@@ -191,7 +191,7 @@ function StickyBottomCTA() {
       <Link to="/signup" style={{
         padding: '10px 24px', background: 'linear-gradient(180deg,#ed7648,#e76a3c)',
         color: '#fff', fontSize: 14, fontWeight: 700, borderRadius: 10,
-        textDecoration: 'none', boxShadow: '0 2px 10px rgba(231,106,60,.2)', whiteSpace: 'nowrap',
+        textDecoration: 'none', boxShadow: '0 2px 10px rgba(231,106,60,.2)', textAlign: 'center',
       }}>Build your first quote free →</Link>
     </div>
   );
