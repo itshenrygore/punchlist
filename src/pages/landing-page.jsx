@@ -270,30 +270,23 @@ export default function LandingPage() {
           <div className="container">
             <div className="pain-grid">
               <div className="pain-card">
-                <div className="pain-icon">💸</div>
                 <div className="pain-num">$200–$800</div>
-                <div className="pain-label">left on the table per job when you quote from memory</div>
+                <div className="pain-label">left on the table per job<br/>when you quote from memory</div>
               </div>
-              <div className="pain-card pain-card-mid">
-                <div className="pain-icon">📋</div>
-                <div className="pain-num">3 in 10</div>
-                <div className="pain-label">quotes have at least one forgotten line item</div>
-              </div>
+              <div className="pain-divider" />
               <div className="pain-card">
-                <div className="pain-icon">🌙</div>
+                <div className="pain-num">3 in 10</div>
+                <div className="pain-label">quotes have at least<br/>one forgotten line item</div>
+              </div>
+              <div className="pain-divider" />
+              <div className="pain-card">
                 <div className="pain-num">10pm</div>
-                <div className="pain-label">when most contractors finally sit down to write quotes</div>
+                <div className="pain-label">when most contractors<br/>finally sit down to write quotes</div>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* MARGIN TAGLINE */}
-        <div className="margin-callout">
-          <div className="container">
             <p className="margin-callout-text">Most contractors don't lose jobs — they lose margin.</p>
           </div>
-        </div>
+        </section>
 
         {/* ═══════════════════════════════════════════════════
             FOREMAN — Moved UP. Strongest differentiator.

@@ -277,6 +277,13 @@ export default function PublicQuotePage() {
     return groups;
   }, [includedItems]);
 
+  const effectivePaymentMethods = useMemo(() => {
+    if (!quote) return [];
+    const base = Array.isArray(quote.payment_methods) ? [...quote.payment_methods] : [];
+    if (quote.contractor_stripe_link && !base.some(m => /credit|debit|card|stripe/i.test(m))) base.unshift('Credit/Debit Card');
+    return base;
+  }, [quote]);
+
   if (loading) return (
     <div className="doc-shell"><div className="doc-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div style={{ textAlign: 'center', color: 'var(--doc-muted)' }}><div className="loading-spinner" style={{ margin: '0 auto 12px' }} />Loading your quote…</div>
@@ -313,12 +320,6 @@ export default function PublicQuotePage() {
   const conversation = Array.isArray(quote.conversation) ? quote.conversation : [];
   const canSign = canAct && !isRevisionRequested && (!hasTerms || termsAccepted);
   const contractorDisplayName = quote.contractor_company || quote.contractor_name || 'your contractor';
-
-  const effectivePaymentMethods = useMemo(() => {
-    const base = Array.isArray(quote.payment_methods) ? [...quote.payment_methods] : [];
-    if (quote.contractor_stripe_link && !base.some(m => /credit|debit|card|stripe/i.test(m))) base.unshift('Credit/Debit Card');
-    return base;
-  }, [quote.payment_methods, quote.contractor_stripe_link]);
 
   const groupOrder = ['Labour', 'Materials', 'Services'];
   const sortedGroupKeys = Object.keys(groupedItems).sort((a, b) => {
