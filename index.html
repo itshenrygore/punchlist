@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Punchlist — Contractor Quoting</title>
+    <meta name="description" content="Quote faster, scope better, and catch what gets missed before you drive off." />
+    <meta property="og:title" content="Punchlist — Contractor Quoting" />
+    <meta property="og:description" content="AI-powered quoting for trades. Build professional quotes in 60 seconds from your phone." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://punchlist.ca" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Punchlist — Contractor Quoting" />
+    <meta name="twitter:description" content="AI-powered quoting for trades. Build professional quotes in 60 seconds from your phone." />
+    <meta name="theme-color" id="meta-theme-color" content="#F6F5F2" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- CRITICAL: Apply theme BEFORE any CSS renders to prevent flash -->
+    <script>
+      (function(){
+        var t='light';
+        try{var s=localStorage.getItem('pl_theme');if(s==='dark'||s==='light')t=s}catch(e){}
+        document.documentElement.setAttribute('data-theme',t);
+        var m=document.getElementById('meta-theme-color');
+        if(m)m.content=t==='dark'?'#0F0F10':'#F6F5F2';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
