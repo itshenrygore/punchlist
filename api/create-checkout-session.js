@@ -25,8 +25,24 @@ export default async function handler(req, res) {
 
   // ── BILLING PORTAL (Stripe Customer Portal for Pro subscribers) ──
   if (body.action === 'billing_portal') {
-    const { customerId } = body;
-    if (!customerId) return res.status(400).json({ error: 'Missing customerId' });
+    // Verify the session and look up the Stripe customer ID server-side.
+    // Never accept customerId from the client — any caller who knows a valid
+    // Stripe customer ID could access another user's billing portal.
+    const supabase = getSupabase();
+    if (!supabase) return res.status(500).json({ error: 'Server configuration error' });
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .maybeSingle();
+    const customerId = profile?.stripe_customer_id;
+    if (!customerId) return res.status(400).json({ error: 'No billing account found' });
 
     const configId = process.env.STRIPE_PORTAL_CONFIG_ID || null;
 

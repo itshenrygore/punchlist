@@ -259,6 +259,18 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Auth — require a valid Supabase session before touching the Anthropic API
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) return res.status(500).json({ error: 'Server configuration error' });
+  const serviceSupabase = createClient(supabaseUrl, supabaseKey);
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const { data: { user }, error: authErr } = await serviceSupabase.auth.getUser(token);
+  if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+
   const { description, trade = 'Other', province = 'AB', country = 'CA', photo = null, wonQuotes = [], labourRate = 0 } = req.body || {};
   if (!String(description || '').trim()) return res.status(400).json({ error: 'description required', items: [] });
 

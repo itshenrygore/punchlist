@@ -12,15 +12,26 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (blocked(res, `push:${getClientIp(req)}`, 10, 60_000)) return;
 
-  const { user_id, subscription, action } = req.body || {};
-  if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
-
   let supabase;
   try {
     supabase = getSupabase();
   } catch (e) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
+
+  // Auth — derive user_id from the session token; never trust it from the body.
+  // Accepting user_id from the client would let any caller overwrite any user's
+  // push subscription (subscribe them to an attacker-controlled endpoint, or
+  // disable their notifications entirely).
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+  const user_id = user.id;
+
+  const { subscription, action } = req.body || {};
+  if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
 
   try {
     // Unsubscribe: clear the push_subscription

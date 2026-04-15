@@ -160,6 +160,15 @@ function templates(appUrl) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Auth — require a valid Supabase session to prevent unauthenticated Twilio abuse
+  const supabase = getSupabase();
+  if (!supabase) return res.status(500).json({ error: 'Server configuration error' });
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+
   // Fail gracefully if Twilio isn't configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
     return res.status(200).json({ ok: false, skipped: true, reason: 'Twilio not configured' });

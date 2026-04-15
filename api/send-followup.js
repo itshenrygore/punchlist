@@ -169,14 +169,14 @@ async function sendResendEmail({ to, customerName, contractorName, contractorEma
   }
 }
 
-// ── Auth helper — extracts user from Bearer token ──
+// ── Auth helper — extracts user and raw token from Bearer header ──
 async function getAuthUser(req, supabase) {
   const header = req.headers['authorization'] || '';
   const token = header.replace(/^Bearer\s+/i, '').trim();
-  if (!token) return null;
+  if (!token) return { user: null, token: null };
   const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return null;
-  return user;
+  if (error || !user) return { user: null, token: null };
+  return { user, token };
 }
 
 // ── Main handler ──
@@ -190,8 +190,20 @@ export default async function handler(req, res) {
   }
 
   // 1. Auth
-  const user = await getAuthUser(req, supabase);
+  const { user, token } = await getAuthUser(req, supabase);
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  // Build a user-scoped client (with the caller's JWT) for the SECURITY DEFINER
+  // RPC, which calls auth.uid() internally to verify ownership. The service-role
+  // client has no user JWT, so auth.uid() returns NULL and the RPC always raises
+  // 'not_owner'. The service-role client continues to be used for all other
+  // queries where bypassing RLS is intentional.
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const userSupabase = anonKey
+    ? createClient(process.env.SUPABASE_URL, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      })
+    : supabase; // fallback: RPC may still fail, but avoids a hard crash
 
   const { quoteId, customMessage, method } = req.body || {};
   if (!quoteId) return res.status(400).json({ error: 'quoteId required' });
@@ -256,8 +268,8 @@ export default async function handler(req, res) {
     }
   }
 
-  // 4. Atomic counter bump
-  const { data: rpcData, error: rpcErr } = await supabase
+  // 4. Atomic counter bump — must use user-scoped client so auth.uid() resolves
+  const { data: rpcData, error: rpcErr } = await userSupabase
     .rpc('rpc_record_followup_send', { p_quote_id: quoteId });
 
   if (rpcErr) {
