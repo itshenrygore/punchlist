@@ -44,6 +44,11 @@ export default function NotificationCenter() {
   const [loading, setLoading] = useState(false);
   const bellRef = useRef(null);
   const panelRef = useRef(null);
+  // Unique channel name per mount — prevents "cannot add postgres_changes
+  // callbacks after subscribe()" when React StrictMode double-invokes effects
+  // or when the component remounts before Supabase finishes tearing down the
+  // previous channel with a shared static name.
+  const channelName = useRef(`notifications-realtime-${Math.random().toString(36).slice(2)}`);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -71,7 +76,7 @@ export default function NotificationCenter() {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel('notifications-realtime')
+      .channel(channelName.current)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -100,7 +105,7 @@ export default function NotificationCenter() {
         } catch (e) { console.warn("[PL]", e); }
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(channel).catch(() => {}); };
   }, [user]);
 
   // Close on outside click
