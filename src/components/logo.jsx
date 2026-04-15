@@ -1,58 +1,142 @@
 /**
- * Punchlist Logo — uses CSS variables for theme-reactive colors
+ * Punchlist Logo — premium glass-mark design
+ *
+ * The brand mark is a glass square (translucent, soft border, inset
+ * highlight) wrapping the orange tally-bars wordmark. The orange bars
+ * stay constant — they're the brand. The glass adapts to background:
+ *   • dark backgrounds (landing hero, dark mode)  → white-translucent
+ *   • light backgrounds (app shell, light mode)   → dark-translucent
+ *
+ * Adaptation is driven by CSS variables defined in tokens.css:
+ *   --logo-glass-bg, --logo-glass-border, --logo-glass-highlight
+ *
+ * Pass `dark={true|false}` to override theme detection (e.g., the
+ * landing hero sets dark={true} regardless of the user's OS theme).
  */
+
+const SIZES = {
+  sm: { mark: 26, gap: 8,  font: 17, sub: 9  },
+  md: { mark: 34, gap: 10, font: 22, sub: 10 },
+  lg: { mark: 44, gap: 12, font: 28, sub: 11 },
+};
+
 export default function Logo({ size = 'md', dark, tagline = false }) {
-  const scales = { sm:.75, md:1, lg:1.35 };
-  const s = scales[size] || 1;
-  // Use CSS variable reference — this makes the logo reactive to theme changes
-  // without needing re-render. The SVG text uses fill="var(--text)" which
-  // automatically adapts when [data-theme] changes.
-  const explicitDark = dark !== undefined ? dark : null;
-  const textColor = explicitDark === true ? '#f0ede8' : explicitDark === false ? '#111210' : 'var(--text, #f0ede8)';
-  const subColor = explicitDark === true ? '#7a7875' : explicitDark === false ? '#6b6a65' : 'var(--muted, #7a7875)';
+  const dims = SIZES[size] || SIZES.md;
+
+  const textColor =
+    dark === true ? '#f5f3ee' :
+    dark === false ? '#1a1a1a' :
+    'var(--text, #1a1a1a)';
+
+  const subColor =
+    dark === true ? 'rgba(245,243,238,0.55)' :
+    dark === false ? 'rgba(26,26,26,0.55)' :
+    'var(--muted, rgba(26,26,26,0.55))';
 
   return (
-    <svg
-      width={Math.round(200 * s)}
-      height={Math.round(tagline ? 52 * s : 38 * s)}
-      viewBox={`0 0 200 ${tagline ? 52 : 38}`}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+    <span
+      className="pl-logo"
+      data-force-theme={dark === true ? 'dark' : dark === false ? 'light' : undefined}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: dims.gap,
+        lineHeight: 1,
+        verticalAlign: 'middle',
+      }}
       aria-label="Punchlist"
       role="img"
     >
-      <rect x="0" y="0" width="5" height={tagline ? 44 : 36} rx="2" fill="#d45a1a"/>
-      <rect x="8" y="0" width="2" height={tagline ? 44 : 36} rx="1" fill="#d45a1a" opacity="0.35"/>
-      <text
-        x="18" y="27"
-        fontFamily="-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif"
-        fontSize="24" fontWeight="800" letterSpacing="-1"
-        fill={textColor}
-      >
-        punchlist
-      </text>
-      {tagline && (
-        <text
-          x="18" y="46"
-          fontFamily="-apple-system,system-ui,sans-serif"
-          fontSize="9" fontWeight="500" letterSpacing=".08em"
-          fill={subColor}
+      <GlassMark size={dims.mark} />
+      <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, lineHeight: 1 }}>
+        <span
+          style={{
+            fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,system-ui,sans-serif",
+            fontSize: dims.font,
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            color: textColor,
+          }}
         >
-          CONTRACTOR QUOTING
-        </text>
-      )}
-    </svg>
+          punchlist
+        </span>
+        {tagline && (
+          <span
+            style={{
+              fontFamily: "-apple-system,system-ui,sans-serif",
+              fontSize: dims.sub,
+              fontWeight: 500,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: subColor,
+            }}
+          >
+            Contractor Quoting
+          </span>
+        )}
+      </span>
+    </span>
   );
 }
 
+/** Glass square + tally bars only (no wordmark). For sidebars, favicons, tight UI. */
 export function LogoMark({ size = 32 }) {
+  return <GlassMark size={size} />;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   GlassMark — the shared visual primitive.
+─────────────────────────────────────────────────────────────── */
+function GlassMark({ size = 32 }) {
+  const radius   = Math.max(6, Math.round(size * 0.24));
+  const padding  = Math.round(size * 0.22);
+  const barW     = Math.max(2,   Math.round(size * 0.13));
+  const barThinW = Math.max(1.5, Math.round(size * 0.075));
+  const barH     = size - padding * 2;
+  const barGap   = Math.round(size * 0.13);
+  const bar1X    = padding;
+  const bar2X    = bar1X + barW + barGap;
+
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Punchlist" role="img">
-      <rect x="6"  y="4" width="5"  height="24" rx="2"   fill="#d45a1a"/>
-      <rect x="14" y="4" width="2"  height="24" rx="1"   fill="#d45a1a" opacity="0.38"/>
-      <rect x="19" y="4" width="7"  height="5"  rx="1.5" fill="var(--text, #f0ede8)"/>
-      <rect x="19" y="13" width="9" height="5"  rx="1.5" fill="var(--text, #f0ede8)" opacity="0.55"/>
-      <rect x="19" y="22" width="5" height="5"  rx="1.5" fill="var(--text, #f0ede8)" opacity="0.3"/>
-    </svg>
+    <span
+      className="pl-logo-mark"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: size,
+        height: size,
+        borderRadius: radius,
+        background: 'var(--logo-glass-bg, rgba(255,255,255,0.16))',
+        border: '1px solid var(--logo-glass-border, rgba(255,255,255,0.28))',
+        boxShadow:
+          'inset 0 1px 0 var(--logo-glass-highlight, rgba(255,255,255,0.24)), 0 1px 2px rgba(0,0,0,0.06)',
+        backdropFilter: 'blur(14px) saturate(120%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(120%)',
+        flexShrink: 0,
+        transition: 'background .2s ease, border-color .2s ease',
+      }}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <rect
+          x={bar1X} y={padding} width={barW} height={barH}
+          rx={Math.max(1, barW / 2)}
+          fill="#d45a1a"
+        />
+        <rect
+          x={bar2X} y={padding} width={barThinW} height={barH}
+          rx={Math.max(0.75, barThinW / 2)}
+          fill="#d45a1a"
+          opacity="0.45"
+        />
+      </svg>
+    </span>
   );
 }

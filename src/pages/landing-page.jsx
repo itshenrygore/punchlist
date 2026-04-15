@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/landing.css';
+import Logo from '../components/logo';
 
 /* ═══════════════════════════════════════════════════════════════
    Punchlist Landing Page v2 — Precision Polish
@@ -38,17 +39,6 @@ function Rv({ children, className = '', delay = 0, style = {} }) {
   return <div ref={ref} className={`rv ${vis ? 'vis' : ''} ${className}`} style={{ transitionDelay: `${delay}ms`, ...style }}>{children}</div>;
 }
 
-/* ═══ Brand mark — Punchlist "punch" tally (matches src/components/logo.jsx) ═══
-   Two vertical bars, white-on-orange, sized to fit inside .lp-brand-mark. */
-function BrandMark({ size = 15 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="3.5" y="2" width="3" height="12" rx="1" fill="#fff" />
-      <rect x="9" y="2" width="1.5" height="12" rx="0.75" fill="#fff" opacity="0.55" />
-    </svg>
-  );
-}
-
 /* ═══ NAV ═══ */
 function LpNav() {
   const [sc, setSc] = useState(false);
@@ -57,9 +47,8 @@ function LpNav() {
   return (
     <header className={`lp-nav ${sc ? 'lp-nav--scrolled' : ''}`}>
       <div className="lp-nav-inner" style={{ height: sc ? 56 : 64 }}>
-        <Link to="/" className="lp-brand">
-          <div className="lp-brand-mark"><BrandMark size={15} /></div>
-          <span className="lp-brand-text">punchlist</span>
+        <Link to="/" className="lp-brand" aria-label="Punchlist home">
+          <Logo size="sm" dark={true} />
         </Link>
         <nav className="lp-desk-nav">
           <a href="#how" className="lp-nav-link">How it works</a>
@@ -445,7 +434,7 @@ function LpFooter() {
     <footer className="lp-footer">
       <div className="lp-container lp-footer-inner">
         <div>
-          <div className="lp-brand" style={{marginBottom:5}}><div className="lp-brand-mark" style={{width:24,height:24}}><BrandMark size={12} /></div><span className="lp-brand-text" style={{fontSize: 'var(--text-md)'}}>punchlist</span></div>
+          <div style={{marginBottom:5}}><Logo size="sm" dark={true} /></div>
           <div style={{fontSize: 'var(--text-xs)',color:'var(--lp-text-3)'}}>Quote it. Track it. Close it.</div>
         </div>
         <div className="lp-footer-links"><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><Link to="/login">Log in</Link><Link to="/signup">Try free</Link><Link to="/terms">Terms</Link><a href="mailto:hello@punchlist.ca">Contact</a></div>

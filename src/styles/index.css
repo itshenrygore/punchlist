@@ -99,6 +99,11 @@
   --z-modal: 200;
   --z-overlay: 300;
   --z-toast: 400;
+
+  /* ── Premium glass logo mark (default = dark theme = light glass) ── */
+  --logo-glass-bg:        rgba(255,255,255,0.22);
+  --logo-glass-border:    rgba(255,255,255,0.36);
+  --logo-glass-highlight: rgba(255,255,255,0.32);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -157,7 +162,29 @@
   --shadow-lg:   0 8px 28px rgba(16,24,40,.12);
   --shadow-float:0 12px 40px rgba(16,24,40,.14);
 
+  /* ── Premium glass logo mark — dark glass on light surfaces ── */
+  --logo-glass-bg:        rgba(20,20,20,0.05);
+  --logo-glass-border:    rgba(20,20,20,0.10);
+  --logo-glass-highlight: rgba(255,255,255,0.55);
+
   color-scheme: light;
+}
+
+/* ───────────────────────────────────────────────────────────
+   Force-theme escape hatch for the logo mark.
+   Components can wrap the logo with data-force-theme="dark"
+   to opt into the light-glass style regardless of the page
+   theme (e.g. landing page hero, modal over a dark backdrop).
+   ─────────────────────────────────────────────────────────── */
+[data-force-theme="dark"] {
+  --logo-glass-bg:        rgba(255,255,255,0.22);
+  --logo-glass-border:    rgba(255,255,255,0.36);
+  --logo-glass-highlight: rgba(255,255,255,0.32);
+}
+[data-force-theme="light"] {
+  --logo-glass-bg:        rgba(20,20,20,0.05);
+  --logo-glass-border:    rgba(20,20,20,0.10);
+  --logo-glass-highlight: rgba(255,255,255,0.55);
 }
 
 /* Light mode body */
