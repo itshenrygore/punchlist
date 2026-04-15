@@ -60,9 +60,10 @@ function PushToggle({ userId }) {
         userVisibleOnly: true,
         applicationServerKey: vapidKey,
       });
+      const { data: { session } } = await supabase.auth.getSession();
       await fetch('/api/push-subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
         body: JSON.stringify({ user_id: userId, subscription: sub.toJSON() }),
       });
       setStatus('subscribed');
@@ -79,9 +80,10 @@ function PushToggle({ userId }) {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       if (sub) await sub.unsubscribe();
+      const { data: { session } } = await supabase.auth.getSession();
       await fetch('/api/push-subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
         body: JSON.stringify({ user_id: userId, action: 'unsubscribe' }),
       });
       setStatus('prompt');

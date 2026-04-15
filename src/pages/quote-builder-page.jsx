@@ -7,6 +7,7 @@ import QbCoachmarks from '../components/qb-coachmarks';
 import { useCustomers, searchCustomers, invalidateCustomers } from '../hooks/use-customers';
 import { requestAiScope, getWonQuoteContext, getProfile, getQuote, updateQuote, createQuote, createCustomer, updateCustomer, listQuotes, uploadQuotePhoto, getQuotingDefaults, findCustomerByContact, sendQuoteEmail } from '../lib/api';
 import { useAuth } from '../hooks/use-auth';
+import { supabase } from '../lib/supabase';
 import { useUnsavedChanges } from '../hooks/use-unsaved-changes';
 import { useToast } from '../components/toast';
 import { currency, friendly } from '../lib/format';
@@ -194,6 +195,10 @@ export default function QuoteBuilderPage() {
 
   // ── Shared state ──
   const [saving, setSaving] = useState(false);
+  // savingRef mirrors the `saving` state so the autosave effect can read it
+  // without listing it as a dependency — prevents the saving→effect→saving
+  // feedback loop that causes React error #62 (max update depth exceeded).
+  const savingRef = useRef(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [saveState, setSaveState] = useState('');
@@ -671,7 +676,7 @@ export default function QuoteBuilderPage() {
     if (!nextStatus && !initialLoadComplete.current) return null;
     if (!nextStatus && lineItems.length === 0) return null;
     const savePromise = (async () => {
-      setSaving(true); setSaveState('saving');
+      setSaving(true); savingRef.current = true; setSaveState('saving');
       try {
         const effectiveStatus = nextStatus || draft.status || 'draft';
         const pl = { ...draft, title: title || draft.title, description, status: effectiveStatus, line_items: lineItems, trade, province, country, delivery_method: deliveryMethod };
@@ -690,7 +695,7 @@ export default function QuoteBuilderPage() {
           try { await saveOfflineDraft({ ...draft, title, description, line_items: lineItems, trade, province, country, id: quoteId, savedAt: new Date().toISOString() }); setOfflineDraft(true); setSaveState(''); if (!silent) toast("Saved offline — will sync when online", 'info'); return null; } catch (e) { console.warn("[PL]", e); }
         }
         setError(friendly(e)); setSaveState(''); if (!silent) toast(friendly(e), 'error'); return null;
-      } finally { setSaving(false); }
+      } finally { setSaving(false); savingRef.current = false; }
     })();
     saveMutex.current = savePromise;
     try { return await savePromise; } finally { saveMutex.current = null; }
@@ -710,18 +715,18 @@ export default function QuoteBuilderPage() {
       }
       return;
     }
-    if (saving || isLocked || !initialLoadComplete.current) return;
+    if (savingRef.current || isLocked || !initialLoadComplete.current) return;
     if (lineItems.length === 0) return;
     const t = setTimeout(() => { save(null, true); }, 800);
     return () => clearTimeout(t);
-  }, [isDirty, draft, lineItems, title, description, quoteId, saving, isLocked, offlineDraft]);
+  }, [isDirty, draft, lineItems, title, description, quoteId, isLocked, offlineDraft]);
 
   // Flush on tab hide / pagehide — catches the "user switches apps mid-edit"
   // and "user closes the tab" cases that the debounce would otherwise miss.
   useEffect(() => {
     if (!quoteId) return;
     const flush = () => {
-      if (dirty.current && !saving && !isLocked && initialLoadComplete.current && lineItems.length > 0) {
+      if (dirty.current && !savingRef.current && !isLocked && initialLoadComplete.current && lineItems.length > 0) {
         save(null, true);
       }
     };
@@ -731,7 +736,7 @@ export default function QuoteBuilderPage() {
       window.removeEventListener('visibilitychange', flush);
       window.removeEventListener('pagehide', flush);
     };
-  }, [quoteId, saving, isLocked, lineItems.length]);
+  }, [quoteId, isLocked, lineItems.length]);
 
   // Cancel any pending undo timer on unmount (prevents actualSend firing after navigation)
   useEffect(() => () => { undoCancelRef.current?.(); }, []);
@@ -1593,7 +1598,8 @@ export default function QuoteBuilderPage() {
                     const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
                     if (!vapidKey) return;
                     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
-                    await fetch('/api/push-subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: user?.id, subscription: sub.toJSON() }) });
+                    const { data: { session: pushSession } } = await supabase.auth.getSession();
+                    await fetch('/api/push-subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(pushSession?.access_token ? { Authorization: `Bearer ${pushSession.access_token}` } : {}) }, body: JSON.stringify({ user_id: user?.id, subscription: sub.toJSON() }) });
                     toast('Notifications enabled', 'success');
                   } catch { }
                 }}>
