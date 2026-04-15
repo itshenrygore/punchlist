@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background: warm light -->
+  <rect width="512" height="512" rx="96" fill="#f5f4f1"/>
+  <!-- Impact mark: thick vertical bar (the "punch") -->
+  <rect x="100" y="80" width="60" height="352" rx="18" fill="#d45a1a"/>
+  <!-- Echo line -->
+  <rect x="176" y="80" width="20" height="352" rx="10" fill="#d45a1a" opacity="0.3"/>
+  <!-- Checklist ticks: three horizontal bars -->
+  <rect x="224" y="112" width="180" height="44" rx="12" fill="#4a4f57"/>
+  <rect x="224" y="192" width="140" height="44" rx="12" fill="#4a4f57" opacity="0.55"/>
+  <rect x="224" y="272" width="160" height="44" rx="12" fill="#4a4f57" opacity="0.3"/>
+  <!-- Checkmark on the first item -->
+  <path d="M248 126 L262 142 L292 116" stroke="#d45a1a" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
