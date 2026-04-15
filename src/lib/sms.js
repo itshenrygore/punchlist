@@ -9,12 +9,24 @@
      smsNotify.quoteReady({ to: customer.phone, contractorName, quoteTitle, total, shareToken });
    ═══════════════════════════════════════════════════════════════════════════ */
 
+import { supabase } from './supabase';
+
+async function getAuthHeader() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ? `Bearer ${session.access_token}` : '';
+  } catch {
+    return '';
+  }
+}
+
 async function sendSMS(action, to, data) {
   if (!to) return { ok: false, reason: 'no_phone' };
   try {
+    const authHeader = await getAuthHeader();
     const res = await fetch('/api/send-sms', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(authHeader ? { Authorization: authHeader } : {}) },
       body: JSON.stringify({ action, to, data }),
     });
     const result = await res.json().catch(() => ({}));
