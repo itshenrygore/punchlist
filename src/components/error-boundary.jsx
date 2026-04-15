@@ -3,7 +3,7 @@ import { Component } from 'react';
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { error: null, isChunkError: false };
+    this.state = { error: null, isChunkError: false, componentStack: '', showDetails: false };
   }
 
   static getDerivedStateFromError(error) {
@@ -16,13 +16,14 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('Punchlist render error:', error, info?.componentStack);
+    this.setState({ componentStack: info?.componentStack || '' });
   }
 
   handleRetry = () => {
     if (this.state.isChunkError) {
       window.location.reload();
     } else {
-      this.setState({ error: null, isChunkError: false });
+      this.setState({ error: null, isChunkError: false, componentStack: '', showDetails: false });
     }
   };
 
@@ -68,22 +69,47 @@ export default class ErrorBoundary extends Component {
               </button>
             )}
           </div>
-          {process.env.NODE_ENV === 'development' && !this.state.isChunkError && (
-            <pre style={{
-              marginTop: 20,
-              background: 'var(--red-bg)',
-              color: 'var(--red)',
-              padding: 16,
-              borderRadius: 8,
-              fontSize: 'var(--text-2xs)',
-              textAlign: 'left',
-              maxWidth: 600,
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              border: '1px solid rgba(192,64,64,.2)',
-            }}>
-              {this.state.error?.message}
-            </pre>
+          {!this.state.isChunkError && (
+            <>
+              <button
+                type="button"
+                onClick={() => this.setState(s => ({ showDetails: !s.showDetails }))}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  fontSize: 'var(--text-xs)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  marginTop: 8,
+                  fontFamily: 'inherit',
+                }}
+              >
+                {this.state.showDetails ? 'Hide error details' : 'Show error details'}
+              </button>
+              {this.state.showDetails && (
+                <pre style={{
+                  marginTop: 8,
+                  background: 'var(--red-bg, #fef2f2)',
+                  color: 'var(--red, #b91c1c)',
+                  padding: 16,
+                  borderRadius: 8,
+                  fontSize: '11px',
+                  textAlign: 'left',
+                  maxWidth: 'min(600px, 92vw)',
+                  maxHeight: 360,
+                  overflow: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  border: '1px solid rgba(192,64,64,.2)',
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                }}>
+                  {this.state.error?.name && <strong>{this.state.error.name}: </strong>}
+                  {this.state.error?.message || 'Unknown error'}
+                  {this.state.error?.stack && '\n\n' + this.state.error.stack}
+                  {this.state.componentStack && '\n\nComponent stack:' + this.state.componentStack}
+                </pre>
+              )}
+            </>
           )}
         </div>
       );
