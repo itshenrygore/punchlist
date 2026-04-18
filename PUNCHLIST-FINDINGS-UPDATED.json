@@ -1,0 +1,1915 @@
+{
+  "generated_at": "2026-04-14T21:30:00Z",
+  "audit_version": "v100-m8.5-final + phase-7",
+  "audit_session": "Sessions 1a+1b+1c+1d+1e merged + Phase 7 additions (65 findings total)",
+  "coverage": {
+    "status": "partial",
+    "audited_in_depth": [
+      "src/app/router.jsx",
+      "src/pages/dashboard-page.jsx",
+      "src/pages/quote-builder-page.jsx (describe phase only)",
+      "src/pages/public-quote-page.jsx (loading/error, ActionSheet, approve CTA, terms details)",
+      "src/pages/signup-page.jsx",
+      "src/components/dashboard/action-list-row.jsx",
+      "src/components/global-search.jsx",
+      "src/styles/dashboard-v2.css (tap-target CSS verified)",
+      "src/styles/tokens.css (reduced-motion override verified)",
+      "src/styles/index.css (grep-measured, not line-by-line)",
+      "docs/DESIGN-SYSTEM.md (read in full for standard)"
+    ],
+    "spot_checked_quant_only": [
+      "src/pages/quote-detail-page.jsx",
+      "src/pages/invoice-detail-page.jsx",
+      "src/pages/quotes-list-page.jsx",
+      "src/pages/invoices-list-page.jsx",
+      "src/pages/bookings-page.jsx",
+      "src/pages/contacts-page.jsx",
+      "src/pages/landing-page.jsx",
+      "src/pages/analytics-page.jsx",
+      "src/pages/login-page.jsx",
+      "src/pages/project-portal-page.jsx (grep only)",
+      "src/pages/payments-onboarding-page.jsx (grep only)",
+      "src/pages/settings-page.jsx (toast pattern corrected but not deep-read)"
+    ],
+    "not_yet_audited": [
+      "src/pages/quote-builder-page.jsx (building, review, sent phases)",
+      "src/pages/quote-detail-page.jsx (deep)",
+      "src/pages/invoice-detail-page.jsx (deep)",
+      "src/pages/public-invoice-page.jsx",
+      "src/pages/public-amendment-page.jsx",
+      "src/pages/public-additional-work-page.jsx",
+      "src/pages/project-portal-page.jsx (deep)",
+      "src/pages/payments-onboarding-page.jsx (deep)",
+      "src/pages/payments-setup-page.jsx",
+      "src/pages/analytics-page.jsx (deep)",
+      "src/pages/bookings-page.jsx (deep)",
+      "src/pages/contacts-page.jsx (deep)",
+      "src/pages/landing-page.jsx (deep)",
+      "src/pages/pricing-page.jsx",
+      "src/pages/billing-page.jsx",
+      "src/pages/terms-page.jsx",
+      "src/pages/additional-work-detail-page.jsx",
+      "src/pages/settings-page.jsx (deep)",
+      "src/components/app-shell.jsx",
+      "src/components/booking-drawer.jsx",
+      "src/components/pl-calendar.jsx",
+      "src/components/followup-modal.jsx",
+      "src/components/template-editor.jsx",
+      "src/components/foreman.jsx",
+      "Full flow walks 1-24 (only #1 signup->send and #13 view->approve partially traced)",
+      "SMS/email template voice audit (system defaults from M2)",
+      "A11y sweep beyond tap-target spot checks",
+      "Performance (TTI, LCP, CLS, INP) \u2014 structurally unavailable without browser/DevTools"
+    ],
+    "audit_limitations": [
+      "No DevTools access \u2014 no actual measured perceived-speed numbers (spinner durations, LCP/CLS/INP). All speed findings are structural (presence/absence of skeletons, optimistic UI, etc.) not measured.",
+      "No browser rendering \u2014 no screenshot-based 3-second tests. Clarity findings are code-structural.",
+      "No device matrix \u2014 no iPhone SE / Pixel / iPad verification. CSS tap-target sizes checked against spec instead.",
+      "Zip was extracted directly (no internal 'punchlist/' folder) \u2014 noted for Phase packaging."
+    ]
+  },
+  "overall_taste_score": 3.2,
+  "axis_scores": {
+    "speed": 3.5,
+    "clarity": 3.0,
+    "reduction": 3.0,
+    "confidence": 2.5,
+    "motion": 3.5,
+    "recovery": 3.0,
+    "delight": 3.5
+  },
+  "axis_score_rationale": {
+    "speed": "Dashboard uses skeleton-first loading (top-1% pattern), dashboard_bundle RPC collapses 7 queries into 1, CLS-safe approval transition on public quote. Drag: many pages fall back to a generic spinner; router-level transition is a generic spinner; project-portal has 4 spinners. No measured numbers.",
+    "clarity": "Dashboard v2's 5-row information hierarchy is strong and persona-driven (Henry's three morning questions). Public quote above-fold reassurance is concrete. Drag: 10px 'tap to change' text on builder, dual CTAs above fold on dashboard, inline visual-weight overrides fight the type scale.",
+    "reduction": "Trade/province collapsed into <details> on builder, dismissible dashboard items, thoughtful empty states. Drag: two overlapping 'New quote' triggers on dashboard, visible emoji glyphs used where icons would suffice, terms rendered as <pre> with nine inline style props.",
+    "confidence": "Design system defines real tokens (7 text sizes, 12 spacing tokens, 5 elevation levels, 5 durations, 5 easings) and Stat/Card/Section primitives exist. Adoption is the problem: 549 ad-hoc fontSize inline in JSX, 2,066 raw px values in index.css. Dollar amounts inconsistently typographed (billing-page mixes 28/24/13/12/9 px freestanding). This is the axis most dragging the score.",
+    "motion": "CSS-only entrance stagger on dashboard, RevealOnView on public quote, reduced-motion override at token level (tokens.css:225), visualViewport keyboard detection on ActionSheet. Drag: toasts carry state changes that motion alone could carry; some animations lack semantic payload.",
+    "recovery": "Good error copy on public quote unavailable state, undo toast on AI scope population, unsavedChanges guard in builder. Drag: ActionListRow dismiss has no undo and no confirm (violates the Linear-standard cited in the prompt); error state on public quote says 'contact your contractor' but provides no contact; quote-builder jd-skip-link can navigate Kira by accident.",
+    "delight": "Action labels like 'Text Kristine' instead of 'Send' on ActionListRow \u2014 Superhuman-grade. Approve CTA reassurance bullets. Voice input on builder. Empty state copy 'You're all caught up / Next quote is a good one.' Missing: a named win moment per flow, deposit-received SMS branded as 'Kristine's phone just buzzed'-style confirmation for contractor, thoughtful post-send moment."
+  },
+  "classification": "Solid top-25%, approaching top-10% on dashboard surface specifically. Two blockers to top-1%: (a) design-system adoption debt is pervasive enough to fracture visual cohesion across pages, most visible on customer-facing surfaces where trust is earned; (b) ~51 emoji glyphs on public-quote-page and ~50 on project-portal render inconsistently across Kristine's Android vs Kira's iOS. The taste moves needed are unglamorous (token discipline sweep, icon-set unification, typography hierarchy consolidation) but high-leverage.",
+  "findings": [
+    {
+      "id": "UX-001",
+      "title": "Design-system tokens exist but adoption is sparse; 549 ad-hoc fontSize and 285 ad-hoc px values inline in JSX",
+      "page_or_flow": "cross-cutting",
+      "persona": "all",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P0",
+      "frequency": "per-session",
+      "category": "consistency",
+      "description": "docs/DESIGN-SYSTEM.md defines a disciplined type scale (--text-2xs through --text-7xl), a 12-step spacing scale, 5 elevation levels, and primitives (Card, Section, Stat) via a barrel import. Grep across src/pages + src/components: 549 inline fontSize integers, 285 inline px values in style={{}}, 79 inline hex colors, 56 inline rgba values. The audit standard is 'any > 5 across the app is a finding.' Examples: billing-page.jsx uses fontSize 28/24/14/13/12/9 inline on a single page; terms-page.jsx has seven h3s at fontSize: 14 (body-size headings); project-portal-page.jsx has 64 fontSize violations in a single file AND 'color: #ea580c' inline on a customer-facing page.",
+      "reproduction_steps": [
+        "grep -rnE \"fontSize:\\s*['\\\"]?[0-9]\" src/pages src/components --include=\"*.jsx\" | wc -l  \u2192 549",
+        "grep -rnE \"style=\\{\\{[^}]*[0-9]+px\" src/pages src/components --include=\"*.jsx\" | wc -l  \u2192 285",
+        "Open src/pages/billing-page.jsx lines 53-87: 6 distinct fontSize integers in 35 lines"
+      ],
+      "competitor_reference": "Stripe Dashboard",
+      "gap_vs_competitor": "major",
+      "measured_evidence": "549 fontSize violations, 285 px violations in JSX inline styles across src/pages + src/components",
+      "suggested_fix": "Codemod sweep: (a) any inline fontSize maps to nearest --text-* token via className substitution; (b) any inline padding/margin/gap in px maps to --space-* via utility class or :where() CSS override on <Card>. Treat this as the Phase \u03b4 (confidence) centerpiece, not a find-and-replace \u2014 requires per-site judgement because some inline sizes are semantically wrong (14px headings should be --text-xl not --text-base).",
+      "estimated_effort": "XL",
+      "taste_axis_impact": [
+        "confidence",
+        "clarity"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-002",
+      "title": "~170 emoji glyphs used as UI icons across customer and contractor surfaces; lucide-react already imported elsewhere",
+      "page_or_flow": "cross-cutting (public-quote, project-portal, quote-detail, quote-builder, bookings most-affected)",
+      "persona": "kristine primarily, all",
+      "device": "all \u2014 most visible on Android Chrome vs iOS Safari side-by-side",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P0",
+      "frequency": "per-customer",
+      "category": "visual",
+      "description": "Python-verified counts (excluding comments): public-quote-page.jsx 51, project-portal-page.jsx 50, quote-detail-page.jsx 43, quote-builder-page.jsx 32. Glyphs include \u2713 (most common), \ud83d\udcac, \ud83d\udd12, \u270f, \u2715, \ud83d\udd17, \ud83d\udcc5, \ud83d\udcb0. These render as platform-default emoji: Apple, Google, and Microsoft each style these differently. Kristine on her Android sees Noto Color Emoji; Kira on iPhone sees Apple Color Emoji. The brand identity fractures between them. Additional inconsistency: \u2713 and \u2705 both used for 'success'; \u2715 and \u2717 both used for 'close'; \u270f and \u270e and \u270f\ufe0f all used for 'edit'. The app already imports lucide-react (e.g. dashboard uses ArrowRight, CheckCircle2, Clock, Calendar, DollarSign) so no new dependency needed.",
+      "reproduction_steps": [
+        "Open public-quote-page.jsx:43 \u2192 '\ud83d\udcac Questions & Replies' section header",
+        "Open public-quote-page.jsx:48 \u2192 '\ud83d\udc64' and '\ud83d\udd27' as conversation avatars (identity signals to Kristine)",
+        "Open public-quote-page.jsx:651 \u2192 '\ud83d\udd12 Accept Terms to Continue' primary CTA",
+        "Open public-quote-page.jsx:654, 658-660 \u2192 \u2713 as reassurance glyphs",
+        "Compare to dashboard/action-list-row.jsx which already uses lucide: MessageSquare, X (no emoji anywhere)"
+      ],
+      "competitor_reference": "Stripe Checkout / Apple Pay (exclusively SVG iconography)",
+      "gap_vs_competitor": "major",
+      "measured_evidence": "Python re.findall with emoji Unicode ranges, comments stripped: 51/50/43/32 on top-4 files",
+      "suggested_fix": "Port all UI emoji glyphs to lucide-react icons. Replace \u2713\u2192Check, \u2715\u2192X, \ud83d\udcac\u2192MessageSquare, \ud83d\udd12\u2192Lock, \ud83d\udd17\u2192Link2, \u270f\u2192Pencil, \ud83d\udcc5\u2192Calendar, \ud83d\udcb0\u2192DollarSign, \ud83d\udc64\u2192User, \ud83d\udd27\u2192Wrench. Reserve emoji for moments that are intentionally emoji-as-content (e.g., \ud83c\udf89 in a rare delight moment).",
+      "estimated_effort": "L",
+      "taste_axis_impact": [
+        "confidence",
+        "clarity"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-003",
+      "title": "Public quote loading state is a spinner, not a skeleton \u2014 Kristine's first impression of Punchlist",
+      "page_or_flow": "flow #13 (SMS \u2192 tap link \u2192 view on iPhone/Android)",
+      "persona": "kristine",
+      "device": "all mobile",
+      "theme": "all",
+      "axis": "speed",
+      "severity": "P0",
+      "frequency": "per-customer",
+      "category": "perf",
+      "description": "src/pages/public-quote-page.jsx:383-387 renders <div className='loading-spinner' /> with text 'Loading your quote\u2026' for the entire first paint after Kristine taps the SMS link. The audit standard: 'every data-dependent page' gets a skeleton matching real layout. Kristine is making a trust judgement in the first 300ms \u2014 a blinking spinner on a white card reads 'broken link' or 'slow page.' Contrast with Stripe Checkout, which renders the merchant name, amount, and a skeleton card the moment the DOM parses.",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:383-387",
+        "Confirm the guard is `if (loading) return (\u2026spinner\u2026)` not `if (loading && !initialHint) return (\u2026skeleton\u2026)`"
+      ],
+      "competitor_reference": "Stripe Checkout, LinkedIn feed, Facebook \u2014 skeletons that match real layout",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Code-traced: single spinner component, no skeleton scaffold. Dashboard shows the app has CardSkeleton (dashboard-page.jsx:69), so the pattern is available but not adopted here.",
+      "suggested_fix": "Build a PublicQuoteSkeleton that renders the hero card, price block, and CTA bar in shimmer form. Extract from the existing doc-card layout so structure matches 1:1. If contractor_name can be decoded from shareToken or from a lightweight pre-fetch, show it immediately in the skeleton header for trust.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "speed",
+        "clarity"
+      ],
+      "assigned_phase": "1",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Replaced loading-spinner with PublicLoadingState skeleton component (src/components/public-loading-state.jsx). Uses dv2-skeleton/dv2-skeleton-shimmer classes, respects prefers-reduced-motion."
+    },
+    {
+      "id": "UX-004",
+      "title": "Dashboard dismiss action has no undo and no confirmation \u2014 violates Linear-standard cited in audit prompt",
+      "page_or_flow": "dashboard / flow #2 (needs-follow-up \u2192 nudge sent)",
+      "persona": "henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "recovery",
+      "severity": "P1",
+      "frequency": "per-session",
+      "category": "flow",
+      "description": "src/components/dashboard/action-list-row.jsx:69-76 renders a dismiss \u00d7 button that calls onDismiss(item) with no undo toast and no confirmation. The prompt's recovery axis explicitly cites 'Linear-style \u2014 even destructive actions have a 5s undo toast.' dashboard-page.jsx dismissItem() presumably writes to dismissed_dashboard_items which the M4 changelog calls 'persistent dismiss.' A misfired tap \u2014 especially easy on mobile given the 28\u00d728 target (see UX-005) \u2014 is unrecoverable without knowing which record was hidden. Note: the useToast hook in the codebase already exposes showUndo (used by quote-builder) so the infrastructure exists.",
+      "reproduction_steps": [
+        "Open src/components/dashboard/action-list-row.jsx:71-76",
+        "Confirm onDismiss call-site in src/pages/dashboard-page.jsx (dismissItem handler) \u2014 no undo wrap",
+        "Confirm showUndo exists: src/pages/quote-builder-page.jsx:117 `const { show: toast, showUndo } = useToast();`"
+      ],
+      "competitor_reference": "Linear undo toasts (every archive/dismiss is undoable for 5s)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Code-traced: no call to showUndo from dashboard-page.jsx dismissItem path; no confirm modal imported.",
+      "suggested_fix": "Wrap onDismiss in showUndo('Hidden. Undo?', restoreFn, 5000). Additionally, consider lifting the auto-dismiss on the toast itself so Henry at 60mph doesn't miss it; Linear caps at 5s and that's fine.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "recovery"
+      ],
+      "assigned_phase": "1",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Wired showUndo into dismissItem in dashboard-page.jsx. 5s countdown, optimistic remove, DB write deferred to onCommit, onUndo restores item to setDismissedIds."
+    },
+    {
+      "id": "UX-005",
+      "title": "Dashboard ActionListRow dismiss target is 28\u00d728px; action button is 32px tall \u2014 below 44px mobile standard",
+      "page_or_flow": "dashboard / all mobile",
+      "persona": "kira",
+      "device": "iPhone SE, Android Pixel",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P1",
+      "frequency": "per-session",
+      "category": "a11y",
+      "description": "src/styles/dashboard-v2.css:441-443 declares .dv2-arow-dismiss { width: 28px; height: 28px; }. Lines 466-470 declare .dv2-arow-btn { height: 32px; }. The audit standard: 44\u00d744 touch target. On @media (hover: none) the dismiss is always visible (line 461-463) so it's a live mobile target. iOS HIG is 44pt. Kira tapping on iPhone SE has a non-trivial chance of mis-hitting adjacent elements.",
+      "reproduction_steps": [
+        "cat src/styles/dashboard-v2.css | sed -n '441,470p'",
+        "width: 28px; height: 28px; on .dv2-arow-dismiss",
+        "height: 32px; on .dv2-arow-btn"
+      ],
+      "competitor_reference": "iOS HIG (44pt) / Material Design (48dp)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "CSS specified dimensions",
+      "suggested_fix": "Option A (preferred): Keep the visual size at 28/32 and expand the hit area with a pseudo-element (`::after { content: ''; position: absolute; inset: -8px; }`) so the visible design stays tight but the tap target is honest. Option B: Increase visible size on (hover: none) media query.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity",
+        "recovery"
+      ],
+      "assigned_phase": "6",
+      "status": "resolved",
+      "resolved_in_phase": "6",
+      "resolution_notes": "Added position:relative + ::after {inset:-8px} to .dv2-arow-dismiss (28\u219244px touch target). Added @media(hover:none) ::after {inset:-6px 0} to .dv2-arow-btn (32\u219244px tall). Visible sizes unchanged."
+    },
+    {
+      "id": "UX-006",
+      "title": "GlobalSearch is nav-only, not a Linear-style command palette",
+      "page_or_flow": "cross-cutting (cmd-K surface)",
+      "persona": "henry",
+      "device": "desktop primarily",
+      "theme": "all",
+      "axis": "reduction",
+      "severity": "P1",
+      "frequency": "per-session",
+      "category": "navigation",
+      "description": "src/components/global-search.jsx exists, is bound to \u2318K (line 140), and searches quotes/customers/bookings/invoices. The audit standard cites Linear/Raycast \u2014 command palettes that execute actions ('Change status', 'Assign', 'Send quote', 'Create invoice'), not just navigate. GlobalSearch's result-click path is navigate(path) \u2014 it can only jump to records. Henry's 40th-quote-of-the-week workflow is exactly where an action-capable palette compounds: 'Nudge Kristine' / 'Send quote to Greg' / 'Mark complete' \u2014 all currently require 3-4 taps through pages.",
+      "reproduction_steps": [
+        "Open src/components/global-search.jsx:128-133: `function go(path) { setOpen(false); setQuery(''); setDebouncedQuery(''); navigate(path); }` \u2014 only navigation",
+        "Open src/components/global-search.jsx:99-101: allResults is built from records only, not actions"
+      ],
+      "competitor_reference": "Linear cmd-K, Raycast, Superhuman \u2318K",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Code-traced: zero action handlers in global-search.jsx",
+      "suggested_fix": "Extend GlobalSearch with an action registry: actions = [{label:'New quote', shortcut:'n', run:()=>nav('/app/quotes/new')}, {label:'Nudge...', requiresQuote:true, run:(q)=>openNudgeModal(q)}, ...]. When query matches an action verb, show actions first. Keep existing record search. This is the Phase \u03b9 centerpiece.",
+      "estimated_effort": "L",
+      "taste_axis_impact": [
+        "reduction",
+        "delight"
+      ],
+      "assigned_phase": "9",
+      "status": "open"
+    },
+    {
+      "id": "UX-007",
+      "title": "Router Suspense fallback is generic spinner with inline styles \u2014 breaks first-paint impression on every lazy route",
+      "page_or_flow": "every lazy-loaded route (16+ routes affected)",
+      "persona": "all",
+      "device": "all",
+      "theme": "all",
+      "axis": "speed",
+      "severity": "P1",
+      "frequency": "per-session",
+      "category": "perf",
+      "description": "src/app/router.jsx:42-49 defines LoadingFallback as a generic spinner with 'Loading\u2026' text and 6 inline styles. It fires on every route transition for 16 lazy-loaded routes. Kira clicking any sidebar link sees the identical spinner regardless of destination. Inline styles bypass the token system (`fontSize: 14, fontWeight: 600`).",
+      "reproduction_steps": [
+        "Open src/app/router.jsx:42-49",
+        "Count lazy routes: 16 (PublicQuote, Quote*, Invoice*, Contacts, Bookings, Settings, Billing, Analytics, PaymentsSetup, PaymentsOnboarding, InvoicesList)"
+      ],
+      "competitor_reference": "Linear (instant tab switch with optimistic skeleton), Notion (per-page shell)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Replace with per-route skeleton components (route \u2192 skeleton map). At minimum move inline styles to a class. Better: pair each lazy() with its own skeleton via a HOC: lazy(() => import('...').then(withSkeleton(DashboardSkeleton))).",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "speed",
+        "confidence"
+      ],
+      "assigned_phase": "2",
+      "status": "resolved",
+      "resolved_in_phase": "2",
+      "resolution_notes": "Router's single LoadingFallback replaced with per-route Suspense wrappers. Each of the 19 lazy routes now declares its own destination-specific skeleton component from src/components/skeletons/. Inline styles on LoadingFallback and NotFound moved to CSS classes."
+    },
+    {
+      "id": "UX-008",
+      "title": "Dashboard shows two 'New quote' CTAs above the fold \u2014 reduction violation",
+      "page_or_flow": "dashboard",
+      "persona": "all",
+      "device": "all",
+      "theme": "all",
+      "axis": "reduction",
+      "severity": "P2",
+      "frequency": "per-session",
+      "category": "navigation",
+      "description": "dashboard-page.jsx:611-614 renders <Link className='btn btn-primary'>New quote</Link> in Row 1. Immediately below, lines 619-629 render the dv2-job-form with a 'Build quote / + New quote' button. Both trigger the quote creation flow. Design-system \u00a73 (reduction): 'If two buttons do similar things, one is wrong.' The form input is the richer entry point (accepts a job description and routes directly to the builder's describe phase). The Row-1 button is redundant.",
+      "reproduction_steps": [
+        "Open src/pages/dashboard-page.jsx:611-629",
+        "Confirm both paths land at /app/quotes/new via trackQuoteFlowStarted and job form submit"
+      ],
+      "competitor_reference": "Linear (one create-issue entry point per context)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Two paths: (a) Remove the Row-1 button; the job form is the entry. (b) Keep the Row-1 button but collapse it into the job-form area on mobile (\u2264768px). (a) is the reductive choice; (b) is safer if analytics show the Row-1 button carries meaningful click volume.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "reduction",
+        "clarity"
+      ],
+      "assigned_phase": "3",
+      "status": "resolved",
+      "resolved_in": "v100-ux-phase-3"
+    },
+    {
+      "id": "UX-009",
+      "title": "Quote-builder 'tap to change' disclosure uses 10px text \u2014 below body legibility standard",
+      "page_or_flow": "quote-builder describe phase (Kira's first quote)",
+      "persona": "kira",
+      "device": "all mobile",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P1",
+      "frequency": "per-quote",
+      "category": "a11y",
+      "description": "src/pages/quote-builder-page.jsx:1056 renders `<span style={{ fontSize: 10, color: 'var(--subtle)' }}>(tap to change)</span>`. 10px is below the smallest design-system token (--text-2xs is 11px). On iPhone SE with --subtle color, Kira may miss the affordance entirely. The parent summary already implies interactivity via <details>, so this micro-label may be removable entirely.",
+      "reproduction_steps": [
+        "Open src/pages/quote-builder-page.jsx:1056"
+      ],
+      "competitor_reference": "Stripe forms (no body text below 12px)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source literal: fontSize: 10",
+      "suggested_fix": "Option A: remove the hint; the <summary> already affords interaction. Option B: use --text-2xs (11px) with --muted color and an inline chevron icon. Option A is cleaner.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity",
+        "reduction"
+      ],
+      "assigned_phase": "3",
+      "status": "resolved",
+      "resolved_in": "v100-ux-phase-3"
+    },
+    {
+      "id": "UX-010",
+      "title": "Quote-builder photo-remove \u00d7 has zero tap target (padding: 0) on Kira's iPhone SE",
+      "page_or_flow": "quote-builder describe phase",
+      "persona": "kira",
+      "device": "iPhone SE, Android Pixel",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P1",
+      "frequency": "per-quote",
+      "category": "a11y",
+      "description": "src/pages/quote-builder-page.jsx:1046 renders `<button ... aria-label='Remove photo' style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 0, marginLeft: 4 }}>\u00d7</button>`. padding:0 + a \u00d7 glyph \u2248 14px hitbox. Kira taps to remove the wrong photo, has to re-pick, loses flow.",
+      "reproduction_steps": [
+        "Open src/pages/quote-builder-page.jsx:1046"
+      ],
+      "competitor_reference": "iOS HIG 44pt",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "padding: 0 inline",
+      "suggested_fix": "Move to a class .jd-helper-dismiss with min-width/height 32px (visible) + ::after expansion to 44x44 target. Replace \u00d7 with lucide <X> for consistency with UX-002.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity",
+        "recovery"
+      ],
+      "assigned_phase": "6",
+      "status": "resolved",
+      "resolved_in_phase": "6",
+      "resolution_notes": "Replaced padding:0 \u00d7 glyph with .jd-photo-dismiss class: lucide <X size=12>, ::after {inset:-12px} expanding to 44px touch target. Applied in quote-builder-page.jsx and quote-detail-page.jsx."
+    },
+    {
+      "id": "UX-011",
+      "title": "Public-quote error state says 'Contact your contractor' but shows no way to contact them \u2014 dead end",
+      "page_or_flow": "flow #13 error branch",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "recovery",
+      "severity": "P1",
+      "frequency": "rare (but high-impact when it fires)",
+      "category": "error",
+      "description": "src/pages/public-quote-page.jsx:389-398 renders the error state with copy 'This link may have expired. Contact your contractor.' The page provides no contractor phone, email, or name \u2014 quote is null when this state fires. Kristine cannot act. The audit's recovery axis: 'no dead ends.' Probable fix requires API support to surface minimal contractor info even for a non-viewable quote (e.g., a public 'quote-lookup' endpoint that returns contractor_name + contact even when the quote itself is expired/not-found).",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:389-398",
+        "Confirm: `if (error && !quote) return (\u2026)` \u2014 so quote is null, no contact info available"
+      ],
+      "competitor_reference": "Stripe Checkout 'session expired' surfaces a 'Return to merchant' CTA",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Add an API branch to the public quote resolver that returns a minimal `{ contractor_name, contractor_phone?, contractor_email? }` payload even for expired/invalidated tokens (same token, different state). Render a 'Text <name>' button using sms:<phone> URL. This requires additive API work \u2014 flag to check against the prompt's hard constraint on public-quote-action.js.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "recovery",
+        "confidence"
+      ],
+      "assigned_phase": "6",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Created PublicErrorState (src/components/public-error-state.jsx) with Lucide Link2 icon, docType-aware heading, optional sms:/mailto: CTAs. API v1: contractor contact info not yet returned on error responses \u2014 v2 task filed."
+    },
+    {
+      "id": "UX-012",
+      "title": "Public-quote conversation uses \ud83d\udc64 and \ud83d\udd27 as avatars for customer and contractor \u2014 Android/iOS render differently",
+      "page_or_flow": "flow #14 (Kristine asks question, receives reply)",
+      "persona": "kristine",
+      "device": "Android Pixel vs iOS Safari contrast",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer-who-asks",
+      "category": "visual",
+      "description": "src/pages/public-quote-page.jsx:48 \u2014 `{entry.role === 'customer' ? '\ud83d\udc64' : '\ud83d\udd27'}`. Renders as Google/Apple/MS-styled emoji depending on device. The contractor identity is the most important trust signal on this page; making it a literal wrench emoji is visually weak against Stripe/Apple Pay standards. Worse: the contractor_logo is already available on the quote (used by PublicPageShell) \u2014 the conversation could use a contractor initials chip or logo thumbnail.",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:39-62 (ConversationThread)"
+      ],
+      "competitor_reference": "Stripe / Intercom (named avatars with initials or logos)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Customer avatar: initials chip from Kristine's name. Contractor avatar: contractor_logo if set, otherwise initials chip of contractor_name. Drop emoji entirely.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence",
+        "delight"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-013",
+      "title": "Public-quote terms <pre> has 9 inline style properties \u2014 should be a class",
+      "page_or_flow": "public-quote",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-customer-with-terms",
+      "category": "consistency",
+      "description": "src/pages/public-quote-page.jsx:857 \u2014 single <pre> element with inline styles: fontFamily, fontSize 12, lineHeight 1.6, color var, whiteSpace, margin, padding, background var, borderRadius 8, overflowWrap. Nine properties; half use tokens, half are raw numbers. Classic mid-iteration tech debt. No variant re-use across the app.",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:857"
+      ],
+      "competitor_reference": "any design-system-disciplined app",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "9 inline style props on one element",
+      "suggested_fix": "Extract to .pq-terms-body class in phase2-public-quote.css. Use --text-xs for size, --space-3 for padding, --r-md for radius.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-014",
+      "title": "Primary 'Approve & Sign' CTA overrides its own class's fontSize/padding/fontWeight inline",
+      "page_or_flow": "public-quote sticky CTA",
+      "persona": "kristine",
+      "device": "all mobile",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-customer",
+      "category": "consistency",
+      "description": "src/pages/public-quote-page.jsx:864 \u2014 `<button className='doc-cta-primary pl-cta-approve' style={{ fontSize: 16, padding: '14px 20px', fontWeight: 700 }}>`. Same button pattern at line 647 has NO inline overrides. So one instance of the same CTA looks different from another. 14px is not a --space-* token (tokens are 12/16). Classic case of 'polish without meaning' \u2014 the inline was added to fix one rendering but never reconciled back into the class.",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:647 (no overrides)",
+        "Open src/pages/public-quote-page.jsx:864 (3 overrides on visually identical button)"
+      ],
+      "competitor_reference": "any design-system-disciplined app",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source literal diff between two instances",
+      "suggested_fix": "Remove the inline overrides. If the sticky CTA needs different sizing than the hero CTA, introduce a .pl-cta-approve--sticky modifier class with the change encoded.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-015",
+      "title": "E-transfer email rendered at fontSize: 12 on public-quote \u2014 copy-critical info for Kristine",
+      "page_or_flow": "public-quote payment section",
+      "persona": "kristine",
+      "device": "iPhone SE, Android Pixel",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P1",
+      "frequency": "per-customer-paying-by-etransfer",
+      "category": "form",
+      "description": "src/pages/public-quote-page.jsx:899 \u2014 `{quote.etransfer_email && <p style={{ marginTop: 8, fontSize: 12 }}>E-Transfer: {quote.etransfer_email}</p>}`. Kristine needs to copy this exact email address into her bank app. 12px on iPhone SE with finger-selection is hard to hit precisely. No copy-to-clipboard affordance.",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:899"
+      ],
+      "competitor_reference": "Stripe Dashboard payout details (copy-to-clipboard on every ID)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Make the e-transfer email a chip with built-in copy button (Check icon after copy, Lucide Copy icon before). Increase to --text-base. Label clearly as 'Send E-Transfer to:'.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity",
+        "delight"
+      ],
+      "assigned_phase": "5",
+      "status": "resolved",
+      "resolved_in_phase": 5,
+      "resolution_notes": "E-transfer email on public-quote-view replaced with CopyChip component. Renders Copy icon \u2192 Check icon transition on click, aria-live \"Copied to clipboard\" announcement, 1.5s reset. Both etransfer_email render sites updated (payment details block + deposit block). Competitor reference: Stripe payment details copy affordance."
+    },
+    {
+      "id": "UX-016",
+      "title": "Settings toast copy inconsistent across neighboring handlers \u2014 voice fracture",
+      "page_or_flow": "settings-page",
+      "persona": "kira (onboarding) + henry (ongoing)",
+      "device": "all",
+      "theme": "all",
+      "axis": "delight",
+      "severity": "P2",
+      "frequency": "per-session",
+      "category": "copy",
+      "description": "src/pages/settings-page.jsx shows multiple voice registers: (398) 'Payments connected \u2014 you're all set.' (warm, casual); (399) 'Payment setup isn't finished yet. Go to Settings to complete it.' (directive, tells user to go where they already are); (419) 'Could not start Stripe setup. Please try again or contact support.' (corporate apology); (435) 'Could not connect to Stripe. Please try again.' (terse); (452) '8+ characters required' (no object noun); (441) 'Your name is required' (fine). One page, five voices.",
+      "reproduction_steps": [
+        "Open src/pages/settings-page.jsx:398-453 \u2014 six distinct toast strings"
+      ],
+      "competitor_reference": "Stripe Dashboard (one voice across the surface)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source literals",
+      "suggested_fix": "Write a 1-page voice guide and sweep. Principles already implied by the good ones: active, specific, never apologize for normal behavior, name the object ('Password needs 8+ characters' not '8+ characters required'). Remove the line 399 redirect \u2014 user is already on Settings.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "delight",
+        "clarity"
+      ],
+      "assigned_phase": "8",
+      "status": "open"
+    },
+    {
+      "id": "UX-017",
+      "title": "Signup step-indicator duplicated inline \u2014 2 identical 8-line hand-rolled dot pairs",
+      "page_or_flow": "flow #1 (Kira signup)",
+      "persona": "kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "rare",
+      "category": "consistency",
+      "description": "src/pages/signup-page.jsx:162-165 and 213-216 \u2014 two identical step-indicator widgets built from inline-styled divs with 'width: 24, height: 4, borderRadius: 2, background: var(--brand)'. The opacity differs between the two instances to indicate progress. This is a <StepDots current={n} total={2} /> component waiting to happen.",
+      "reproduction_steps": [
+        "diff src/pages/signup-page.jsx:162-165 src/pages/signup-page.jsx:213-216"
+      ],
+      "competitor_reference": "any design-system-disciplined app",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source diff",
+      "suggested_fix": "Extract <StepDots current total />. Move to src/components/ui/step-dots.jsx.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-018",
+      "title": "Signup 'Skip for now' text-button visually indistinguishable from disclaimer copy",
+      "page_or_flow": "flow #1 (Kira signup step 2)",
+      "persona": "kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P2",
+      "frequency": "rare",
+      "category": "form",
+      "description": "src/pages/signup-page.jsx:194-199 \u2014 button with background:none, border:none, color:var(--subtle), fontSize:12. Positioned below the primary CTA. Kira's eye reads this as fine-print copy, not an action. If she taps by accident while aiming for the primary, she's navigated past trade setup. Similar pattern appears in quote-builder-page.jsx:1066 ('or add items manually \u2192').",
+      "reproduction_steps": [
+        "Open src/pages/signup-page.jsx:194-199"
+      ],
+      "competitor_reference": "Stripe onboarding (skip links are always labeled as links with underline + chevron, never look like disclaimers)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source",
+      "suggested_fix": "Render as a standard .btn-link: underline on hover, --text-sm, --muted color (not --subtle), with a right chevron. Apply the same pattern to quote-builder-page.jsx:1066.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity"
+      ],
+      "assigned_phase": "3",
+      "status": "resolved",
+      "resolved_in": "v100-ux-phase-3"
+    },
+    {
+      "id": "UX-019",
+      "title": "index.css is 7,492 lines \u2014 exceeds the design system's own acknowledged debt target of ~6,300",
+      "page_or_flow": "cross-cutting",
+      "persona": "maintainer",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-session",
+      "category": "perf",
+      "description": "docs/DESIGN-SYSTEM.md \u00a79 flags '6,300-line index.css needs modular split' as a Phase 6 deferral. Actual current size: 7,492 lines. The debt grew between design-system write and v100 ship. 2,066 raw px values inside it (not tokens). Bundle-size impact is real (this file is CSS-loaded, not lazy).",
+      "reproduction_steps": [
+        "wc -l src/styles/index.css \u2192 7492",
+        "grep -cE '(padding|margin|gap|font-size):\\s*[0-9]+px' src/styles/index.css \u2192 2066"
+      ],
+      "competitor_reference": "Stripe Dashboard (split by feature, lazy-loaded, each < 50KB gzipped)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "wc -l + grep",
+      "suggested_fix": "Not an elevation task \u2014 this is a refactor. Recommend: extract the top 5 feature-specific sections (dashboard v1, quote-detail, invoice-detail, public-quote, quote-builder) into sibling CSS files lazy-loaded via their page's dynamic import. Phase 6 work, not \u03b1-\u03b9.",
+      "estimated_effort": "XL",
+      "taste_axis_impact": [
+        "speed",
+        "confidence"
+      ],
+      "assigned_phase": "deferred-v101",
+      "status": "open"
+    },
+    {
+      "id": "UX-020",
+      "title": "Skeleton adoption low: 7 of 25 pages use a skeleton; 11 use a spinner as sole loading state",
+      "page_or_flow": "cross-cutting",
+      "persona": "all",
+      "device": "all",
+      "theme": "all",
+      "axis": "speed",
+      "severity": "P1",
+      "frequency": "per-session",
+      "category": "perf",
+      "description": "grep-measured: 7 pages import Skeleton or PageSkeleton (bookings, quotes-list, invoices-list, invoice-detail via local impl, contacts, analytics, dashboard via local CardSkeleton). The remaining 18 either have no loading state (rely on empty render), or use loading-spinner+Loading\u2026 text (project-portal-page 4x, public-quote-page, billing-page, public-invoice-page 2x, pricing-page, quote-builder-page, public-amendment-page, additional-work-detail-page). The audit standard: 'every data-dependent page' gets a skeleton matching real layout.",
+      "reproduction_steps": [
+        "grep -rl 'Skeleton\\|page-skeleton' src/pages --include='*.jsx' | wc -l \u2192 7",
+        "grep -rcE 'loading-spinner|Loading\u2026' src/pages --include='*.jsx' | grep -v ':0'"
+      ],
+      "competitor_reference": "LinkedIn feed / Facebook (every data-backed surface)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "grep counts",
+      "suggested_fix": "Build a library of per-page skeleton components in src/components/skeletons/. Match each page's primary layout. Audit spinner call-sites one-by-one.",
+      "estimated_effort": "L",
+      "taste_axis_impact": [
+        "speed",
+        "clarity"
+      ],
+      "assigned_phase": "2",
+      "status": "resolved",
+      "resolved_in_phase": "2",
+      "resolution_notes": "Skeleton library built in src/components/skeletons/ (skel-base.jsx + index.jsx with 14 named skeletons). invoice-detail-page, additional-work-detail-page, and quote-detail-page inline spinners/minimal-skeletons replaced with proper zone-matched skeleton components. Pages already using PageSkeleton (contacts, analytics, bookings, invoices-list, billing) were compliant and not changed. dashboard-page CardSkeleton left in place (deferred to Phase 4 primitive extraction). quote-builder AI-build spinner is intentional UX, not a loading state."
+    },
+    {
+      "id": "UX-021",
+      "title": "project-portal-page.jsx has inline '#ea580c' and '#fef3c7' and '#f4f4f5' hex colors on a customer-facing page",
+      "page_or_flow": "project-portal (Kristine's unified post-approval surface)",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all \u2014 but especially dark theme will look wrong",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer-post-approval",
+      "category": "visual",
+      "description": "src/pages/project-portal-page.jsx:76, 335, 341, 426 \u2014 hardcoded hex colors on a customer-facing surface that should theme. '#ea580c' is Tailwind orange-600. '#fef3c7' is Tailwind amber-100, '#92400e' is amber-800, '#f4f4f5' is zinc-100, '#71717a' is zinc-500. These are Tailwind defaults \u2014 someone patched in colors from a different palette instead of using --doc-* tokens that exist for exactly this surface.",
+      "reproduction_steps": [
+        "grep -nE \"color:\\s*['\\\"]#\" src/pages/project-portal-page.jsx"
+      ],
+      "competitor_reference": "Stripe Checkout (themed to merchant)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "5 hex color literals",
+      "suggested_fix": "Replace with --doc-accent, --doc-warn, --doc-muted-bg etc. Audit the full --doc-* palette for coverage gaps and add tokens where missing.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-022",
+      "title": "quote-builder-page.jsx:1224 is a single JSX line with multiple buttons and window-global access",
+      "page_or_flow": "quote-builder review phase",
+      "persona": "henry (frequent editor)",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-quote",
+      "category": "consistency",
+      "description": "src/pages/quote-builder-page.jsx:1224 is a ~700-character single line rendering three add-item triggers ('Search catalog', '+ Custom item', 'Ask Foreman') with a conditional fourth ('Retry AI scope'). Contains a window.__punchlistOpenForeman global access, inline context construction, and a complex ternary. This is a maintainability issue but also a craft issue \u2014 the formatting is evidence of 'iteration without consolidation.'",
+      "reproduction_steps": [
+        "view src/pages/quote-builder-page.jsx:1224"
+      ],
+      "competitor_reference": "any top-1% codebase (readable JSX)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Single-line JSX ~700 chars",
+      "suggested_fix": "Extract <AddItemTriggers quoteContext={...} onMode={setAddMode} onRetry={retryScope} /> component. Eliminate window.__punchlistOpenForeman in favor of a useForeman() hook or context provider.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "resolved",
+      "resolved_in_phase": 10
+    },
+    {
+      "id": "UX-023",
+      "title": "Quote-builder textarea has no auto-grow and no character counter \u2014 Kira's long description scrolls internally",
+      "page_or_flow": "quote-builder describe phase",
+      "persona": "kira",
+      "device": "iPhone SE especially",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P2",
+      "frequency": "per-quote",
+      "category": "form",
+      "description": "src/pages/quote-builder-page.jsx:1034 \u2014 textarea with rows={4}. No auto-height, no character count, no helper showing description length. Kira at 9pm types a 6-line description and the box scrolls internally, hiding what she wrote 3 sentences ago. Anxiety amplifier.",
+      "reproduction_steps": [
+        "Open src/pages/quote-builder-page.jsx:1034",
+        "Confirm no onInput auto-resize, no maxLength, no counter"
+      ],
+      "competitor_reference": "Stripe Dashboard / Linear / Notion \u2014 auto-grow textareas throughout",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Add useAutoGrow() hook driven by scrollHeight. Cap at viewport/2 on mobile to preserve fold-line. Optionally show '142 chars \u2014 nice and specific' helper for positive reinforcement on \u226580 chars.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity",
+        "delight"
+      ],
+      "assigned_phase": "5",
+      "status": "resolved",
+      "resolved_in_phase": 5,
+      "resolution_notes": "useAutoGrow hook (scrollHeight-driven, capped at viewport/2) wired to describe textarea via descTextareaRef. qb-desc-auto CSS class adds overflow:hidden + transition. Char helper row added below textarea: positive \"Nice and specific\" label at 80+ chars, \"Very detailed \u2014 great for accuracy\" at 160+ chars, always-visible char count. prefers-reduced-motion: transition:none on .qb-desc-auto."
+    },
+    {
+      "id": "UX-024",
+      "title": "terms-page.jsx headings use fontSize: 14 inline on seven sibling h3s \u2014 headings styled as body text",
+      "page_or_flow": "terms page",
+      "persona": "all",
+      "device": "all",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P2",
+      "frequency": "rare (but high-stakes when read)",
+      "category": "visual",
+      "description": "src/pages/terms-page.jsx:14-43 \u2014 seven h3 elements at fontSize: 14 inline. 14px is --text-base (body size), not heading size. Typographic hierarchy collapsed. Legal copy loses its navigability at a glance.",
+      "reproduction_steps": [
+        "Open src/pages/terms-page.jsx:14-43"
+      ],
+      "competitor_reference": "Stripe legal docs (clear heading hierarchy)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "7 inline fontSize: 14 on h3",
+      "suggested_fix": "Remove inline, use --text-xl or --text-lg on h3. Add visible section numbering.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity",
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-025",
+      "title": "Contractor card conversation emojis \ud83d\udc64 \ud83d\udd27 are identity \u2014 should be logo or initials",
+      "page_or_flow": "flow #14 + flow #16 (amendment convo)",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "delight",
+      "severity": "P2",
+      "frequency": "per-conversation",
+      "category": "visual",
+      "description": "Closely related to UX-012 but specifically the delight angle: the contractor logo is already fetched for PublicPageShell. Reusing it as the avatar on every contractor message would be a micro-delight \u2014 Kristine sees the same brand mark repeated, reinforcing legitimacy. Currently: a wrench emoji.",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:48",
+        "Confirm quote.contractor_logo is destructured elsewhere in the page"
+      ],
+      "competitor_reference": "Intercom, Shopify support (branded avatars)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Build <ConvAvatar role name logoUrl />. For contractor: logoUrl if set, else initials of contractor_name on a --doc-accent background. For customer: initials of quote.customer_name on --doc-muted-bg. Keep size consistent with existing .pq-msg-avatar dimensions.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "delight",
+        "confidence"
+      ],
+      "assigned_phase": "5",
+      "status": "resolved",
+      "resolved_in_phase": 4,
+      "resolution_notes": "ConvAvatar built in Phase 4.1 (initials chip for customer, logo/initials for contractor). Phase 5: deposit-success banner enriched with contractor follow-up context as the delight propagation of this pattern \u2014 contractor name appears as a warm reassurance rather than just a status label."
+    },
+    {
+      "id": "UX-026",
+      "title": "Zip packaging violates Phase packaging rule \u2014 extraction creates files at root, not in a 'punchlist/' folder",
+      "page_or_flow": "build/release packaging",
+      "persona": "maintainer",
+      "device": "n/a",
+      "theme": "n/a",
+      "axis": "recovery",
+      "severity": "P2",
+      "frequency": "per-release",
+      "category": "consistency",
+      "description": "Extracting /mnt/user-data/uploads/punchlist-v100.zip into /home/claude placed files directly at root (api/, src/, etc. as siblings of /home/claude). The M8.5 phase rules require 'Internal folder stays punchlist/. Version only in filename.' Re-extracting over a repo would clobber the real filesystem. Not a UX finding per se but a release-hygiene finding that affects Phase \u03b1-\u03b9 zip packaging going forward.",
+      "reproduction_steps": [
+        "cd /tmp && unzip /mnt/user-data/uploads/punchlist-v100.zip && ls"
+      ],
+      "competitor_reference": "standard release hygiene",
+      "gap_vs_competitor": "n/a",
+      "measured_evidence": "Extraction behavior",
+      "suggested_fix": "Enforce a `punchlist/` wrapper when building v100+N zips. The Phase-session prompt template in M8.5 already specifies the correct `zip -rq ... punchlist` command \u2014 check that the v100 zip was built with this.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [],
+      "assigned_phase": "1",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Phase 1 zip ships with punchlist/ internal folder. Build command documented in changelog."
+    },
+    {
+      "id": "UX-027",
+      "title": "Dashboard Row-1 New Quote button uses .btn-primary without .btn-lg \u2014 visual weight below the job-input 'Build quote' button beneath it",
+      "page_or_flow": "dashboard first view",
+      "persona": "kira (first-day) + henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P3",
+      "frequency": "per-session",
+      "category": "visual",
+      "description": "dashboard-page.jsx:611-614 'New quote' button does not specify size modifier. dashboard-page.jsx:624-628 'Build quote / + New quote' submit button uses class dv2-job-go which has dedicated sizing. Adjacent buttons with different visual weights doing similar jobs is the exact pattern UX-008 flags \u2014 keeping this as a sub-finding because it's also a hierarchy issue independent of the redundancy one.",
+      "reproduction_steps": [
+        "Open src/pages/dashboard-page.jsx:611-628"
+      ],
+      "competitor_reference": "Linear (one CTA has primacy)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Code-traced",
+      "suggested_fix": "Ties into UX-008. If Row-1 button stays, give it .btn-primary + .btn-sm to subordinate it. If it goes, this disappears.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity"
+      ],
+      "assigned_phase": "3",
+      "status": "resolved",
+      "resolved_in": "v100-ux-phase-3"
+    },
+    {
+      "id": "UX-028",
+      "title": "ActionListRow button scale :active animation lacks prefers-reduced-motion override (global only zeroes durations, not the transform state)",
+      "page_or_flow": "dashboard interaction",
+      "persona": "reduced-motion users",
+      "device": "all",
+      "theme": "all",
+      "axis": "recovery",
+      "severity": "P3",
+      "frequency": "rare",
+      "category": "a11y",
+      "description": "src/styles/dashboard-v2.css:481 \u2014 `.dv2-arow-btn:active { transform: scale(0.97); }`. The tokens.css reduced-motion override (line 225-240) zeroes transition-duration. With duration 0ms the scale state is still applied but visually instant. That is acceptable \u2014 scale(0.97) held briefly isn't vestibular. However, the audit's 'every new animation respects prefers-reduced-motion' rule deserves a defensive check here because the transform is load-bearing feedback, not decorative. Marking this as P3 because the global override likely mitigates the effect.",
+      "reproduction_steps": [
+        "Open src/styles/dashboard-v2.css:481"
+      ],
+      "competitor_reference": "WCAG 2.3.3 (motion animation from interactions)",
+      "gap_vs_competitor": "parity",
+      "measured_evidence": "Code-traced; global override exists and covers the common case",
+      "suggested_fix": "Optional \u2014 wrap the :active transform in an @media (prefers-reduced-motion: no-preference) block. Low priority.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "recovery"
+      ],
+      "assigned_phase": "6",
+      "status": "resolved",
+      "resolved_in_phase": "6",
+      "resolution_notes": "Added explicit @media(prefers-reduced-motion:reduce){.dv2-arow-btn:active{transform:none}} override. Defensive hardening beyond the global token duration-zeroing \u2014 eliminates any held scale state for vestibular-sensitive users."
+    },
+    {
+      "id": "UX-029",
+      "title": "ActionSheet placeholder copy has filler \u2014 'the more detail the better\u2026' violates voice guide",
+      "page_or_flow": "flow #17 (Kristine requests changes)",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "delight",
+      "severity": "P3",
+      "frequency": "rare",
+      "category": "copy",
+      "description": "src/pages/public-quote-page.jsx:79 \u2014 `'Describe what you\\'d like changed \u2014 the more detail the better\u2026'`. Filler phrase. The audit voice rule: prefer specific nouns and numbers, calm authority. 'A couple of sentences is plenty.' or 'Even a quick note helps.' are warmer and more specific.",
+      "reproduction_steps": [
+        "Open src/pages/public-quote-page.jsx:79"
+      ],
+      "competitor_reference": "Stripe / Linear microcopy discipline",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source",
+      "suggested_fix": "Rewrite: 'A couple of lines is plenty \u2014 pricing, materials, scope, whatever's on your mind.'",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "delight"
+      ],
+      "assigned_phase": "8",
+      "status": "open"
+    },
+    {
+      "id": "UX-030",
+      "title": "Dashboard `New quote` Row-1 button label lacks first-person warmth present elsewhere",
+      "page_or_flow": "dashboard",
+      "persona": "kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "delight",
+      "severity": "P3",
+      "frequency": "per-session",
+      "category": "copy",
+      "description": "dashboard-page.jsx:613 'New quote'. The signup CTA 'Create my first quote \u2192' (signup-page.jsx:192) demonstrates the warmer voice this product is capable of. For returning contractors the label doesn't need first-person \u2014 but the job-form button at line 624-628 swaps between 'Build quote' and '+ New quote' depending on input state. Consistency between the two 'New quote' triggers (when they co-exist) would be a win.",
+      "reproduction_steps": [
+        "Open dashboard-page.jsx:613 vs signup-page.jsx:192"
+      ],
+      "competitor_reference": "Superhuman send confirmations ('Kristine's phone just buzzed')",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Copy comparison",
+      "suggested_fix": "Likely becomes moot after UX-008. If the Row-1 button stays, keep 'New quote' terse; the personality lives elsewhere. Worth raising so the designer makes this call consciously, not accidentally.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "delight"
+      ],
+      "assigned_phase": "8",
+      "status": "open"
+    },
+    {
+      "id": "UX-031",
+      "title": "BUG: initial_sms fallback template contains literal '{fn?\\' \\'+fn:\\'\\'}' that .replace('{firstName}') won't match",
+      "page_or_flow": "flow #1 step 'send quote' (fallback path when DB template fetch fails)",
+      "persona": "kristine (receives malformed SMS) via kira",
+      "device": "n/a (SMS body content)",
+      "theme": "n/a",
+      "axis": "recovery",
+      "severity": "P1",
+      "frequency": "rare (only fires when userTemplates is empty AND DB lookup failed \u2014 but high-impact when it fires; Kristine receives a broken text)",
+      "category": "copy",
+      "description": "src/pages/quote-detail-page.jsx:151 contains: `const tmplBody = userTemplates?.find(t=>t.template_key==='initial_sms')?.body || \\`Hi{fn?' '+fn:''}, your quote from {senderName} is ready: {link}\\`;` \u2014 the fallback template literal on the right side of || contains the string `{fn?' '+fn:''}` which is NOT a valid JS interpolation (it's inside a backtick but uses `{...}` not `${...}`). Then `.replace('{firstName}', fn)` only replaces the token `{firstName}` which the fallback does not contain. If the fallback path fires, Kristine receives literally: 'Hi{fn?\\' \\'+fn:\\'\\'}, your quote from Acme Plumbing is ready: https://...'. Discovered while auditing the single-line handler formatting (UX-037); would likely not have been caught in review because the line is ~2000 characters wide.",
+      "reproduction_steps": [
+        "Open src/pages/quote-detail-page.jsx:151",
+        "Trace: if userTemplates is null/empty, tmplBody = fallback string",
+        "fallback string contains `{fn?' '+fn:''}` (literal characters)",
+        ".replace('{firstName}', fn) does not match it",
+        "Simulate: tmplBody = \"Hi{fn?' '+fn:''}, ...\"; msg = tmplBody.replace('{firstName}', 'Kristine') \u2192 result still contains the broken token"
+      ],
+      "competitor_reference": "n/a (correctness bug)",
+      "gap_vs_competitor": "not-implemented",
+      "measured_evidence": "Source inspection of fallback string and subsequent .replace chain",
+      "suggested_fix": "Replace the fallback template with one using the same {firstName} / {senderName} / {link} token vocabulary as the primary template: `Hi{firstName ? ' ' + firstName : ''}, your quote from {senderName} is ready: {link}`. But wait \u2014 even that won't work with .replace because the ternary is in the template. The correct fix: use explicit token `{firstName}` and let .replace substitute, or switch to renderTemplate() from src/lib/api/templates.js which appears to be the single-source template renderer. The cleanest fix is the latter \u2014 drop the fallback literal and rely on renderTemplate() with a known-good system default.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "recovery",
+        "confidence"
+      ],
+      "assigned_phase": "1",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Replaced literal JS ternary fallback string with getSystemDefaults().initial_sms routed through renderTemplate(). Single token-resolution path. handleCopyLink and handleDownloadPdf reformatted to multiline."
+    },
+    {
+      "id": "UX-032",
+      "title": "4 public pages have copy-pasted loading-spinner and \ud83d\udd17 error blocks \u2014 extract shared components",
+      "page_or_flow": "flows #13, #17, #18, plus project-portal open",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer-link",
+      "category": "consistency",
+      "description": "src/pages/public-quote-page.jsx:383-398, public-invoice-page.jsx:72-100, public-amendment-page.jsx:88-104, project-portal-page.jsx:1217-1232 \u2014 all four render nearly-identical loading+error scaffolds: doc-shell wrapper, centered flex, spinner or \ud83d\udd17 glyph, 'unavailable' headline, 'Contact your contractor' fallback. Each slightly differs: amendment tacks on raw error text at fontSize:11; additional-work uses a different shell (UX-033). This is 4x copy-paste that compounds UX-003 (spinner\u2192skeleton) and UX-011 (error dead-end) \u2014 fixing at component level fixes all 4 pages simultaneously.",
+      "reproduction_steps": [
+        "diff src/pages/public-quote-page.jsx:383-398 src/pages/public-invoice-page.jsx:72-100 src/pages/public-amendment-page.jsx:88-104 src/pages/project-portal-page.jsx:1217-1232",
+        "Each is ~12-16 lines of near-identical JSX with variant copy"
+      ],
+      "competitor_reference": "any DRY-disciplined codebase",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "4 copies; lexically near-identical",
+      "suggested_fix": "Extract src/components/public-loading-state.jsx with props {contractorName, logoUrl, label}. Extract src/components/public-error-state.jsx with props {contractorName, contractorPhone, contractorEmail, docType, rawError}. Replace at call sites. This delivers UX-003 + UX-011 fixes across all 4 pages in one pass.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "confidence",
+        "recovery",
+        "speed"
+      ],
+      "assigned_phase": "1",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Extracted PublicLoadingState and PublicErrorState. Replaced copy-pasted blocks in all 5 public pages. public-additional-work-page migrated from marketing-shell to doc-shell via shared components (UX-033 partial, full treatment deferred to Phase 4)."
+    },
+    {
+      "id": "UX-033",
+      "title": "public-additional-work-page uses 'marketing-shell' while sibling public pages use 'doc-shell' \u2014 visual shell inconsistency",
+      "page_or_flow": "flow customer additional-work review",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-customer-with-AW-request",
+      "category": "consistency",
+      "description": "src/pages/public-additional-work-page.jsx:48 renders `<div className='marketing-shell'><main className='container'>\u2026` for the loading state (and presumably elsewhere). The 3 other public pages (public-quote, public-invoice, public-amendment) use `<div className='doc-shell'><div className='doc-container'>\u2026`. Kristine who has received quote + amendment + additional-work links from the same contractor will see one visually different scaffold. The marketing-shell is likely from an earlier version before the doc-shell pattern was introduced \u2014 leftover debt.",
+      "reproduction_steps": [
+        "grep -nE 'className=\"(doc-shell|marketing-shell)' src/pages/public-*.jsx"
+      ],
+      "competitor_reference": "any app with consistent customer-surface shell",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "grep",
+      "suggested_fix": "Migrate public-additional-work-page to doc-shell/doc-container. Resolves naturally when UX-032's shared components are extracted (they'll enforce doc-shell via the wrapper).",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-034",
+      "title": "project-portal primary nav tabs are 4 emoji (\ud83d\udccb \ud83d\udcdd \ud83d\udcb3 \ud83d\udcac) \u2014 Kristine's main way to move around post-approval",
+      "page_or_flow": "project-portal \u2014 Kristine's post-approval hub",
+      "persona": "kristine",
+      "device": "Android Pixel, iPhone SE/14",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer-post-approval",
+      "category": "navigation",
+      "description": "src/pages/project-portal-page.jsx:1244-1249 \u2014 tabs = [{id:'quote',icon:'\ud83d\udccb'},{id:'updates',icon:'\ud83d\udcdd'},{id:'payments',icon:'\ud83d\udcb3'},{id:'messages',icon:'\ud83d\udcac'}]. These are the primary navigation affordances for Kristine's unified post-approval view. Render inconsistently across Android Chrome (Google Noto emoji) and iOS Safari (Apple emoji). Identity-level nav shouldn't depend on OS. Applies to every customer who approves a quote and then navigates the portal to pay a deposit, ask a question, or review amendments. Compounds UX-002.",
+      "reproduction_steps": [
+        "Open src/pages/project-portal-page.jsx:1244-1249",
+        "Confirm TabBar at line 19 passes t.icon directly into <span className='pp-tab-icon'>"
+      ],
+      "competitor_reference": "Stripe Checkout, Intercom, Shopify customer portals (all use SVG nav icons)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Source literals",
+      "suggested_fix": "Replace with lucide-react: FileText (quote), FileEdit (updates), CreditCard (payments), MessageSquare (messages). Port TabBar to accept LucideIcon type for the icon prop rather than string.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence",
+        "clarity"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-035",
+      "title": "project-portal MessagesTab compose input and send button have 7 + 5 inline style properties \u2014 propagates the 'polish without meaning' pattern",
+      "page_or_flow": "flow #14 (Kristine asks question in portal)",
+      "persona": "kristine",
+      "device": "all mobile",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-customer-who-messages",
+      "category": "consistency",
+      "description": "src/pages/project-portal-page.jsx:1141 \u2014 text input with inline `flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--doc-line)', fontSize: 14, outline: 'none', background: 'var(--doc-card-bg, #fff)'`. Line 1143 \u2014 send button with `padding: '10px 18px', fontSize: 14, border: 'none', cursor: 'pointer', flexShrink: 0` overriding its doc-cta-primary class. Fallback `var(--doc-card-bg, #fff)` suggests the token may not be defined in every theme \u2014 worth verifying.",
+      "reproduction_steps": [
+        "Open src/pages/project-portal-page.jsx:1141-1145"
+      ],
+      "competitor_reference": "Linear message composer (clean class-based)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "7 + 5 inline properties on two adjacent elements",
+      "suggested_fix": "Extract .pp-compose-input and .pp-compose-send classes into phase2-public-quote.css or a new phase-project-portal.css. Verify --doc-card-bg is defined in both themes or pick a defined token.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-036",
+      "title": "quote-detail customer contact buttons are pure emoji (\ud83d\udcde \ud83d\udcac \u2709) \u2014 Henry's most-frequent action surface",
+      "page_or_flow": "quote-detail page header",
+      "persona": "henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-session",
+      "category": "visual",
+      "description": "src/pages/quote-detail-page.jsx:280-282 \u2014 three anchor buttons with no visible text, only emoji icons: `<a href='tel:{phone}' className='btn btn-secondary btn-sm' aria-label='Call customer'>\ud83d\udcde</a>` and similar for \ud83d\udcac (SMS) and \u2709 (email). Henry opens this page 20-40 times per day (his v99 baseline from the changelog); these are his primary means of reaching a customer. Emoji-as-anchor-button is worst-case for brand consistency \u2014 each one renders as OS-default glyph with no control over weight/color/theme. Additionally \u2709 (U+2709) is a monochrome dingbat while \ud83d\udcde and \ud83d\udcac are color emoji \u2014 inconsistent weights within a single button row.",
+      "reproduction_steps": [
+        "Open src/pages/quote-detail-page.jsx:279-283"
+      ],
+      "competitor_reference": "Linear contact-card icons, Pipedrive activity row icons (all SVG with color control)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "3 emoji anchors in a critical location",
+      "suggested_fix": "Replace with lucide-react: Phone, MessageSquare, Mail. Keep aria-label. Preserve btn-secondary btn-sm classes. This is a 3-line change with outsized perception impact.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence",
+        "clarity"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-037",
+      "title": "quote-detail-page.jsx handlers at lines 151, 154, 156, 160 are single-line with ~20 statements each \u2014 bugs hide in code this dense (UX-031 is an instance)",
+      "page_or_flow": "quote-detail core handlers",
+      "persona": "maintainer",
+      "device": "n/a",
+      "theme": "n/a",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "n/a (maintainability)",
+      "category": "consistency",
+      "description": "Lines 151 (~2000 chars, handleSendText), 154 (~680 chars, handleCopyLink), 156 (~1200 chars, handleDownloadPdf), 160 (~900 chars, completeAndInvoice) are each single-line functions with embedded comments, nested try/catch, inline state updates, and conditional chains. This is not a 'nice to have' readability concern \u2014 UX-031 is a live bug that escaped review, and the density of the code is a contributing factor. Related: the same file has multiple ~1600-char single-line JSX expressions in phase banners (lines 288, 290).",
+      "reproduction_steps": [
+        "awk 'length > 500' src/pages/quote-detail-page.jsx"
+      ],
+      "competitor_reference": "any linted codebase",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "awk line-length scan",
+      "suggested_fix": "Format with Prettier (max-len ~100). Likely reveals 2-3 more small bugs. Tie to UX-031 fix \u2014 fixing just UX-031 without reformatting around it leaves the same fragility for the next edit.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "resolved",
+      "resolved_in_phase": 10
+    },
+    {
+      "id": "UX-038",
+      "title": "public-invoice e-transfer copy button has no post-click feedback \u2014 Kristine taps, nothing visible happens",
+      "page_or_flow": "flow #18 (Kristine pays invoice by e-transfer)",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "delight",
+      "severity": "P2",
+      "frequency": "per-customer-who-etransfers",
+      "category": "form",
+      "description": "src/pages/public-invoice-page.jsx:390-394 \u2014 `<button onClick={() => { navigator.clipboard?.writeText(invoice.etransfer_email); }} style={{ fontSize: 11, padding: '2px 8px', marginLeft: 4, cursor: 'pointer' }}>Copy</button>`. No feedback: no toast, no icon swap (Check), no aria-live announcement. Kristine taps, unsure whether it worked. Has to switch to her bank app and paste to find out. Additionally: 11px with 2/8px padding is a ~16px tall button \u2014 below touch-target standard. Labels the button 'Copy' (with verb, good) but provides nothing after.",
+      "reproduction_steps": [
+        "Open src/pages/public-invoice-page.jsx:390-394"
+      ],
+      "competitor_reference": "Stripe Dashboard 'Copy' patterns (swap icon Copy\u2192Check for 1.5s, announce via aria-live)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source \u2014 no .then() handler, no state update",
+      "suggested_fix": "Add useState for copied state. onClick awaits clipboard write then sets copied=true, setTimeout to reset at 1.5s. Swap Copy icon \u2192 Check icon, add aria-live='polite' region with 'Copied to clipboard'. Increase visible size \u2014 32px min height on mobile.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "delight",
+        "clarity"
+      ],
+      "assigned_phase": "5",
+      "status": "resolved",
+      "resolved_in_phase": 5,
+      "resolution_notes": "public-invoice-page e-transfer copy button replaced with CopyChip. Previously: bare button with navigator.clipboard, no visual feedback. Now: Copy\u2192Check icon swap, green copied state, aria-live announcement, 1.5s auto-reset. Competitor reference: Linear copy-to-clipboard interactions."
+    },
+    {
+      "id": "UX-039",
+      "title": "public-invoice payment CTAs fragment across 4 inline-styled variants (Connect, Stripe link, Square, PayPal) \u2014 with hardcoded PayPal blue #0070ba",
+      "page_or_flow": "flow #18 step 'pay invoice'",
+      "persona": "kristine",
+      "device": "all mobile",
+      "theme": "all (PayPal blue overrides theme)",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer-with-links-configured",
+      "category": "visual",
+      "description": "src/pages/public-invoice-page.jsx:335, 354, 359, 364 \u2014 four primary-CTA buttons for different payment providers, each with inline style overrides. Line 364 has hardcoded `background: '#0070ba'` (PayPal blue) and `color: '#fff'`. Line 359 has `background: 'var(--doc-text)', color: '#fff'` (Square, borrowing the body-text color token as a background \u2014 semantically wrong). Different sizes (line 335: fontSize 15, padding 14/18; lines 354-364: fontSize 14, padding 12/16). Kristine with 2+ payment options sees CTAs that look inconsistent in weight and color.",
+      "reproduction_steps": [
+        "view src/pages/public-invoice-page.jsx:335-367"
+      ],
+      "competitor_reference": "Stripe Checkout, Shopify Pay (unified CTA design, brand lockups as icons only)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "4 CTAs \u00d7 5-7 inline style props each; 1 hardcoded hex",
+      "suggested_fix": "Unify CTAs as a single .doc-cta-primary with a provider icon prefix (lucide Stripe-branded SVG or a local /public/icons/paypal.svg etc.). Sizes consistent. Provider brand color lives on a small icon, not as the button background. This also fixes theming \u2014 PayPal blue as a background in dark mode is broken.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "resolved",
+      "resolved_in_phase": 10
+    },
+    {
+      "id": "UX-040",
+      "title": "public-invoice 'Powered by Punchlist \u00b7 Secure checkout via Stripe' rendered at fontSize: 10 \u2014 trust copy at illegible size",
+      "page_or_flow": "public-invoice hero",
+      "persona": "kristine",
+      "device": "iPhone SE especially",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer",
+      "category": "visual",
+      "description": "src/pages/public-invoice-page.jsx:348 \u2014 `<span style={{ fontSize: 10, color: 'var(--doc-muted)', textAlign: 'center' }}>Powered by Punchlist \u00b7 Secure checkout via Stripe</span>`. 10px, muted color. This is TRUST copy (Stripe brand lockup) appearing right under a payment CTA \u2014 the exact moment Kristine asks herself 'is this a real checkout?'. Stripe's own brand guidelines mandate minimum readable size for their attribution. Also: 10px is below --text-2xs (11px), the design system's smallest sanctioned size.",
+      "reproduction_steps": [
+        "Open src/pages/public-invoice-page.jsx:348"
+      ],
+      "competitor_reference": "Stripe Checkout (merchant attribution at 13px minimum)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "fontSize: 10 inline",
+      "suggested_fix": "Raise to --text-xs (12px) minimum; ideally --text-sm (13px). Consider: a Stripe brand-approved shield icon + 'Secured by Stripe' at --text-sm. Also applies next to financing tile copy at line 343 (fontSize: 11).",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence",
+        "clarity"
+      ],
+      "assigned_phase": "3",
+      "status": "resolved",
+      "resolved_in": "v100-ux-phase-3"
+    },
+    {
+      "id": "UX-041",
+      "title": "public-amendment error state surfaces raw technical error string below 'contact your contractor' \u2014 voice + legibility double-fail",
+      "page_or_flow": "flow #17 error branch (public-amendment)",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "recovery",
+      "severity": "P2",
+      "frequency": "rare",
+      "category": "error",
+      "description": "src/pages/public-amendment-page.jsx:101 \u2014 `<p style={{ marginTop: 16, fontSize: 11, color: 'var(--doc-muted)' }}>{error}</p>` where `error` is the raw Error.message (e.g. 'Server error', 'Amendment not found', 'Failed'). Kristine sees two messages: a friendly 'This link may be invalid or expired' and below it a technical debug string at illegible size. Two voices. Also doesn't help her recover.",
+      "reproduction_steps": [
+        "Open src/pages/public-amendment-page.jsx:94-104"
+      ],
+      "competitor_reference": "Stripe Checkout error surfaces (friendly message only; technical detail behind 'Show details' disclosure for support)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source",
+      "suggested_fix": "Drop the raw error render. If needed for support diagnosis, put behind <details><summary>Technical details</summary>...</details>. Resolves naturally with UX-032 shared component extraction.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "recovery",
+        "delight"
+      ],
+      "assigned_phase": "1",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Raw error string removed. PublicErrorState (UX-032) never renders error variable content \u2014 only user-appropriate copy."
+    },
+    {
+      "id": "UX-042",
+      "title": "project-portal TermsSection <pre> has the identical 6-property inline-style cluster as public-quote-page:857 \u2014 exact copy-paste",
+      "page_or_flow": "project-portal quote tab terms + public-quote terms",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-customer-with-terms",
+      "category": "consistency",
+      "description": "src/pages/project-portal-page.jsx:48 `<pre style={{ fontFamily: 'inherit', fontSize: 13, lineHeight: 1.7, color: 'var(--doc-text)', whiteSpace: 'pre-wrap', margin: '12px 0' }}>` is a near-duplicate of src/pages/public-quote-page.jsx:857 (which was flagged as UX-013). Note minor diff: 13 vs 12 fontSize, 1.7 vs 1.6 lineHeight. Even within a near-duplicate the numbers drift \u2014 classic sign that both files are edited independently. Bundles with UX-013 into a single .terms-body class fix.",
+      "reproduction_steps": [
+        "diff src/pages/project-portal-page.jsx:48 src/pages/public-quote-page.jsx:857"
+      ],
+      "competitor_reference": "any DRY codebase",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source comparison",
+      "suggested_fix": "Extract <TermsBody terms={...} /> component into src/components/ui/ with a single canonical style. Both sites use it. Resolves UX-013 and UX-042 together.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-043",
+      "title": "STRENGTH \u2014 The 8 system default SMS templates are top-1% content design; treat as canonical voice reference",
+      "page_or_flow": "cross-cutting voice reference",
+      "persona": "all (contractor writes them to customer)",
+      "device": "n/a",
+      "theme": "n/a",
+      "axis": "delight",
+      "severity": "strength",
+      "frequency": "per-send (every SMS Kira ships)",
+      "category": "copy",
+      "description": "src/lib/api/templates.js:31-48 defines SYSTEM_DEFAULTS \u2014 8 templates that exemplify the voice Punchlist should hold throughout the app. Specific craft moments: followup_2 uses face-saving phrasing ('didn't get buried'), followup_3 uses takeaway close ('totally understand if the timing isn't right'), deposit_received_sms combines gratitude + concrete next step + 'I'll take it from here' ownership language, job_complete asks a soft question rather than declaring completion. Further: TEMPLATE_HINTS (lines 76-85) explain the psychology of each template in Settings so contractors understand *why* changing them might weaken reply rate. This is meta-delight \u2014 the app teaches the craft it embodies. Log as strength + use as canonical voice exemplar for Phase \u03b8.",
+      "reproduction_steps": [
+        "Read src/lib/api/templates.js:31-85 end-to-end",
+        "Compare to settings-page.jsx:1131 warning banner copy ('\u26a0 Add your phone number above') \u2014 flat by comparison",
+        "Compare to settings-page.jsx:1147 '$0.01/text' disclosure \u2014 flatter still, at 10px"
+      ],
+      "competitor_reference": "Superhuman onboarding flow, Linear ship-log entries",
+      "gap_vs_competitor": "parity",
+      "measured_evidence": "Full read of SYSTEM_DEFAULTS + TEMPLATE_HINTS",
+      "suggested_fix": "Treat this file as the voice canon. When Phase \u03b8 writes docs/VOICE-GUIDE.md, quote these 8 templates and their 8 hints as the exemplars. Every other surface in the app should be held to this standard.",
+      "estimated_effort": "n/a (preserve)",
+      "taste_axis_impact": [
+        "delight",
+        "confidence"
+      ],
+      "assigned_phase": "8",
+      "status": "preserve"
+    },
+    {
+      "id": "UX-044",
+      "title": "project-portal QuoteTab duplicates ~500 lines of state/handlers from public-quote-page.jsx \u2014 parallel maintenance risk",
+      "page_or_flow": "project-portal Quote tab",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer-who-opens-portal",
+      "category": "consistency",
+      "description": "src/pages/project-portal-page.jsx QuoteTab (line 122-690) re-implements handleConnectPay (line 144), deposit polling (line 157-176), toggleOptional (line 194-200), openSignature, handleSheetSubmit \u2014 all near-identical to public-quote-page.jsx equivalents. This means: (a) every public-quote fix (including the Phase \u03b1 PublicErrorState work from UX-032) has to be applied twice; (b) divergences will accumulate because each page iterates separately; (c) UX-013's terms inline-style cluster appears in both places (UX-042); (d) emoji avatars on conversation UI appear in both. The 'one URL per customer-job' project-portal pattern was introduced to REPLACE legacy public pages, but QuoteTab is a fork, not an abstraction. Compounds UX-032, UX-042, and whatever future public-quote-page fixes land.",
+      "reproduction_steps": [
+        "diff <(sed -n '144,320p' src/pages/project-portal-page.jsx) <(sed -n '170,350p' src/pages/public-quote-page.jsx)",
+        "Count identical function signatures: 4 (handleConnectPay, toggleOptional, openSignature, handleSheetSubmit)"
+      ],
+      "competitor_reference": "any DRY-disciplined codebase",
+      "gap_vs_competitor": "major",
+      "measured_evidence": "~569 lines in QuoteTab alone",
+      "suggested_fix": "Extract src/components/public-quote-view.jsx receiving quote + shareToken + mode='standalone'|'portal-tab' props. Both public-quote-page and project-portal QuoteTab import it. Shared state management via the same component. This also resolves UX-042 (terms <pre>) in one place and sets up UX-032 shared components to benefit both pages. Large refactor \u2014 recommended for Phase \u03b4, but worth flagging now because every in-between fix doubles the work.",
+      "estimated_effort": "XL",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-045",
+      "title": "UpdatesTab's AmendmentCard and AdditionalWorkCard duplicate logic from standalone public-amendment-page.jsx and public-additional-work-page.jsx",
+      "page_or_flow": "project-portal Updates tab",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-customer-with-amendment-or-AW",
+      "category": "consistency",
+      "description": "src/pages/project-portal-page.jsx AmendmentCard (line 753-831) and AdditionalWorkCard (line 832-905) re-implement the amendment-approve/decline flow and additional-work-approve/decline flow that live in the standalone public pages (public-amendment-page.jsx, public-additional-work-page.jsx). Three places for the same logic: standalone amendment page, project-portal AmendmentCard, and the quote-detail amendment-diff component. Same pattern as UX-044 but across amendments and AW.",
+      "reproduction_steps": [
+        "Compare handleAmendmentAction in project-portal-page.jsx:716 to the equivalent in public-amendment-page.jsx",
+        "Both POST to /api/public-amendment with same action/token shape"
+      ],
+      "competitor_reference": "any DRY codebase",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Three implementation sites for two flows",
+      "suggested_fix": "Same pattern as UX-044 \u2014 extract <AmendmentView mode> and <AdditionalWorkView mode> components with shared state/handlers. After extraction, standalone pages become thin wrappers, portal tabs render the same component.",
+      "estimated_effort": "L",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "resolved",
+      "resolved_in_phase": 10
+    },
+    {
+      "id": "UX-046",
+      "title": "Settings has two save-state indicators \u2014 top-right pill AND bottom-row label \u2014 redundant",
+      "page_or_flow": "settings every tab",
+      "persona": "kira + henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "reduction",
+      "severity": "P2",
+      "frequency": "per-session",
+      "category": "consistency",
+      "description": "src/pages/settings-page.jsx:508-514 renders a save-state pill in the AppShell actions slot: '\u2713 Saved' / '\u27f3 Saving\u2026' / '\u25cf Unsaved'. Line 1285-1297 renders an additional save row at the bottom of the page: spinner + 'Saving\u2026' or '\u2713 Changes save automatically' + a 'Save now' button. Two widgets communicating overlapping state. Kira learning where Save happens has to reconcile the two. Either the top pill is the canonical save indicator (drop the bottom row, or simplify to just 'Save now' button) or the bottom is (drop the top pill).",
+      "reproduction_steps": [
+        "Open src/pages/settings-page.jsx:508-514 (top pill)",
+        "Open src/pages/settings-page.jsx:1285-1297 (bottom row)",
+        "Both render during save/saved states"
+      ],
+      "competitor_reference": "Stripe Dashboard (single save-state indicator, usually inline per-section)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source",
+      "suggested_fix": "Keep the top-right pill \u2014 it's visible from any scroll position and already elegant. Drop the bottom row's save-state label, keeping only the 'Save now' button for users who prefer explicit control.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "reduction",
+        "clarity"
+      ],
+      "assigned_phase": "3",
+      "status": "resolved",
+      "resolved_in": "v100-ux-phase-3"
+    },
+    {
+      "id": "UX-047",
+      "title": "Settings Notifications tab has inline Tailwind rgba alert banners \u2014 amber (#92400e) and green (#15803d) hardcoded, not themed",
+      "page_or_flow": "settings Notifications tab",
+      "persona": "kira",
+      "device": "all",
+      "theme": "all (alerts won't theme for dark mode)",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-session-who-configures-SMS",
+      "category": "visual",
+      "description": "src/pages/settings-page.jsx:1131-1133 warning banner with `background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.15)', color: '#92400e'`. Line 1135-1138 success banner symmetric with `rgba(19,138,91,.04)`, `rgba(19,138,91,.12)`, `#15803d`. These are Tailwind amber-500 and green-700 colors as raw rgba/hex. Same pattern as UX-021 on project-portal but this time on the contractor's own settings page. Breaks theming and propagates the ad-hoc-palette problem.",
+      "reproduction_steps": [
+        "view src/pages/settings-page.jsx:1130-1139"
+      ],
+      "competitor_reference": "any themed app",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Source",
+      "suggested_fix": "Extract .alert--warn and .alert--success classes using design-system tokens (which should already exist or be added: --color-warn-bg, --color-warn-border, --color-warn-text, and green equivalents). Replace at call sites. Also ideal candidates for a reusable <Alert variant='warn'|'success'> primitive in src/components/ui/.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-048",
+      "title": "'Standard messaging rates apply. Approximately $0.01/text' at fontSize: 10 in --subtle \u2014 material pricing disclosure at illegible size",
+      "page_or_flow": "settings Notifications tab SMS section",
+      "persona": "kira",
+      "device": "all mobile especially",
+      "theme": "all",
+      "axis": "recovery",
+      "severity": "P1",
+      "frequency": "per-session-who-enables-SMS",
+      "category": "form",
+      "description": "src/pages/settings-page.jsx:1145-1147: `<div className='muted small' style={{ marginTop: 6, fontSize: 10, color: 'var(--subtle)' }}>Standard messaging rates apply. Approximately $0.01/text.</div>`. This is material pricing information \u2014 Kira is being told her business will be charged per SMS. Rendering it at 10px in --subtle is the industry-wide UX antipattern where 'disclose but hide' is used to minimize friction at the cost of informed consent. It's also a trust breaker when Kira realizes mid-use that she's being charged.",
+      "reproduction_steps": [
+        "Open src/pages/settings-page.jsx:1145-1147"
+      ],
+      "competitor_reference": "Twilio, Stripe Billing (pricing information at readable size with link to 'learn more')",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Source",
+      "suggested_fix": "Raise to --text-xs (12px) minimum, ideally --text-sm. Keep --muted color (not --subtle). Consider phrasing: 'SMS is priced separately at approximately $0.01 per text. See pricing for details.' with a link. This is also a voice finding for Phase \u03b8 \u2014 the current phrasing uses 'Standard messaging rates apply' which is telco-contract legalese, not Punchlist voice.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "recovery",
+        "clarity",
+        "confidence"
+      ],
+      "assigned_phase": "1",
+      "status": "resolved",
+      "resolved_in_phase": "1",
+      "resolution_notes": "Removed fontSize:10 + color:var(--subtle) inline overrides from SMS cost disclosure. Now uses muted small class at --text-xs / --muted. Copy rewritten: \"SMS is priced separately at approximately $0.01 per text.\""
+    },
+    {
+      "id": "UX-049",
+      "title": "Settings Account delete-account button renders danger color 3 different ways \u2014 btn needs .btn--danger modifier family",
+      "page_or_flow": "settings Account tab",
+      "persona": "kira + henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "rare",
+      "category": "visual",
+      "description": "src/pages/settings-page.jsx:1247 'Delete my account' \u2014 `className='btn btn-secondary'` with `style={{ color: 'var(--danger)' }}`. Line 1253 'Yes, I understand' \u2014 `className='btn btn-secondary'` with `style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}`. Line 1261 'Permanently delete everything' \u2014 `className='btn btn-primary'` with `style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }}`. Three buttons escalating destructiveness, each implemented with a different combination of classes and inline style overrides. Functional, but a .btn--danger-ghost / .btn--danger-outline / .btn--danger-solid modifier family would encode the intent once and make the escalation visually systematic.",
+      "reproduction_steps": [
+        "view src/pages/settings-page.jsx:1247-1264"
+      ],
+      "competitor_reference": "Linear destructive-button family (consistent .btn--destructive modifier)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source diff of 3 buttons",
+      "suggested_fix": "Add .btn--danger-ghost (text only), .btn--danger-outline (border + text), .btn--danger-solid (filled) to the button system. Also flag: this escalation pattern is genuinely good \u2014 preserve the 3-step confirm, just clean up the styling.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "resolved",
+      "resolved_in_phase": 10
+    },
+    {
+      "id": "UX-050",
+      "title": "Preferences tab has a hand-rolled toggle switch (10 lines of inline style) \u2014 should be a <Toggle> primitive",
+      "page_or_flow": "settings Preferences tab",
+      "persona": "kira + henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "rare-to-per-session",
+      "category": "consistency",
+      "description": "src/pages/settings-page.jsx:1174-1211 hand-rolls an iOS-style toggle with role='switch' aria-checked: absolutely-positioned knob, 10 inline style properties, manual left transition, #fff hardcoded on the knob. The a11y is correct (role + aria-checked) but this is a component-extraction opportunity. The codebase already has design-system primitives (Card, Stat, etc.) in src/components/ui/ \u2014 add <Toggle checked onChange disabled ariaLabel />. Likely this exact switch exists or will exist elsewhere (template editor, future preferences, etc.) \u2014 extracting now prevents divergence.",
+      "reproduction_steps": [
+        "view src/pages/settings-page.jsx:1174-1211"
+      ],
+      "competitor_reference": "Radix UI Switch, shadcn/ui Switch",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "38 lines of inline-styled toggle",
+      "suggested_fix": "Extract src/components/ui/toggle.jsx with the exact visual spec. Drop-in replace. Also add --min-tap-44 utility to ensure the tap target is \u226544px (the current 44\u00d724 visible control is below that on height). Hitbox expansion via ::before pseudo-element.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-051",
+      "title": "STRENGTH \u2014 Preferences reflective-summary 'Currently: X is on/off' pattern confirms Kira's choice back to her",
+      "page_or_flow": "settings Preferences tab",
+      "persona": "kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "strength",
+      "frequency": "per-session",
+      "category": "copy",
+      "description": "src/pages/settings-page.jsx:1213-1217: after the auto-send-invoice toggle, a panel reads `\ud83d\udca1 Currently: Invoice is sent automatically when you complete a job.` (or the negation when off). This reflects Kira's selection back to her in plain language, removing any ambiguity about which way the switch goes. Often toggles confuse users because they show the setting name, not the current consequence. This pattern inverts that. Propagate to other toggle-heavy surfaces (Notifications tab, future preference panels). Also aligns with the voice canon established by UX-043.",
+      "reproduction_steps": [
+        "Open src/pages/settings-page.jsx:1213-1217"
+      ],
+      "competitor_reference": "Stripe Dashboard policy-settings (similar reflective summary pattern)",
+      "gap_vs_competitor": "parity",
+      "measured_evidence": "Source read",
+      "suggested_fix": "Preserve. Propagate: audit other toggle surfaces (SMS notifications enable/disable, digest enable/disable, push enable/disable) and add 'Currently: X' reflective summaries where missing. Minus the \ud83d\udca1 emoji \u2014 per UX-002.",
+      "estimated_effort": "n/a (preserve) / S (propagate)",
+      "taste_axis_impact": [
+        "clarity",
+        "delight"
+      ],
+      "assigned_phase": "5",
+      "status": "resolved",
+      "resolved_in_phase": 5,
+      "resolution_notes": "Reflective \"Currently: X\" pattern propagated to: (1) Daily Digest panel \u2014 states on/off clearly, (2) SMS Notifications panel \u2014 states on/off with phone number context, (3) Auto-send invoice panel \u2014 existing \ud83d\udca1 emoji replaced with <Info size={14}> + pl-reflective-summary shared CSS class. All three use consistent pl-reflective-summary component pattern."
+    },
+    {
+      "id": "UX-052",
+      "title": "Settings About panel uses double-hyphen '--' instead of em-dash '\u2014' \u2014 punctuation inconsistency with app-wide convention",
+      "page_or_flow": "settings Account tab About panel",
+      "persona": "all",
+      "device": "all",
+      "theme": "all",
+      "axis": "delight",
+      "severity": "P3",
+      "frequency": "rare",
+      "category": "copy",
+      "description": "src/pages/settings-page.jsx:1276: 'Built for speed, clarity, and customer trust -- not to replace your accounting software.' Double-hyphen '--' where the rest of the app uses proper em-dashes '\u2014'. Micro-voice finding but emblematic of the broader voice-inconsistency issue: the voice is good when attended to (UX-043) but drifts in places that haven't been reviewed recently. A typography-aware copy pass for Phase \u03b8 should catch all of these.",
+      "reproduction_steps": [
+        "grep -n ' -- ' src/pages/settings-page.jsx"
+      ],
+      "competitor_reference": "any typographically-disciplined app (em-dashes throughout)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source grep",
+      "suggested_fix": "Replace '--' with '\u2014'. Sweep the rest of the codebase for ' -- ' (with spaces) to catch siblings.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "delight"
+      ],
+      "assigned_phase": "8",
+      "status": "open"
+    },
+    {
+      "id": "UX-053",
+      "title": "project-portal PaymentsTab deposit badge has inline Tailwind hex (#fef3c7, #92400e) \u2014 same leakage pattern as UX-021 and UX-047",
+      "page_or_flow": "project-portal Payments tab deposit status",
+      "persona": "kristine",
+      "device": "all",
+      "theme": "all (badge won't theme in dark mode)",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-customer-with-deposit",
+      "category": "visual",
+      "description": "src/pages/project-portal-page.jsx:953: `<span className='pp-update-type' style={{ background: depositPaid ? 'var(--doc-green-soft)' : '#fef3c7', color: depositPaid ? 'var(--doc-green)' : '#92400e' }}>`. When the deposit is paid, uses --doc-* tokens; when pending, falls back to raw Tailwind amber. Asymmetric. The pending state will break in dark mode. Same Tailwind-palette leakage as UX-021 (project-portal checkbox) and UX-047 (settings alerts) \u2014 consistent enough to suggest this app once used Tailwind amber/green directly before the --doc-* tokens were added, and the migration was incomplete.",
+      "reproduction_steps": [
+        "view src/pages/project-portal-page.jsx:953"
+      ],
+      "competitor_reference": "any themed app",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Source \u2014 asymmetric token/hex usage in one ternary",
+      "suggested_fix": "Add --doc-amber-soft, --doc-amber, etc. to the --doc-* token family. Replace the inline hex. Audit for other Tailwind-palette leakage with: grep -rn '#fef3c7\\|#92400e\\|#15803d\\|#0070ba' src/ \u2014 gather these together as a Phase \u03b4 sub-sweep.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-054",
+      "title": "STRENGTH \u2014 followup-modal reassurance footer 'You're the sender \u2014 this goes out as your message, not from Punchlist'",
+      "page_or_flow": "Henry's daily nudge flow",
+      "persona": "kira + henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "delight",
+      "severity": "strength",
+      "frequency": "per-nudge",
+      "category": "copy",
+      "description": "src/components/followup-modal.jsx:251-253: `<p className='followup-modal__footer'>You're the sender \u2014 this goes out as your message, not from Punchlist.</p>`. This one line addresses the exact anxiety a contractor has about automated nudges: 'will this sound robotic?' Punchlist clarifies ownership \u2014 it's Kira's message, in her voice, using her phone identity. This is the reassurance pattern that makes the feature feel like a tool, not a bot. Log as strength + propagate: the SMS template preview on quote-detail M5 \u00a75.1 ('Texted to Kristine' + preview card) should include similar reassurance language around auto-sent deposit receipts etc.",
+      "reproduction_steps": [
+        "Open src/components/followup-modal.jsx:251-253"
+      ],
+      "competitor_reference": "Superhuman 'send from me' attribution",
+      "gap_vs_competitor": "parity",
+      "measured_evidence": "Source read",
+      "suggested_fix": "Preserve. Propagate pattern to other auto-send surfaces (deposit receipt confirmation in Settings, invoice auto-send toggle preview, any future auto-messages).",
+      "estimated_effort": "n/a (preserve) / S (propagate)",
+      "taste_axis_impact": [
+        "delight",
+        "confidence"
+      ],
+      "assigned_phase": "5",
+      "status": "resolved",
+      "resolved_in_phase": 5,
+      "resolution_notes": "Sender-reassurance \"goes out as your message, not from Punchlist\" propagated to: (1) auto-send invoice settings panel (shown when toggle is on), (2) quote send modal text path (pl-sender-reassurance shared class). Original in followup-modal.jsx migrated to pl-sender-reassurance class. Competitor reference: Superhuman sender-identity clarity."
+    },
+    {
+      "id": "UX-055",
+      "title": "STRENGTH \u2014 followup-modal SMS character counter is segment-boundary-aware (160/320 thresholds with '2 SMS segments' warning)",
+      "page_or_flow": "Henry's daily nudge flow",
+      "persona": "kira + henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "strength",
+      "frequency": "per-nudge",
+      "category": "form",
+      "description": "src/components/followup-modal.jsx:208-223: character counter not only shows current count but WARNS at 160 chars (SMS 2-segment boundary \u2014 each segment is a separate telco charge) and CAPS at 320. Color shifts: muted under 160, amber at 160+, red at 280+. Meta-helper text: 'Quote link is added automatically if missing' so Kira doesn't paste the link twice. This is the SMS-aware-UX equivalent of Stripe's credit-card-type-detection: solves a problem Kira didn't know existed. Top-1% craft.",
+      "reproduction_steps": [
+        "Open src/components/followup-modal.jsx:208-223"
+      ],
+      "competitor_reference": "Twilio Studio (segment-aware SMS composer), Front SMS app",
+      "gap_vs_competitor": "parity",
+      "measured_evidence": "Source read",
+      "suggested_fix": "Preserve. Lift the segment-boundary-awareness + char counter into a reusable <SmsComposerField> primitive for use on the Messages template editor and any future SMS-composition surface.",
+      "estimated_effort": "n/a (preserve) / M (extract into primitive)",
+      "taste_axis_impact": [
+        "clarity",
+        "delight"
+      ],
+      "assigned_phase": "5",
+      "status": "resolved",
+      "resolved_in_phase": 5,
+      "resolution_notes": "SmsComposerField primitive extracted to src/components/ui/SmsComposerField.jsx. Props: id, value, onChange, rows, label, showLinkHint, autoFocus, disabled, className. Segment-boundary awareness: warn color at 160+, \"2 SMS segments\" label at 160+, \"At limit\" at 320. Migrated into: followup-modal.jsx (primary call site), quote-builder send modal SMS composer. Barrel-exported from ui/index.js."
+    },
+    {
+      "id": "UX-056",
+      "title": "Analytics StatCard reimplements the <Stat> primitive that the design system already provides",
+      "page_or_flow": "analytics page",
+      "persona": "henry (data review)",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-session (analytics view)",
+      "category": "consistency",
+      "description": "src/pages/analytics-page.jsx:29-43 defines a local StatCard with inline styles: 18px 20px padding, fontSize 11 label, fontSize 26 value, letterSpacing -.03em, fontWeight 800. docs/DESIGN-SYSTEM.md:162 documents a <Stat> primitive with label/value/prefix/suffix/tone props, count-up enabled by default, width-reserved via --min-ch. Stat is imported and used on signup (src/pages/quote-builder-page.jsx:28) and elsewhere. Analytics \u2014 the numeric-typography showcase \u2014 reimplements what already exists. Also skips the <Stat>'s tabular-nums + count-up animations. This is the canonical 'adoption debt' finding from UX-001 but on a high-visibility page.",
+      "reproduction_steps": [
+        "view src/pages/analytics-page.jsx:29-43",
+        "view docs/DESIGN-SYSTEM.md:162 (Stat primitive)"
+      ],
+      "competitor_reference": "Stripe Dashboard (canonical Stat rendering across all analytics)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Two implementations of the same widget; only one exists in the design system",
+      "suggested_fix": "Replace local StatCard with <Stat label={...} value={...} prefix={...} suffix={...} tone={...} hint={sub} />. Remove the local function. Gains: count-up animation on load, tabular-nums on numbers, width reservation (stops layout shift as numbers update). Delete analytics-page's local StatCard entirely.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-057",
+      "title": "Analytics chart palette is 5 hardcoded Tailwind hex colors \u2014 no theme support, no token",
+      "page_or_flow": "analytics funnel + bar charts",
+      "persona": "henry",
+      "device": "all",
+      "theme": "dark theme will render them as-is (not remapped)",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-session",
+      "category": "visual",
+      "description": "src/pages/analytics-page.jsx:48: `const colors = ['#e86b30', '#f59e0b', '#3b82f6', '#059669', '#8b5cf6'];`. Punchlist brand orange + Tailwind amber-500, blue-500, emerald-600, violet-500. Hardcoded. Won't respect brand theming, won't respect dark-mode adjustments (in light mode these saturated colors look punchy; in dark mode they look garish against a dark bg without saturation adjustment). Charts are inherently color-carrying \u2014 they need a defined palette, not ad-hoc hex.",
+      "reproduction_steps": [
+        "Open src/pages/analytics-page.jsx:48"
+      ],
+      "competitor_reference": "Stripe Dashboard chart palette (defined + themed)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Source",
+      "suggested_fix": "Add to src/styles/tokens.css: --chart-1 through --chart-5 with light and dark theme variants. Replace the hardcoded array with `const colors = ['var(--chart-1)', ...]` or consume via CSS custom properties. Also: sort by information-hierarchy meaning \u2014 pipeline funnel should have a consistent directional palette (e.g., orange\u2192green as funnel progresses).",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-058",
+      "title": "Analytics FunnelChart renders each row with ~20 inline style properties \u2014 should be a class-based component",
+      "page_or_flow": "analytics funnel",
+      "persona": "henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-session",
+      "category": "consistency",
+      "description": "src/pages/analytics-page.jsx:45-74 \u2014 the entire FunnelChart is inline-styled. Each bar row has 7+ inline style properties. Animation inline (transition: 'width .5s ease'). Chart primitive can't be reused outside analytics-page. If bookings or invoices want a similar visualization, this gets copy-pasted. Same anti-pattern as UX-050 (hand-rolled toggle) \u2014 a component that should be in src/components/ui/.",
+      "reproduction_steps": [
+        "view src/pages/analytics-page.jsx:45-74"
+      ],
+      "competitor_reference": "Recharts, Chart.js (or a lightweight local component factored correctly)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "Source \u2014 inline styles throughout",
+      "suggested_fix": "Extract src/components/ui/funnel-chart.jsx with props {data, palette, showPercentages}. Classes in dedicated CSS. Consumable by analytics, future reports, etc. Takes UX-057 palette with it.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-059",
+      "title": "STRENGTH \u2014 Bookings page is the most design-system-compliant page audited (3 fontSize violations in 622 lines)",
+      "page_or_flow": "bookings",
+      "persona": "henry",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "strength",
+      "frequency": "per-session",
+      "category": "visual",
+      "description": "Grep comparison across audited pages: bookings-page.jsx has 3 inline fontSize violations in 622 lines. Compare to settings (33), pricing (40), payments-onboarding (43), project-portal (64), analytics (21). Bookings uses classes almost exclusively. Also: PageSkeleton on load, EmptyState-aligned voice ('All caught up \u2014 no jobs waiting'), proper role='button' + tabIndex + onKeyDown for clickable rails, aria-label for rail toggle. This is what post-Phase-\u03b4-target pages look like. Use bookings as the reference page for Phase \u03b4's token-discipline sweep.",
+      "reproduction_steps": [
+        "grep -cE \"fontSize:\\s*['\\\"]?[0-9]\" src/pages/bookings-page.jsx  \u2192 3",
+        "Compare to other pages' counts"
+      ],
+      "competitor_reference": "Linear calendar, Google Calendar (responsive, keyboard-accessible)",
+      "gap_vs_competitor": "parity",
+      "measured_evidence": "grep counts",
+      "suggested_fix": "Preserve. Use as the reference page for Phase \u03b4 \u2014 every other page's token-discipline sweep should aim for similar violation density (\u2264 0.5 per 100 lines).",
+      "estimated_effort": "n/a",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": null,
+      "status": "preserve"
+    },
+    {
+      "id": "UX-060",
+      "title": "StepDots widget exists in 3 places (signup-page inline \u00d72, payments-onboarding-page as local function) \u2014 extract to design-system primitive",
+      "page_or_flow": "signup flow + payments-onboarding flow",
+      "persona": "kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-first-time-flow",
+      "category": "consistency",
+      "description": "Compounds UX-017 (signup). signup-page.jsx:162-165 and 213-216 are inline step-indicators (two copies in one file). payments-onboarding-page.jsx:54-72 is a proper StepDots function but file-local \u2014 not exported. Three places, three slightly different implementations. payments-onboarding version has the richest spec (current dot is 24\u00d78 rounded rect; done/pending are 8\u00d78 dots; opacity shift for done). Use THAT as the canonical implementation, extract to src/components/ui/step-dots.jsx, drop into signup and anywhere else.",
+      "reproduction_steps": [
+        "view src/pages/signup-page.jsx:162-165, 213-216",
+        "view src/pages/payments-onboarding-page.jsx:54-72"
+      ],
+      "competitor_reference": "Stripe Checkout stepper, Linear onboarding",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "3 implementations in 2 files",
+      "suggested_fix": "Extract src/components/ui/step-dots.jsx from the payments-onboarding version (best spec). Replace 3 call sites. Export from the ui barrel. This is a bundled fix with UX-017.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-061",
+      "title": "Invoice-detail edit-mode inputs have repeated inline font/padding overrides on every row \u2014 tap targets too small",
+      "page_or_flow": "invoice edit mode",
+      "persona": "henry (inline edits invoice)",
+      "device": "iPhone SE (tap targets), desktop (visual density)",
+      "theme": "all",
+      "axis": "clarity",
+      "severity": "P2",
+      "frequency": "per-edit-session",
+      "category": "form",
+      "description": "src/pages/invoice-detail-page.jsx:345-348 \u2014 each row in the edit table has `.input` class PLUS inline `fontSize: 12, padding: '6px 8px'`. Line 348 remove button has `padding: '4px 6px', fontSize: 11`. On iPhone SE, an 11px button with 4px/6px padding gives ~16px visible target. Below 44px. Same pattern as UX-005 and UX-010. Also: why override the .input class? Because the designer wanted smaller inputs in this table \u2014 but the override pattern means Phase \u03b4 can't globally improve .input without watching for every inline override.",
+      "reproduction_steps": [
+        "view src/pages/invoice-detail-page.jsx:343-351"
+      ],
+      "competitor_reference": "Stripe Dashboard invoice editor (consistent control sizing)",
+      "gap_vs_competitor": "minor",
+      "measured_evidence": "4 inputs \u00d7 2 inline style props; 1 button with 2 inline style props; per row, \u00d7N rows",
+      "suggested_fix": "Add .input--dense modifier (fontSize: var(--text-sm), padding: var(--space-2) var(--space-3)). Add .btn--xs with hitbox-expanding pseudo-element for remove-action. Replace inline overrides.",
+      "estimated_effort": "S",
+      "taste_axis_impact": [
+        "clarity",
+        "recovery"
+      ],
+      "assigned_phase": "4",
+      "status": "resolved",
+      "resolved_in_phase": "6",
+      "resolution_notes": "Added .input--dense modifier (var(--text-xs), var(--space-2) var(--space-3)) and .btn--xs with ::after {inset:-10px -8px} tap target. Replaced 3x inline fontSize/padding overrides per invoice-edit-row. Remove button now uses lucide X + btn--xs."
+    },
+    {
+      "id": "UX-062",
+      "title": "Pricing-page has 40 inline fontSize violations in 227 lines \u2014 second-worst density in the app",
+      "page_or_flow": "pricing-page (marketing/conversion)",
+      "persona": "kira + anyone-evaluating-purchase",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-session-who-visits-pricing",
+      "category": "visual",
+      "description": "grep: 40 inline fontSize violations in a 227-line file = 17.6 violations per 100 lines. For comparison, bookings-page is at 0.5/100 (UX-059). This is a conversion-critical page \u2014 Kira evaluates whether to upgrade to Pro \u2014 rendered with the worst visual discipline in the app. CheckIcon and XIcon functions at top (lines 7-12) inline-style the glyphs with fontSize 14 + fontWeight 700. FAQItem inline-styles everything. Should be class-driven throughout.",
+      "reproduction_steps": [
+        "grep -cE \"fontSize:\\s*['\\\"]?[0-9]\" src/pages/pricing-page.jsx  \u2192 40",
+        "wc -l src/pages/pricing-page.jsx  \u2192 227",
+        "Density: 17.6 per 100 lines"
+      ],
+      "competitor_reference": "Stripe pricing page (disciplined type scale)",
+      "gap_vs_competitor": "moderate",
+      "measured_evidence": "Grep",
+      "suggested_fix": "Pricing is a standalone marketing page with no shared components needs. Rewrite with tokens throughout. May be quicker than incremental fixes \u2014 candidate for Phase \u03b4 rewrite.",
+      "estimated_effort": "M",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "open"
+    },
+    {
+      "id": "UX-063",
+      "title": "payments-onboarding 43 fontSize violations in 952 lines; 10+ custom button components (PrimaryBtn, SecondaryBtn, etc.) reimplementing .btn",
+      "page_or_flow": "payments-onboarding (Kira's first-deposit flow)",
+      "persona": "kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P1",
+      "frequency": "per-first-onboarding",
+      "category": "consistency",
+      "description": "src/pages/payments-onboarding-page.jsx defines PrimaryBtn (line 129), SecondaryBtn (line 166), FlowFrame (line 75), local StepDots (UX-060), plus AcknowledgeScreen, ResumeScreen, ActionRequiredScreen, RestrictedScreen (lines 372+). This is a mini-design-system inside one file, reimplementing components that exist in src/components/ui/. Any future design-system-level change (e.g. Phase \u03b4's button modifier system) won't automatically flow to these local forks. And 43 fontSize violations even WITH those local components means the primitives themselves contain inline overrides. Likely the largest confidence-axis debt outside index.css itself.",
+      "reproduction_steps": [
+        "grep -nE '^function [A-Z]' src/pages/payments-onboarding-page.jsx  \u2192 10+ local components",
+        "wc -l: 952 lines"
+      ],
+      "competitor_reference": "Stripe Connect onboarding (uses the main design system throughout)",
+      "gap_vs_competitor": "major",
+      "measured_evidence": "10+ local button/screen components in a 952-line file",
+      "suggested_fix": "Refactor in Phase \u03b4. Replace PrimaryBtn/SecondaryBtn with canonical .btn system. Extract AcknowledgeScreen etc. into a src/components/onboarding-flow/ folder as proper shared primitives \u2014 likely reusable by quote-builder's describe-phase too. Big job; schedule for Phase \u03b4's final session.",
+      "estimated_effort": "XL",
+      "taste_axis_impact": [
+        "confidence"
+      ],
+      "assigned_phase": "4",
+      "status": "resolved",
+      "resolved_in_phase": 10
+    },
+    {
+      "id": "UX-NEW-6A",
+      "title": "dashboard-page-v1.jsx win-close \u00d7 button missing aria-label and uses glyph, not lucide",
+      "page_or_flow": "dashboard-v1 (legacy)",
+      "persona": "Henry / Kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "post-win",
+      "category": "accessibility",
+      "description": "v2-win-close at dashboard-page-v1.jsx:733 rendered a naked \u00d7 glyph with font-size: 16px and no aria-label. Below the 44\u00d744 touch target on mobile. Phase 6 flagged, Phase 7 fix.",
+      "resolution": "Phase 7 \u2014 imported lucide X, replaced glyph, added aria-label=\"Dismiss win card\", flex-centered the button, added ::after tap expansion on (hover: none).",
+      "status": "resolved"
+    },
+    {
+      "id": "UX-NEW-6B",
+      "title": "quote-builder catalog overlay close \u2715 missing aria-label, text-sized for glyph",
+      "page_or_flow": "quote-builder (catalog overlay)",
+      "persona": "Kira",
+      "device": "all",
+      "theme": "all",
+      "axis": "confidence",
+      "severity": "P2",
+      "frequency": "per-quote-build",
+      "category": "accessibility",
+      "description": "rq-catalog-close at quote-builder-page.jsx:1278 rendered \u2715 with font-size: 13px and no aria-label. Mobile rule already enforced 44\u00d744 but the icon was typographic, not vector. Phase 6 flagged, Phase 7 fix.",
+      "resolution": "Phase 7 \u2014 replaced \u2715 with lucide X size=14, added aria-label=\"Close catalog\", flex-centered the button in CSS.",
+      "status": "resolved"
+    },
+    {
+      "id": "UX-NEW-7A",
+      "title": "landing-page hero h2 uses inline color:'#fff' instead of a token",
+      "page_or_flow": "landing",
+      "persona": "all (visitor)",
+      "device": "all",
+      "theme": "all (effectively light-on-dark only)",
+      "axis": "consistency",
+      "severity": "P3",
+      "frequency": "per-visit",
+      "category": "token-hygiene",
+      "description": "landing-page.jsx:265 sets style={{color:'#fff'}} inline on an .lp-h2 element. The section has a permanent dark gradient background, so the visual result is correct, but it slipped past the Phase 4 hex-grep and is inconsistent with the --always-white token used elsewhere. No user-visible bug.",
+      "resolution": "deferred to Session 1f / Phase 8 token sweep",
+      "status": "open"
+    },
+    {
+      "id": "UX-NEW-7B",
+      "title": "analytics-page sparkline uses hardcoded #059669 instead of green token family",
+      "page_or_flow": "analytics",
+      "persona": "Henry",
+      "device": "all",
+      "theme": "dark (perceptible)",
+      "axis": "consistency",
+      "severity": "P3",
+      "frequency": "per-view",
+      "category": "token-hygiene",
+      "description": "analytics-page.jsx:113\u2013122 renders the sparkline polyline, gradient stops, and data dots with hardcoded #059669 (Tailwind green-600). Dark-mode palette elsewhere uses --green-light (#4ade80) tints; the chart reads as dim green-600 against the dark surface. Not WCAG-failing, but inconsistent with the rest of the dark palette. Related to open UX-057 (chart palette) and should be folded into that fix.",
+      "resolution": "deferred to Session 1f \u2014 pairs with UX-057",
+      "status": "open"
+    }
+  ]
+}
