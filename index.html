@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Punchlist — Send the Quote Before You Leave the Driveway</title>
+    <meta name="description" content="Professional quotes in minutes, not hours. Complete scope, real pricing, nothing missed. Your customer approves before you're home. Free for trades contractors." />
+    <meta property="og:title" content="Punchlist — Professional Quotes in Minutes, Not Hours" />
+    <meta property="og:description" content="Complete scope, real pricing, customer approves on their phone. Built for plumbers, electricians, HVAC techs, and every trades contractor who's tired of quoting at 10pm." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://punchlist.ca" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Punchlist — Professional Quotes in Minutes, Not Hours" />
+    <meta name="twitter:description" content="Complete scope, real pricing, customer approves on their phone. Built for trades contractors who are tired of quoting at 10pm." />
+    <meta name="theme-color" id="meta-theme-color" content="#F6F5F2" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="color-scheme" content="light" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- CRITICAL: Apply theme BEFORE any CSS renders to prevent flash -->
+    <script>
+      (function(){
+        var t='light';
+        try{var s=localStorage.getItem('pl_theme');if(s==='dark'||s==='light')t=s}catch(e){}
+        document.documentElement.setAttribute('data-theme',t);
+        var m=document.getElementById('meta-theme-color');
+        if(m)m.content=t==='dark'?'#0F0F10':'#F6F5F2';
+      })();
+    </script>
+
+    <!--
+      ═══════════════════════════════════════════════════════════
+      FONTS (Phase 0) — Clash Display for headings, Inter for body.
+      Both are free (OFL-licensed) and served from CDN with
+      metric-matched fallbacks declared in src/styles/tokens.css,
+      so the font swap causes zero layout shift.
+      ═══════════════════════════════════════════════════════════
+    -->
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      rel="preload"
+      as="style"
+      href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap"
+    />
+
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
