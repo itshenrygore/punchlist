@@ -663,9 +663,6 @@ export default function LandingPage() {
               <a href="#pricing">Pricing</a>
               <a href="#faq">FAQ</a>
               <Link to="/login">Log in</Link>
-              <Link to="/support">Support</Link>
-              <Link to="/terms">Terms</Link>
-              <Link to="/privacy">Privacy</Link>
             </div>
           </div>
           <div className="lp-footer-copy">

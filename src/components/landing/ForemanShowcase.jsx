@@ -41,7 +41,7 @@ const MESSAGES = [
   },
 ];
 
-const DELAYS = [800, 2200, 2800, 2000, 1600];
+const DELAYS = [400, 1000, 1200, 1000, 800];
 
 /* ───── Feature list ───── */
 const FEATURES = [

@@ -685,7 +685,8 @@
   border-radius:var(--lp-r-sm); background:var(--lp-accent-light);
   border:1px solid rgba(212,114,42,0.12); color:var(--lp-accent-deep);
   font-size:13px; font-weight:600; cursor:pointer;
-  font-family:var(--lp-f-body); text-align:center;
+  font-family:var(--lp-f-body);
+  align-items:center; justify-content:center; gap:6px;
 }
 
 @media(max-width:820px) {
@@ -693,7 +694,7 @@
   .lp-demo-pane { border-right:none; border-bottom:1px solid var(--lp-border); }
   .lp-demo-pane:last-child { border-bottom:none; }
   .lp-demo-mob-tabs { display:flex; }
-  .lp-demo-mob-next { display:block; }
+  .lp-demo-mob-next { display:flex; }
   .lp-demo-pane--hidden { display:none; }
 }
 

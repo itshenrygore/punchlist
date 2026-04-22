@@ -146,7 +146,7 @@ export default function InteractiveDemo() {
             Customer: {preset.customer}
           </div>
           <button className="lp-demo-mob-next" onClick={() => setMobilePane(1)}>
-            Review scope <ArrowRight size={14} style={{ verticalAlign: 'middle' }} />
+            Review scope <ArrowRight size={14} />
           </button>
         </div>
 
@@ -213,7 +213,7 @@ export default function InteractiveDemo() {
           </div>
 
           <button className="lp-demo-mob-next" onClick={() => setMobilePane(2)}>
-            See customer quote <ArrowRight size={14} style={{ verticalAlign: 'middle' }} />
+            See customer quote <ArrowRight size={14} />
           </button>
         </div>
 
