@@ -153,7 +153,10 @@ export default function ForemanShowcase() {
                 return (
                   <div key={i} className={`lp-foreman-msg lp-foreman-msg--photo${visible ? ' lp-foreman-msg--visible' : ''}`}>
                     <div className="lp-foreman-photo-placeholder">
-                      <Camera size={18} style={{ opacity: 0.5 }} />
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                        <Camera size={22} style={{ opacity: 0.4 }} />
+                        <span style={{ fontSize: 10, opacity: 0.4, fontWeight: 500 }}>Photo attached</span>
+                      </div>
                     </div>
                   </div>
                 );

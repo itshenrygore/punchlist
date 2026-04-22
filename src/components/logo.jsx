@@ -1,11 +1,10 @@
 /**
- * Punchlist Logo — refined brand mark
+ * Punchlist Logo — punch-bar + checklist mark
  *
- * The mark: three graduated vertical bars in the brand orange,
- * ascending left-to-right like a project coming together.
- * Housed in a soft glass container that adapts to light/dark.
+ * The brand mark: an orange impact bar and echo line on the left,
+ * three horizontal checklist rows on the right with an orange
+ * checkmark on the first item. Housed in a soft glass container.
  *
- * The orange gradient (#E07A32 → #B85D1E) is the brand constant.
  * The glass adapts via CSS variables from tokens.css:
  *   --logo-glass-bg, --logo-glass-border, --logo-glass-highlight
  *
@@ -83,25 +82,16 @@ export function LogoMark({ size = 32 }) {
 }
 
 /* ───────────────────────────────────────────────────────────────
-   BrandMark — the shared visual primitive.
-   Three ascending bars in a soft glass container.
+   BrandMark — punch bar + checklist icon in a glass container.
+   All geometry scales proportionally from the `size` prop.
+   Based on the 512×512 favicon viewBox.
 ─────────────────────────────────────────────────────────────── */
 function BrandMark({ size = 32 }) {
   const r = Math.max(6, Math.round(size * 0.22));
-  const pad = Math.round(size * 0.22);
-  const barW = Math.max(2.5, Math.round(size * 0.14));
-  const gap = Math.max(1.5, Math.round(size * 0.08));
 
-  /* Three bars, ascending: 48%, 72%, 100% of available height */
-  const maxH = size - pad * 2;
-  const heights = [maxH * 0.48, maxH * 0.72, maxH];
-
-  /* Center the bar group horizontally */
-  const groupW = barW * 3 + gap * 2;
-  const startX = (size - groupW) / 2;
-
-  /* Unique gradient ID per instance */
-  const gradId = `pl-g-${size}`;
+  /* Adapt list-row color to light/dark context */
+  const rowFill =
+    'var(--logo-row-fill, #4a4f57)';
 
   return (
     <span
@@ -126,35 +116,28 @@ function BrandMark({ size = 32 }) {
       <svg
         width={size}
         height={size}
-        viewBox={`0 0 ${size} ${size}`}
+        viewBox="0 0 512 512"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#E07A32" />
-            <stop offset="100%" stopColor="#B85D1E" />
-          </linearGradient>
-        </defs>
-        {heights.map((h, i) => {
-          const x = startX + i * (barW + gap);
-          const y = pad + (maxH - h);
-          const rx = Math.max(1.2, barW * 0.38);
-          const opacity = 0.4 + i * 0.3; /* 0.4, 0.7, 1.0 */
-          return (
-            <rect
-              key={i}
-              x={x}
-              y={y}
-              width={barW}
-              height={h}
-              rx={rx}
-              fill={`url(#${gradId})`}
-              opacity={opacity}
-            />
-          );
-        })}
+        {/* Impact bar (the "punch") */}
+        <rect x="100" y="80" width="60" height="352" rx="18" fill="#d45a1a" />
+        {/* Echo line */}
+        <rect x="176" y="80" width="20" height="352" rx="10" fill="#d45a1a" opacity="0.3" />
+        {/* Checklist rows */}
+        <rect x="224" y="112" width="180" height="44" rx="12" fill={rowFill} />
+        <rect x="224" y="192" width="140" height="44" rx="12" fill={rowFill} opacity="0.55" />
+        <rect x="224" y="272" width="160" height="44" rx="12" fill={rowFill} opacity="0.3" />
+        {/* Checkmark on first item */}
+        <path
+          d="M248 126 L262 142 L292 116"
+          stroke="#d45a1a"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
       </svg>
     </span>
   );

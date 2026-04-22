@@ -75,6 +75,7 @@
   --logo-glass-bg:        rgba(20,20,20,0.05);
   --logo-glass-border:    rgba(20,20,20,0.10);
   --logo-glass-highlight: rgba(255,255,255,0.55);
+  --logo-row-fill:        #4a4f57;
 
   color-scheme: light;
   color-scheme: light;
@@ -170,6 +171,7 @@
   --logo-glass-bg:        rgba(255,255,255,0.22);
   --logo-glass-border:    rgba(255,255,255,0.36);
   --logo-glass-highlight: rgba(255,255,255,0.32);
+  --logo-row-fill:        #e0ddd8;
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -182,11 +184,13 @@
   --logo-glass-bg:        rgba(255,255,255,0.22);
   --logo-glass-border:    rgba(255,255,255,0.36);
   --logo-glass-highlight: rgba(255,255,255,0.32);
+  --logo-row-fill:        #e0ddd8;
 }
 [data-force-theme="light"] {
   --logo-glass-bg:        rgba(20,20,20,0.05);
   --logo-glass-border:    rgba(20,20,20,0.10);
   --logo-glass-highlight: rgba(255,255,255,0.55);
+  --logo-row-fill:        #4a4f57;
 }
 
 /* Dark mode body */
