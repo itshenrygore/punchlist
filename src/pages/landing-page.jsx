@@ -416,12 +416,12 @@ function HowItWorks() {
     {
       num: '01', icon: MessageSquare,
       title: 'Describe the job',
-      desc: 'Type, speak, or snap a photo. Punchlist builds your scope from a trade catalog with 1,000+ items.',
+      desc: 'Type, speak, or snap a photo. Punchlist suggests a scope from a trade catalog with 1,000+ items.',
     },
     {
       num: '02', icon: Send,
-      title: 'Send the quote',
-      desc: 'Your customer gets a branded, mobile-first quote with a monthly payment option. One link, no PDFs.',
+      title: 'Review and send',
+      desc: 'Edit any line, adjust pricing, add or remove items — then send. Your customer gets a branded, mobile-first quote with a monthly option.',
     },
     {
       num: '03', icon: DollarSign,
@@ -535,10 +535,10 @@ export default function LandingPage() {
         <div className="lp-container">
           <div className="lp-section-head rv">
             <span className="lp-eyebrow">Live demo</span>
-            <h2 className="lp-h2">Describe the job. Get a quote.</h2>
+            <h2 className="lp-h2">Describe the job. Review the scope. Send the quote.</h2>
             <p className="lp-sub">
-              Pick a common job below. See how Punchlist builds the scope,
-              catches missed items, and shows your customer a quote with a monthly option.
+              Pick a common job below. See how Punchlist suggests a scope,
+              catches missed items, and lets you fine-tune everything before your customer sees it.
             </p>
           </div>
           <InteractiveDemo />

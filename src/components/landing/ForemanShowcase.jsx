@@ -37,7 +37,7 @@ const MESSAGES = [
   {
     type: 'bot',
     content: 'action',
-    text: "Want me to build this into a quote? I'll use Mike's info and your 25% markup.",
+    text: "Ready for your review. Want me to build this into a quote? You can adjust any line before sending.",
   },
 ];
 
@@ -45,10 +45,10 @@ const DELAYS = [800, 2200, 2800, 2000, 1600];
 
 /* ───── Feature list ───── */
 const FEATURES = [
-  { icon: Camera, title: 'Photo diagnosis', sub: 'Snap a photo of the issue — get a diagnosis with flagged concerns' },
+  { icon: Camera, title: 'Photo diagnosis', sub: 'Snap a photo of the issue — get a diagnosis with flagged concerns for you to review' },
   { icon: Search, title: 'Troubleshooting', sub: 'Identify parts, spot hidden damage, and flag risks before you quote' },
-  { icon: Zap, title: 'Scope to quote', sub: 'Describe the job and get detailed line-item scope from a 1,000+ item catalog' },
-  { icon: CheckCircle, title: 'Nothing missed', sub: 'Catches permits, haul-away, rough-in — items that protect your margin' },
+  { icon: Zap, title: 'Scope to quote', sub: 'Get a suggested line-item scope from a 1,000+ item catalog — edit every line before sending' },
+  { icon: CheckCircle, title: 'Nothing missed', sub: 'Catches permits, haul-away, rough-in — items you decide whether to include' },
 ];
 
 /* ───── Component ───── */
@@ -112,7 +112,7 @@ export default function ForemanShowcase() {
         </h2>
         <p className="lp-foreman-desc rv rv-d2">
           Foreman sees what you see. Snap a photo, describe the situation, and get
-          a diagnosis with flagged concerns — plus a ready-to-send scope with pricing.
+          a diagnosis with flagged concerns — plus a suggested scope you can edit before quoting.
         </p>
         <div className="lp-foreman-features">
           {FEATURES.map((f, i) => (
@@ -203,8 +203,8 @@ export default function ForemanShowcase() {
                   <div key={i} className={`lp-foreman-msg lp-foreman-msg--bot${visible ? ' lp-foreman-msg--visible' : ''}`}>
                     {msg.text}
                     <div className="lp-foreman-action-btns">
-                      <span className="lp-foreman-action-btn lp-foreman-action-btn--primary">Build quote</span>
-                      <span className="lp-foreman-action-btn lp-foreman-action-btn--ghost">Add more items</span>
+                      <span className="lp-foreman-action-btn lp-foreman-action-btn--primary">Review & build quote</span>
+                      <span className="lp-foreman-action-btn lp-foreman-action-btn--ghost">Edit scope</span>
                     </div>
                   </div>
                 );
