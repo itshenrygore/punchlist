@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background: warm light with rounded corners -->
+  <!-- Background: warm light -->
   <rect width="512" height="512" rx="96" fill="#f5f4f1"/>
   <!-- Impact mark: thick vertical bar (the "punch") -->
   <rect x="148" y="113" width="67" height="286" rx="34" fill="#d45a1a"/>

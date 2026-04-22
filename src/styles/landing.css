@@ -1058,10 +1058,6 @@
   color:var(--lp-text-3); flex-shrink:0;
   transition:transform 0.3s var(--lp-ease);
 }
-.lp-faq-a {
-  overflow:hidden; will-change:max-height;
-  transition:max-height 0.4s var(--lp-ease), opacity 0.3s var(--lp-ease);
-}
 .lp-faq-a-inner {
   padding:0 18px 15px; font-size:14px; line-height:1.7; color:var(--lp-text-2);
 }

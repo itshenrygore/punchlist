@@ -389,56 +389,36 @@ const FAQ_DATA = [
   },
 ];
 
-function FAQItem({ item, isOpen, onToggle, className }) {
-  const contentRef = useRef(null);
-  const [height, setHeight] = useState(0);
-
-  useEffect(() => {
-    if (isOpen && contentRef.current) {
-      setHeight(contentRef.current.scrollHeight);
-    } else {
-      setHeight(0);
-    }
-  }, [isOpen]);
-
-  return (
-    <div className={`lp-faq-item${isOpen ? ' lp-faq-item--open' : ''} ${className}`}>
-      <button className="lp-faq-q" onClick={onToggle}>
-        <span>{item.q}</span>
-        <ChevronDown
-          size={16}
-          className="lp-faq-chevron"
-          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }}
-        />
-      </button>
-      <div
-        className="lp-faq-a"
-        ref={contentRef}
-        style={{
-          maxHeight: isOpen ? `${height}px` : '0px',
-          opacity: isOpen ? 1 : 0,
-        }}
-      >
-        <div className="lp-faq-a-inner">{item.a}</div>
-      </div>
-    </div>
-  );
-}
-
 function FAQ() {
   const [openIdx, setOpenIdx] = useState(null);
 
   return (
     <div className="lp-faq-list">
-      {FAQ_DATA.map((item, i) => (
-        <FAQItem
-          key={i}
-          item={item}
-          isOpen={openIdx === i}
-          onToggle={() => setOpenIdx(openIdx === i ? null : i)}
-          className={`rv rv-d${Math.min(i % 3 + 1, 3)}`}
-        />
-      ))}
+      {FAQ_DATA.map((item, i) => {
+        const isOpen = openIdx === i;
+        return (
+          <div
+            className={`lp-faq-item${isOpen ? ' lp-faq-item--open' : ''} rv rv-d${Math.min(i % 3 + 1, 3)}`}
+            key={i}
+          >
+            <button
+              className="lp-faq-q"
+              onClick={() => setOpenIdx(isOpen ? null : i)}
+              aria-expanded={isOpen}
+            >
+              <span>{item.q}</span>
+              <ChevronDown
+                size={16}
+                className="lp-faq-chevron"
+                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }}
+              />
+            </button>
+            {isOpen && (
+              <div className="lp-faq-a-inner">{item.a}</div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
