@@ -1143,6 +1143,93 @@
 }
 
 /* ═══════════════════════════════════════════
+   MOBILE POLISH
+   ═══════════════════════════════════════════ */
+
+/* Hero on mobile — tighter spacing, better text sizes */
+@media(max-width:640px) {
+  .lp-hero { padding-top:clamp(80px,12vh,110px); padding-bottom:clamp(32px,5vh,56px); }
+  .lp-h1 { font-size:clamp(30px,8vw,42px); }
+  .lp-hero-sub { font-size:15px; }
+  .lp-hero-ctas { flex-direction:column; gap:10px; }
+  .lp-hero-ctas .lp-btn-primary,
+  .lp-hero-ctas .lp-btn-secondary { width:100%; justify-content:center; text-align:center; }
+  .lp-hero-proof { justify-content:center; gap:12px; }
+  .lp-eyebrow-pill { font-size:11px; padding:4px 12px 4px 6px; margin-bottom:16px; }
+}
+
+/* Stats bar on small screens */
+@media(max-width:480px) {
+  .lp-stats-inner { gap:8px; }
+  .lp-stat-num { font-size:clamp(20px,6vw,28px); }
+  .lp-stat-label { font-size:10px; }
+}
+
+/* Section headings — less white space on mobile */
+@media(max-width:640px) {
+  .lp-section { padding:clamp(40px,7vh,72px) 0; }
+  .lp-section-head { margin-bottom:24px; }
+  .lp-h2 { font-size:clamp(24px,6vw,32px); }
+  .lp-sub { font-size:14px; }
+}
+
+/* Sticker Shock mobile */
+@media(max-width:480px) {
+  .lp-shock-container { height:160px; }
+  .lp-shock-amount { font-size:clamp(28px,8vw,36px); }
+  .lp-shock-sub { font-size:14px; margin-bottom:24px; }
+  .lp-shock-metrics { gap:24px; }
+  .lp-shock-metric-num { font-size:clamp(20px,6vw,28px); }
+}
+
+/* How It Works on mobile */
+@media(max-width:640px) {
+  .lp-how-step { padding:18px; gap:14px; }
+  .lp-how-icon { width:40px; height:40px; border-radius:11px; }
+  .lp-how-title { font-size:17px; }
+  .lp-how-desc { font-size:12px; }
+}
+
+/* Testimonials on mobile — full width */
+@media(max-width:640px) {
+  .lp-testimonials-grid { max-width:100%; }
+  .lp-testimonial { padding:20px; }
+  .lp-testimonial-text { font-size:13px; }
+}
+
+/* Pricing mobile */
+@media(max-width:480px) {
+  .lp-pricing-grid { max-width:100%; }
+  .lp-price-card { padding:20px; }
+  .lp-price-big { font-size:32px; }
+}
+
+/* FAQ mobile */
+@media(max-width:640px) {
+  .lp-faq-list { max-width:100%; }
+  .lp-faq-q { padding:14px 16px; font-size:13px; }
+  .lp-faq-a-inner { padding:0 16px 14px; font-size:13px; }
+}
+
+/* Final CTA mobile */
+@media(max-width:640px) {
+  .lp-final-cta { padding:clamp(48px,9vh,80px) 0; }
+  .lp-final-h2 { font-size:clamp(24px,7vw,36px); }
+  .lp-final-sub { font-size:14px; margin-bottom:24px; }
+  .lp-final-btns { flex-direction:column; align-items:center; }
+  .lp-final-btns .lp-btn-glow-dark,
+  .lp-final-btns .lp-btn-ghost-dark { width:100%; max-width:300px; justify-content:center; text-align:center; }
+  .lp-final-proof { gap:8px; }
+  .lp-final-proof span { font-size:11px; }
+}
+
+/* Footer on mobile */
+@media(max-width:640px) {
+  .lp-footer-inner { flex-direction:column; align-items:flex-start; gap:14px; }
+  .lp-footer-links { gap:12px; flex-wrap:wrap; }
+}
+
+/* ═══════════════════════════════════════════
    REDUCED MOTION & ACCESSIBILITY
    ═══════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
