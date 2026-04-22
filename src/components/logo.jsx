@@ -1,17 +1,15 @@
 /**
- * Punchlist Logo — premium glass-mark design
+ * Punchlist Logo — refined brand mark
  *
- * The brand mark is a glass square (translucent, soft border, inset
- * highlight) wrapping the orange tally-bars wordmark. The orange bars
- * stay constant — they're the brand. The glass adapts to background:
- *   • dark backgrounds (landing hero, dark mode)  → white-translucent
- *   • light backgrounds (app shell, light mode)   → dark-translucent
+ * The mark: three graduated vertical bars in the brand orange,
+ * ascending left-to-right like a project coming together.
+ * Housed in a soft glass container that adapts to light/dark.
  *
- * Adaptation is driven by CSS variables defined in tokens.css:
+ * The orange gradient (#E07A32 → #B85D1E) is the brand constant.
+ * The glass adapts via CSS variables from tokens.css:
  *   --logo-glass-bg, --logo-glass-border, --logo-glass-highlight
  *
- * Pass `dark={true|false}` to override theme detection (e.g., the
- * landing hero sets dark={true} regardless of the user's OS theme).
+ * Pass `dark={true|false}` to override theme detection.
  */
 
 const SIZES = {
@@ -47,14 +45,14 @@ export default function Logo({ size = 'md', dark, tagline = false }) {
       aria-label="Punchlist"
       role="img"
     >
-      <GlassMark size={dims.mark} />
+      <BrandMark size={dims.mark} />
       <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, lineHeight: 1 }}>
         <span
           style={{
-            fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,system-ui,sans-serif",
+            fontFamily: "'Clash Display',-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,system-ui,sans-serif",
             fontSize: dims.font,
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
+            fontWeight: 600,
+            letterSpacing: '-0.03em',
             color: textColor,
           }}
         >
@@ -63,10 +61,10 @@ export default function Logo({ size = 'md', dark, tagline = false }) {
         {tagline && (
           <span
             style={{
-              fontFamily: "-apple-system,system-ui,sans-serif",
+              fontFamily: "'Inter',-apple-system,system-ui,sans-serif",
               fontSize: dims.sub,
               fontWeight: 500,
-              letterSpacing: '0.08em',
+              letterSpacing: '0.06em',
               textTransform: 'uppercase',
               color: subColor,
             }}
@@ -79,23 +77,31 @@ export default function Logo({ size = 'md', dark, tagline = false }) {
   );
 }
 
-/** Glass square + tally bars only (no wordmark). For sidebars, favicons, tight UI. */
+/** Mark only (no wordmark). For sidebars, favicons, tight UI. */
 export function LogoMark({ size = 32 }) {
-  return <GlassMark size={size} />;
+  return <BrandMark size={size} />;
 }
 
 /* ───────────────────────────────────────────────────────────────
-   GlassMark — the shared visual primitive.
+   BrandMark — the shared visual primitive.
+   Three ascending bars in a soft glass container.
 ─────────────────────────────────────────────────────────────── */
-function GlassMark({ size = 32 }) {
-  const radius   = Math.max(6, Math.round(size * 0.24));
-  const padding  = Math.round(size * 0.22);
-  const barW     = Math.max(2,   Math.round(size * 0.13));
-  const barThinW = Math.max(1.5, Math.round(size * 0.075));
-  const barH     = size - padding * 2;
-  const barGap   = Math.round(size * 0.13);
-  const bar1X    = padding;
-  const bar2X    = bar1X + barW + barGap;
+function BrandMark({ size = 32 }) {
+  const r = Math.max(6, Math.round(size * 0.22));
+  const pad = Math.round(size * 0.22);
+  const barW = Math.max(2.5, Math.round(size * 0.14));
+  const gap = Math.max(1.5, Math.round(size * 0.08));
+
+  /* Three bars, ascending: 48%, 72%, 100% of available height */
+  const maxH = size - pad * 2;
+  const heights = [maxH * 0.48, maxH * 0.72, maxH];
+
+  /* Center the bar group horizontally */
+  const groupW = barW * 3 + gap * 2;
+  const startX = (size - groupW) / 2;
+
+  /* Unique gradient ID per instance */
+  const gradId = `pl-g-${size}`;
 
   return (
     <span
@@ -106,11 +112,11 @@ function GlassMark({ size = 32 }) {
         justifyContent: 'center',
         width: size,
         height: size,
-        borderRadius: radius,
+        borderRadius: r,
         background: 'var(--logo-glass-bg, rgba(255,255,255,0.16))',
         border: '1px solid var(--logo-glass-border, rgba(255,255,255,0.28))',
         boxShadow:
-          'inset 0 1px 0 var(--logo-glass-highlight, rgba(255,255,255,0.24)), 0 1px 2px rgba(0,0,0,0.06)',
+          'inset 0 1px 0 var(--logo-glass-highlight, rgba(255,255,255,0.24)), 0 1px 3px rgba(0,0,0,0.06)',
         backdropFilter: 'blur(14px) saturate(120%)',
         WebkitBackdropFilter: 'blur(14px) saturate(120%)',
         flexShrink: 0,
@@ -125,17 +131,30 @@ function GlassMark({ size = 32 }) {
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        <rect
-          x={bar1X} y={padding} width={barW} height={barH}
-          rx={Math.max(1, barW / 2)}
-          fill="#d45a1a"
-        />
-        <rect
-          x={bar2X} y={padding} width={barThinW} height={barH}
-          rx={Math.max(0.75, barThinW / 2)}
-          fill="#d45a1a"
-          opacity="0.45"
-        />
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#E07A32" />
+            <stop offset="100%" stopColor="#B85D1E" />
+          </linearGradient>
+        </defs>
+        {heights.map((h, i) => {
+          const x = startX + i * (barW + gap);
+          const y = pad + (maxH - h);
+          const rx = Math.max(1.2, barW * 0.38);
+          const opacity = 0.4 + i * 0.3; /* 0.4, 0.7, 1.0 */
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={y}
+              width={barW}
+              height={h}
+              rx={rx}
+              fill={`url(#${gradId})`}
+              opacity={opacity}
+            />
+          );
+        })}
       </svg>
     </span>
   );

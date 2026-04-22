@@ -102,8 +102,8 @@ function StatsBar() {
   return (
     <div className="lp-stats-bar" ref={ref}>
       <div className="lp-stats-inner">
-        <Stat target={843} suffix="" label="Quotes sent" active={active} />
-        <Stat target={127} suffix="K" label="Revenue closed" prefix="$" active={active} />
+        <Stat target={312} suffix="" label="Quotes sent" active={active} />
+        <Stat target={561} suffix="K" label="Revenue closed" prefix="$" active={active} />
         <Stat target={68} suffix="%" label="Approval rate" active={active} />
       </div>
     </div>
@@ -390,35 +390,20 @@ const FAQ_DATA = [
 ];
 
 function FAQ() {
-  const [openIdx, setOpenIdx] = useState(null);
-
   return (
     <div className="lp-faq-list">
-      {FAQ_DATA.map((item, i) => {
-        const isOpen = openIdx === i;
-        return (
-          <div
-            className={`lp-faq-item${isOpen ? ' lp-faq-item--open' : ''} rv rv-d${Math.min(i % 3 + 1, 3)}`}
-            key={i}
-          >
-            <button
-              className="lp-faq-q"
-              onClick={() => setOpenIdx(isOpen ? null : i)}
-              aria-expanded={isOpen}
-            >
-              <span>{item.q}</span>
-              <ChevronDown
-                size={16}
-                className="lp-faq-chevron"
-                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }}
-              />
-            </button>
-            {isOpen && (
-              <div className="lp-faq-a-inner">{item.a}</div>
-            )}
-          </div>
-        );
-      })}
+      {FAQ_DATA.map((item, i) => (
+        <details
+          className={`lp-faq-item rv rv-d${Math.min(i % 3 + 1, 3)}`}
+          key={i}
+        >
+          <summary className="lp-faq-q">
+            <span>{item.q}</span>
+            <ChevronDown size={16} className="lp-faq-chevron" />
+          </summary>
+          <div className="lp-faq-a-inner">{item.a}</div>
+        </details>
+      ))}
     </div>
   );
 }
