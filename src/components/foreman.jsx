@@ -45,7 +45,7 @@ export default function Foreman() {
   const [profile, setProfile] = useState(null);
   const [photoB64, setPhotoB64] = useState(null);
   const [quoteContext, setQuoteContext] = useState(null);
-  const [triggerPos, setTriggerPos] = useState({ bottom: 136, right: 16 });
+  const [triggerPos, setTriggerPos] = useState({ bottom: 80, right: 16 });
   const scrollRef = useRef(null);
   const fileRef = useRef(null);
   const inputRef = useRef(null);
@@ -114,7 +114,7 @@ export default function Foreman() {
       if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragMoved.current = true;
       setTriggerPos({
         right: Math.max(8, Math.min(window.innerWidth - 56, startRight + dx)),
-        bottom: Math.max(136, Math.min(window.innerHeight - 56, startBottom + dy)),
+        bottom: Math.max(72, Math.min(window.innerHeight - 56, startBottom + dy)),
       });
     }
     function end() {
@@ -208,14 +208,14 @@ export default function Foreman() {
         <button
           type="button"
           className="fm-trigger"
-          style={{ bottom: triggerPos.bottom, right: triggerPos.right }}
+          style={{ bottom: triggerPos.bottom, right: triggerPos.right, opacity: 0.7 }}
           onClick={handleTriggerClick}
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
           ref={dragRef}
           aria-label="Open Foreman"
         >
-          <span className="fm-trigger-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/></svg></span>
+          <span className="fm-trigger-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
         </button>
       )}
 

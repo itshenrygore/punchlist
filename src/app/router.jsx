@@ -123,7 +123,7 @@ export default function AppRouter() {
         <Route path="/app/settings" element={<ProtectedRoute><S fallback={<SettingsSkeleton />}><SettingsPage /></S></ProtectedRoute>} />
         <Route path="/app/billing" element={<ProtectedRoute><S fallback={<BillingSkeleton />}><BillingPage /></S></ProtectedRoute>} />
         <Route path="/app/analytics" element={<ProtectedRoute><S fallback={<AnalyticsSkeleton />}><AnalyticsPage /></S></ProtectedRoute>} />
-        <Route path="/app/payments-setup" element={<ProtectedRoute><S fallback={<SlimFallback />}><PaymentsSetupPage /></S></ProtectedRoute>} />
+        <Route path="/app/payments-setup" element={<ProtectedRoute><S fallback={<PaymentsOnboardingSkeleton />}><PaymentsOnboardingPage /></S></ProtectedRoute>} />
         <Route path="/app/payments/setup" element={<ProtectedRoute><S fallback={<PaymentsOnboardingSkeleton />}><PaymentsOnboardingPage /></S></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

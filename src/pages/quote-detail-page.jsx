@@ -25,6 +25,7 @@ import { haptic } from '../hooks/use-mobile-ux';
    Zone 1: Status Hero — big, clear status + ONE primary action
    Zone 2: Activity Feed — unified timeline with inline reply
    Zone 3: Scope Details — collapsed by default
+   Mobile: Tabs split Zone 2+3 into "Details" and "Messages" for cleaner UX
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function QuoteDetailPage() {
@@ -55,6 +56,7 @@ export default function QuoteDetailPage() {
   const [userProfile, setUserProfile] = useState(null);
   const [upgradePrompt, setUpgradePrompt] = useState(null);
   const [scopeOpen, setScopeOpen] = useState(true);
+  const [mobileTab, setMobileTab] = useState('details'); // 'details' | 'messages'
   // v100 M3: Follow-up / nudge modal
   const [showNudgeModal, setShowNudgeModal] = useState(false);
   const [userTemplates, setUserTemplates] = useState(null); // null = not yet fetched
@@ -445,6 +447,15 @@ export default function QuoteDetailPage() {
             </div>
           )}
 
+          {/* ══════════ MOBILE TAB BAR ══════════ */}
+          <div className="qd-mobile-tabs">
+            <button type="button" className={`qd-mobile-tab${mobileTab === 'details' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('details')}>Details</button>
+            <button type="button" className={`qd-mobile-tab${mobileTab === 'messages' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('messages')}>
+              Messages
+              {(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? <span className="qd-mobile-tab-badge">{mc}</span> : null; })()}
+            </button>
+          </div>
+
           {/* ══════════ ZONE 1: STATUS HERO ══════════ */}
           <div className="qd-hero">
             <div className="qd-hero-top">
@@ -545,7 +556,7 @@ export default function QuoteDetailPage() {
           </div>
 
           {/* ══════════ ZONE 2: COMMUNICATION ══════════ */}
-          <div className="qd-feed">
+          <div className={`qd-feed${mobileTab === 'details' ? ' qd-zone-messages' : ''}`}>
             <div className="qd-feed-header"><span style={{fontWeight:700,fontSize:"var(--text-base)"}}><MessageSquare size={13} style={{verticalAlign:"middle",marginRight:6}}/>Messages</span><span className="qb-muted fs-12">{(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? `${mc} message${mc !== 1 ? 's' : ''}` : ''; })()}</span></div>
             {/* Reply input first — most important action (hide on paid/invoiced — job is done) */}
             {!isDraft && hasShareToken && !['paid','invoiced'].includes(quote?.status) && (
@@ -579,7 +590,7 @@ export default function QuoteDetailPage() {
           </div>
 
           {/* ══════════ ZONE 3: SCOPE DETAILS (collapsed) ══════════ */}
-          <div className="qd-scope">
+          <div className={`qd-scope${mobileTab === 'messages' ? ' qd-zone-details' : ''}`}>
             <button type="button" className="qd-scope-toggle pl-toggle-row" onClick={()=>setScopeOpen(v=>!v)} style={{ width:'100%', background:'none', border:'none', fontFamily:'inherit' }}>
               <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{display:'inline-flex'}}><FileText size={14}/></span><span style={{fontWeight:700,fontSize: 'var(--text-base)'}}>Scope & Pricing</span><span className="qb-muted fs-12">{(quote.line_items||[]).length} items · {currency(quote.total)}</span></div>
               <span className={`pl-chevron ${scopeOpen ? 'pl-chevron--open' : ''}`} />

@@ -328,6 +328,25 @@ export default function QuotesListPage() {
         </div>
       </div>
 
+      {/* ── Mobile filter controls (hidden on desktop where ql-desktop-filters shows) ── */}
+      <div className="ql-mobile-filters">
+        <select
+          className="input"
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value)}
+          style={{ flex: 1, minWidth: 0, fontSize: 'var(--text-xs)', height: 36 }}
+          aria-label="Sort quotes"
+        >
+          {SORT_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' }}>
+          <input type="checkbox" checked={hideCompleted} onChange={toggleHideCompleted} style={{ accentColor: 'var(--brand)', width: 16, height: 16 }} />
+          Hide completed
+        </label>
+      </div>
+
       {/* ── Summary line (only when filters are active — unfiltered summary lives in PageHeader) ── */}
       {!loading && quotes.length > 0 && isFiltered && (
         <div style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)', marginBottom: 12 }}>

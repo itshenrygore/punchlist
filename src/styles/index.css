@@ -4065,6 +4065,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .qd-sidebar .btn.full-width{padding:12px}
 }
 
+/* ── QUOTES LIST: mobile filter bar ── */
+.ql-mobile-filters{display:none;gap:8px;align-items:center;padding:6px 0;margin-bottom:4px}
+
 /* ── QUOTES LIST: cards breathe more on mobile ── */
 @media(max-width:640px){
   .qcard{padding:14px 12px}
@@ -4074,9 +4077,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   /* Filter toggles bigger touch targets */
   #ql-filter-toggle{display:inline-flex!important;min-height:40px;font-size:12px}
   .ql-desktop-filters{display:none!important}
+  .ql-mobile-filters{display:flex!important}
 }
 @media(min-width:641px){
   #ql-filter-toggle{display:none!important}
+  .ql-mobile-filters{display:none!important}
 }
 
 /* ── CONTACTS: list items bigger on mobile, search always visible ── */
@@ -5444,6 +5449,18 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 
 /* Activity feed */
 .qd-feed{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+
+/* Mobile tab bar — hidden on desktop, visible on mobile */
+.qd-mobile-tabs{display:none;gap:0;border-bottom:2px solid var(--line);margin-bottom:12px}
+.qd-mobile-tab{flex:1;padding:10px 0;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:var(--text-sm);font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.qd-mobile-tab--active{color:var(--brand);border-bottom-color:var(--brand)}
+.qd-mobile-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--brand);color:var(--always-white, #fff);font-size:11px;font-weight:700}
+@media(max-width:768px){
+  .qd-mobile-tabs{display:flex}
+  .qd-zone-messages{display:none!important}
+  .qd-zone-details{display:none!important}
+  .ql-strip{display:none}
+}
 .qd-feed-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
 .qd-feed-list{display:flex;flex-direction:column}
 

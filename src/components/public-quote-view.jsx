@@ -214,7 +214,37 @@ export default function PublicQuoteView({
     finally { setPayLoading(false); }
   }
 
-  // Lock body scroll when overlay is open (prevents iOS background scroll)\n  useScrollLock(Boolean(activeSheet));\n\n  // Refs for scroll targets\n  const topRef = useRef(null);\n  const signRef = useRef(null);\n  const threadRef = useRef(null);\n  const termsRef = useRef(null);\n  const readFiredRef = useRef(false);\n\n  // §5.2 — Mark messages as read when thread scrolls into view\n  useEffect(() => {\n    if (!shareToken || !threadRef.current || readFiredRef.current) return;\n    const el = threadRef.current;\n    const observer = new IntersectionObserver(\n      (entries) => {\n        if (entries[0]?.isIntersecting && !readFiredRef.current) {\n          readFiredRef.current = true;\n          fetch('/api/mark-messages-read', {\n            method: 'POST',\n            headers: { 'Content-Type': 'application/json' },\n            body: JSON.stringify({ token: shareToken }),\n          }).catch(e => console.warn('[PL]', e));\n          observer.disconnect();\n        }\n      },\n      { threshold: 0.3 }\n    );\n    observer.observe(el);\n    return () => observer.disconnect();\n  }, [shareToken, quote?.id]);
+  // Lock body scroll when overlay is open (prevents iOS background scroll)
+  useScrollLock(Boolean(activeSheet));
+
+  // Refs for scroll targets
+  const topRef = useRef(null);
+  const signRef = useRef(null);
+  const threadRef = useRef(null);
+  const termsRef = useRef(null);
+  const readFiredRef = useRef(false);
+
+  // §5.2 — Mark messages as read when thread scrolls into view
+  useEffect(() => {
+    if (!shareToken || !threadRef.current || readFiredRef.current) return;
+    const el = threadRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !readFiredRef.current) {
+          readFiredRef.current = true;
+          fetch('/api/mark-messages-read', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: shareToken }),
+          }).catch(e => console.warn('[PL]', e));
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [shareToken, quote?.id]);
 
   // Note: data fetching is handled by the parent page.
 

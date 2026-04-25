@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { DollarSign, Smartphone, CheckCircle, Lock } from 'lucide-react';
 import AppShell from '../components/app-shell';
 
 const FAQ = [
@@ -85,13 +86,13 @@ export default function PaymentsSetupPage() {
           <h2 style={{ fontSize: 'var(--text-xl)', letterSpacing: '-.02em', margin: '0 0 16px' }}>Why set this up</h2>
           <div style={{ display: 'grid', gap: 10 }}>
             {[
-              { icon: 'dollar', title: 'Get paid faster', desc: 'Customer pays right from the quote — no chasing e-transfers or waiting for cheques.' },
-              { icon: 'mobile', title: 'Bigger jobs get approved', desc: 'When customers can pay monthly, a $6,000 job becomes $250/mo. Easier to say yes.' },
-              { icon: '✅', title: 'You always get the full amount', desc: 'Regardless of how the customer pays, the full quote total is deposited to your account.' },
-              { icon: 'lock', title: 'Deposits before you start', desc: 'Require a deposit when the customer approves. Money in your account before the job begins.' },
-            ].map(({ icon, title, desc }) => (
+              { Icon: DollarSign, title: 'Get paid faster', desc: 'Customer pays right from the quote — no chasing e-transfers or waiting for cheques.' },
+              { Icon: Smartphone, title: 'Bigger jobs get approved', desc: 'When customers can pay monthly, a $6,000 job becomes $250/mo. Easier to say yes.' },
+              { Icon: CheckCircle, title: 'You always get the full amount', desc: 'Regardless of how the customer pays, the full quote total is deposited to your account.' },
+              { Icon: Lock, title: 'Deposits before you start', desc: 'Require a deposit when the customer approves. Money in your account before the job begins.' },
+            ].map(({ Icon, title, desc }) => (
               <div key={title} className="panel" style={{ padding: '14px 18px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 'var(--text-2xl)', flexShrink: 0 }}>{icon}</span>
+                <span style={{ flexShrink: 0, color: 'var(--brand)', marginTop: 2 }}><Icon size={22} /></span>
                 <div>
                   <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: 2 }}>{title}</strong>
                   <span style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', lineHeight: 1.5 }}>{desc}</span>
@@ -104,9 +105,9 @@ export default function PaymentsSetupPage() {
         {/* CTA */}
         <div className="panel" style={{ textAlign: 'center', padding: '24px 20px', marginBottom: 32, background: 'var(--brand-bg)', border: '1px solid var(--brand-line)' }}>
           <div style={{ fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: 6 }}>Ready to accept payments?</div>
-          <p className="muted small" style={{ marginBottom: 14, lineHeight: 1.5, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>Go to Settings → Payment Methods and click "Connect with Stripe." It takes about 10 minutes.</p>
-          <Link className="btn btn-primary" to="/app/settings" style={{ fontSize: 'var(--text-sm)', padding: '11px 24px' }}>
-            Go to Settings →
+          <p className="muted small" style={{ marginBottom: 14, lineHeight: 1.5, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>Connect your Stripe account to start accepting card payments and deposits. Takes about 10 minutes.</p>
+          <Link className="btn btn-primary" to="/app/payments/setup" style={{ fontSize: 'var(--text-sm)', padding: '11px 24px' }}>
+            Start Stripe Setup →
           </Link>
         </div>
 
