@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Phone, MessageSquare, Mail, Link2, Eye, FileText, Calendar, Check, RefreshCw, Pencil, Camera, X } from 'lucide-react';
 import AppShell from '../components/app-shell';
@@ -57,6 +57,8 @@ export default function QuoteDetailPage() {
   const [upgradePrompt, setUpgradePrompt] = useState(null);
   const [scopeOpen, setScopeOpen] = useState(true);
   const [mobileTab, setMobileTab] = useState('details'); // 'details' | 'messages'
+  const feedRef = useRef(null);
+  const mobileTabBarRef = useRef(null);
   // v100 M3: Follow-up / nudge modal
   const [showNudgeModal, setShowNudgeModal] = useState(false);
   const [userTemplates, setUserTemplates] = useState(null); // null = not yet fetched
@@ -448,9 +450,9 @@ export default function QuoteDetailPage() {
           )}
 
           {/* ══════════ MOBILE TAB BAR ══════════ */}
-          <div className="qd-mobile-tabs">
+          <div className="qd-mobile-tabs" ref={mobileTabBarRef}>
             <button type="button" className={`qd-mobile-tab${mobileTab === 'details' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('details')}>Details</button>
-            <button type="button" className={`qd-mobile-tab${mobileTab === 'messages' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('messages')}>
+            <button type="button" className={`qd-mobile-tab${mobileTab === 'messages' ? ' qd-mobile-tab--active' : ''}`} onClick={() => { setMobileTab('messages'); requestAnimationFrame(() => { mobileTabBarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); }}>
               Messages
               {(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? <span className="qd-mobile-tab-badge">{mc}</span> : null; })()}
             </button>

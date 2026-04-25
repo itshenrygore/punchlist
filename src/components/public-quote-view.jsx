@@ -649,22 +649,29 @@ export default function PublicQuoteView({
                       align="center"
                       tone="brand"
                       decimals={Number.isInteger(Number(mo)) ? 0 : 2}
-                      hint="Subject to approval · Choose at checkout"
+                      hint="*Estimated · Subject to credit approval"
                     />
                   </>
                 );
               })()}
             </div>
             {showFinancing(displayTotal) && (
-              <div className="pl-affirm-line">
-                Pay over time with Affirm or Klarna — choose at checkout.
-              </div>
+              <>
+                <div className="pl-affirm-line">
+                  Pay over time with Affirm or Klarna — choose at checkout.
+                </div>
+                <div className="pl-financing-disclaimer">
+                  *Estimated monthly payment. Actual terms, rates (0–36% APR), and eligibility are
+                  determined by the financing provider at checkout and depend on creditworthiness.
+                  Payment options are subject to approval. This is not a guaranteed offer of credit.
+                </div>
+              </>
             )}
             </RevealOnView>
 
-            {/* Trust signals — above the fold, always visible. */}
+            {/* Trust signals */}
             <div className="pl-hero-trust" role="list" aria-label="Quote reassurances">
-              <span role="listitem">✓ No payment now</span>
+              <span role="listitem">✓ No payment required now</span>
               <span role="listitem">✓ Price locked in</span>
               <span role="listitem">✓ Cancel anytime before work starts</span>
             </div>
@@ -686,11 +693,6 @@ export default function PublicQuoteView({
                     <span className="pl-cta-check">✓</span> Approved
                   </span>
                 </button>
-                <div className="doc-hero-reassurance">
-                  <span>✓ No payment required now</span>
-                  <span>✓ Price locked in</span>
-                  <span>✓ Cancel before work starts, no obligation</span>
-                </div>
               </div>
             )}
 
@@ -784,8 +786,11 @@ export default function PublicQuoteView({
             return (
               <div className="pq-financing-above-fold" aria-hidden="false">
                 <div className="pq-financing-above-fold-label">Pay monthly</div>
-                <div className="pq-financing-above-fold-value">from {currency(mo)}<span style={{ fontSize: 'var(--text-md)', fontWeight: 600 }}>/mo</span></div>
-                <div className="pq-financing-above-fold-hint">Subject to approval · Choose at checkout with Affirm or Klarna</div>
+                <div className="pq-financing-above-fold-value">from {currency(mo)}<span style={{ fontSize: 'var(--text-md)', fontWeight: 600 }}>/mo</span><span style={{ fontSize: 'var(--text-2xs)', verticalAlign: 'super' }}>*</span></div>
+                <div className="pq-financing-above-fold-hint">Subject to credit approval · Terms set by financing provider at checkout</div>
+                <div className="pl-financing-disclaimer" style={{ marginTop: 6 }}>
+                  *Estimated payment. Actual rate (0–36% APR), term, and eligibility depend on creditworthiness and are determined by the financing provider. Not a guaranteed offer of credit.
+                </div>
               </div>
             );
           })()}
@@ -857,7 +862,7 @@ export default function PublicQuoteView({
             <div className="doc-total-row doc-total-row--grand" aria-live="polite"><span>Total</span><strong className="tabular pl-totals-grand-num">{currency(displayTotal)}</strong></div>
             {showFinancing(displayTotal) && (
               <div className="doc-total-row doc-total-row--monthly-highlight">
-                <span>or from {currency(estimateMonthly(displayTotal))}/mo</span>
+                <span>or from {currency(estimateMonthly(displayTotal))}/mo*</span>
                 <strong>Pay monthly at checkout →</strong>
               </div>
             )}
@@ -904,7 +909,7 @@ export default function PublicQuoteView({
               <div style={{ textAlign: 'center', marginTop: 8 }}>
                 <div style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-muted)' }}>No payment required now · Price locked in · Cancel anytime before work starts</div>
                 {showFinancing(displayTotal) && (
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-accent)', fontWeight: 600, marginTop: 6 }}>Pay monthly option available — choose at checkout</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-accent)', fontWeight: 600, marginTop: 6 }}>Monthly payment option available* — choose at checkout</div>
                 )}
               </div>
             </div>
@@ -1133,7 +1138,7 @@ export default function PublicQuoteView({
         <div className="doc-sticky-cta">
           <div className="doc-sticky-total">
             {showFinancing(displayTotal) ? (
-              <>from {currency(estimateMonthly(displayTotal))}<span className="doc-sticky-per">/mo</span><span className="doc-sticky-full">or {currency(displayTotal)}</span></>
+              <>from {currency(estimateMonthly(displayTotal))}<span className="doc-sticky-per">/mo*</span><span className="doc-sticky-full">or {currency(displayTotal)}</span></>
             ) : (
               currency(displayTotal)
             )}

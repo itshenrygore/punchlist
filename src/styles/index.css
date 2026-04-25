@@ -5,6 +5,7 @@
    PostCSS's @import plugin inlines this before Tailwind runs.
    ═══════════════════════════════════════════════════════════ */
 @import './tokens.css';
+@import './document.css';
 @import './phase1-builder.css';
 @import './phase2-public-quote.css';
 @import './phase3-dashboard.css';
@@ -3403,13 +3404,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .app-shell:has(.bs-empty-state) .fm-trigger:hover{opacity:1}
 
 /* ── Overlay ── */
-.fm-overlay{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:flex-end;padding:16px;overscroll-behavior:contain}
+.fm-overlay{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;padding:0;overscroll-behavior:contain}
 @media(min-width:641px){.fm-overlay{align-items:center;justify-content:flex-end;padding:24px}}
 
 /* ── Panel ── */
 .fm-panel{width:100%;max-width:400px;height:min(560px,calc(100vh - 32px));background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden;animation:fm-slide-in .2s var(--ease)}
-@media(max-width:640px){.fm-panel{max-width:100%;height:calc(100vh - 80px);border-radius:var(--r-lg) var(--r-lg) 0 0}}
-@keyframes fm-slide-in{from{opacity:0;transform:translateY(12px) scale(.97)}}
+@media(max-width:640px){.fm-panel{max-width:100%;height:min(480px,calc(100vh - 120px));border-radius:var(--r-lg) var(--r-lg) 0 0}}
+@keyframes fm-slide-in{from{opacity:0;transform:translateY(40px)}}
 
 /* ── Header ── */
 .fm-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);flex-shrink:0}
@@ -4275,11 +4276,11 @@ input[type="number"]{-moz-appearance:textfield}
 
 /* ── #19: Foreman — use dvh for keyboard-aware height ── */
 @media(max-width:640px){
-  .fm-panel{height:calc(100dvh - 80px)!important;max-height:calc(100dvh - 80px)!important}
+  .fm-panel{height:min(480px,calc(100dvh - 120px))!important;max-height:min(480px,calc(100dvh - 120px))!important}
 }
 @supports not (height: 100dvh){
   @media(max-width:640px){
-    .fm-panel{height:calc(100vh - 80px)!important;max-height:calc(100vh - 80px)!important}
+    .fm-panel{height:min(480px,calc(100vh - 120px))!important;max-height:min(480px,calc(100vh - 120px))!important}
   }
 }
 
@@ -7850,3 +7851,148 @@ kbd.pl-kbd {
 @media(max-width:380px){
   .fm-trigger{width:44px;height:44px;right:10px}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   v102 PATCHES
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Financing disclaimer fine print ── */
+.pl-financing-disclaimer{
+  margin-top:8px;
+  font-size:10px;
+  line-height:1.45;
+  color:var(--doc-muted,#667085);
+  text-align:center;
+  max-width:400px;
+  margin-left:auto;
+  margin-right:auto;
+  opacity:.75;
+  letter-spacing:.01em;
+}
+
+/* ── Public quote footer: padding-bottom override for sticky CTA clearance ── */
+/* (Base styles now provided by document.css import) */
+
+/* (Print signature blocks now provided by document.css import) */
+
+/* ── Quote detail mobile tabs — sticky positioning ── */
+@media(max-width:768px){
+  .qd-mobile-tabs{position:sticky;top:0;z-index:10;background:var(--panel);padding-top:4px;border-bottom:2px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+}
+
+/* ── Foreman: bottom-sheet overlay — flush bottom on mobile ── */
+@media(max-width:640px){
+  .fm-overlay{padding-bottom:0!important;padding-left:0!important;padding-right:0!important}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAYMENTS SETUP PAGE — v102 redesign
+   ═══════════════════════════════════════════════════════════ */
+.ps-page{max-width:640px;margin:0 auto;padding:0 16px 80px}
+.ps-back{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:var(--text-sm);color:var(--muted);text-decoration:none;
+  margin-bottom:16px;font-weight:500;transition:color .15s
+}
+.ps-back:hover{color:var(--text)}
+
+.ps-hero{margin-bottom:28px}
+.ps-hero-title{font-size:clamp(1.5rem,4vw,2rem);letter-spacing:-.03em;margin:0 0 8px;line-height:1.15}
+.ps-hero-sub{color:var(--muted);font-size:var(--text-base);line-height:1.65;margin:0}
+
+.ps-steps{margin-bottom:24px;padding:20px;background:var(--surface-alt,var(--panel-2))}
+.ps-steps-label{margin-bottom:14px}
+.ps-step{display:flex;gap:12px;align-items:flex-start;padding:6px 0}
+.ps-step+.ps-step{margin-top:6px}
+.ps-step-num{
+  width:28px;height:28px;border-radius:8px;
+  background:var(--brand);color:var(--always-white,#fff);
+  display:flex;align-items:center;justify-content:center;
+  font-size:var(--text-sm);font-weight:700;flex-shrink:0
+}
+.ps-step strong{font-size:var(--text-sm);display:block}
+.ps-step-hint{margin:2px 0 0;font-size:var(--text-xs);color:var(--muted);line-height:1.5}
+
+.ps-benefits{display:grid;gap:8px;margin-bottom:28px}
+.ps-benefit{padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.ps-benefit-icon{flex-shrink:0;color:var(--brand);margin-top:1px}
+.ps-benefit-title{font-size:var(--text-sm);display:block;margin-bottom:2px}
+.ps-benefit-desc{font-size:var(--text-xs);color:var(--muted);line-height:1.5}
+
+.ps-cta{text-align:center;padding:28px 20px;margin-bottom:32px;background:var(--brand-bg);border:1px solid var(--brand-line)}
+.ps-cta-title{font-size:var(--text-md);display:block;margin-bottom:6px}
+.ps-cta-sub{color:var(--muted);font-size:var(--text-sm);line-height:1.6;margin:0 auto 16px;max-width:400px}
+
+.ps-faq{margin-bottom:40px}
+.ps-faq-title{font-size:var(--text-xl);letter-spacing:-.02em;margin:0 0 14px}
+.ps-faq-item{padding:0;overflow:hidden}
+.ps-faq-item+.ps-faq-item{margin-top:2px}
+.ps-faq-q{
+  width:100%;padding:14px 18px;background:none;border:none;
+  cursor:pointer;text-align:left;font-size:var(--text-sm);font-weight:600;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  color:var(--text);font-family:inherit;line-height:1.4
+}
+.ps-faq-q:hover{background:var(--panel-2)}
+.ps-faq-chevron{color:var(--muted);transition:transform .15s;flex-shrink:0}
+.ps-faq-chevron--open{transform:rotate(180deg)}
+.ps-faq-a{padding:0 18px 16px;font-size:var(--text-sm);color:var(--muted);line-height:1.7}
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS FILTER TABS (pl-tabstrip) — v102
+   ═══════════════════════════════════════════════════════════ */
+.pl-tabstrip{
+  display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  padding:4px 0 12px;margin-bottom:8px;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.pl-tabstrip::-webkit-scrollbar{display:none}
+.pl-tab{
+  flex-shrink:0;
+  padding:6px 14px;
+  border-radius:var(--r-pill,999px);
+  background:var(--panel-2,#f3f4f6);
+  border:1px solid transparent;
+  font-size:var(--text-xs,12px);
+  font-weight:600;
+  color:var(--muted,#6b7280);
+  cursor:pointer;
+  font-family:inherit;
+  white-space:nowrap;
+  transition:all .15s;
+  line-height:1.3;
+}
+.pl-tab:hover{background:var(--surface-2,#e5e7eb);color:var(--text)}
+.pl-tab.is-active{
+  background:var(--brand-bg,#fff7ed);
+  border-color:var(--brand-line,#fed7aa);
+  color:var(--brand,#f97316);
+}
+
+/* ── Quotes list search bar layout ── */
+.pl-search-safe{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+
+/* ── Payments page: dark mode ── */
+[data-theme="dark"] .ps-steps{background:var(--panel-2)}
+[data-theme="dark"] .ps-cta{background:rgba(249,115,22,.08);border-color:rgba(249,115,22,.2)}
+[data-theme="dark"] .ps-faq-q:hover{background:var(--surface-2)}
+
+/* ── Financing disclaimer: contrast fix inside orange tile ── */
+.pq-financing-above-fold .pl-financing-disclaimer{color:var(--doc-text-2,#4b5563);opacity:.65}
+
+/* ── Foreman: dark mode shadow for bottom-sheet ── */
+[data-theme="dark"] .fm-panel{box-shadow:0 -4px 32px rgba(0,0,0,.4);border-color:var(--line-2)}
+
+/* ── Quote detail: dark mode sticky tab shadow ── */
+@media(max-width:768px){
+  [data-theme="dark"] .qd-mobile-tabs{box-shadow:0 2px 8px rgba(0,0,0,.2);border-bottom-color:var(--line-2)}
+}
+
+/* ── Public quote footer: bottom padding so it doesn't collide with sticky CTA ── */
+.doc-footer{padding-bottom:20px}
+@media(max-width:680px){.doc-footer{padding-bottom:80px}}
+
+/* ── Tabstrip: dark mode ── */
+[data-theme="dark"] .pl-tab{background:var(--surface-2,#27272a);color:var(--muted)}
+[data-theme="dark"] .pl-tab:hover{background:var(--panel-2);color:var(--text)}
+[data-theme="dark"] .pl-tab.is-active{background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.25);color:var(--brand)}
