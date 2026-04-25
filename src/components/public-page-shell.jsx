@@ -1,3 +1,5 @@
+import { LogoMark } from './logo';
+
 const BANNER_STYLES = {
   info:    { background: 'rgba(59,130,246,.12)', border: '1px solid rgba(59,130,246,.25)', color: 'var(--blue-light, #60a5fa)' },
   success: { background: 'rgba(34,197,94,.12)',  border: '1px solid rgba(34,197,94,.25)',  color: 'var(--green-light, #4ade80)' },
@@ -25,8 +27,9 @@ export default function PublicPageShell({ contractorName, logoUrl, statusBanner,
           {stickyCtaContent}
         </div>
       )}
-      <div className="public-shell-footer">
-        Powered by <a href="https://punchlist.ca?ref=quote" target="_blank" rel="noreferrer">Punchlist</a>
+      <div className="public-shell-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        <LogoMark size={14} />
+        <span>Powered by <a href="https://punchlist.ca?ref=quote" target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>Punchlist</a></span>
       </div>
     </>
   );

@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { useUnsavedChanges } from '../hooks/use-unsaved-changes';
 import { supabase } from '../lib/supabase';
+import { useScrollFade } from '../hooks/use-scroll-fade';
 
 import { TRADES, normalizeTrade } from '../../shared/tradeBrain';
 import { CA_PROVINCES, US_STATES, REGION_LABELS } from '../lib/pricing';
@@ -117,6 +118,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { show: showToast } = useToast();
+  const settingsTabsRef = useScrollFade();
   const [form, setForm] = useState({
     full_name: '',
     company_name: '',
@@ -524,7 +526,7 @@ export default function SettingsPage() {
       }
     >
       {/* Tab bar */}
-      <div className="settings-tabs">
+      <div className="settings-tabs" ref={settingsTabsRef}>
         {[
           { id: 'profile', label: 'Profile' },
           { id: 'payments', label: 'Payments' },

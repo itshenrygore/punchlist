@@ -12,7 +12,8 @@ import { formatDateTime, currency } from '../lib/format';
 import BookingDrawer from '../components/booking-drawer';
 import ConfirmModal from '../components/confirm-modal';
 import { isSameDay, toLocalDatetime, DURATION_OPTIONS, findAvailableSlots, getMapsUrl, fmtDuration as fmtDur } from '../lib/scheduling';
-import { haptic } from '../hooks/use-mobile-ux';
+import { haptic, usePullToRefresh } from '../hooks/use-mobile-ux';
+import { useScrollRestore } from '../hooks/use-scroll-restore';
 
 /* ═══════════════════════════════════════════════════════════
    BookingsPage — v3: Premium Schedule Workspace
@@ -32,6 +33,19 @@ export default function BookingsPage() {
   const [quotes, setQuotes]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const skelStart = useRef(Date.now());
+
+  // v103 Phase 5: Scroll restoration + pull-to-refresh
+  useScrollRestore('/app/bookings');
+
+  function fetchBookings() {
+    if (!user) return;
+    setLoading(true);
+    Promise.all([listBookings(user.id), listCustomers(user.id), listQuotes(user.id)])
+      .then(([b, c, q]) => { setBookings(b || []); setCustomers(c || []); setQuotes(q || []); })
+      .finally(() => setLoading(false));
+  }
+
+  usePullToRefresh(fetchBookings);
 
   /* ── View state ── */
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);

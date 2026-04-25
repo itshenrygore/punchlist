@@ -48,6 +48,8 @@ export function usePullToRefresh(onRefresh, { threshold = 80, enabled = true } =
   const startY = useRef(0);
   const pulling = useRef(false);
   const indicator = useRef(null);
+  const onRefreshRef = useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
 
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
@@ -84,7 +86,7 @@ export function usePullToRefresh(onRefresh, { threshold = 80, enabled = true } =
       }
       if (dy >= threshold) {
         haptic('medium');
-        onRefresh?.();
+        onRefreshRef.current?.();
       }
     }
     document.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -95,5 +97,5 @@ export function usePullToRefresh(onRefresh, { threshold = 80, enabled = true } =
       document.removeEventListener('touchmove', onTouchMove);
       document.removeEventListener('touchend', onTouchEnd);
     };
-  }, [onRefresh, threshold, enabled]);
+  }, [threshold, enabled]);
 }

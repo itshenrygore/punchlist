@@ -16,7 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" id="meta-color-scheme" content="light dark" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
@@ -26,10 +26,12 @@
     <script>
       (function(){
         var t='light';
-        try{var s=localStorage.getItem('pl_theme');if(s==='dark'||s==='light')t=s}catch(e){}
+        try{var s=localStorage.getItem('pl_theme');if(s==='dark'||s==='light')t=s;else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark'}catch(e){}
         document.documentElement.setAttribute('data-theme',t);
         var m=document.getElementById('meta-theme-color');
         if(m)m.content=t==='dark'?'#0F0F10':'#F6F5F2';
+        var cs=document.getElementById('meta-color-scheme');
+        if(cs)cs.content=t==='dark'?'dark':'light';
       })();
     </script>
 

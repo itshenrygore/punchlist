@@ -36,7 +36,7 @@ import HeadlineStat from '../components/dashboard/headline-stat';
 import EmptyState from '../components/dashboard/empty-state';
 import { useToast } from '../components/toast';
 import { useAuth } from '../hooks/use-auth';
-import { haptic } from '../hooks/use-mobile-ux';
+import { haptic, usePullToRefresh } from '../hooks/use-mobile-ux';
 import { supabase } from '../lib/supabase';
 import {
   listQuotes, listBookings, listInvoices, listCustomers,
@@ -281,6 +281,24 @@ export default function DashboardPage() {
   /* ── Job input ── */
   const jobInputRef = useRef(null);
   const [jobInput, setJobInput] = useState('');
+
+  // v103 Phase 5: Pull-to-refresh on dashboard
+  usePullToRefresh(() => {
+    if (!user) return;
+    setBundleLoading(true);
+    Promise.all([fetchDashboardBundle(user.id), getProfile(user.id)])
+      .then(([bundleResult, profile]) => {
+        if (bundleResult.source === 'rpc' && bundleResult.data) {
+          setBundle(bundleResult.data);
+        } else {
+          setUsingFallback(true);
+          Promise.all([listQuotes(user.id), listBookings(user.id), listInvoices(user.id), listCustomers(user.id)])
+            .then(([q, b, inv, c]) => { setQuotes(q || []); setBookings(b || []); setInvoiceList(inv || []); setAllCustomers(c || []); });
+        }
+        if (profile) setUserProfile(profile);
+      })
+      .finally(() => setBundleLoading(false));
+  });
 
   /* ── Load dismissed items ── */
   useEffect(() => {

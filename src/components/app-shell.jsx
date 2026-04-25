@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { useTheme } from '../contexts/theme-context';
 import GlobalSearch from './global-search';
@@ -12,9 +12,12 @@ import { createQuote } from '../lib/api';
 import useScrollLock from '../hooks/use-scroll-lock';
 import { useScrollToTop } from '../hooks/use-mobile-ux';
 import { useToast } from './toast';
+import { useKeyboardVisible } from '../hooks/use-keyboard-visible';
+import { useHideOnScroll } from '../hooks/use-hide-on-scroll';
 
 export default function AppShell({ title, subtitle, children, actions, hideTitle = false }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signOut, user } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const { show: showToast } = useToast();
@@ -25,6 +28,13 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
   useScrollToTop(headerRef);
   const [offlineCount, setOfflineCount] = useState(0);
   const [companyName, setCompanyName] = useState('');
+
+  // v103 Phase 3: Keyboard detection — sets data-keyboard="open" on <html>
+  useKeyboardVisible();
+
+  // v103 Phase 3: Auto-hide topbar on scroll down (mobile only)
+  useHideOnScroll();
+
   // v100 M4: Classic view escape hatch (§9.4). Shown for 30 days post-v100 release.
   // Release date: 2026-04-14. Remove this block after 2026-05-14.
   const V100_RELEASE = new Date('2026-04-14T00:00:00Z');
@@ -54,15 +64,11 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
   }, [mobileOpen]);
 
   // v100 Phase 9 (UX-006): one-shot tip introducing the command palette.
-  // Shown once per browser, on desktop only (where ⌘K is ergonomic), a
-  // few seconds after the shell mounts so it doesn't compete with the
-  // onboarding wizard or page loads.
   useEffect(() => {
     if (!user) return;
     try {
       if (localStorage.getItem('pl_cmdk_tip_seen')) return;
     } catch { /* storage blocked — show anyway, once */ }
-    // Skip on narrow viewports — ⌘K is a desktop affordance
     if (typeof window !== 'undefined' && window.innerWidth < 900) return;
     const t = setTimeout(() => {
       showToast('Tip: press \u2318 K anywhere to search or run a command.', 'info');
@@ -81,7 +87,6 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
         }).catch(e => console.warn('[PL]', e));
       }
     });
-    // Check for pending offline drafts on mount
     getOfflineDrafts().then(d => setOfflineCount(d.length)).catch(e => console.warn('[PL]', e));
     return cleanup;
   }, [user]);
@@ -91,12 +96,11 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
     navigate('/');
   }
 
-  // v100 M4: toggle dashboard version — writes to profile + localStorage
+  // v100 M4: toggle dashboard version
   async function handleClassicView() {
     const next = dashVersion === 'v2' ? 'v1' : 'v2';
     setDashVersion(next);
     try { localStorage.setItem('pl_dash_version', next); } catch { /* no-op */ }
-    // Persist to profile so it survives cache clear
     if (user) {
       import('../lib/supabase').then(({ supabase }) => {
         supabase.from('profiles').update({ dashboard_version: next }).eq('id', user.id).then(() => {});
@@ -105,7 +109,6 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
     if (next === 'v1') {
       import('../lib/analytics').then(({ track }) => track('dashboard_downgrade', { from: 'v2', to: 'v1' }));
     }
-    // Reload so the router picks up the new version
     window.location.reload();
   }
 
@@ -191,7 +194,7 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
           )}
           <button className="btn btn-secondary btn-sm app-sidebar-signout" type="button" onClick={handleSignOut}>Sign out</button>
         </aside>
-        <main id="main-content" className="app-main app-main-padded app-content">{children}</main>
+        <main id="main-content" className="app-main app-main-padded app-content app-content-enter" key={location.pathname}>{children}</main>
       </div>
 
       <MobileNav />

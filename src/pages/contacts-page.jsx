@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import AppShell from '../components/app-shell';
@@ -13,6 +13,8 @@ import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { currency, formatDateTime, formatDate } from '../lib/format';
 import { toneForStatus, chipForStatus } from '../lib/workflow';
+import { usePullToRefresh } from '../hooks/use-mobile-ux';
+import { useScrollRestore } from '../hooks/use-scroll-restore';
 
 const emptyForm = { name: '', email: '', phone: '', address: '', notes: '' };
 
@@ -82,6 +84,21 @@ export default function ContactsPage() {
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [mergeTargetId, setMergeTargetId] = useState('');
   const [merging, setMerging] = useState(false);
+
+  // v103 Phase 5: Scroll restoration + pull-to-refresh
+  useScrollRestore('/app/contacts');
+
+  function fetchContacts() {
+    if (!user) return;
+    setLoading(true);
+    Promise.all([listCustomers(user.id), listQuotes(user.id), listBookings(user.id), listInvoices(user.id)])
+      .then(([c, q, b, inv]) => {
+        setCustomers(c || []); setQuotes(q || []); setBookings(b || []); setInvoices(inv || []);
+      })
+      .finally(() => setLoading(false));
+  }
+
+  usePullToRefresh(fetchContacts);
 
   useEffect(() => {
     if (!user) return;

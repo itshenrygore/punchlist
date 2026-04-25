@@ -13,6 +13,8 @@ import { useToast } from '../components/toast';
 import { usePullToRefresh, haptic } from '../hooks/use-mobile-ux';
 import { estimateMonthly, showFinancing } from '../lib/financing';
 import { Card, PageHeader, RevealOnView } from '../components/ui';
+import { useScrollFade } from '../hooks/use-scroll-fade';
+import { useScrollRestore } from '../hooks/use-scroll-restore';
 
 const ALL_STATUSES = [
   'draft', 'sent', 'viewed', 'approved', 'approved_pending_deposit',
@@ -167,6 +169,8 @@ export default function QuotesListPage() {
   const { user } = useAuth();
   const { show: toast } = useToast();
   const [searchParams] = useSearchParams();
+  const tabstripRef = useScrollFade();
+  useScrollRestore('/app/quotes');
   const [quotes, setQuotes]               = useState([]);
   const [loading, setLoading]             = useState(true);
   const [search, setSearch]               = useState('');
@@ -280,7 +284,7 @@ export default function QuotesListPage() {
       />
 
       {/* ── Status tabs (all screen sizes, scrollable on mobile) ── */}
-      <div className="pl-tabstrip" role="tablist" aria-label="Filter quotes by status">
+      <div className="pl-tabstrip" ref={tabstripRef} role="tablist" aria-label="Filter quotes by status">
         {STATUS_PILLS.map(p => {
           const active = statusFilter === p.value;
           return (

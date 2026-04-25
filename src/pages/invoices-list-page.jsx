@@ -8,6 +8,8 @@ import { listInvoices } from '../lib/api';
 import { currency, formatDate, exportInvoicesCSV } from '../lib/format';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
+import { usePullToRefresh } from '../hooks/use-mobile-ux';
+import { useScrollRestore } from '../hooks/use-scroll-restore';
 
 const STATUS_FILTERS = [
   { value: 'all',     label: 'All' },
@@ -120,6 +122,18 @@ export default function InvoicesListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // v103 Phase 5: Scroll restoration + pull-to-refresh
+  useScrollRestore('/app/invoices');
+
+  function fetchInvoices() {
+    if (!user) return;
+    setLoading(true);
+    listInvoices(user.id)
+      .then(setInvoices)
+      .catch(() => toast('Could not load invoices', 'error'))
+      .finally(() => setLoading(false));
+  }
+
   useEffect(() => {
     if (!user) return;
     listInvoices(user.id)
@@ -127,6 +141,8 @@ export default function InvoicesListPage() {
       .catch(() => toast('Could not load invoices', 'error'))
       .finally(() => setLoading(false));
   }, [user]);
+
+  usePullToRefresh(fetchInvoices);
 
   const filtered = useMemo(() => {
     let list = invoices;

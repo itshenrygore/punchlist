@@ -250,22 +250,14 @@ body {
   background: #FFFFFF;
 }
 
-/* Light mode nav/sidebar */
-[data-theme="dark"] .app-topbar {
-  background: rgba(246,245,242,.92);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border-color: rgba(17,24,39,.08);
-}
-[data-theme="dark"] .app-sidebar {
-  background: #FFFFFF;
-  border-color: rgba(17,24,39,.08);
-}
-[data-theme="dark"] .mobile-bottom-nav {
-  background: rgba(255,255,255,.95);
-  backdrop-filter: blur(16px);
-  border-color: rgba(17,24,39,.08);
-}
+/* v103: REMOVED — These inverted overrides are superseded by Phase 2 rules
+   at end of file. Commented out to prevent cascade conflicts.
+   See: "v103: TOPBAR THEME FIX + MOBILE NAV POLISH" section. */
+/* [REMOVED — Phase 2 supersedes]
+[data-theme="dark"] .app-topbar { ... }
+[data-theme="dark"] .app-sidebar { ... }
+[data-theme="dark"] .mobile-bottom-nav { ... }
+*/
 
 /* Light mode panels */
 [data-theme="dark"] .panel {
@@ -357,30 +349,13 @@ body {
   background: #fff;
 }
 
-/* Topbar & sidebar */
-[data-theme="dark"] .app-topbar {
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(20px) saturate(1.6);
-  border-bottom-color: rgba(17,24,39,.08);
-}
-[data-theme="dark"] .app-sidebar {
-  background: #fff;
-  border-right-color: rgba(17,24,39,.08);
-}
-[data-theme="dark"] .app-sidebar a {
-  color: #667085;
-}
-[data-theme="dark"] .app-sidebar a:hover,
-[data-theme="dark"] .app-sidebar a.active {
-  color: #161616;
-  background: rgba(231,106,60,.06);
-}
+/* [REMOVED — Phase 2 supersedes] Topbar & sidebar inverted overrides */
+/*
+[data-theme="dark"] .app-topbar { background: rgba(255,255,255,.92); ... }
+[data-theme="dark"] .app-sidebar { background: #fff; ... }
+*/
 
-/* Mobile nav */
-[data-theme="dark"] .mobile-bottom-nav {
-  background: rgba(255,255,255,.95);
-  border-top-color: rgba(17,24,39,.08);
-}
+/* Mobile nav — menu/overlay keep their inverted rules (not handled by Phase 2) */
 [data-theme="dark"] .mobile-menu {
   background: #fff;
 }
@@ -515,33 +490,7 @@ body {
   box-shadow: 0 4px 16px rgba(16,24,40,.1);
 }
 
-/* Topbar light overrides */
-[data-theme="dark"] .app-topbar {
-  background: rgba(246,245,242,.92);
-  border-bottom-color: rgba(17,24,39,.08);
-  box-shadow: 0 1px 0 rgba(0,0,0,.03);
-}
-
-/* Sidebar */
-[data-theme="dark"] .app-sidebar {
-  background: #FFFFFF;
-  border-right-color: rgba(17,24,39,.08);
-}
-[data-theme="dark"] .sidebar-link {
-  color: #667085;
-}
-[data-theme="dark"] .sidebar-link:hover,
-[data-theme="dark"] .sidebar-link.active {
-  background: rgba(231,106,60,.05);
-  color: #161616;
-}
-
-/* Mobile bottom nav */
-[data-theme="dark"] .mobile-bottom-nav {
-  background: rgba(255,255,255,.95);
-  border-top-color: rgba(17,24,39,.08);
-  box-shadow: 0 -1px 0 rgba(0,0,0,.03);
-}
+/* [REMOVED — Phase 2 supersedes] Topbar, sidebar, bottom nav inverted overrides */
 
 /* Quote builder panels */
 [data-theme="dark"] .qb-intake,
@@ -5142,7 +5091,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 /* ── Global Touch Targets — 44px minimum on mobile ── */
 @media(max-width:768px){
   .btn{min-height:44px}
-  .btn-sm{min-height:38px;padding:8px 14px}
+  .btn-sm{min-height:44px;padding:10px 14px}
   .btn-lg{min-height:52px;padding:14px 24px;font-size:16px}
   .btn-primary{font-weight:700}
 }
@@ -5170,7 +5119,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 @media(max-width:768px){
   .mobile-bottom-nav{height:62px;padding:2px 8px env(safe-area-inset-bottom,0);gap:0}
   .mobile-nav-item{gap:3px;font-size:inherit;border-radius:12px;margin:2px;transition:color .15s,background .15s}
-  .mobile-nav-item.active{background:var(--brand-bg)}
+  .mobile-nav-item.active{background:none} /* v103: pill highlight moved to .mobile-nav-icon (Phase 2) */
   .mobile-nav-icon{font-size:18px}
   .mobile-nav-label{font-size:10px;font-weight:700;letter-spacing:.01em}
   .mobile-nav-action{width:48px;height:48px;margin:3px 2px;border-radius:16px;font-size:24px;box-shadow:0 4px 14px rgba(249,115,22,.35)}
@@ -7875,9 +7824,12 @@ kbd.pl-kbd {
 
 /* (Print signature blocks now provided by document.css import) */
 
-/* ── Quote detail mobile tabs — sticky positioning ── */
+/* ── Quote detail mobile tabs — scroll with content (v103 Phase 3) ── */
+/* Previously sticky; changed to flow with content to reclaim ~42px of viewport.
+   On iPhone 8 (667px): topbar(48) + nav(58) = 106px fixed. Without sticky tabs
+   and with auto-hide topbar, we reclaim up to 90px during scroll. */
 @media(max-width:768px){
-  .qd-mobile-tabs{position:sticky;top:0;z-index:10;background:var(--panel);padding-top:4px;border-bottom:2px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .qd-mobile-tabs{position:relative;top:auto;z-index:1;background:var(--panel);padding-top:4px;border-bottom:2px solid var(--line);box-shadow:none}
 }
 
 /* ── Foreman: bottom-sheet overlay — flush bottom on mobile ── */
@@ -7996,3 +7948,632 @@ kbd.pl-kbd {
 [data-theme="dark"] .pl-tab{background:var(--surface-2,#27272a);color:var(--muted)}
 [data-theme="dark"] .pl-tab:hover{background:var(--panel-2);color:var(--text)}
 [data-theme="dark"] .pl-tab.is-active{background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.25);color:var(--brand)}
+
+
+/* ══════════════════════════════════════════════════════════════
+   v103: iOS ZOOM FIX + TOUCH TARGET COMPLIANCE
+   Phase 1 — Ship-blocking mobile UX fixes
+   ══════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   iOS ZOOM PREVENTION — additional inputs
+   These were missed by prior passes.
+   Bare element selectors are the nuclear catch-all:
+   any <input>, <textarea>, or <select> without a class
+   will still get 16px to prevent iOS zoom.
+   ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .textarea-sm,
+  .id-textarea,
+  textarea,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="number"],
+  input:not([type]),
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Ensure padding isn't cramped with the larger font */
+  .textarea-sm {
+    padding: 10px 14px;
+  }
+  .id-textarea {
+    padding: 12px 14px;
+  }
+}
+
+
+/* ────────────────────────────────────────────
+   TOUCH TARGETS — 44px minimum on mobile
+   Apple HIG + Material Design compliance.
+   ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* ── Pill / tab filters ── */
+  .pl-tab,
+  .bk-tab,
+  .ct-tab,
+  .settings-tab {
+    min-height: 44px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* ── Quote builder small buttons ── */
+  .qb-reuse-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .qb-details-toggle {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  /* ── Schedule rail toggle ── */
+  .sched-rail-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* ── Line-item include/exclude dot — expand hit area, keep visual size ──
+       The dot stays 22px visually but gets a 44px tap zone via pseudo-element */
+  .lr-dot {
+    position: relative;
+  }
+  .lr-dot::after {
+    content: '';
+    position: absolute;
+    inset: -11px;
+    /* expands 22px dot to 44px touch target */
+  }
+
+  /* ct-csv-btn, ct-toggle-btn — already at 44px (line ~6337) */
+
+  /* ── Checkboxes — enlarge tap area, keep visual at 14px ── */
+  .qb-ck,
+  .toggle-row {
+    min-height: 44px;
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+  }
+  .qb-ck input[type="checkbox"],
+  .toggle-row input[type="checkbox"] {
+    position: relative;
+    width: 18px;
+    height: 18px;
+  }
+  .qb-ck input[type="checkbox"]::after,
+  .toggle-row input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    inset: -13px;
+    /* expands to 44px touch target */
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   v103: TOPBAR THEME FIX + MOBILE NAV POLISH
+   Phase 2 — Visual consistency across light/dark themes
+   ══════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   FIX 1: Topbar — theme-aware glass background
+
+   Problem: The base rule (line 727) hardcodes rgba(15,15,16,.92) — dark.
+   Line 4423 overrides with color-mix() which is correct but requires
+   Chrome 111+ / Safari 16.2+ / Firefox 113+. iPhone 8 users on iOS 15
+   (Safari 15) don't get color-mix, falling back to the dark glass.
+
+   Solution: Add an explicit light-theme fallback BEFORE the color-mix
+   rule. Browsers that support color-mix will use line 4423 (later in
+   cascade). Browsers that don't will land on this safe rgba fallback.
+   ──────────────────────────────────────────── */
+
+/* Light-theme glass — fallback for browsers without color-mix() */
+.app-topbar {
+  background: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .03);
+}
+
+/* Dark theme topbar — correct dark glass (overrides inverted rules at 254/361/519) */
+[data-theme="dark"] .app-topbar {
+  background: rgba(15, 15, 16, .92);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-bottom-color: rgba(255, 255, 255, .06);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .03);
+}
+
+/* ────────────────────────────────────────────
+   FIX 2: Mobile bottom nav — theme-aware
+   Base at line 1695 hardcodes dark. We add light and dark variants.
+   ──────────────────────────────────────────── */
+
+/* Light theme bottom nav */
+.mobile-bottom-nav {
+  background: rgba(255, 255, 255, .95);
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+}
+
+/* Dark theme bottom nav — correct dark glass (overrides inverted rules at 264/380/540) */
+[data-theme="dark"] .mobile-bottom-nav {
+  background: rgba(15, 15, 16, .97);
+  border-top-color: rgba(255, 255, 255, .06);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, .03);
+}
+
+/* ────────────────────────────────────────────
+   FIX 3: Mobile nav active state — pill background
+   Currently only color change. Add subtle pill highlight.
+   ──────────────────────────────────────────── */
+.mobile-nav-item.active {
+  color: var(--brand);
+}
+.mobile-nav-item.active .mobile-nav-icon {
+  background: var(--brand-bg);
+  border-radius: var(--r-pill);
+  padding: 4px 14px;
+  transform: none; /* Pill background is the active indicator — no scale needed.
+                      Scale inside a pill looks oversized. Matches iOS tab bar. */
+  transition: background .2s ease, transform .15s ease;
+}
+.mobile-nav-item.active .mobile-nav-icon svg {
+  stroke: var(--brand);
+}
+/* Keep inactive icons same padding so layout doesn't shift on tab switch */
+.mobile-nav-item:not(.active) .mobile-nav-icon {
+  padding: 4px 14px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  transition: background .2s ease;
+}
+/* Dark mode active pill */
+[data-theme="dark"] .mobile-nav-item.active .mobile-nav-icon {
+  background: rgba(231, 106, 60, .15);
+}
+
+/* ────────────────────────────────────────────
+   FIX 4: Dark mode color mismatch —
+   Ensure nav text/icons are properly themed
+   ──────────────────────────────────────────── */
+.mobile-nav-item {
+  color: var(--muted);
+}
+.mobile-nav-label {
+  color: inherit;
+}
+[data-theme="dark"] .mobile-nav-item {
+  color: rgba(255, 255, 255, .45);
+}
+[data-theme="dark"] .mobile-nav-item.active {
+  color: var(--brand);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   v103: STICKY BAR CONSOLIDATION + KEYBOARD HANDLING
+   Phase 3 — Viewport reclaim, keyboard safety, FAB awareness
+   ══════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   FIX 1: iOS/Android keyboard handling
+   When the software keyboard opens, hide bottom nav and ALL
+   fixed CTA bars so they don't sit behind the keyboard.
+   data-keyboard attribute is set by useKeyboardVisible().
+   ──────────────────────────────────────────── */
+[data-keyboard="open"] .mobile-bottom-nav,
+[data-keyboard="open"] .qd-mobile-send-bar,
+[data-keyboard="open"] .qb-mobile-bar,
+[data-keyboard="open"] .rq-footer,
+[data-keyboard="open"] .doc-sticky-cta {
+  display: none !important;
+}
+
+/* Foreman FAB also hides when keyboard is open */
+[data-keyboard="open"] .fm-trigger {
+  display: none !important;
+}
+
+/* ────────────────────────────────────────────
+   FIX 2: Foreman FAB position awareness (refinement)
+   Existing :has() rules (~line 7842) push FAB up when
+   qd-mobile-send-bar is visible. Add missing selectors
+   for qb-mobile-bar and rq-footer.
+   ──────────────────────────────────────────── */
+@media(max-width:768px){
+  .app-shell:has(.qb-mobile-bar) .fm-trigger {
+    bottom: 200px !important;
+  }
+  .app-shell:has(.rq-footer) .fm-trigger {
+    bottom: 200px !important;
+  }
+}
+
+/* ────────────────────────────────────────────
+   FIX 3: Auto-hide topbar on scroll down (mobile only)
+   Reclaims 48px of viewport on scroll.
+   data-scrolled="down" is set by useHideOnScroll().
+   ──────────────────────────────────────────── */
+@media(max-width:768px){
+  .app-topbar {
+    transition: transform .25s ease, box-shadow .25s ease;
+    will-change: transform;
+  }
+
+  /* Smooth hide when keyboard opens (Phase 3 keyboard handling) */
+  .mobile-bottom-nav {
+    transition: opacity .2s ease, transform .2s ease;
+    will-change: transform;
+  }
+
+  [data-scrolled="down"] .app-topbar {
+    transform: translateY(-100%);
+    box-shadow: none;
+  }
+
+  /* When topbar hides, sticky elements anchored to top:56px
+     need to slide up to top:0 to avoid a gap */
+  [data-scrolled="down"] .settings-tabs {
+    top: 0;
+    transition: top .25s ease;
+  }
+
+  /* btn--xs — too small for mobile touch (24px). Bump to 44px */
+  .btn--xs {
+    min-height: 44px;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* FIX 3b: Dark mode mobile tabs — un-sticky cleanup.
+   Overrides the old shadow rule at ~line 7988 which was for
+   the sticky variant. No shadow needed when flowing. */
+[data-theme="dark"] .qd-mobile-tabs {
+  box-shadow: none;
+  border-bottom-color: var(--line-2);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   v103: QUOTE BUILDER LINE ITEMS + SCROLL AFFORDANCES
+   Phase 4 — Mobile line item vertical stack, scroll fade hints
+   ══════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   FIX 1: Quote builder line items — vertical stack on mobile
+
+   Desktop: rq-card-top has [name | total] on one line, then
+   rq-card-controls has [qty stepper × price | actions] below.
+   At 375px, everything gets squeezed.
+
+   Mobile: Stack into two clear rows:
+     Row 1: Name input (full width) — total aligned right
+     Row 2: Qty stepper × Price = Actions
+   The card feels more spacious, inputs are large enough
+   to tap and type comfortably.
+
+   All font sizes ≥ 16px to prevent iOS Safari auto-zoom on focus.
+   All interactive elements ≥ 44px touch target (Apple HIG).
+   ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Card itself — generous padding, remove left indent
+     used for drag handle (hidden on mobile) */
+  .rq-card {
+    padding: 14px 12px !important;
+  }
+
+  /* Hide drag handle on mobile — drag reorder isn't practical
+     on touch devices. Long-press-to-reorder could be added
+     later but the handle grip pattern doesn't work. */
+  .rq-card-drag-handle {
+    display: none;
+  }
+
+  /* Main grid — stack children vertically with breathing room */
+  .rq-card-main {
+    display: grid;
+    gap: 10px;
+  }
+
+  /* Row 1: Name fills width, total sits right-aligned */
+  .rq-card-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Name input: 16px to prevent iOS zoom, generous tap area */
+  .rq-card-name {
+    font-size: 16px !important; /* iOS zoom prevention */
+    font-weight: 700;
+    flex: 1;
+    min-width: 0;
+    padding: 6px 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .rq-card-line-total {
+    font-size: 14px;
+    font-weight: 800;
+    min-width: 54px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Row 2: Controls — qty, ×, price, actions in a flex row.
+     flex-wrap: wrap ensures graceful fallback on 320px screens
+     (e.g. iPhone 5/SE 1st gen) instead of overflowing. */
+  .rq-card-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Qty stepper — touch-friendly sizing (44px buttons) */
+  .rq-qty-stepper {
+    flex-shrink: 0;
+    transform: none; /* override scale-down from earlier breakpoints */
+  }
+  .rq-qty-btn {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 18px;
+  }
+  .rq-qty-val {
+    min-width: 34px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* × label — subtle separator */
+  .rq-card-times {
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Price input — flex to fill remaining space.
+     16px font to prevent iOS zoom on focus. */
+  .rq-price-wrap {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+  }
+  .rq-card-price-input {
+    width: 100% !important;
+    font-size: 16px !important; /* iOS zoom prevention */
+    padding: 8px 8px 8px 2px;
+    min-height: 44px;
+  }
+  .rq-price-prefix {
+    font-size: 14px;
+    padding-left: 10px;
+  }
+
+  /* Action buttons — 44px touch targets.
+     Sit at the end of controls row. */
+  .rq-card-item-actions {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .rq-card-action-btn {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  /* Notes input — full width, 16px to prevent iOS zoom */
+  .rq-card-notes {
+    font-size: 16px !important; /* iOS zoom prevention */
+    padding: 10px 12px;
+    margin-top: 4px;
+  }
+
+  /* Add-note button — easy to tap */
+  .rq-card-add-note {
+    font-size: 13px;
+    padding: 6px 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Price hint — readable but secondary */
+  .rq-price-hint {
+    font-size: 11px;
+    padding: 4px 0 0;
+  }
+}
+
+/* 375px and below — tighter gaps but KEEP touch targets ≥ 44px.
+   Only spacing and non-interactive sizing shrinks here.
+   We do NOT drop button/input sizes below 44px. */
+@media (max-width: 375px) {
+  /* Tighter card padding — still has breathing room but saves
+     vertical space when stacking many items on a small screen */
+  .rq-card {
+    padding: 12px 10px !important;
+  }
+  .rq-card-main {
+    gap: 8px;
+  }
+  .rq-card-controls {
+    gap: 6px;
+  }
+  /* Qty value display (non-interactive) can be narrower */
+  .rq-qty-val {
+    min-width: 28px;
+  }
+  /* Line total (non-interactive) can be smaller */
+  .rq-card-line-total {
+    font-size: 13px;
+    min-width: 44px;
+  }
+}
+
+
+/* ────────────────────────────────────────────
+   FIX 2: Horizontal scroll fade affordance
+
+   When a scrollable strip (.pl-tabstrip, .settings-tabs)
+   has content off-screen to the right, a subtle gradient
+   mask fades the right edge, hinting "scroll for more."
+
+   Three states managed by useScrollFade() hook:
+   - Default (no class)  → right fade only (at start)
+   - .scrolled-mid       → both left and right fade
+   - .scrolled-end       → no fade (at end, or no overflow)
+   ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Default state: at scroll start, content hidden to the right */
+  .pl-tabstrip,
+  .settings-tabs {
+    -webkit-mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
+  }
+
+  /* Scrolled to middle — content hidden on both sides */
+  .pl-tabstrip.scrolled-mid,
+  .settings-tabs.scrolled-mid {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 85%, transparent 100%);
+  }
+
+  /* Scrolled to end or no overflow — no mask needed */
+  .pl-tabstrip.scrolled-end,
+  .settings-tabs.scrolled-end {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* ────────────────────────────────────────────
+   FIX 3: Swipeable row discovery hint
+
+   The SwipeableRow component already has a built-in peek
+   animation (swipeable-row.jsx lines 29-46) that slides
+   the first row 24px left on first visit to teach the
+   swipe gesture, stored in sessionStorage('pl_swipe_taught').
+
+   The edge hint bar (.swipeable-hint) is also built-in.
+
+   No additional CSS changes needed — this is already
+   implemented. Phase 4 just documents the existing behavior.
+   ──────────────────────────────────────────── */
+
+
+/* ══════════════════════════════════════════════════════════════
+   v103: QUOTE DETAIL SIDEBAR ON MOBILE + PAGE TRANSITIONS
+   Phase 5 — Mobile "More" tab, page transition animation,
+   scroll restoration support, pull-to-refresh hooks
+   ══════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   FIX 1: Quote Detail — "More" tab (third mobile tab)
+
+   On mobile, the sidebar (photos, PDF, share, scope changes,
+   more actions) was only accessible by scrolling far down.
+   Now it's a clean third tab in the mobile tab bar.
+
+   Three zones controlled by mobileTab state:
+   - 'details'  → show qd-scope, hide qd-feed + qd-sidebar
+   - 'messages' → show qd-feed, hide qd-scope + qd-sidebar
+   - 'more'     → show qd-sidebar, hide qd-scope + qd-feed
+   ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* When "More" tab is active, hide the other zones */
+  .qd-zone-sidebar { display: none !important; }
+
+  /* When "More" is selected, sidebar flows inline instead of aside */
+  .qd-sidebar--mobile-inline {
+    display: grid !important;
+    position: static;
+    gap: 10px;
+  }
+
+  /* Badge on the "More" tab — subtle dot for photo/amendment count */
+  .qd-mobile-tab-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand);
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+}
+
+/* On desktop, the "More" tab button is hidden */
+.qd-mobile-tab--more {
+  display: none;
+}
+@media (max-width: 768px) {
+  .qd-mobile-tab--more {
+    display: flex;
+  }
+}
+
+
+/* ────────────────────────────────────────────
+   FIX 2: Page transition animation
+
+   Subtle fade-up on route change. The key prop on
+   .app-content-enter triggers re-mount on navigation,
+   which fires the CSS animation.
+
+   200ms is fast enough to feel instant but visible
+   enough to smooth the context switch.
+   ──────────────────────────────────────────── */
+.app-content-enter {
+  animation: pageIn .2s ease-out;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .app-content-enter {
+    animation: none;
+  }
+}
+
+
+/* ────────────────────────────────────────────
+   FIX 3: Pull-to-refresh indicator
+   Already styled by existing .ptr-indicator rules.
+   No additional CSS needed — just documenting that
+   the hook is now wired to all list pages.
+   ──────────────────────────────────────────── */

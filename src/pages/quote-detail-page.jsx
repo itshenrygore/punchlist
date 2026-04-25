@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Phone, MessageSquare, Mail, Link2, Eye, FileText, Calendar, Check, RefreshCw, Pencil, Camera, X } from 'lucide-react';
+import { Phone, MessageSquare, Mail, Link2, Eye, FileText, Calendar, Check, RefreshCw, Pencil, Camera, X, MoreHorizontal } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import { QuoteDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
@@ -56,7 +56,7 @@ export default function QuoteDetailPage() {
   const [userProfile, setUserProfile] = useState(null);
   const [upgradePrompt, setUpgradePrompt] = useState(null);
   const [scopeOpen, setScopeOpen] = useState(true);
-  const [mobileTab, setMobileTab] = useState('details'); // 'details' | 'messages'
+  const [mobileTab, setMobileTab] = useState('details'); // 'details' | 'messages' | 'more'
   const feedRef = useRef(null);
   const mobileTabBarRef = useRef(null);
   // v100 M3: Follow-up / nudge modal
@@ -456,6 +456,10 @@ export default function QuoteDetailPage() {
               Messages
               {(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? <span className="qd-mobile-tab-badge">{mc}</span> : null; })()}
             </button>
+            <button type="button" className={`qd-mobile-tab qd-mobile-tab--more${mobileTab === 'more' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('more')}>
+              <MoreHorizontal size={14} style={{ verticalAlign: 'middle', marginRight: 3 }} />More
+              {(photos.length > 0 || amendments.length > 0 || additionalWork.length > 0) && <span className="qd-mobile-tab-dot" />}
+            </button>
           </div>
 
           {/* ══════════ ZONE 1: STATUS HERO ══════════ */}
@@ -558,7 +562,7 @@ export default function QuoteDetailPage() {
           </div>
 
           {/* ══════════ ZONE 2: COMMUNICATION ══════════ */}
-          <div className={`qd-feed${mobileTab === 'details' ? ' qd-zone-messages' : ''}`}>
+          <div className={`qd-feed${mobileTab !== 'messages' ? ' qd-zone-messages' : ''}`}>
             <div className="qd-feed-header"><span style={{fontWeight:700,fontSize:"var(--text-base)"}}><MessageSquare size={13} style={{verticalAlign:"middle",marginRight:6}}/>Messages</span><span className="qb-muted fs-12">{(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? `${mc} message${mc !== 1 ? 's' : ''}` : ''; })()}</span></div>
             {/* Reply input first — most important action (hide on paid/invoiced — job is done) */}
             {!isDraft && hasShareToken && !['paid','invoiced'].includes(quote?.status) && (
@@ -592,7 +596,7 @@ export default function QuoteDetailPage() {
           </div>
 
           {/* ══════════ ZONE 3: SCOPE DETAILS (collapsed) ══════════ */}
-          <div className={`qd-scope${mobileTab === 'messages' ? ' qd-zone-details' : ''}`}>
+          <div className={`qd-scope${mobileTab !== 'details' ? ' qd-zone-details' : ''}`}>
             <button type="button" className="qd-scope-toggle pl-toggle-row" onClick={()=>setScopeOpen(v=>!v)} style={{ width:'100%', background:'none', border:'none', fontFamily:'inherit' }}>
               <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{display:'inline-flex'}}><FileText size={14}/></span><span style={{fontWeight:700,fontSize: 'var(--text-base)'}}>Scope & Pricing</span><span className="qb-muted fs-12">{(quote.line_items||[]).length} items · {currency(quote.total)}</span></div>
               <span className={`pl-chevron ${scopeOpen ? 'pl-chevron--open' : ''}`} />
@@ -607,8 +611,8 @@ export default function QuoteDetailPage() {
           </div>
         </section>
 
-        {/* ── SIDEBAR ── */}
-        <aside className="qd-sidebar">
+        {/* ── SIDEBAR — visible on desktop always, on mobile only in "More" tab ── */}
+        <aside className={`qd-sidebar${mobileTab === 'more' ? ' qd-sidebar--mobile-inline' : ''}${mobileTab !== 'more' ? ' qd-zone-sidebar' : ''}`}>
           {!isDraft && <div className="qb-card"><span className="qb-label">{isLocked?'Share':'Send / Share'}</span>{quote.sent_at&&<div style={{marginBottom:8,padding:'5px 10px',background:'rgba(19,138,91,.04)',border:'1px solid rgba(19,138,91,.12)',borderRadius:'var(--r-sm)',fontSize: 'var(--text-2xs)',color:'var(--green)'}}>Sent {formatDate(quote.sent_at)}</div>}<div className="qd-send-grid">{!isLocked&&quote.customer?.phone&&<button className="btn btn-primary full-width" type="button" onClick={handleSendText}><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>{quote.sent_at?`Resend to ${quote.customer?.name?.split(' ')[0]||''}` :`Text ${quote.customer?.name?.split(' ')[0]||''}`}</button>}<button className="btn btn-secondary full-width" type="button" onClick={handleCopyLink}><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>Copy link</button></div><a href={shareUrl+'?preview=1'} target="_blank" rel="noreferrer" style={{display:'block',marginTop:8,fontSize: 'var(--text-2xs)',color:'var(--brand)',textDecoration:'none',fontWeight:600}}>Preview ↗</a></div>}
 
           {(isApproved||isScheduled||isCompleted)&&<div className="qb-card" style={{border:'1px solid rgba(176,112,48,.2)',background:'var(--amber-bg)'}}><span className="qb-label" style={{color:'var(--amber)'}}>Scope Changes</span>{amendments.map(am=><a key={am.id} href={`/public/amendment/${am.share_token}`} target="_blank" rel="noreferrer" className="aw-status-card" style={{textDecoration:'none',color:'inherit'}}><div><strong style={{fontSize: 'var(--text-sm)'}}>{am.title}</strong><div className="qb-muted">{currency(am.total)} · Amendment</div></div><StatusBadge status={am.status}/></a>)}{additionalWork.map(aw=><Link key={aw.id} to={`/app/additional-work/${aw.id}`} className="aw-status-card"><div><strong style={{fontSize: 'var(--text-sm)'}}>{aw.title}</strong><div className="qb-muted">{currency(aw.total)} · Additional work</div></div><StatusBadge status={aw.status}/></Link>)}<button className="btn btn-secondary full-width" style={{marginTop:8,fontSize: 'var(--text-xs)'}} type="button" onClick={()=>{ const m=getScopeMode(); if(m==='edit') navigate(`/app/quotes/${quote.id}/edit`); else setShowAddScope(true); }}>+ Add scope</button></div>}
