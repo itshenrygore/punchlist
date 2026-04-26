@@ -65,7 +65,7 @@ function Nav() {
           <Link to="/login" className="lp-nav-link">Log in</Link>
           <Link to="/signup" className="lp-nav-cta">Get started free</Link>
         </div>
-        <button className="lp-mob-btn" onClick={() => setOpen(o => !o)} aria-label="Menu">
+        <button type="button" className="lp-mob-btn" onClick={() => setOpen(o => !o)} aria-label="Menu">
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
@@ -246,7 +246,7 @@ function Testimonials() {
         <div className={`lp-testimonial card-lift rv rv-d${i + 1}`} key={i}>
           <div className="lp-stars">
             {[...Array(5)].map((_, j) => (
-              <Star key={j} size={14} fill="#F59E0B" color="#F59E0B" />
+              <Star key={j} size={14} fill="var(--amber)" color="var(--amber)" />
             ))}
           </div>
           <div className="lp-testimonial-text">"{t.text}"</div>
@@ -577,7 +577,7 @@ export default function LandingPage() {
         <div className="lp-container">
           <div className="lp-section-head rv">
             <span className="lp-eyebrow" style={{ color: 'rgba(255,255,255,0.4)' }}>How it works</span>
-            <h2 className="lp-h2" style={{ color: '#fff' }}>Three steps. That's it.</h2>
+            <h2 className="lp-h2" style={{ color: 'var(--on-brand, #fff)' }}>Three steps. That's it.</h2>
           </div>
           <HowItWorks />
         </div>

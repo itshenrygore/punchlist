@@ -383,7 +383,8 @@ export default function BookingsPage() {
                 <button className="sched-fab" type="button" onClick={() => handleSlotClick(new Date())} aria-label="New booking">+</button>
                 {needsScheduling.length > 0 && (
                   <button className="sched-mobile-rail-btn" type="button" onClick={() => setMobileRailOpen(true)}>
-                    {needsScheduling.length} to schedule
+                    To schedule
+                    {needsScheduling.length > 0 && <span className="qd-mobile-tab-badge">{needsScheduling.length}</span>}
                   </button>
                 )}
               </>

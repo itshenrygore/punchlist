@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { DollarSign, Eye, PenTool } from 'lucide-react';
 import { getProfile, updateProfile } from '../lib/api';
 import { useAuth } from '../hooks/use-auth';
 import { CA_PROVINCES, US_STATES } from '../lib/pricing';
@@ -77,7 +78,8 @@ export default function OnboardingWizard({ onDismiss }) {
 
   return (
     <div className="ob-backdrop">
-      <div className="ob-card">
+      <div className="ob-card" style={{ position: 'relative' }}>
+        <button type="button" className="ob-close" onClick={skipAll} aria-label="Close" style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 16, fontFamily: 'inherit', zIndex: 1, width: 36, height: 36, display: 'grid', placeItems: 'center', borderRadius: 'var(--r-sm, 8px)', transition: 'background .15s, color .15s' }}>✕</button>
 
         {step === 0 && (
           <>
@@ -122,15 +124,15 @@ export default function OnboardingWizard({ onDismiss }) {
             <h2 className="ob-title">Here's what happens when you send a quote</h2>
             <div className="ob-pillars">
               <div className="ob-pillar">
-                <span className="ob-pillar-icon">💰</span>
+                <span className="ob-pillar-icon"><DollarSign size={20} /></span>
                 <span className="ob-pillar-text">Your customer sees the total <strong>and a monthly option</strong></span>
               </div>
               <div className="ob-pillar">
-                <span className="ob-pillar-icon">👁</span>
+                <span className="ob-pillar-icon"><Eye size={20} /></span>
                 <span className="ob-pillar-text">You <strong>track every view</strong> and get notified when they open it</span>
               </div>
               <div className="ob-pillar">
-                <span className="ob-pillar-icon">✍️</span>
+                <span className="ob-pillar-icon"><PenTool size={20} /></span>
                 <span className="ob-pillar-text">They <strong>approve and sign</strong> right from their phone</span>
               </div>
             </div>

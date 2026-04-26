@@ -1099,7 +1099,8 @@ export default function PublicQuoteView({
             {error && !showSignature && <div style={{ color: 'var(--doc-red)', fontSize: 'var(--text-sm)', textAlign: 'center', marginTop: 6 }}>{error}</div>}
           </div>
 
-          {/* Footer */}
+          {/* Footer — only on standalone mode (portal has its own footer) */}
+          {mode !== 'portal-tab' && (
           <div className="doc-footer">
             <div>
               <div style={{ fontWeight: 600, color: 'var(--doc-text)' }}>{contractorDisplayName}</div>
@@ -1116,6 +1117,7 @@ export default function PublicQuoteView({
               <button type="button" className="doc-footer-link" onClick={() => window.print()}>Print</button>
             </div>
           </div>
+          )}
 
           {/* Print signature area */}
           <div className="doc-signature-print">

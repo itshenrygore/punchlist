@@ -6,26 +6,22 @@ import { createCheckout } from '../lib/api';
 import { PLANS, FEATURE_COMPARISON, FAQ, PRICING } from '../lib/billing';
 
 function CheckIcon() {
-  return <span style={{ color: 'var(--green)', flexShrink: 0, display:'inline-flex' }}><svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><polyline points='20 6 9 17 4 12'/></svg></span>;
+  return <span className="pr-check-icon"><svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><polyline points='20 6 9 17 4 12'/></svg></span>;
 }
 function XIcon() {
-  return <span style={{ color: 'var(--muted)', fontWeight: 400, flexShrink: 0, fontSize: 'var(--text-sm)', opacity: 0.5 }}>—</span>;
+  return <span className="pr-dash-icon">&mdash;</span>;
 }
 
 function FAQItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ borderBottom: '1px solid var(--line)', padding: '16px 0' }}>
-      <button type="button" onClick={() => setOpen(!open)} style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%',
-        background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit',
-        fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--text)', textAlign: 'left', gap: 12,
-      }}>
+    <div className="pr-faq-item">
+      <button type="button" onClick={() => setOpen(!open)} className="pr-faq-q">
         <span>{q}</span>
-        <span style={{ color: 'var(--muted)', fontSize: 'var(--text-xl)', flexShrink: 0, transition: 'transform .2s', transform: open ? 'rotate(45deg)' : 'none' }}>+</span>
+        <span className="pr-faq-toggle" style={{ transform: open ? 'rotate(45deg)' : 'none' }}>+</span>
       </button>
       {open && (
-        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-2)', lineHeight: 1.6, margin: '10px 0 0', paddingRight: 24 }}>{a}</p>
+        <p className="pr-faq-a">{a}</p>
       )}
     </div>
   );
@@ -49,111 +45,106 @@ export default function PricingPage() {
       <Header />
 
       {/* ── HERO ── */}
-      <section style={{ padding: '56px 16px 32px', textAlign: 'center' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+      <section className="pr-hero">
+        <div className="pr-hero-inner">
           <div className="eyebrow" style={{ marginBottom: 10 }}>Pricing</div>
-          <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', letterSpacing: '-.04em', lineHeight: 1.1, margin: '0 0 14px' }}>
+          <h1 className="pr-hero-title">
             Simple pricing.<br />Pays for itself on one&nbsp;job.
           </h1>
-          <p className="muted" style={{ fontSize: 'var(--text-md)', lineHeight: 1.6, maxWidth: 440, margin: '0 auto' }}>
+          <p className="muted pr-hero-sub">
             Start free. No credit card. Upgrade when Punchlist is making you money.
           </p>
         </div>
       </section>
 
       {/* ── ROI STRIP ── */}
-      <section style={{ padding: '0 16px 36px', textAlign: 'center' }}>
-        <div className="notice-banner" style={{ maxWidth: 520, margin: '0 auto', textAlign: 'center', fontSize: 'var(--text-base)', lineHeight: 1.6, padding: '14px 20px' }}>
+      <section className="pr-roi-section">
+        <div className="notice-banner pr-roi-banner">
           <strong>One missed line item</strong> on one job costs more than 8 months of Pro. Most contractors miss $150–$300 per job.
         </div>
       </section>
 
       {/* ── PRICING CARDS ── */}
-      <section style={{ padding: '0 16px 48px' }}>
-        <div className="pricing-cards-grid" style={{ maxWidth: 880, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, alignItems: 'start' }}>
+      <section className="pr-cards-section">
+        <div className="pr-cards-grid">
 
           {/* FREE */}
-          <div className="panel" style={{ padding: 24, borderRadius: 'var(--r-xl)' }}>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>{free.name}</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                <span style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1 }}>$0</span>
+          <div className="panel pr-card">
+            <div className="pr-card-header">
+              <div className="pr-tier-label">{free.name}</div>
+              <div className="pr-price-row">
+                <span className="pr-price">$0</span>
               </div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginTop: 4 }}>No credit card, no time limit</div>
+              <div className="pr-price-hint">No credit card, no time limit</div>
             </div>
-            <div style={{ display: 'grid', gap: 8, marginBottom: 20 }}>
+            <div className="pr-features">
               {free.features.map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 'var(--text-sm)', color: 'var(--text-2)' }}>
+                <div key={f} className="pr-feature-row">
                   <CheckIcon /><span>{f}</span>
                 </div>
               ))}
             </div>
-            <Link className="btn btn-secondary full-width" to="/signup" style={{ fontSize: 'var(--text-sm)', padding: '11px', borderRadius: 'var(--r)' }}>
-              Build your first quote →
+            <Link className="btn btn-secondary full-width pr-card-cta" to="/signup">
+              Build your first quote &rarr;
             </Link>
           </div>
 
-          {/* PRO — visually dominant */}
-          <div className="panel" style={{
-            padding: 24, borderRadius: 'var(--r-xl)',
-            border: '2px solid var(--brand)',
-            boxShadow: '0 8px 32px rgba(232,107,48,.12)',
-            position: 'relative',
-          }}>
-            <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: 'var(--brand)', color: 'white', fontSize: 'var(--text-2xs)', fontWeight: 800, padding: '3px 12px', borderRadius: 'var(--r-pill)', whiteSpace: 'nowrap', letterSpacing: '.04em', textTransform: 'uppercase' }}>Most Popular</div>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Pro</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                <span style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1 }}>${PRICING.monthly}</span>
-                <span style={{ fontSize: 'var(--text-base)', color: 'var(--muted)', fontWeight: 500 }}>/mo</span>
+          {/* PRO */}
+          <div className="panel pr-card pr-card--popular">
+            <div className="pr-popular-badge">Most Popular</div>
+            <div className="pr-card-header">
+              <div className="pr-tier-label" style={{ color: 'var(--brand)' }}>Pro</div>
+              <div className="pr-price-row">
+                <span className="pr-price">${PRICING.monthly}</span>
+                <span className="pr-price-period">/mo</span>
               </div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginTop: 4 }}>Full platform. No limits.</div>
+              <div className="pr-price-hint">Full platform. No limits.</div>
             </div>
-            <div style={{ display: 'grid', gap: 8, marginBottom: 20 }}>
+            <div className="pr-features">
               {pro.features.map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 'var(--text-sm)', color: 'var(--text-2)' }}>
+                <div key={f} className="pr-feature-row">
                   <CheckIcon /><span>{f}</span>
                 </div>
               ))}
             </div>
-            <button className="btn btn-primary full-width" style={{ fontSize: 'var(--text-base)', padding: '13px', borderRadius: 'var(--r)' }} type="button" disabled={checkingOut} onClick={() => handleCheckout('monthly')}>
-              {checkingOut ? 'Loading…' : 'Upgrade to Pro'}
+            <button className="btn btn-primary full-width pr-card-cta" type="button" disabled={checkingOut} onClick={() => handleCheckout('monthly')}>
+              {checkingOut ? 'Loading\u2026' : 'Upgrade to Pro'}
             </button>
-            <div className="muted" style={{ fontSize: 'var(--text-2xs)', textAlign: 'center', marginTop: 8 }}>Cancel anytime</div>
+            <div className="pr-card-note muted">Cancel anytime</div>
           </div>
 
           {/* ANNUAL */}
-          <div className="panel" style={{ padding: 24, borderRadius: 'var(--r-xl)', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: 'var(--green)', color: 'white', fontSize: 'var(--text-2xs)', fontWeight: 800, padding: '3px 12px', borderRadius: 'var(--r-pill)', whiteSpace: 'nowrap', letterSpacing: '.04em', textTransform: 'uppercase' }}>Save ${PRICING.annualSavings}</div>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Annual</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                <span style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1 }}>${PRICING.annual}</span>
-                <span style={{ fontSize: 'var(--text-base)', color: 'var(--muted)', fontWeight: 500 }}>/yr</span>
+          <div className="panel pr-card pr-card--annual">
+            <div className="pr-save-badge">Save ${PRICING.annualSavings}</div>
+            <div className="pr-card-header">
+              <div className="pr-tier-label" style={{ color: 'var(--green)' }}>Annual</div>
+              <div className="pr-price-row">
+                <span className="pr-price">${PRICING.annual}</span>
+                <span className="pr-price-period">/yr</span>
               </div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginTop: 4 }}>${PRICING.annualMonthly}/mo · save ${PRICING.annualSavings} vs monthly</div>
+              <div className="pr-price-hint">${PRICING.annualMonthly}/mo &middot; save ${PRICING.annualSavings} vs monthly</div>
             </div>
-            <div style={{ display: 'grid', gap: 8, marginBottom: 20 }}>
+            <div className="pr-features">
               {annual.features.map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 'var(--text-sm)', color: 'var(--text-2)' }}>
+                <div key={f} className="pr-feature-row">
                   <CheckIcon /><span>{f}</span>
                 </div>
               ))}
             </div>
-            <button className="btn btn-primary full-width" style={{ fontSize: 'var(--text-base)', padding: '13px', borderRadius: 'var(--r)', background: 'var(--green)', borderColor: 'var(--green)' }} type="button" disabled={checkingOut} onClick={() => handleCheckout('yearly')}>
-              {checkingOut ? 'Loading…' : 'Get Annual'}
+            <button className="btn btn-primary full-width pr-card-cta pr-card-cta--green" type="button" disabled={checkingOut} onClick={() => handleCheckout('yearly')}>
+              {checkingOut ? 'Loading\u2026' : 'Get Annual'}
             </button>
-            <div className="muted" style={{ fontSize: 'var(--text-2xs)', textAlign: 'center', marginTop: 8 }}>Best value · cancel anytime</div>
+            <div className="pr-card-note muted">Best value &middot; cancel anytime</div>
           </div>
         </div>
       </section>
 
       {/* ── WHEN YOU'LL WANT PRO ── */}
-      <section style={{ padding: '32px 16px 48px' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(1.3rem,3vw,1.8rem)', letterSpacing: '-.03em', textAlign: 'center', margin: '0 0 8px' }}>When you'll want Pro</h2>
-          <p className="muted" style={{ textAlign: 'center', fontSize: 'var(--text-base)', marginBottom: 24 }}>Upgrade makes sense when Punchlist becomes part of how you run jobs</p>
-          <div style={{ display: 'grid', gap: 12 }}>
+      <section className="pr-why-section">
+        <div className="pr-why-inner">
+          <h2 className="pr-section-heading">When you'll want Pro</h2>
+          <p className="muted pr-section-sub">Upgrade makes sense when Punchlist becomes part of how you run jobs</p>
+          <div className="pr-why-grid">
             {[
               { icon: 'send', text: "You're sending more than 5 quotes per month and need unlimited" },
               { icon: 'eye', text: 'Track every view — see the moment customers open your quote' },
@@ -162,8 +153,8 @@ export default function PricingPage() {
               { icon: 'calendar', text: 'Schedule jobs from the same app you quoted in' },
               { icon: 'receipt', text: 'Invoice customers and collect payment online — they can pay monthly' },
             ].map(({ icon, text }) => (
-              <div key={text} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: 'var(--panel-2)', borderRadius: 'var(--r-sm)', border: '1px solid var(--line)' }}>
-                <span style={{ flexShrink: 0, display:'inline-flex', alignItems:'center', color:'var(--brand)' }}>
+              <div key={text} className="pr-why-item">
+                <span className="pr-why-icon">
                   {icon === 'eye' && <Eye size={18} strokeWidth={1.75} />}
                   {icon === 'bell' && <Bell size={18} strokeWidth={1.75} />}
                   {icon === 'dollar' && <DollarSign size={18} strokeWidth={1.75} />}
@@ -171,7 +162,7 @@ export default function PricingPage() {
                   {icon === 'send' && <Send size={18} strokeWidth={1.75} />}
                   {icon === 'receipt' && <Receipt size={18} strokeWidth={1.75} />}
                 </span>
-                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-2)', lineHeight: 1.5 }}>{text}</span>
+                <span className="pr-why-text">{text}</span>
               </div>
             ))}
           </div>
@@ -179,27 +170,27 @@ export default function PricingPage() {
       </section>
 
       {/* ── FEATURE COMPARISON ── */}
-      <section style={{ padding: '0 16px 48px' }}>
-        <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(1.3rem,3vw,1.8rem)', letterSpacing: '-.03em', textAlign: 'center', margin: '0 0 20px' }}>What's included</h2>
-          <div className="panel" style={{ borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
+      <section className="pr-compare-section">
+        <div className="pr-compare-inner">
+          <h2 className="pr-section-heading">What's included</h2>
+          <div className="panel pr-compare-panel">
+            <table className="pr-compare-table">
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                  <th style={{ textAlign: 'left', padding: '10px 14px', fontWeight: 700, fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Feature</th>
-                  <th style={{ textAlign: 'center', padding: '10px 14px', fontWeight: 700, fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.04em', width: 80 }}>Free</th>
-                  <th style={{ textAlign: 'center', padding: '10px 14px', fontWeight: 700, fontSize: 'var(--text-xs)', color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '.04em', width: 80 }}>Pro</th>
+                <tr>
+                  <th className="pr-th pr-th--feature">Feature</th>
+                  <th className="pr-th pr-th--plan">Free</th>
+                  <th className="pr-th pr-th--plan pr-th--pro">Pro</th>
                 </tr>
               </thead>
               <tbody>
                 {FEATURE_COMPARISON.map(({ feature, free: freeVal, pro: proVal }) => (
-                  <tr key={feature} style={{ borderBottom: '1px solid var(--line)' }}>
-                    <td style={{ padding: '10px 14px', color: 'var(--text-2)' }}>{feature}</td>
-                    <td style={{ textAlign: 'center', padding: '10px 14px' }}>
-                      {typeof freeVal === 'string' ? <span style={{ fontWeight: 600, fontSize: 'var(--text-xs)' }}>{freeVal}</span> : freeVal ? <CheckIcon /> : <XIcon />}
+                  <tr key={feature} className="pr-tr">
+                    <td className="pr-td pr-td--feature">{feature}</td>
+                    <td className="pr-td pr-td--plan">
+                      {typeof freeVal === 'string' ? <span className="pr-plan-val">{freeVal}</span> : freeVal ? <CheckIcon /> : <XIcon />}
                     </td>
-                    <td style={{ textAlign: 'center', padding: '10px 14px' }}>
-                      {typeof proVal === 'string' ? <span style={{ fontWeight: 700, fontSize: 'var(--text-xs)', color: 'var(--brand)' }}>{proVal}</span> : proVal ? <CheckIcon /> : <XIcon />}
+                    <td className="pr-td pr-td--plan">
+                      {typeof proVal === 'string' ? <span className="pr-plan-val pr-plan-val--pro">{proVal}</span> : proVal ? <CheckIcon /> : <XIcon />}
                     </td>
                   </tr>
                 ))}
@@ -210,24 +201,25 @@ export default function PricingPage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section style={{ padding: '0 16px 48px' }}>
-        <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(1.3rem,3vw,1.8rem)', letterSpacing: '-.03em', textAlign: 'center', margin: '0 0 20px' }}>Questions</h2>
+      <section className="pr-faq-section">
+        <div className="pr-faq-inner">
+          <h2 className="pr-section-heading">Questions</h2>
           {FAQ.map(({ q, a }) => <FAQItem key={q} q={q} a={a} />)}
         </div>
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section style={{ padding: '0 16px 64px', textAlign: 'center' }}>
-        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginBottom: 32 }}>All prices in Canadian dollars (CAD).</p>
-        <div style={{ maxWidth: 440, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(1.4rem,3vw,2rem)', letterSpacing: '-.03em', margin: '0 0 12px' }}>You have a job to quote this&nbsp;week.</h2>
-          <p className="muted" style={{ fontSize: 'var(--text-base)', marginBottom: 20 }}>Try Punchlist on that one job. Free, no credit card, takes two minutes.</p>
-          <Link className="btn btn-primary" to="/signup" style={{ fontSize: 'var(--text-base)', padding: '13px 28px', borderRadius: 'var(--r)' }}>
-            Try Punchlist free →
+      <section className="pr-final-cta">
+        <p className="pr-cad-note muted">All prices in Canadian dollars (CAD).</p>
+        <div className="pr-final-inner">
+          <h2 className="pr-final-title">You have a job to quote this&nbsp;week.</h2>
+          <p className="muted pr-final-sub">Try Punchlist on that one job. Free, no credit card, takes two minutes.</p>
+          <Link className="btn btn-primary pr-final-btn" to="/signup">
+            Try Punchlist free &rarr;
           </Link>
-          <p style={{ marginTop: 16, fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>
-            Already have an account? <Link to="/login" style={{ color: 'var(--brand-dark)', fontWeight: 600 }}>Log in</Link>
+          <p className="pr-final-login">
+            Already have an account?{' '}
+            <Link to="/login" className="pr-final-login-link">Log in</Link>
           </p>
         </div>
       </section>

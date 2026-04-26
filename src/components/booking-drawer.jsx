@@ -376,6 +376,7 @@ export default function BookingDrawer({
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Access notes, parts needed…"
+              onFocus={(e) => { setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); }}
             />
           </div>
 

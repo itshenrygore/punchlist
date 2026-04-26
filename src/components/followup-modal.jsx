@@ -259,7 +259,7 @@ export default function FollowupModal({ quote, userProfile, templates, onClose, 
             label={`Message ${sendVia}`}
             value={body}
             onChange={setBody}
-            rows={5}
+            rows={6}
             showLinkHint={true}
             autoFocus={true}
           />

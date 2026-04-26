@@ -463,7 +463,8 @@ export default function QuoteDetailPage() {
           </div>
 
           {/* ══════════ ZONE 1: STATUS HERO ══════════ */}
-          <div className="qd-hero">
+          <div className={`qd-hero${mobileTab !== 'details' ? ' qd-hero--compact' : ''}`}>
+           {mobileTab === 'details' ? (<>
             <div className="qd-hero-top">
               <div style={{flex:1,minWidth:0}}>
                 <h1 className="qd-hero-title" style={{display:'flex',alignItems:'center'}}>{quote.title||'Untitled'}{inlineEditBtn}</h1>
@@ -559,15 +560,20 @@ export default function QuoteDetailPage() {
                 )}
               </div>
             )}
+           </>) : (
+            <div className="qd-hero-compact">
+              <div className="qd-hero-compact-info">
+                <span className="qd-hero-compact-title">{quote.title || 'Untitled'}</span>
+                <span className="qd-hero-compact-sep">·</span>
+                <span className="qd-hero-compact-total">{currency(quote.total)}</span>
+              </div>
+              <StatusBadge status={quote.status} />
+            </div>
+           )}
           </div>
 
           {/* ══════════ ZONE 2: COMMUNICATION ══════════ */}
           <div className={`qd-feed${mobileTab !== 'messages' ? ' qd-zone-messages' : ''}`}>
-            <div className="qd-feed-header"><span style={{fontWeight:700,fontSize:"var(--text-base)"}}><MessageSquare size={13} style={{verticalAlign:"middle",marginRight:6}}/>Messages</span><span className="qb-muted fs-12">{(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? `${mc} message${mc !== 1 ? 's' : ''}` : ''; })()}</span></div>
-            {/* Reply input first — most important action (hide on paid/invoiced — job is done) */}
-            {!isDraft && hasShareToken && !['paid','invoiced'].includes(quote?.status) && (
-              <div className="qd-feed-reply" style={{marginBottom:12}}><div style={{display:'flex',gap:8,alignItems:'flex-end'}}><textarea value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder={`Message ${quote.customer?.name?.split(' ')[0]||'customer'}…`} rows={1} className="qd-feed-reply-input" onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleReply();}}} onInput={e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';}} /><button type="button" className="btn btn-primary btn-sm" disabled={replySending||!replyText.trim()} onClick={handleReply} style={{flexShrink:0,height:36}}>{replySending?'…':'Send'}</button></div><div style={{fontSize: 'var(--text-2xs)',color:'var(--muted)',marginTop:4}}>{quote.customer?.email?'Email + quote page':'Quote page only'}{quote.customer?.phone?' + SMS':''}</div></div>
-            )}
             {/* Messages thread — customer questions and contractor replies only */}
             {(() => { const msgs = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message'); return msgs.length > 0 ? (
               <div className="qd-feed-list">
@@ -580,23 +586,28 @@ export default function QuoteDetailPage() {
             ) : (
               <div style={{padding:'16px',textAlign:'center',color:'var(--muted)',fontSize: 'var(--text-sm)',background:'var(--bg)',borderRadius:'var(--r-sm)'}}>No messages yet</div>
             ); })()}
-
-            {/* Activity timeline — system events only */}
-            <div className="qd-feed-header" style={{marginTop:16,paddingTop:12,borderTop:'1px solid var(--line)'}}><span style={{fontWeight:600,fontSize: 'var(--text-xs)',color:'var(--muted)'}}>Activity</span><span className="qb-muted" style={{fontSize: 'var(--text-2xs)'}}>{timeline.filter(e=>e.type!=='customer_message'&&e.type!=='contractor_message').length} events</span></div>
-            <div className="qd-feed-list">
-              {timeline.filter(ev=>ev.type!=='customer_message'&&ev.type!=='contractor_message').map((ev,i) => {
-                const isAm = ev.subtype==='amendment';
-                const isAW = ev.subtype==='additional_work';
-                if((isAm||isAW)&&ev.data){ const d=ev.data; return (
-                  <a key={`${ev.subtype}${i}`} href={isAm?`/public/amendment/${d.share_token}`:`/app/additional-work/${d.id}`} target={isAm?'_blank':undefined} rel={isAm?'noreferrer':undefined} className="qd-feed-event qd-feed-event--link" style={{textDecoration:'none',color:'inherit'}}><span className="qd-feed-event-icon">{ev.icon}</span><div className="qd-feed-event-body"><span className="qd-feed-event-label">{ev.label}</span>{d.total&&<span className="qd-feed-event-detail">{currency(d.total)}</span>}</div><div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}><StatusBadge status={d.status}/><span className="qd-feed-event-time">{timeAgo(ev.time)}</span></div></a>
-                );}
-                return <div key={`e${i}`} className={`qd-feed-event ${ev.type==='milestone'?'qd-feed-event--milestone':''}`}><span className="qd-feed-event-icon">{ev.icon}</span><div className="qd-feed-event-body"><span className="qd-feed-event-label">{ev.label}</span>{ev.detail&&<span className="qd-feed-event-detail">{ev.detail}</span>}</div><span className="qd-feed-event-time">{timeAgo(ev.time)}</span></div>;
-              })}
-            </div>
+            {/* Reply input — below the thread */}
+            {!isDraft && hasShareToken && !['paid','invoiced'].includes(quote?.status) && (
+              <div className="qd-feed-reply"><div style={{display:'flex',gap:8,alignItems:'flex-end'}}><textarea value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder={`Message ${quote.customer?.name?.split(' ')[0]||'customer'}…`} rows={1} className="qd-feed-reply-input" onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleReply();}}} onInput={e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';}} /><button type="button" className="btn btn-primary btn-sm" disabled={replySending||!replyText.trim()} onClick={handleReply} style={{flexShrink:0,height:36}}>{replySending?'…':'Send'}</button></div><div style={{fontSize: 'var(--text-2xs)',color:'var(--muted)',marginTop:4}}>{quote.customer?.email?'Email + quote page':'Quote page only'}{quote.customer?.phone?' + SMS':''}</div></div>
+            )}
           </div>
 
           {/* ══════════ ZONE 3: SCOPE DETAILS (collapsed) ══════════ */}
           <div className={`qd-scope${mobileTab !== 'details' ? ' qd-zone-details' : ''}`}>
+            {/* Activity timeline — moved here from Messages zone */}
+            <div className="qd-activity-section">
+              <div className="qd-feed-header"><span style={{fontWeight:600,fontSize: 'var(--text-xs)',color:'var(--muted)'}}>Activity</span><span className="qb-muted" style={{fontSize: 'var(--text-2xs)'}}>{timeline.filter(e=>e.type!=='customer_message'&&e.type!=='contractor_message').length} events</span></div>
+              <div className="qd-feed-list">
+                {timeline.filter(ev=>ev.type!=='customer_message'&&ev.type!=='contractor_message').map((ev,i) => {
+                  const isAm = ev.subtype==='amendment';
+                  const isAW = ev.subtype==='additional_work';
+                  if((isAm||isAW)&&ev.data){ const d=ev.data; return (
+                    <a key={`${ev.subtype}${i}`} href={isAm?`/public/amendment/${d.share_token}`:`/app/additional-work/${d.id}`} target={isAm?'_blank':undefined} rel={isAm?'noreferrer':undefined} className="qd-feed-event qd-feed-event--link" style={{textDecoration:'none',color:'inherit'}}><span className="qd-feed-event-icon">{ev.icon}</span><div className="qd-feed-event-body"><span className="qd-feed-event-label">{ev.label}</span>{d.total&&<span className="qd-feed-event-detail">{currency(d.total)}</span>}</div><div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}><StatusBadge status={d.status}/><span className="qd-feed-event-time">{timeAgo(ev.time)}</span></div></a>
+                  );}
+                  return <div key={`e${i}`} className={`qd-feed-event ${ev.type==='milestone'?'qd-feed-event--milestone':''}`}><span className="qd-feed-event-icon">{ev.icon}</span><div className="qd-feed-event-body"><span className="qd-feed-event-label">{ev.label}</span>{ev.detail&&<span className="qd-feed-event-detail">{ev.detail}</span>}</div><span className="qd-feed-event-time">{timeAgo(ev.time)}</span></div>;
+                })}
+              </div>
+            </div>
             <button type="button" className="qd-scope-toggle pl-toggle-row" onClick={()=>setScopeOpen(v=>!v)} style={{ width:'100%', background:'none', border:'none', fontFamily:'inherit' }}>
               <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{display:'inline-flex'}}><FileText size={14}/></span><span style={{fontWeight:700,fontSize: 'var(--text-base)'}}>Scope & Pricing</span><span className="qb-muted fs-12">{(quote.line_items||[]).length} items · {currency(quote.total)}</span></div>
               <span className={`pl-chevron ${scopeOpen ? 'pl-chevron--open' : ''}`} />
@@ -628,7 +639,7 @@ export default function QuoteDetailPage() {
 
       {/* Mobile bars */}
       {isDraft && <div className="qd-mobile-send-bar"><Link className="btn btn-primary" to={`/app/quotes/${quote.id}/edit`} style={{flex:1,textAlign:'center',textDecoration:'none'}}>Continue editing →</Link></div>}
-      {!isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" onClick={handleSendText} ><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>Text {quote.customer?.name?.split(' ')[0] || 'quote'}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink} ><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>Copy link</button>}<button className="btn btn-secondary" type="button" onClick={handleCopyLink} style={{flex:0,padding:'10px 14px'}}><Link2 size={14}/></button></div>}
+      {!isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" onClick={handleSendText} ><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>Text {quote.customer?.name?.split(' ')[0] || 'quote'}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink} ><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>Copy link</button>}<button className="btn btn-secondary qd-copy-link-btn" type="button" onClick={handleCopyLink} aria-label="Copy quote link" style={{flex:0,padding:'10px 14px'}}><Link2 size={14}/><span className="qd-copy-link-text">Link</span></button></div>}
       {isRevision&&quote.status!=='question_asked'&&<div className="qd-mobile-send-bar"><Link className="btn btn-primary" to={`/app/quotes/${quote.id}/edit`} style={{flex:1,textAlign:'center',textDecoration:'none'}}>Revise & resend →</Link></div>}
       {isApproved&&<div className="qd-mobile-send-bar"><button className="btn btn-primary" type="button" onClick={()=>setShowScheduleModal(true)} style={{flex:1}}><Calendar size={13} style={{verticalAlign:'middle',marginRight:5}}/>Schedule job</button></div>}
       {isScheduled&&<div className="qd-mobile-send-bar"><button className="btn btn-primary flex-1" type="button" onClick={markComplete} ><Check size={13} style={{verticalAlign:'middle',marginRight:5}}/>Mark complete</button></div>}

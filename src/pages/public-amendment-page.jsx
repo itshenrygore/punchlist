@@ -168,7 +168,7 @@ export default function PublicAmendmentPage() {
             {/* Pricing hero */}
             <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
               <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--doc-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>Revised total</div>
-              <div style={{ fontSize: 'var(--text-5xl)', fontWeight: 900, letterSpacing: '-.04em', color: 'var(--doc-accent, #ea580c)' }}>{currency(newTotal)}</div>
+              <div style={{ fontSize: 'var(--text-5xl)', fontWeight: 900, letterSpacing: '-.04em', color: 'var(--doc-accent, var(--brand))' }}>{currency(newTotal)}</div>
               {showFinancing(newTotal) && (
                 <div style={{ fontSize: 'var(--text-sm)', color: 'var(--doc-muted)', marginTop: 6 }}>
                   or as low as {currency(estimateMonthly(newTotal))}/mo · subject to approval

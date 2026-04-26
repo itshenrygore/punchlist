@@ -3,7 +3,7 @@ import { Component } from 'react';
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { error: null, isChunkError: false, componentStack: '', showDetails: false };
+    this.state = { error: null, isChunkError: false, componentStack: '', showDetails: false, copied: false };
   }
 
   static getDerivedStateFromError(error) {
@@ -23,7 +23,7 @@ export default class ErrorBoundary extends Component {
     if (this.state.isChunkError) {
       window.location.reload();
     } else {
-      this.setState({ error: null, isChunkError: false, componentStack: '', showDetails: false });
+      this.setState({ error: null, isChunkError: false, componentStack: '', showDetails: false, copied: false });
     }
   };
 
@@ -69,6 +69,21 @@ export default class ErrorBoundary extends Component {
               </button>
             )}
           </div>
+          {!this.state.isChunkError && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                const details = `${this.state.error?.name}: ${this.state.error?.message}\n${this.state.error?.stack || ''}\n${this.state.componentStack || ''}`;
+                navigator.clipboard?.writeText(details).then(() => {
+                  this.setState({ copied: true });
+                  setTimeout(() => this.setState({ copied: false }), 2000);
+                });
+              }}
+            >
+              {this.state.copied ? '✓ Copied' : 'Copy error details'}
+            </button>
+          )}
           {import.meta.env.DEV && !this.state.isChunkError && (
             <>
               <button

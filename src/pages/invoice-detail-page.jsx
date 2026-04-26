@@ -323,44 +323,44 @@ export default function InvoiceDetailPage() {
         <div className="inv-doc">
           {editing ? (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Edit Invoice</h2>
-                <div style={{ display: 'flex', gap: 6 }}>
+              <div className="id-edit-header">
+                <h2 className="id-edit-title">Edit Invoice</h2>
+                <div className="id-edit-actions">
                   <button className="btn btn-primary btn-sm" type="button" disabled={saving} onClick={saveEdits}>{saving ? 'Saving…' : 'Save changes'}</button>
                   <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditing(false)}>Cancel</button>
                 </div>
               </div>
-              <div style={{ display: 'grid', gap: 10, marginBottom: 16 }}>
+              <div className="id-edit-fields">
                 <div><span className="field-label">Title</span><input className="input" value={editTitle} onChange={e => setEditTitle(e.target.value)} /></div>
                 <div><span className="field-label">Description</span><textarea className="input textarea-sm" value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={2} /></div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div className="id-edit-row-2col">
                   <div><span className="field-label">Due date</span><input className="input" type="date" value={editDueAt} onChange={e => setEditDueAt(e.target.value)} /></div>
                   <div><span className="field-label">Discount ($)</span><input className="input" type="number" min="0" step="1" value={editDiscount} onChange={e => setEditDiscount(Number(e.target.value))} /></div>
                 </div>
               </div>
-              <div style={{ marginBottom: 12 }}>
-                <div className="inv-edit-header" style={{ display: 'grid', gap: 6, padding: '6px 0', fontSize: 'var(--text-2xs)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--muted)' }}>
-                  <span>Item</span><span style={{ textAlign: 'right' }}>Qty</span><span style={{ textAlign: 'right' }}>Price</span><span/>
+              <div className="id-edit-items">
+                <div className="inv-edit-header id-edit-grid-header">
+                  <span>Item</span><span className="id-edit-input-right">Qty</span><span className="id-edit-input-right">Price</span><span/>
                 </div>
                 {editItems.map((item, idx) => (
-                  <div key={item.id || idx} className="inv-edit-row" style={{ display: 'grid', gap: 6, padding: '6px 0', borderBottom: '1px solid var(--line)', alignItems: 'center' }}>
-                    <input className="input input--dense" style={{ minWidth: 0 }} value={item.name} onChange={e => updateEditItem(idx, 'name', e.target.value)} placeholder="Item name" />
-                    <input className="input input--dense" style={{ textAlign: 'right' }} type="number" min="0" step="0.25" value={item.quantity} onChange={e => updateEditItem(idx, 'quantity', e.target.value)} />
-                    <input className="input input--dense" style={{ textAlign: 'right' }} type="number" min="0" step="1" value={item.unit_price} onChange={e => updateEditItem(idx, 'unit_price', e.target.value)} />
-                    <button className="btn btn-secondary btn--xs" type="button" onClick={() => removeEditItem(idx)} style={{ color: 'var(--red)' }} aria-label="Remove item"><X size={12} /></button>
+                  <div key={item.id || idx} className="inv-edit-row id-edit-item-row">
+                    <input className="input input--dense id-edit-input-min" value={item.name} onChange={e => updateEditItem(idx, 'name', e.target.value)} placeholder="Item name" />
+                    <input className="input input--dense id-edit-input-right" type="number" min="0" step="0.25" value={item.quantity} onChange={e => updateEditItem(idx, 'quantity', e.target.value)} />
+                    <input className="input input--dense id-edit-input-right" type="number" min="0" step="1" value={item.unit_price} onChange={e => updateEditItem(idx, 'unit_price', e.target.value)} />
+                    <button className="btn btn-secondary btn--xs" type="button" onClick={() => removeEditItem(idx)} className="id-edit-remove" aria-label="Remove item"><X size={12} /></button>
                   </div>
                 ))}
-                <button className="btn btn-secondary btn-sm" type="button" onClick={addEditItem} style={{ marginTop: 8, fontSize: 'var(--text-2xs)' }}>+ Add item</button>
+                <button className="btn btn-secondary btn-sm" type="button" onClick={addEditItem} className="id-edit-add-btn">+ Add item</button>
               </div>
               {editTotals && (
-                <div className="inv-totals" style={{ marginTop: 12 }}>
+                <div className="inv-totals id-edit-totals">
                   <div className="inv-total-row"><span>Subtotal</span><span>{currency(editTotals.subtotal)}</span></div>
-                  {editTotals.discount > 0 && <div className="inv-total-row"><span>Discount</span><span style={{ color: 'var(--red)' }}>−{currency(editTotals.discount)}</span></div>}
+                  {editTotals.discount > 0 && <div className="inv-total-row"><span>Discount</span><span className="id-color-red">−{currency(editTotals.discount)}</span></div>}
                   <div className="inv-total-row"><span>Tax ({invoice.province})</span><span>{currency(editTotals.tax)}</span></div>
                   <div className="inv-total-row inv-grand"><span>Total</span><span>{currency(editTotals.total)}</span></div>
                 </div>
               )}
-              <div style={{ marginTop: 12 }}><span className="field-label">Notes</span><textarea className="input textarea-sm" value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} /></div>
+              <div className="id-edit-notes"><span className="field-label">Notes</span><textarea className="input textarea-sm" value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} /></div>
             </div>
           ) : (
             <>
@@ -402,7 +402,7 @@ export default function InvoiceDetailPage() {
                 {hasAdditionalWork ? (
                   Object.entries(groupedItems).map(([group, groupItems]) => (
                     <div key={group}>
-                      <div style={{ padding: '10px 0 4px', fontSize: 'var(--text-2xs)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: group === 'Additional Work' ? 'var(--amber)' : 'var(--muted)', borderLeft: group === 'Additional Work' ? '3px solid var(--amber)' : 'none', paddingLeft: group === 'Additional Work' ? 10 : 0 }}>
+                      <div className={`id-group-header ${group === 'Additional Work' ? 'id-group-header--additional' : 'id-group-header--original'}`}>
                         {group === 'Additional Work' ? '+ Approved additional work' : group}
                       </div>
                       {groupItems.map((item, i) => (
@@ -431,37 +431,37 @@ export default function InvoiceDetailPage() {
                     </div>
                   ))
                 ) : (
-                  <div style={{ padding: '16px 0', textAlign: 'center', fontSize: 'var(--text-sm)', color: 'var(--muted)' }}>Line items included in total above.</div>
+                  <div className="id-items-empty">Line items included in total above.</div>
                 )}
               </div>
               <div className="inv-totals">
                 <div className="inv-total-row"><span>Subtotal</span><span>{currency(invoice.subtotal)}</span></div>
-                {Number(invoice.discount || 0) > 0 && <div className="inv-total-row"><span>Discount</span><span style={{ color: 'var(--red)' }}>−{currency(invoice.discount)}</span></div>}
+                {Number(invoice.discount || 0) > 0 && <div className="inv-total-row"><span>Discount</span><span className="id-color-red">−{currency(invoice.discount)}</span></div>}
                 <div className="inv-total-row"><span>Tax ({invoice.province})</span><span>{currency(invoice.tax)}</span></div>
-                {depositCredited > 0 && <div className="inv-total-row"><span>Deposit credited</span><span style={{ color: 'var(--green)' }}>−{currency(depositCredited)}</span></div>}
+                {depositCredited > 0 && <div className="inv-total-row"><span>Deposit credited</span><span className="id-color-green">−{currency(depositCredited)}</span></div>}
                 <div className="inv-total-row inv-grand"><span>Total</span><span>{currency(invoice.total)}</span></div>
                 {totalPaid > 0 && !isPaid && (
                   <>
-                    <div className="inv-total-row" style={{ color: 'var(--green)' }}><span>Paid</span><span>−{currency(totalPaid)}</span></div>
-                    <div className="inv-total-row inv-grand" style={{ color: 'var(--brand)' }}><span>Balance</span><span>{currency(balance)}</span></div>
+                    <div className="inv-total-row id-color-green"><span>Paid</span><span>−{currency(totalPaid)}</span></div>
+                    <div className="inv-total-row inv-grand id-color-brand"><span>Balance</span><span>{currency(balance)}</span></div>
                   </>
                 )}
               </div>
               {isPaid && <div className="inv-paid-stamp">PAID</div>}
               {invoice.notes && <div className="inv-notes"><strong>Notes:</strong> {invoice.notes}</div>}
               {payments.length > 0 && (
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
-                  <div style={{ fontSize: 'var(--text-2xs)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--muted)', marginBottom: 8 }}>Payment History</div>
+                <div className="id-pay-history">
+                  <div className="id-pay-history-label">Payment History</div>
                   {payments.map(p => (
-                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--line)', fontSize: 'var(--text-xs)' }}>
+                    <div key={p.id} className="id-pay-row">
                       <div>
-                        <span style={{ fontWeight: 600, color: 'var(--green)' }}>{currency(p.amount)}</span>
-                        {p.method && <span style={{ color: 'var(--muted)', marginLeft: 8 }}>via {p.method}</span>}
-                        <span style={{ color: 'var(--subtle)', marginLeft: 8 }}>{formatDate(p.paid_at)}</span>
-                        {p.notes && <div style={{ color: 'var(--muted)', fontSize: 'var(--text-2xs)', marginTop: 2 }}>{p.notes}</div>}
+                        <span className="id-pay-amount">{currency(p.amount)}</span>
+                        {p.method && <span className="id-pay-method">via {p.method}</span>}
+                        <span className="id-pay-date">{formatDate(p.paid_at)}</span>
+                        {p.notes && <div className="id-pay-notes">{p.notes}</div>}
                       </div>
                       {!isPaid && (
-                        <button className="btn btn-secondary btn-sm inv-payment-delete" type="button" onClick={() => handleDeletePayment(p.id)} style={{ padding: '2px 6px', fontSize: 'var(--text-2xs)', color: 'var(--red)' }} aria-label="Delete payment">×</button>
+                        <button className="btn btn-secondary btn-sm inv-payment-delete" type="button" onClick={() => handleDeletePayment(p.id)} className="id-pay-delete" aria-label="Delete payment">×</button>
                       )}
                     </div>
                   ))}
@@ -475,7 +475,7 @@ export default function InvoiceDetailPage() {
         <aside className="inv-sidebar">
           <div className="qb-card">
             <span className="qb-label">Status</span>
-            <div style={{ marginTop: 8 }}>
+            <div className="id-status-wrap">
               <StatusBadge status={isOverdue && !isPaid ? 'overdue' : invoice.status} />
             </div>
             {isPaid && (
@@ -485,7 +485,7 @@ export default function InvoiceDetailPage() {
               </div>
             )}
             {isPartial && !isPaid && (
-              <div style={{ color: 'var(--amber)', fontSize: 'var(--text-xs)', fontWeight: 700, marginTop: 8 }}>
+              <div className="id-partial-info">
                 {currency(totalPaid)} of {currency(invoice.total)} paid · {currency(balance)} remaining
               </div>
             )}
@@ -496,35 +496,35 @@ export default function InvoiceDetailPage() {
             <div className="qd-send-grid">
               {!isPaid && !editing && (
                 <>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="id-send-row">
                     {invoice.customer?.phone && (
-                      <button className="btn btn-primary" type="button" style={{ flex: 1 }} onClick={handleSendText}>
+                      <button className="btn btn-primary" type="button" className="id-mobile-btn" onClick={handleSendText}>
                         {['sent','viewed','partial','overdue'].includes(invoice.status) ? 'Resend text' : 'Text invoice'}
                       </button>
                     )}
                     <button className="btn btn-secondary" type="button" style={{ flex: invoice.customer?.phone ? 0 : 1, padding: '10px 14px' }} onClick={handleSendCopy} aria-label="Copy link" title="Copy link">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                      {!invoice.customer?.phone && <span style={{ marginLeft: 6 }}>Copy link</span>}
+                      {!invoice.customer?.phone && <span className="id-send-link-label">Copy link</span>}
                     </button>
                   </div>
                   {invoice.status !== 'draft' && (
-                    <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--muted)', textAlign: 'center', marginTop: 2 }}>
+                    <div className="id-sent-date">
                       Sent {formatDate(invoice.issued_at || invoice.updated_at)}
                     </div>
                   )}
                   <button className="btn btn-secondary full-width" type="button" onClick={() => {
                     window.location.href = `/api/export-pdf?invoice_token=${invoice.share_token}`;
                   }}>Download PDF</button>
-                  <a href={customerUrl} target="_blank" rel="noreferrer" className="qd-share-link" style={{ textAlign: 'center', display: 'block', marginTop: 2 }}>Preview customer view ↗</a>
-                  <button className="btn btn-secondary full-width" type="button" onClick={startEditing} style={{ marginTop: 4 }}>
+                  <a href={customerUrl} target="_blank" rel="noreferrer" className="qd-share-link id-preview-link">Preview customer view ↗</a>
+                  <button className="btn btn-secondary full-width" type="button" onClick={startEditing} className="id-edit-btn">
                     Edit invoice
                   </button>
                   {!showPartialForm && !showPayForm ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 4 }}>
-                      <button className="btn btn-secondary full-width" type="button" onClick={() => setShowPartialForm(true)} style={{ fontSize: 'var(--text-2xs)' }}>
+                    <div className="id-pay-grid">
+                      <button className="btn btn-secondary full-width" type="button" onClick={() => setShowPartialForm(true)} className="id-record-btn">
                         Record payment
                       </button>
-                      <button className="btn btn-secondary full-width" type="button" onClick={() => setShowPayForm(true)} style={{ color: 'var(--green)', fontSize: 'var(--text-2xs)' }}>
+                      <button className="btn btn-secondary full-width" type="button" onClick={() => setShowPayForm(true)} className="id-mark-paid-btn">
                         Mark fully paid
                       </button>
                     </div>
@@ -534,7 +534,7 @@ export default function InvoiceDetailPage() {
                         <option value="">Payment method (optional)</option>
                         {(country === 'US' ? US_PAYMENT_METHODS : CA_PAYMENT_METHODS).map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      <div className="id-pay-grid-2">
                         <button className="btn btn-primary btn-sm" type="button" disabled={paying} onClick={handleMarkPaid}>
                           {paying ? 'Saving…' : 'Confirm paid'}
                         </button>
@@ -543,14 +543,14 @@ export default function InvoiceDetailPage() {
                     </div>
                   ) : showPartialForm ? (
                     <div className="inv-pay-form">
-                      <div style={{ fontSize: 'var(--text-2xs)', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>Record Payment</div>
+                      <div className="id-partial-header">Record Payment</div>
                       <input className="qb-inp" type="number" min="0" step="1" placeholder={`Amount (balance: ${currency(balance)})`} value={partialAmount} onChange={e => setPartialAmount(e.target.value)} autoFocus />
                       <select className="qb-inp" value={partialMethod} onChange={e => setPartialMethod(e.target.value)}>
                         <option value="">Payment method (optional)</option>
                         {(country === 'US' ? US_PAYMENT_METHODS : CA_PAYMENT_METHODS).map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                       <input className="qb-inp" placeholder="Notes (optional)" value={partialNotes} onChange={e => setPartialNotes(e.target.value)} />
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      <div className="id-pay-grid-2">
                         <button className="btn btn-primary btn-sm" type="button" disabled={partialSaving} onClick={handleRecordPartial}>
                           {partialSaving ? 'Saving…' : 'Record'}
                         </button>
@@ -560,14 +560,14 @@ export default function InvoiceDetailPage() {
                   ) : null}
                 </>
               )}
-              {isPaid && <div className="inv-paid-confirm" style={{ textAlign: 'center' }}>✓ This invoice has been paid</div>}
+              {isPaid && <div className="inv-paid-confirm id-paid-confirm">✓ This invoice has been paid</div>}
             </div>
           </div>
 
           {profile?.payment_instructions && (
             <div className="qb-card">
-              <div style={{ padding: '8px 10px', background: 'var(--bg)', borderRadius: 'var(--r-sm)', fontSize: 'var(--text-2xs)', color: 'var(--muted)' }}>
-                <strong style={{ display: 'block', marginBottom: 4, fontSize: 'var(--text-2xs)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Payment instructions (visible to customer)</strong>
+              <div className="id-pay-instructions">
+                <strong className="id-pay-instructions-label">Payment instructions (visible to customer)</strong>
                 {profile.payment_instructions}
               </div>
             </div>
@@ -576,11 +576,11 @@ export default function InvoiceDetailPage() {
           {!isPaid && (
             <div className="qb-card">
               <span className="qb-label">Auto-reminders</span>
-              <p style={{ margin: '4px 0 10px', fontSize: 'var(--text-2xs)', color: 'var(--muted)' }}>
+              <p className="id-reminder-desc">
                 Send automatic text reminders when overdue
               </p>
               {REMINDER_OPTIONS.map(opt => (
-                <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', fontSize: 'var(--text-xs)', cursor: 'pointer', color: 'var(--text-2)' }}>
+                <label key={opt.value} className="id-reminder-label">
                   <input
                     type="checkbox"
                     checked={reminderSchedule.includes(opt.value)}
@@ -591,7 +591,7 @@ export default function InvoiceDetailPage() {
                 </label>
               ))}
               {invoice.last_reminder_sent_at && (
-                <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--muted)', marginTop: 6 }}>
+                <div className="id-last-reminder">
                   Last reminder: {formatDate(invoice.last_reminder_sent_at)}
                 </div>
               )}
@@ -601,22 +601,29 @@ export default function InvoiceDetailPage() {
           {invoice.quote_id && (
             <div className="qb-card">
               <span className="qb-label">Related quote</span>
-              <Link className="btn btn-secondary full-width" to={`/app/quotes/${invoice.quote_id}`} style={{ marginTop: 8 }}>
+              <Link className="btn btn-secondary full-width" to={`/app/quotes/${invoice.quote_id}`} className="id-related-link">
                 View original quote
               </Link>
             </div>
           )}
 
           {hasAdditionalWork && (
-            <div className="qb-card" style={{ background: 'var(--amber-bg)', border: '1px solid rgba(176,112,48,.2)' }}>
-              <span className="qb-label" style={{ color: 'var(--amber)' }}>Includes additional work</span>
-              <p style={{ margin: '6px 0 0', fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>
+            <div className="qb-card id-aw-card">
+              <span className="qb-label id-aw-label">Includes additional work</span>
+              <p className="id-aw-desc">
                 This invoice includes additional work that was approved after the original quote.
               </p>
             </div>
           )}
         </aside>
       </div>
+      {invoice && invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+        <div className="qd-mobile-send-bar">
+          <button className="btn btn-primary" type="button" className="id-mobile-btn" onClick={() => setShowPayForm(true)}>
+            Mark as paid
+          </button>
+        </div>
+      )}
       <ConfirmModal
         open={!!deletePaymentId}
         onConfirm={confirmDeletePayment}

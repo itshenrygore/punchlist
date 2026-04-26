@@ -94,13 +94,13 @@ function PushToggle({ userId }) {
 
   if (status === 'loading') return null;
   if (status === 'unsupported') return <div className="muted small">Push notifications are not supported in this browser.</div>;
-  if (status === 'denied') return <div className="muted small" style={{ color: 'var(--amber)' }}>Notifications are blocked. Enable them in your browser settings to receive push alerts.</div>;
+  if (status === 'denied') return <div className="muted small" className="sp-push-denied">Notifications are blocked. Enable them in your browser settings to receive push alerts.</div>;
 
   if (status === 'subscribed') {
     return (
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-sm)', color: 'var(--green)', fontWeight: 600 }}>✓ Push notifications enabled</div>
-        <button className="btn btn-secondary btn-sm" type="button" disabled={working} onClick={unsubscribe} style={{ marginTop: 10, fontSize: 'var(--text-xs)' }}>
+        <div className="sp-push-enabled">✓ Push notifications enabled</div>
+        <button className="btn btn-secondary btn-sm" type="button" disabled={working} onClick={unsubscribe} className="sp-push-disable-btn">
           {working ? 'Disabling…' : 'Disable push notifications'}
         </button>
       </div>
@@ -563,8 +563,8 @@ export default function SettingsPage() {
             </div>
             <div>
               <span className="field-label">Logo (shown on quotes and invoices)</span>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
+              <div className="sp-logo-row">
+                <label className="btn btn-secondary btn-sm sp-logo-upload-label">
                   Upload image
                   <input hidden type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={async (e) => {
                     const file = e.target.files?.[0];
@@ -576,13 +576,13 @@ export default function SettingsPage() {
                     } catch (err) { showToast(friendly(err), 'error'); }
                   }} />
                 </label>
-                <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--subtle)' }}>or paste a URL:</span>
+                <span className="sp-logo-url-hint">or paste a URL:</span>
               </div>
-              <input className="input" style={{ marginTop: 6 }} value={form.logo_url || ''} onChange={e => setForm(p => ({ ...p, logo_url: e.target.value }))} placeholder="https://yoursite.com/logo.png" />
+              <input className="input sp-logo-url-input" value={form.logo_url || ''} onChange={e => setForm(p => ({ ...p, logo_url: e.target.value }))} placeholder="https://yoursite.com/logo.png" />
               {form.logo_url && (
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <img src={form.logo_url} alt="Logo preview" style={{ maxHeight: 48, maxWidth: 160, objectFit: 'contain', borderRadius: 4, border: '1px solid var(--line)' }} onError={e => { e.target.style.display = 'none'; }} />
-                  <button type="button" className="btn btn-secondary btn-sm" style={{ fontSize: 'var(--text-2xs)' }} onClick={() => setForm(p => ({ ...p, logo_url: '' }))}>Remove</button>
+                <div className="sp-logo-preview-row">
+                  <img src={form.logo_url} alt="Logo preview" className="sp-logo-preview-img" onError={e => { e.target.style.display = 'none'; }} />
+                  <button type="button" className="btn btn-secondary btn-sm sp-logo-remove-btn" onClick={() => setForm(p => ({ ...p, logo_url: '' }))}>Remove</button>
                 </div>
               )}
             </div>
@@ -610,12 +610,12 @@ export default function SettingsPage() {
             <div className="form-row">
               <div>
                 <span className="field-label">Default hourly labour rate (optional)</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ color: 'var(--muted)', fontWeight: 600 }}>$</span>
+                <div className="sp-rate-row">
+                  <span className="sp-rate-prefix">$</span>
                   <input className="input" type="number" min="0" step="5" value={form.default_labour_rate || ''} onChange={e => setForm(p => ({ ...p, default_labour_rate: Number(e.target.value) || 0 }))} placeholder="e.g. 165" style={{ maxWidth: 120 }} />
-                  <span style={{ color: 'var(--muted)', fontSize: 'var(--text-xs)' }}>/hr</span>
+                  <span className="sp-rate-suffix">/hr</span>
                 </div>
-                <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--muted)', marginTop: 4 }}>Used for labour items on new quotes. Leave blank for suggested rates.</div>
+                <div className="sp-rate-hint">Used for labour items on new quotes. Leave blank for suggested rates.</div>
               </div>
             </div>
             <div>
@@ -624,8 +624,8 @@ export default function SettingsPage() {
             </div>
             <div>
               <span className="field-label">Account email (where approval notifications are sent)</span>
-              <input className="input" value={user?.email || ''} readOnly style={{ background: 'var(--panel-2)', color: 'var(--muted)' }} />
-              <div className="muted small" style={{ marginTop: 4 }}>This is your login email. Change it through your account provider.</div>
+              <input className="input" value={user?.email || ''} readOnly className="sp-readonly-input" />
+              <div className="muted small sp-hint">This is your login email. Change it through your account provider.</div>
             </div>
           </div>
         </div>
@@ -648,7 +648,7 @@ export default function SettingsPage() {
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
-              <div className="muted small" style={{ marginTop: 6, lineHeight: 1.5 }}>
+              <div className="muted small sp-hint-6">
                 The clock starts when you send, not when you create the draft.
               </div>
             </div>
@@ -661,10 +661,10 @@ export default function SettingsPage() {
         {/* ═══ QUOTE TRACKING — explainer ═══ */}
         <div className="panel">
           <div className="eyebrow">Quote Tracking</div>
-          <p className="muted small" style={{ marginTop: 4, marginBottom: 12, lineHeight: 1.5 }}>
+          <p className="muted small sp-tracking-desc">
             Every quote you send is tracked automatically. You'll see when your customer opens it, how many times they've viewed it, and get prompted when it's time to follow up. No extra setup needed.
           </p>
-          <div style={{ display: 'grid', gap: 8, fontSize: 'var(--text-xs)', color: 'var(--text-2)' }}>
+          <div className="sp-tracking-grid">
             <div className="flex-row-gap-8">View counts and timestamps on every sent quote</div>
             <div className="flex-row-gap-8">Notifications when a customer opens your quote</div>
             <div className="flex-row-gap-8">Follow-up prompts based on viewing patterns</div>
@@ -682,29 +682,29 @@ export default function SettingsPage() {
           </p>
 
           {/* ── Punchlist Payments (primary) ── */}
-          <div style={{ background: 'var(--surface-alt, #f8f9fa)', border: '1px solid var(--border)', borderRadius: 12, padding: 18, marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontSize: 'var(--text-base)', fontWeight: 700 }}>Punchlist Payments</span>
+          <div className="sp-pay-card">
+            <div className="sp-pay-header">
+              <span className="sp-pay-title">Punchlist Payments</span>
               {connectLoading && !connectStatus && (
-                <span style={{ width: 64, height: 18, borderRadius: 99, background: 'var(--line)', display: 'inline-block', animation: 'skel-pulse 1.4s ease-in-out infinite' }} />
+                <span className="sp-pay-skel-pill" />
               )}
-              {connectStatus?.onboarded && <span style={{ fontSize: 'var(--text-2xs)', fontWeight: 600, color: 'var(--green)', background: 'var(--green-bg)', padding: '2px 8px', borderRadius: 99 }}>Active</span>}
+              {connectStatus?.onboarded && <span className="sp-pay-active-badge">Active</span>}
             </div>
             {connectStatus === null && !connectLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ height: 12, borderRadius: 4, background: 'var(--line)', width: '85%', animation: 'skel-pulse 1.4s ease-in-out infinite' }} />
-                <div style={{ height: 12, borderRadius: 4, background: 'var(--line)', width: '60%', animation: 'skel-pulse 1.4s ease-in-out infinite' }} />
-                <div style={{ height: 36, borderRadius: 8, background: 'var(--line)', marginTop: 4, animation: 'skel-pulse 1.4s ease-in-out infinite' }} />
+              <div className="sp-pay-skel-col">
+                <div className="sp-pay-skel-bar sp-pay-skel-bar--85" />
+                <div className="sp-pay-skel-bar sp-pay-skel-bar--60" />
+                <div className="sp-pay-skel-bar sp-pay-skel-bar--btn" />
               </div>
             ) : !connectStatus?.onboarded ? (
               <>
-                <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)', marginBottom: 6 }}>
+                <div className="sp-pay-headline">
                   You get paid in full. Customers pay monthly.
                 </div>
-                <p className="muted small" style={{ lineHeight: 1.6, marginBottom: 4 }}>
+                <p className="muted small sp-pay-desc">
                   When a customer chooses monthly payments, Affirm pays you the full amount upfront within 2 business days. The customer repays Affirm over 3–12 months. You don't wait.
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, margin: '12px 0', textAlign: 'center' }}>
+                <div className="sp-pay-stat-grid">
                   <div className="panel-card">
                     <div className="text-heading">$0</div>
                     <div className="muted-small">Setup fee</div>
@@ -718,23 +718,23 @@ export default function SettingsPage() {
                     <div className="muted-small">Paid upfront</div>
                   </div>
                 </div>
-                <Link className="btn btn-primary" to="/app/payments/setup" style={{ width: '100%', textDecoration: 'none', textAlign: 'center', fontSize: 'var(--text-base)', padding: '12px 16px' }}>
+                <Link className="btn btn-primary" to="/app/payments/setup" className="sp-pay-cta-full">
                   {connectStatus?.connected ? 'Finish setup — takes 2 minutes →' : 'Turn on customer financing →'}
                 </Link>
-                <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--subtle)', textAlign: 'center', marginTop: 8, lineHeight: 1.5 }}>
+                <div className="sp-pay-fine-print">
                   No monthly fee · No setup fee · Small processing fee per transaction
                 </div>
               </>
             ) : (
               <>
-                <p className="muted small" style={{ lineHeight: 1.6, marginBottom: 10 }}>
+                <p className="muted small sp-pay-onboarded-desc">
                   Customers can pay by card or choose monthly payments on jobs over $500. You get the full amount within 2 business days.
                 </p>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button type="button" className="btn btn-secondary" onClick={openStripeDashboard} disabled={stripeDashLoading} style={{ fontSize: 'var(--text-xs)' }}>
+                <div className="sp-pay-actions">
+                  <button type="button" className="btn btn-secondary" onClick={openStripeDashboard} disabled={stripeDashLoading} className="sp-pay-btn-sm">
                     {stripeDashLoading ? 'Opening…' : 'View Stripe Dashboard →'}
                   </button>
-                  <Link to="/app/payments-setup" className="btn btn-secondary" style={{ fontSize: 'var(--text-xs)', textDecoration: 'none' }}>
+                  <Link to="/app/payments-setup" className="btn btn-secondary sp-pay-link-btn">
                     How it works →
                   </Link>
                 </div>
@@ -743,8 +743,8 @@ export default function SettingsPage() {
           </div>
 
           {/* ── Deposit defaults ── */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Deposits</div>
+          <div className="sp-mb-16">
+            <div className="sp-section-header">Deposits</div>
             <div className="stack">
               <div>
                 <span className="field-label">Default deposit on new quotes</span>
@@ -764,8 +764,8 @@ export default function SettingsPage() {
           </div>
 
           {/* ── Invoice terms ── */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Invoice terms</div>
+          <div className="sp-mb-16">
+            <div className="sp-section-header">Invoice terms</div>
             <div className="stack">
               <div>
                 <span className="field-label">Due date</span>
@@ -785,7 +785,7 @@ export default function SettingsPage() {
 
           {/* ── Other payment methods ── */}
           <div>
-            <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Other payment methods</div>
+            <div className="sp-section-header--4">Other payment methods</div>
             <p className="muted small" style={{ marginBottom: 12, lineHeight: 1.5 }}>
               Optional. Check any methods you also accept — they'll appear on your quotes and invoices alongside Punchlist Payments.
             </p>
@@ -829,7 +829,7 @@ export default function SettingsPage() {
                 <div>
                   <span className="field-label">Stripe payment link (legacy — optional)</span>
                   <input className="input" value={form.stripe_payment_link} onChange={e => setForm(p => ({ ...p, stripe_payment_link: e.target.value }))} placeholder="https://buy.stripe.com/XXXXXXX" />
-                  <div className="muted small" style={{ marginTop: 4 }}>Paste your own Stripe payment link as a fallback.</div>
+                  <div className="muted small sp-hint">Paste your own Stripe payment link as a fallback.</div>
                 </div>
               )}
             </div>
@@ -847,19 +847,19 @@ export default function SettingsPage() {
             <span className="field-label">Terms &amp; conditions text (optional)</span>
             <textarea
               className="input textarea-md"
-              style={{ minHeight: 120, fontFamily: 'inherit', fontSize: 'var(--text-sm)' }}
+              className="sp-terms-textarea"
               value={form.terms_conditions}
               onChange={e => setForm(p => ({ ...p, terms_conditions: e.target.value }))}
               placeholder="e.g. All work is guaranteed for 1 year from the date of completion. A 25% cancellation fee applies if work is cancelled within 48 hours of the scheduled date. Customer is responsible for providing clear access to the work area…"
             />
-            <p className="muted small" style={{ marginTop: 6 }}>Leave blank to hide this section from quotes.</p>
+            <p className="muted small sp-hint-6">Leave blank to hide this section from quotes.</p>
           </div>
         </div>
 
         {/* Password */}
         <div className="panel">
           <div className="eyebrow">Password</div>
-          <div className="stack" style={{ marginTop: 12 }}>
+          <div className="stack sp-stack-top">
             <div>
               <span className="field-label">New password</span>
               <input className="input" type="password" value={pw.next} onChange={e => setPw(p => ({ ...p, next: e.target.value }))} placeholder="8+ characters" autoComplete="new-password" />
@@ -875,26 +875,26 @@ export default function SettingsPage() {
         </div>
 
         {/* Subscription */}
-        <div className="panel" style={{ background:'linear-gradient(160deg,var(--brand-bg),var(--panel))', border:'1px solid var(--brand-line)' }}>
+        <div className="panel sp-sub-panel">
           <div className="eyebrow">Subscription</div>
           <div className="stack" style={{ marginTop:12 }}>
-            <p className="muted small" style={{ lineHeight:1.6, margin:0 }}>
+            <p className="muted small sp-sub-desc">
               Upgrade to Pro for unlimited quotes, Foreman scope checking, deposits, scheduling, invoicing, and customer pay-over-time.
             </p>
-            <div className="settings-pricing-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-              <div style={{ background:'var(--panel)', border:'1px solid var(--line)', borderRadius:'var(--r)', padding:14, textAlign:'center' }}>
-                <div style={{ fontSize:'1.4rem', fontWeight:800, letterSpacing:'-.03em' }}>${PRICING.monthly}</div>
+            <div className="settings-pricing-grid sp-pricing-grid">
+              <div className="sp-pricing-card">
+                <div className="sp-pricing-amount">${PRICING.monthly}</div>
                 <div className="muted small">per month</div>
-                <button className="btn btn-secondary full-width" style={{ marginTop:10, fontSize: 'var(--text-2xs)' }} type="button" onClick={() => navigate('/app/billing')}>Monthly plan</button>
+                <button className="btn btn-secondary full-width" className="sp-pricing-btn" type="button" onClick={() => navigate('/app/billing')}>Monthly plan</button>
               </div>
-              <div style={{ background:'var(--panel)', border:'2px solid var(--brand)', borderRadius:'var(--r)', padding:'18px 14px 14px', textAlign:'center', position:'relative', overflow:'visible' }}>
-                <div style={{ position:'absolute', top:-9, left:'50%', transform:'translateX(-50%)', background:'var(--brand)', color:'white', fontSize:'var(--text-2xs)', fontWeight:800, padding:'2px 8px', borderRadius:'var(--r-pill)', whiteSpace:'nowrap', zIndex:1 }}>BEST VALUE</div>
-                <div style={{ fontSize:'1.4rem', fontWeight:800, letterSpacing:'-.03em' }}>${PRICING.annual}</div>
+              <div className="sp-pricing-card--featured">
+                <div className="sp-pricing-best">BEST VALUE</div>
+                <div className="sp-pricing-amount">${PRICING.annual}</div>
                 <div className="muted small">per year · save ${PRICING.annualSavings}</div>
-                <button className="btn btn-primary full-width" style={{ marginTop:10, fontSize: 'var(--text-2xs)' }} type="button" onClick={() => navigate('/app/billing')}>Yearly plan</button>
+                <button className="btn btn-primary full-width" className="sp-pricing-btn" type="button" onClick={() => navigate('/app/billing')}>Yearly plan</button>
               </div>
             </div>
-            <div className="muted small" style={{ textAlign:'center' }}>30-day free trial · no credit card required · cancel anytime</div>
+            <div className="muted small sp-pricing-note">30-day free trial · no credit card required · cancel anytime</div>
           </div>
         </div>
         </>}
@@ -911,18 +911,7 @@ export default function SettingsPage() {
             like you.
           </p>
           {!proAccess && (
-            <div
-              style={{
-                marginTop: 10,
-                padding: 10,
-                background: 'var(--panel-2)',
-                border: '1px solid var(--line)',
-                borderRadius: 'var(--r-sm, 8px)',
-                fontSize: 'var(--text-xs)',
-                color: 'var(--text-2)',
-                lineHeight: 1.5,
-              }}
-            >
+            <div className="sp-free-notice">
               You're on the free plan — you can <strong>preview</strong> every
               message and <strong>reset</strong> any customization.
               Editing the wording unlocks with Pro.
@@ -932,24 +921,17 @@ export default function SettingsPage() {
 
         {/* Nudge schedule (cadence editor) */}
         <div className="panel" style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 0 }}>
-              <div className="eyebrow" style={{ marginBottom: 2 }}>Nudge schedule</div>
-              <p className="muted small" style={{ margin: 0, lineHeight: 1.45 }}>
+          <div className="sp-nudge-header">
+            <div className="sp-nudge-label-wrap">
+              <div className="eyebrow sp-nudge-eyebrow">Nudge schedule</div>
+              <p className="muted small sp-nudge-desc">
                 How long to wait before each follow-up when a customer hasn't
                 replied. Defaults to 2 / 4 / 7 days.
               </p>
             </div>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-              gap: 12,
-              marginTop: 14,
-            }}
-          >
+          <div className="sp-nudge-grid">
             {[
               { slot: 'nudge_1', label: 'First nudge', hint: 'after sending' },
               { slot: 'nudge_2', label: 'Second nudge', hint: 'after first' },
@@ -957,7 +939,7 @@ export default function SettingsPage() {
             ].map(({ slot, label, hint }) => (
               <div key={slot}>
                 <span className="field-label">{label}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="sp-nudge-input-row">
                   <input
                     type="number"
                     min={1}
@@ -966,12 +948,7 @@ export default function SettingsPage() {
                     value={cadence[slot]}
                     readOnly={!proAccess}
                     onChange={proAccess ? (e) => handleCadenceChange(slot, e.target.value) : undefined}
-                    style={{
-                      width: 72,
-                      textAlign: 'center',
-                      opacity: proAccess ? 1 : 0.72,
-                      cursor: proAccess ? 'text' : 'not-allowed',
-                    }}
+                    className={`sp-nudge-input ${!proAccess ? 'sp-nudge-input--readonly' : ''}`}
                     aria-label={`${label} days`}
                   />
                   <span className="muted small">days {hint}</span>
@@ -980,8 +957,8 @@ export default function SettingsPage() {
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14, flexWrap: 'wrap' }}>
-            <div className="muted small" style={{ lineHeight: 1.4 }}>
+          <div className="sp-nudge-footer">
+            <div className="muted small sp-nudge-footer-hint">
               After the last nudge the quote moves to your dashboard's cold list —
               we stop auto-prompting so you don't over-nudge.
             </div>
@@ -1006,30 +983,17 @@ export default function SettingsPage() {
 
           {/* Cadence-specific upsell */}
           {!proAccess && templateUpsellKey === '__cadence__' && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: 14,
-                background: 'var(--brand-soft, rgba(249,115,22,.08))',
-                border: '1px solid var(--brand-line, rgba(249,115,22,.3))',
-                borderRadius: 'var(--r-sm, 8px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-                flexWrap: 'wrap',
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>
+            <div className="sp-upsell-banner">
+              <div className="sp-upsell-content">
+                <div className="sp-upsell-title">
                   Tune your nudge rhythm — Pro
                 </div>
-                <div className="muted small" style={{ lineHeight: 1.45 }}>
+                <div className="muted small sp-upsell-desc">
                   Some trades close faster, some slower. Set a cadence that
                   matches how your customers actually decide.
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="sp-upsell-actions">
                 <button type="button"
                   className="btn btn-secondary btn-sm"
                   onClick={() => setTemplateUpsellKey(null)}
@@ -1045,17 +1009,9 @@ export default function SettingsPage() {
         </div>
 
         {/* Token legend */}
-        <div className="panel" style={{ background: 'var(--panel-2)' }}>
-          <div className="eyebrow" style={{ marginBottom: 6 }}>Tokens you can use</div>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 6,
-              fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)',
-              fontSize: 'var(--text-2xs)',
-            }}
-          >
+        <div className="panel sp-token-panel">
+          <div className="eyebrow sp-token-eyebrow">Tokens you can use</div>
+          <div className="sp-token-list">
             {[
               '{firstName}', '{senderName}', '{quoteTitle}', '{total}',
               '{link}', '{monthlyEstimate}', '{depositAmount}',
@@ -1063,19 +1019,13 @@ export default function SettingsPage() {
             ].map(tok => (
               <span
                 key={tok}
-                style={{
-                  padding: '3px 8px',
-                  background: 'var(--panel)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 999,
-                  color: 'var(--text)',
-                }}
+                className="sp-token-chip"
               >
                 {tok}
               </span>
             ))}
           </div>
-          <p className="muted small" style={{ marginTop: 10, marginBottom: 0, lineHeight: 1.5 }}>
+          <p className="muted small sp-token-hint">
             Type these into any message below and Punchlist will swap in the
             real values when sending. Empty tokens (like <code>{'{depositAmount}'}</code>
             when there's no deposit) disappear cleanly.
@@ -1144,16 +1094,16 @@ export default function SettingsPage() {
             Enable SMS notifications
           </label>
           {form.sms_notifications_enabled && !form.phone?.trim() && (
-            <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.15)', borderRadius: 8, fontSize: 'var(--text-xs)', color: 'var(--amber-text)', lineHeight: 1.5 }}>
+            <div className="sp-sms-warning">
               Add your phone number above to receive SMS notifications.
             </div>
           )}
           {form.sms_notifications_enabled && form.phone?.trim() && (
-            <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--green-bg, rgba(19,138,91,.04))', border: '1px solid var(--green-line, rgba(19,138,91,.12))', borderRadius: 8, fontSize: 'var(--text-xs)', color: '#15803d', lineHeight: 1.5 }}>
+            <div className="sp-sms-success">
               ✓ Texts will be sent to <strong>{form.phone}</strong> when customers act on your quotes.
             </div>
           )}
-          <div className="muted small" style={{ marginTop: 10, lineHeight: 1.5 }}>
+          <div className="muted small sp-sms-detail">
             <strong>You'll get texts when:</strong> customer views your quote, approves, requests changes, declines, or asks a question.
             <br />
             <strong>Your customers get texts when:</strong> you send a quote, schedule a job, reschedule, send an invoice, or reply to their question — only if they have a phone number on file.
@@ -1190,9 +1140,9 @@ export default function SettingsPage() {
           <p className="muted small settings-hint">
             Control what happens automatically when you complete a job.
           </p>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 'var(--text-base)' }}>Auto-send invoice on complete</div>
+          <div className="sp-pref-row">
+            <div className="sp-pref-content">
+              <div className="sp-pref-title">Auto-send invoice on complete</div>
               <div className="muted small" style={{ marginTop: 4, lineHeight: 1.5 }}>
                 When you tap <strong>Complete &amp; Invoice</strong>, the invoice is automatically sent to your customer by SMS and email. Turn this off to create the invoice first and review it before sending.
               </div>
@@ -1237,7 +1187,7 @@ export default function SettingsPage() {
           </p>
           <div className="pl-settings-kbd-grid">
             {GLOBAL_SHORTCUTS.map(s => (
-              <div key={s.keys + s.label} style={{ display: 'contents' }}>
+              <div key={s.keys + s.label} className="sp-kbd-row">
                 <div className="pl-kbd-label">{s.label}</div>
                 <div className="pl-kbd-keys">
                   {s.keys.split(' ').map((k, i) => <kbd className="pl-kbd" key={i}>{k}</kbd>)}
@@ -1256,7 +1206,7 @@ export default function SettingsPage() {
           <p className="muted small settings-hint">
             Export your invoices in a format compatible with QuickBooks or Xero.
           </p>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="sp-export-row">
             <button className="btn btn-secondary" type="button" onClick={() => handleAccountingExport('quickbooks')}>Export for QuickBooks</button>
             <button className="btn btn-secondary" type="button" onClick={() => handleAccountingExport('xero')}>Export for Xero</button>
           </div>
@@ -1272,23 +1222,23 @@ export default function SettingsPage() {
             <button className="btn btn-secondary" type="button" disabled={exporting} onClick={handleExportData}>
               {exporting ? 'Exporting…' : 'Export all my data (CSV)'}
             </button>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '4px 0' }} />
+            <hr className="sp-divider" />
             {!deleteConfirm ? (
-              <button className="btn btn-secondary" type="button" style={{ color: 'var(--red)' }} onClick={() => setDeleteConfirm(true)}>Delete my account</button>
+              <button className="btn btn-secondary sp-delete-btn" type="button" onClick={() => setDeleteConfirm(true)}>Delete my account</button>
             ) : !deleteConfirm2 ? (
               <div>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--red)', fontWeight: 600, marginBottom: 8 }}>Are you sure? This will permanently delete all your quotes, contacts, invoices, and bookings.</p>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <p className="sp-delete-warning">Are you sure? This will permanently delete all your quotes, contacts, invoices, and bookings.</p>
+                <div className="sp-delete-actions">
                   <button className="btn btn-secondary" type="button" onClick={() => setDeleteConfirm(false)}>Cancel</button>
-                  <button className="btn btn-secondary" type="button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setDeleteConfirm2(true)}>Yes, I understand</button>
+                  <button className="btn btn-secondary sp-delete-confirm" type="button" onClick={() => setDeleteConfirm2(true)}>Yes, I understand</button>
                 </div>
               </div>
             ) : (
               <div>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--red)', fontWeight: 700, marginBottom: 8 }}>Final confirmation — this cannot be undone.</p>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <p className="sp-delete-final">Final confirmation — this cannot be undone.</p>
+                <div className="sp-delete-actions">
                   <button className="btn btn-secondary" type="button" onClick={() => { setDeleteConfirm(false); setDeleteConfirm2(false); }}>Cancel</button>
-                  <button className="btn btn-primary" type="button" disabled={deleting} style={{ background: 'var(--red)', borderColor: 'var(--red)' }} onClick={handleDeleteAccount}>
+                  <button className="btn btn-primary sp-delete-exec" type="button" disabled={deleting} onClick={handleDeleteAccount}>
                     {deleting ? 'Deleting…' : 'Permanently delete everything'}
                   </button>
                 </div>
@@ -1298,22 +1248,22 @@ export default function SettingsPage() {
         </div>
 
         {/* About */}
-        <div className="panel" style={{ background: 'var(--panel-2)' }}>
+        <div className="panel sp-about-panel">
           <div className="eyebrow">About Punchlist</div>
-          <div className="stack" style={{ marginTop: 10 }}>
-            <div className="muted small" style={{ lineHeight: 1.6 }}>
+          <div className="stack sp-about-stack">
+            <div className="muted small sp-about-text">
               Punchlist is a trades-first quoting and job planning tool for small businesses in Canada and the United States.
               Built for speed, clarity, and customer trust — not to replace your accounting software.
             </div>
             <div className="muted small">
-              Questions? Email <a href="mailto:hello@punchlist.ca" style={{ color: 'var(--brand-dark)' }}>hello@punchlist.ca</a>
+              Questions? Email <a href="mailto:hello@punchlist.ca" className="sp-about-link">hello@punchlist.ca</a>
             </div>
           </div>
         </div>
         </>}
 
         {/* Explicit save */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 0 20px' }}>
+        <div className="sp-save-footer">
           <button className="btn btn-primary btn-sm" type="button" disabled={saving} onClick={save}>
             {saving ? 'Saving…' : 'Save now'}
           </button>

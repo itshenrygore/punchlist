@@ -189,6 +189,7 @@ export default function QuotesListPage() {
     try { return localStorage.getItem('pl_hide_completed') === '1'; } catch { return false; }
   });
   const [sortBy, setSortBy]               = useState('updated');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const fetchQuotes = useCallback(() => {
     if (!user) return;
@@ -304,6 +305,9 @@ export default function QuotesListPage() {
 
       {/* ── Search + desktop controls ── */}
       <div className="pl-search-safe">
+        <button type="button" className="ql-filter-toggle" onClick={() => setMobileFiltersOpen(p => !p)} aria-label="Sort & filter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        </button>
         <input
           type="search"
           className="input"
@@ -333,7 +337,7 @@ export default function QuotesListPage() {
       </div>
 
       {/* ── Mobile filter controls (hidden on desktop where ql-desktop-filters shows) ── */}
-      <div className="ql-mobile-filters">
+      <div className="ql-mobile-filters" style={mobileFiltersOpen ? { display: 'flex' } : undefined}>
         <select
           className="input"
           value={sortBy}

@@ -58,7 +58,7 @@ export default function LoginPage() {
       <form className="panel auth-card stack" data-testid="login-form" onSubmit={handleSubmit}>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <Link to="/" style={{ display: 'inline-block' }}><Logo size="md" /></Link>
-          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)', marginTop: 6, fontWeight: 500 }}>Build, send, and track quotes from your phone.</div>
+          <div className="login-tagline">Build, send, and track quotes from your phone.</div>
         </div>
         <div>
           <div className="eyebrow">Welcome back</div>
@@ -91,32 +91,23 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
             />
-            <button type="button" onClick={() => setShowPass(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', fontSize: 'var(--text-xs)', fontWeight: 600, cursor: 'pointer' }}>{showPass ? 'Hide' : 'Show'}</button>
+            <button type="button" onClick={() => setShowPass(p => !p)} className="login-show-pass">{showPass ? 'Hide' : 'Show'}</button>
           </div>
         </div>
         <div style={{ textAlign: 'right', marginTop: -8 }}>
-          <button type="button" onClick={handleForgotPassword} style={{ background: 'none', border: 'none', color: 'var(--brand-dark)', fontSize: 'var(--text-xs)', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
-            {forgotSent ? '✓ Check your email' : 'Forgot password?'}
+          <button type="button" onClick={handleForgotPassword} className="login-forgot">
+            {forgotSent ? '\u2713 Check your email' : 'Forgot password?'}
           </button>
         </div>
         {error && (
-          <div style={{
-            background: 'var(--red-bg)',
-            border: '1px solid rgba(192,64,64,.2)',
-            borderRadius: 12,
-            padding: '10px 14px',
-            color: 'var(--red)',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 500,
-            lineHeight: 1.5,
-          }}>
+          <div className="login-error">
             {error}
           </div>
         )}
         <button className="btn btn-primary full-width" type="submit" disabled={loading}>
-          {loading ? 'Logging in…' : 'Log in'}
+          {loading ? 'Logging in\u2026' : 'Log in'}
         </button>
-        <div style={{ textAlign: 'center', fontSize: 'var(--text-2xs)', color: 'var(--subtle)', marginTop: -4 }}>Your quotes and customer data are waiting.</div>
+        <div className="login-footer" style={{ textAlign: 'center' }}>Your quotes and customer data are waiting.</div>
         <div className="muted small" style={{ textAlign: 'center' }}>
           Don't have an account?{' '}
           <Link to="/signup" style={{ color: 'var(--brand-dark)', fontWeight: 700 }}>Start free</Link>

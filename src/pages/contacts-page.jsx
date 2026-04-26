@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, FileText, Calendar, DollarSign } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import PageSkeleton from '../components/page-skeleton';
 import EmptyState from '../components/empty-state';
@@ -30,9 +30,9 @@ function tagColor(tag) {
 function ActivityTimeline({ quotes, bookings, invoices }) {
   const events = useMemo(() => {
     const all = [];
-    for (const q of quotes) all.push({ date: q.created_at, icon: '📄', label: q.title || 'Untitled quote', sub: chipForStatus(q.status), path: `/app/quotes/${q.id}`, tone: toneForStatus(q.status) });
-    for (const b of bookings) all.push({ date: b.scheduled_for, icon: '📅', label: b.quote?.title || 'Booking', sub: b.status, path: null, tone: 'sent' });
-    for (const i of invoices) all.push({ date: i.created_at, icon: '💰', label: i.invoice_number || 'Invoice', sub: i.status, path: `/app/invoices/${i.id}`, tone: i.status === 'paid' ? 'paid' : 'sent' });
+    for (const q of quotes) all.push({ date: q.created_at, icon: <FileText size={18} />, label: q.title || 'Untitled quote', sub: chipForStatus(q.status), path: `/app/quotes/${q.id}`, tone: toneForStatus(q.status) });
+    for (const b of bookings) all.push({ date: b.scheduled_for, icon: <Calendar size={18} />, label: b.quote?.title || 'Booking', sub: b.status, path: null, tone: 'sent' });
+    for (const i of invoices) all.push({ date: i.created_at, icon: <DollarSign size={18} />, label: i.invoice_number || 'Invoice', sub: i.status, path: `/app/invoices/${i.id}`, tone: i.status === 'paid' ? 'paid' : 'sent' });
     return all.filter(e => e.date).sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [quotes, bookings, invoices]);
 
@@ -42,7 +42,7 @@ function ActivityTimeline({ quotes, bookings, invoices }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
       {events.map((ev, i) => (
         <div key={ev.date + ev.label} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: i < events.length - 1 ? '1px solid var(--line)' : 'none' }}>
-          <div style={{ fontSize: 'var(--text-xl)', lineHeight: 1, marginTop: 2, flexShrink: 0 }}>{ev.icon}</div>
+          <div style={{ color: 'var(--muted)', lineHeight: 1, marginTop: 2, flexShrink: 0, display: 'inline-flex' }}>{ev.icon}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             {ev.path
               ? <Link to={ev.path} style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--text)', textDecoration: 'none' }}>{ev.label}</Link>
@@ -354,7 +354,7 @@ export default function ContactsPage() {
           {/* ── Right: detail panel ── */}
           <section className="ct-detail">
             {selected && (
-              <button className="ct-close-btn" type="button" onClick={() => setSelectedId('')}>← Back to list</button>
+              <button className="ct-close-btn ct-back-btn" type="button" onClick={() => setSelectedId('')}>← All contacts</button>
             )}
 
             {selected && (

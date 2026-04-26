@@ -140,19 +140,19 @@ export default function PublicInvoicePage() {
           {/* ── Status banners ── */}
           {paymentSuccess && !isPaid && (
             <div className="doc-status doc-status--approved">
-              <span className="doc-status-icon" style={{display:"inline-flex"}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span className="doc-status-icon" className="pi-status-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
               <div>
-                <strong style={{ display: 'block' }}>Payment processing</strong>
-                <span style={{ fontSize: 'var(--text-sm)', opacity: 0.9 }}>Your payment is being processed. This page will update once confirmed.</span>
+                <strong className="pi-status-strong">Payment processing</strong>
+                <span className="pi-status-sub">Your payment is being processed. This page will update once confirmed.</span>
               </div>
             </div>
           )}
           {isPaid && (
             <div className="doc-status doc-status--approved">
-              <span className="doc-status-icon" style={{display:"inline-flex"}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span className="doc-status-icon" className="pi-status-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
               <div>
-                <strong style={{ display: 'block' }}>Invoice paid</strong>
-                <span style={{ fontSize: 'var(--text-sm)', opacity: 0.9 }}>
+                <strong className="pi-status-strong">Invoice paid</strong>
+                <span className="pi-status-sub">
                   Paid {invoice.paid_at ? formatDate(invoice.paid_at) : ''}
                   {invoice.payment_method ? ` via ${invoice.payment_method}` : ''}
                 </span>
@@ -163,8 +163,8 @@ export default function PublicInvoicePage() {
             <div className="doc-status doc-status--warning">
               <span className="doc-status-icon">!</span>
               <div>
-                <strong style={{ display: 'block' }}>Payment overdue</strong>
-                <span style={{ fontSize: 'var(--text-sm)', opacity: 0.9 }}>Was due {formatDate(invoice.due_at)}</span>
+                <strong className="pi-status-strong">Payment overdue</strong>
+                <span className="pi-status-sub">Was due {formatDate(invoice.due_at)}</span>
               </div>
             </div>
           )}
@@ -244,7 +244,7 @@ export default function PublicInvoicePage() {
               {Number(invoice.discount || 0) > 0 && (
                 <div className="doc-total-row">
                   <span>Discount</span>
-                  <strong style={{ color: 'var(--red)' }}>−{currency(invoice.discount)}</strong>
+                  <strong className="pi-color-red">−{currency(invoice.discount)}</strong>
                 </div>
               )}
               <div className="doc-total-row">
@@ -263,13 +263,13 @@ export default function PublicInvoicePage() {
               </div>
               {totalPaidViaPayments > 0 && !isPaid && (
                 <>
-                  <div className="doc-total-row" style={{ color: 'var(--green)' }}>
+                  <div className="doc-total-row pi-color-green">
                     <span>Payments received</span>
                     <strong>−{currency(totalPaidViaPayments)}</strong>
                   </div>
                   <div className="doc-total-row doc-total-row--grand">
                     <span>Balance due</span>
-                    <strong style={{ color: 'var(--red)' }}>{currency(invoiceBalance)}</strong>
+                    <strong className="pi-color-red">{currency(invoiceBalance)}</strong>
                   </div>
                 </>
               )}
@@ -278,16 +278,16 @@ export default function PublicInvoicePage() {
 
           {/* ── Payment history (if partial) ── */}
           {invoicePayments.length > 0 && (
-            <div className="doc-section" style={{ marginTop: 0 }}>
+            <div className="doc-section pi-section-no-mt">
               <h2 className="doc-section-title">Payment History</h2>
               <div className="doc-section-body">
                 {invoicePayments.map(p => (
-                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #e8e6e1', fontSize: 'var(--text-sm)' }}>
+                  <div key={p.id} className="pi-pay-row">
                     <span>
-                      <strong style={{ color: 'var(--green)' }}>{currency(p.amount)}</strong>
-                      {p.method && <span style={{ color: 'var(--muted)', marginLeft: 6 }}>via {p.method}</span>}
+                      <strong className="pi-pay-amount">{currency(p.amount)}</strong>
+                      {p.method && <span className="pi-pay-method">via {p.method}</span>}
                     </span>
-                    <span style={{ color: 'var(--muted)' }}>{formatDate(p.paid_at)}</span>
+                    <span className="pi-pay-date">{formatDate(p.paid_at)}</span>
                   </div>
                 ))}
               </div>
@@ -309,55 +309,55 @@ export default function PublicInvoicePage() {
             <div className="doc-info-grid">
               {/* Balance due — show prominently */}
               {invoiceBalance > 0 && (
-                <div className="doc-info-block" style={{ background: 'var(--doc-deposit-bg, #fff7ed)', border: '1px solid var(--doc-deposit-border, rgba(234,88,12,.15))' }}>
+                <div className="doc-info-block" style={{ background: 'var(--doc-deposit-bg, var(--amber-bg))', border: '1px solid var(--doc-deposit-border, rgba(234,88,12,.15))' }}>
                   <div className="doc-info-label">Amount Due</div>
-                  {error && invoice && <div style={{ color: 'var(--doc-red, #dc2626)', fontSize: 'var(--text-sm)', padding: '8px 12px', background: 'rgba(220,38,38,.06)', borderRadius: 8, marginBottom: 8 }}>{error}</div>}
+                  {error && invoice && <div className="pi-error">{error}</div>}
                   <div className="doc-info-body">
-                    <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 800, color: 'var(--doc-text)', letterSpacing: '-.02em', marginBottom: 4 }}>{currency(invoiceBalance)}</div>
+                    <div className="pi-amount-due">{currency(invoiceBalance)}</div>
                     {/* Online payment buttons */}
                     {invoice.stripe_connect_enabled ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10, marginBottom: 6 }}>
-                        <button type="button" className="doc-cta-primary" onClick={handleConnectPay} disabled={payLoading} style={{ textAlign: 'center', fontSize: 'var(--text-md)', padding: '14px 18px', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+                      <div className="pi-pay-col">
+                        <button type="button" className="doc-cta-primary" onClick={handleConnectPay} disabled={payLoading} className="pi-pay-btn">
                           {payLoading ? 'Loading…' : `Pay ${currency(invoiceBalance)}`}
                         </button>
                         {showFinancing(invoiceBalance) ? (
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--doc-accent)', fontWeight: 700 }}>
+                          <div className="pi-financing-hint">
+                            <div className="pi-financing-rate">
                               or from {currency(estimateMonthly(invoiceBalance))}/mo for 12 months
                             </div>
-                            <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--doc-muted)', marginTop: 4 }}>
+                            <div className="pi-financing-sub">
                               Choose "Pay monthly" at checkout · Powered by Punchlist
                             </div>
                           </div>
                         ) : (
-                          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-muted)', textAlign: 'center' }}>Powered by Punchlist · Secure checkout via Stripe</span>
+                          <span className="pi-powered">Powered by Punchlist · Secure checkout via Stripe</span>
                         )}
                       </div>
                     ) : (invoice.contractor_stripe_link || invoice.square_payment_link || invoice.paypal_link) ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, marginBottom: 6 }}>
+                      <div className="pi-pay-col-sm">
                         {invoice.contractor_stripe_link && (
-                          <a href={invoice.contractor_stripe_link} target="_blank" rel="noreferrer" className="doc-cta-primary" style={{ textAlign: 'center', textDecoration: 'none', fontSize: 'var(--text-base)', padding: '12px 16px' }}>
+                          <a href={invoice.contractor_stripe_link} target="_blank" rel="noreferrer" className="doc-cta-primary pi-pay-link">
                             Pay {currency(invoiceBalance)} Online →
                           </a>
                         )}
                         {invoice.square_payment_link && (
-                          <a href={invoice.square_payment_link} target="_blank" rel="noreferrer" className="doc-cta-primary" style={{ textAlign: 'center', textDecoration: 'none', fontSize: 'var(--text-base)', padding: '12px 16px', background: 'var(--doc-text)', color: '#fff' }}>
+                          <a href={invoice.square_payment_link} target="_blank" rel="noreferrer" className="doc-cta-primary pi-pay-link pi-pay-link--square">
                             Pay via Square
                           </a>
                         )}
                         {invoice.paypal_link && (
-                          <a href={invoice.paypal_link.startsWith('http') ? invoice.paypal_link : `https://paypal.me/${invoice.paypal_link}`} target="_blank" rel="noreferrer" className="doc-cta-primary" style={{ textAlign: 'center', textDecoration: 'none', fontSize: 'var(--text-base)', padding: '12px 16px', background: 'var(--paypal-blue)', color: '#fff' }}>
+                          <a href={invoice.paypal_link.startsWith('http') ? invoice.paypal_link : `https://paypal.me/${invoice.paypal_link}`} target="_blank" rel="noreferrer" className="doc-cta-primary pi-pay-link pi-pay-link--paypal">
                             Pay via PayPal
                           </a>
                         )}
                       </div>
                     ) : (
                       (invoice.etransfer_email || invoice.venmo_zelle_handle) ? (
-                        <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--doc-muted)' }}>See payment options below</p>
+                        <p className="pi-pay-fallback">See payment options below</p>
                       ) : effectivePaymentMethods.length > 0 ? (
-                        <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--doc-muted)' }}>Pay via {effectivePaymentMethods.join(', ')}</p>
+                        <p className="pi-pay-fallback">Pay via {effectivePaymentMethods.join(', ')}</p>
                       ) : (
-                        <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--doc-muted)' }}>Contact {invoice.contractor_company || invoice.contractor_name || 'your contractor'} to arrange payment.</p>
+                        <p className="pi-pay-fallback">Contact {invoice.contractor_company || invoice.contractor_name || 'your contractor'} to arrange payment.</p>
                       )
                     )}
                   </div>
@@ -368,9 +368,9 @@ export default function PublicInvoicePage() {
               {(invoice.etransfer_email || invoice.square_payment_link || invoice.paypal_link || invoice.venmo_zelle_handle) && (
                 <div className="doc-info-block">
                   <div className="doc-info-label">Payment options</div>
-                  <div className="doc-info-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div className="doc-info-body pi-options-col">
                     {invoice.etransfer_email && (
-                      <p className="pl-etransfer-row" style={{ margin: 0 }}>
+                      <p className="pl-etransfer-row pi-etransfer-margin">
                         <span className="pl-etransfer-label">E-Transfer to:</span>
                         <strong className="pl-etransfer-email">{invoice.etransfer_email}</strong>
                         <CopyChip value={invoice.etransfer_email} label="Copy" copiedLabel="Copied" />
@@ -380,8 +380,7 @@ export default function PublicInvoicePage() {
                       <a
                         href={invoice.square_payment_link}
                         target="_blank" rel="noreferrer"
-                        className="doc-cta-primary"
-                        style={{ textAlign: 'center', textDecoration: 'none', fontSize: 'var(--text-base)', padding: '12px 16px' }}
+                        className="doc-cta-primary pi-pay-link"
                       >
                         Pay via Square
                       </a>
@@ -390,14 +389,13 @@ export default function PublicInvoicePage() {
                       <a
                         href={invoice.paypal_link.startsWith('http') ? invoice.paypal_link : `https://paypal.me/${invoice.paypal_link}`}
                         target="_blank" rel="noreferrer"
-                        className="doc-cta-primary"
-                        style={{ textAlign: 'center', textDecoration: 'none', fontSize: 'var(--text-base)', padding: '12px 16px' }}
+                        className="doc-cta-primary pi-pay-link"
                       >
                         Pay via PayPal
                       </a>
                     )}
                     {invoice.venmo_zelle_handle && (
-                      <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>Venmo/Zelle: <strong>{invoice.venmo_zelle_handle}</strong></p>
+                      <p className="pi-venmo-label">Venmo/Zelle: <strong>{invoice.venmo_zelle_handle}</strong></p>
                     )}
                   </div>
                 </div>
@@ -407,7 +405,7 @@ export default function PublicInvoicePage() {
               {!invoice.etransfer_email && !invoice.square_payment_link && !invoice.paypal_link && !invoice.venmo_zelle_handle && effectivePaymentMethods.length === 0 && (
                 <div className="doc-info-block">
                   <div className="doc-info-body">
-                    <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--muted)' }}>
+                    <p className="pi-contact-msg">
                       Contact {invoice.contractor_company || invoice.contractor_name || 'your contractor'} to arrange payment.
                     </p>
                   </div>
@@ -452,8 +450,8 @@ export default function PublicInvoicePage() {
 
           {/* ── Additional work notice ── */}
           {hasAdditionalWork && (
-            <div className="doc-section" style={{ background: 'var(--doc-accent-soft)', margin: '0 -1px', padding: '16px 28px' }}>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--doc-accent)', margin: 0 }}>
+            <div className="doc-section pi-aw-section">
+              <p className="pi-aw-note">
                 <strong>Note:</strong> This invoice includes additional work that was approved after the original quote.
               </p>
             </div>
@@ -465,7 +463,7 @@ export default function PublicInvoicePage() {
               <a 
                 className="doc-cta-secondary" 
                 href={`mailto:${invoice.contractor_email}?subject=Payment for ${invoice.invoice_number}`}
-                style={{ textAlign: 'center', textDecoration: 'none' }}
+                className="pi-contact-link"
               >
                 Contact about payment
               </a>
@@ -505,7 +503,7 @@ export default function PublicInvoicePage() {
               className="doc-cta-primary" 
               href={invoice.contractor_stripe_link}
               target="_blank" rel="noreferrer"
-              style={{ textDecoration: 'none', textAlign: 'center' }}
+              className="pi-sticky-link"
             >
               Pay Online →
             </a>
@@ -514,7 +512,7 @@ export default function PublicInvoicePage() {
               className="doc-cta-primary" 
               href={invoice.square_payment_link}
               target="_blank" rel="noreferrer"
-              style={{ textDecoration: 'none', textAlign: 'center' }}
+              className="pi-sticky-link"
             >
               Pay via Square
             </a>
@@ -523,12 +521,12 @@ export default function PublicInvoicePage() {
               className="doc-cta-primary" 
               href={invoice.paypal_link.startsWith('http') ? invoice.paypal_link : `https://paypal.me/${invoice.paypal_link}`}
               target="_blank" rel="noreferrer"
-              style={{ textDecoration: 'none', textAlign: 'center' }}
+              className="pi-sticky-link"
             >
               Pay via PayPal
             </a>
           ) : (
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-muted)' }}>
+            <span className="pi-sticky-hint">
               {effectivePaymentMethods.length > 0
                 ? `Pay via ${effectivePaymentMethods.join(', ')}`
                 : `Contact ${invoice.contractor_company || 'your contractor'}`}

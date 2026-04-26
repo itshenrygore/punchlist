@@ -256,7 +256,7 @@ BEGIN
       WHEN v_followup_count > 0 THEN jsonb_build_object(
         'type', 'followups',
         'value', v_followup_count,
-        'label', v_followup_count || ' quote' || CASE WHEN v_followup_count > 1 THEN 's' ELSE '' END || ' need follow-up',
+        'label', v_followup_count || ' quote' || CASE WHEN v_followup_count > 1 THEN 's need' ELSE ' needs' END || ' follow-up',
         'tone', 'urgent'
       )
       WHEN v_deposit_total > 0 THEN jsonb_build_object(

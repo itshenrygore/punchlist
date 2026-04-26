@@ -47,8 +47,8 @@ function TermsSection({ terms, accepted, onToggle }) {
   return (
     <div className="pq-terms">
       <button type="button" onClick={() => setExpanded(v => !v)} className="pq-terms-toggle">
-        <span><FileText size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />Terms &amp; Conditions</span>
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-muted)', fontWeight: 400 }}>{expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</span>
+        <span><FileText size={14} className="pp-terms-icon" />Terms &amp; Conditions</span>
+        <span className="pp-terms-hint">{expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</span>
       </button>
       {expanded && (
         <div className="pq-terms-body">
@@ -56,8 +56,8 @@ function TermsSection({ terms, accepted, onToggle }) {
         </div>
       )}
       <div className="pq-terms-accept">
-        <input type="checkbox" id="terms-accept" checked={accepted} onChange={e => onToggle(e.target.checked)} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--doc-accent, var(--brand))' }} />
-        <label htmlFor="terms-accept" style={{ fontSize: 'var(--text-sm)', color: 'var(--doc-text)', cursor: 'pointer', userSelect: 'none', lineHeight: 1.4 }}>
+        <input type="checkbox" id="terms-accept" checked={accepted} onChange={e => onToggle(e.target.checked)} className="pp-terms-checkbox" />
+        <label htmlFor="terms-accept" className="pp-terms-label">
           I have read and agree to the terms &amp; conditions
         </label>
       </div>
@@ -69,18 +69,18 @@ function OptionalItemRow({ item, selected, onToggle, currency }) {
   const price = Number(item.quantity || 1) * Number(item.unit_price || 0);
   return (
     <div className={`pq-optional-item ${selected ? 'pq-optional-item--on' : ''}`}>
-      <div style={{ flexShrink: 0 }}>
+      <div className="pp-opt-shrink">
         <button type="button" onClick={() => onToggle(item.id)} className={`pq-toggle ${selected ? 'pq-toggle--on' : ''}`} aria-label={selected ? 'Remove this add-on' : 'Add this add-on'}>
           <span className="pq-toggle-knob" />
         </button>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="doc-item-name" style={{ color: selected ? 'var(--doc-text)' : 'var(--doc-muted)' }}>{item.name}</div>
+      <div className="pp-opt-body">
+        <div className={`doc-item-name ${selected ? "" : "pp-opt-price--off"}`}>{item.name}</div>
         {item.notes && <div className="doc-item-note">{item.notes}</div>}
         {Number(item.quantity) > 1 && <div className="doc-item-qty">{item.quantity} × {currency(item.unit_price)}</div>}
       </div>
-      <div style={{ minWidth: 70, textAlign: 'right', fontWeight: 700, fontSize: 'var(--text-md)' }}>
-        {selected ? <span style={{ color: 'var(--doc-accent, var(--brand))' }}>+{currency(price)}</span> : <span style={{ color: 'var(--doc-muted)' }}>{currency(price)}</span>}
+      <div className="pp-opt-price">
+        {selected ? <span className="pp-opt-price--on">+{currency(price)}</span> : <span className="pp-opt-price--off">{currency(price)}</span>}
       </div>
     </div>
   );
@@ -106,12 +106,12 @@ function ActionSheet({ type, onSubmit, onClose, sending }) {
       <div className="pq-sheet" onClick={e => e.stopPropagation()}>
         <div className="pq-sheet-handle" />
         <div className="pq-sheet-header">
-          <span style={{ fontSize: 'var(--text-2xl)' }}>{c.icon}</span>
-          <h3 style={{ margin: 0, fontSize: 'var(--text-xl)', fontWeight: 800, letterSpacing: '-.02em' }}>{c.title}</h3>
+          <span className="pp-sheet-icon">{c.icon}</span>
+          <h3 className="pp-sheet-title">{c.title}</h3>
         </div>
         <textarea ref={taRef} className="pq-sheet-textarea" value={text} onChange={e => setText(e.target.value)} placeholder={c.placeholder} rows={4} />
         <div className="pq-sheet-footer">
-          <button type="button" className="doc-cta-secondary" onClick={onClose} style={{ flex: 0, padding: '12px 20px' }}>Cancel</button>
+          <button type="button" className="doc-cta-secondary" onClick={onClose} className="pp-sheet-cancel">Cancel</button>
           <button type="button" className={`doc-cta-primary ${type === 'decline' ? 'pq-btn-danger' : ''}`} style={{ flex: 1 }}
             disabled={sending || (required && !text.trim())} onClick={() => onSubmit(text.trim())}>
             {sending ? 'Sending…' : c.button}
@@ -150,10 +150,10 @@ function UpdatesTab({ quote, amendments, additionalWork, currency, shareToken, o
 
   const hasAny = amendments.length > 0 || additionalWork.length > 0;
   if (!hasAny) return (
-    <div style={{ padding: '40px 28px', textAlign: 'center', color: 'var(--doc-muted)' }}>
-      <div style={{ marginBottom: 12, color: 'var(--doc-muted)' }}><FileText size={32} /></div>
-      <div style={{ fontSize: 'var(--text-md)', fontWeight: 600 }}>Nothing’s changed — yet</div>
-      <div style={{ fontSize: 'var(--text-sm)', marginTop: 4 }}>Scope changes and extra work show up here when they come in.</div>
+    <div className="pp-empty">
+      <div className="pp-empty-icon"><FileText size={32} /></div>
+      <div className="pp-empty-title">Nothing's changed � yet</div>
+      <div className="pp-empty-desc">Scope changes and extra work show up here when they come in.</div>
     </div>
   );
 
@@ -188,8 +188,8 @@ function UpdatesTab({ quote, amendments, additionalWork, currency, shareToken, o
   }
 
   return (
-    <div style={{ padding: '0 0 24px' }}>
-      {error && <div style={{ padding: '12px 28px', color: 'var(--doc-red)', fontSize: 'var(--text-sm)' }}>{error}</div>}
+    <div className="pp-updates-wrap">
+      {error && <div className="pp-updates-error">{error}</div>}
       {updates.map(item => item._type === 'amendment'
         ? <AmendmentCard key={`a-${item.id}`} amendment={item} quote={quote} currency={currency}
             state={amendmentStates[item.id]} onAction={handleAmendmentAction} sending={sending} />
@@ -216,10 +216,10 @@ function PaymentsTab({ quote, invoices, currency }) {
   const hasAny = hasDeposit || invoices.length > 0;
 
   if (!hasAny) return (
-    <div style={{ padding: '40px 28px', textAlign: 'center', color: 'var(--doc-muted)' }}>
-      <div style={{ marginBottom: 12, color: 'var(--doc-muted)' }}><CreditCard size={32} /></div>
-      <div style={{ fontSize: 'var(--text-md)', fontWeight: 600 }}>No payments yet</div>
-      <div style={{ fontSize: 'var(--text-sm)', marginTop: 4 }}>Deposit status and invoices will appear here once the project progresses.</div>
+    <div className="pp-empty">
+      <div className="pp-empty-icon"><CreditCard size={32} /></div>
+      <div className="pp-empty-title">No payments yet</div>
+      <div className="pp-empty-desc">Deposit status and invoices will appear here once the project progresses.</div>
     </div>
   );
 
@@ -236,12 +236,12 @@ function PaymentsTab({ quote, invoices, currency }) {
   }
 
   return (
-    <div style={{ padding: '0 0 24px' }}>
-      {error && <div style={{ padding: '12px 28px', color: 'var(--doc-red)', fontSize: 'var(--text-sm)' }}>{error}</div>}
+    <div className="pp-updates-wrap">
+      {error && <div className="pp-updates-error">{error}</div>}
       {paymentSuccess && (
-        <div className="doc-status doc-status--approved" style={{ margin: '0 20px 12px' }}>
-          <span className="doc-status-icon" style={{display:'inline-flex'}}><Check size={14} /></span>
-          <div><strong style={{ display: 'block' }}>Payment received</strong><span style={{ fontSize: 'var(--text-sm)', opacity: .9 }}>Your payment is being processed. This page will update once confirmed.</span></div>
+        <div className="doc-status doc-status--approved pp-pay-success-margin">
+          <span className="doc-status-icon pp-pay-status-icon"><Check size={14} /></span>
+          <div><strong className="pp-pay-status-strong">Payment received</strong><span className="pp-pay-status-sub">Your payment is being processed. This page will update once confirmed.</span></div>
         </div>
       )}
 
@@ -249,16 +249,16 @@ function PaymentsTab({ quote, invoices, currency }) {
       {hasDeposit && (
         <div className="pp-update-card">
           <div className="pp-update-header">
-            <span className="pp-update-type" style={{ background: depositPaid ? 'var(--doc-green-soft)' : 'var(--amber-bg, #fef3c7)', color: depositPaid ? 'var(--doc-green)' : 'var(--amber-text)' }}>
+            <span className="pp-update-type" style={{ background: depositPaid ? 'var(--doc-green-soft)' : 'var(--amber-bg)', color: depositPaid ? 'var(--doc-green)' : 'var(--amber-text)' }}>
               Deposit
             </span>
             <span className={`pp-update-status pp-update-status--${depositPaid ? 'approved' : 'pending'}`}>
               {depositPaid ? '✓ Paid' : 'Required'}
             </span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-            <span style={{ fontSize: 'var(--text-md)', fontWeight: 700 }}>{currency(quote.deposit_amount)}</span>
-            {depositPaid && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-green)' }}>✓ Payment received</span>}
+          <div className="pp-deposit-row">
+            <span className="pp-deposit-amount">{currency(quote.deposit_amount)}</span>
+            {depositPaid && <span className="pp-deposit-paid">✓ Payment received</span>}
           </div>
         </div>
       )}
@@ -280,7 +280,7 @@ function InvoiceCard({ invoice, currency, onPay, payLoading }) {
   return (
     <div className="pp-update-card">
       <div className="pp-update-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div className="pp-inv-header-row">
           <span className="pp-update-type" style={{ background: isPaid ? 'var(--doc-green-soft)' : isOverdue ? 'var(--doc-red-soft)' : 'var(--doc-accent-soft)', color: isPaid ? 'var(--doc-green)' : isOverdue ? 'var(--doc-red)' : 'var(--doc-accent)' }}>
             Invoice {invoice.invoice_number}
           </span>
@@ -291,8 +291,8 @@ function InvoiceCard({ invoice, currency, onPay, payLoading }) {
         <div className="pp-update-date">{formatDate(invoice.issued_at)}</div>
       </div>
 
-      <div style={{ fontWeight: 700, fontSize: 'var(--text-md)', marginBottom: 4 }}>{invoice.title}</div>
-      {invoice.description && <p style={{ fontSize: 'var(--text-sm)', color: 'var(--doc-text-2)', margin: '0 0 8px' }}>{invoice.description}</p>}
+      <div className="pp-inv-title">{invoice.title}</div>
+      {invoice.description && <p className="pp-inv-desc">{invoice.description}</p>}
 
       {/* Items */}
       {(invoice.invoice_items || []).map(item => (
@@ -306,21 +306,21 @@ function InvoiceCard({ invoice, currency, onPay, payLoading }) {
       ))}
 
       {/* Totals */}
-      <div style={{ borderTop: '1px solid var(--doc-line)', marginTop: 8, paddingTop: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', padding: '2px 0' }}>
+      <div className="pp-inv-totals">
+        <div className="pp-inv-total-row">
           <span>Subtotal</span><span>{currency(invoice.subtotal)}</span>
         </div>
         {Number(invoice.tax) > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', padding: '2px 0' }}>
+          <div className="pp-inv-total-row">
             <span>Tax</span><span>{currency(invoice.tax)}</span>
           </div>
         )}
         {depositCredited > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', padding: '2px 0', color: 'var(--doc-green)' }}>
+          <div className="pp-inv-total-row" style={{ color: 'var(--doc-green)' }}>
             <span>Deposit credited</span><span>−{currency(depositCredited)}</span>
           </div>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 'var(--text-md)', padding: '6px 0', borderTop: '1px solid var(--doc-line)', marginTop: 4 }}>
+        <div className="pp-inv-grand">
           <span>{isPaid ? 'Total' : 'Balance due'}</span>
           <span style={{ color: isPaid ? 'var(--doc-green)' : isOverdue ? 'var(--doc-red)' : 'var(--doc-text)' }}>{currency(isPaid ? invoice.total : balance)}</span>
         </div>
@@ -328,10 +328,10 @@ function InvoiceCard({ invoice, currency, onPay, payLoading }) {
 
       {/* Payment history */}
       {payments.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 'var(--text-2xs)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--doc-muted)', marginBottom: 4 }}>Payment history</div>
+        <div className="pp-pay-history">
+          <div className="pp-pay-history-label">Payment history</div>
           {payments.map(p => (
-            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 'var(--text-xs)', color: 'var(--doc-text-2)' }}>
+            <div key={p.id} className="pp-pay-history-row">
               <span><strong style={{ color: 'var(--doc-green)' }}>{currency(p.amount)}</strong> {p.method && `via ${p.method}`}</span>
               <span>{formatDate(p.paid_at)}</span>
             </div>
@@ -340,26 +340,26 @@ function InvoiceCard({ invoice, currency, onPay, payLoading }) {
       )}
 
       {isPaid && (
-        <div style={{ marginTop: 12, padding: '10px 14px', background: 'var(--doc-green-soft)', borderRadius: 8, textAlign: 'center', fontWeight: 700, color: 'var(--doc-green)', fontSize: 'var(--text-base)' }}>
+        <div className="pp-inv-paid-stamp">
           ✓ PAID {invoice.paid_at ? `· ${formatDate(invoice.paid_at)}` : ''}
         </div>
       )}
 
       {/* Pay button */}
       {!isPaid && balance > 0 && invoice.stripe_connect_enabled && (
-        <button type="button" className="doc-cta-primary" onClick={() => onPay(invoice)} disabled={payLoading} style={{ width: '100%', marginTop: 12, textAlign: 'center', border: 'none', cursor: 'pointer' }}>
+        <button type="button" className="doc-cta-primary" onClick={() => onPay(invoice)} disabled={payLoading} className="pp-inv-pay-btn">
           {payLoading ? 'Loading…' : `Pay ${currency(balance)} →`}
         </button>
       )}
       {!isPaid && balance > 0 && !invoice.stripe_connect_enabled && invoice.contractor_stripe_link && (
-        <a href={invoice.contractor_stripe_link} target="_blank" rel="noreferrer" className="doc-cta-primary" style={{ display: 'block', width: '100%', marginTop: 12, textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}>
+        <a href={invoice.contractor_stripe_link} target="_blank" rel="noreferrer" className="doc-cta-primary pp-inv-pay-link">
           Pay {currency(balance)} Online →
         </a>
       )}
 
       {/* PDF download */}
       {invoice.share_token && (
-        <button className="doc-cta-secondary" type="button" style={{ width: '100%', marginTop: 8, textAlign: 'center' }}
+        <button className="doc-cta-secondary pp-inv-pdf-btn" type="button"
           onClick={() => { window.location.href = `/api/export-pdf?invoice_token=${invoice.share_token}`; }}>
           Download Invoice PDF
         </button>
@@ -399,21 +399,21 @@ function MessagesTab({ quote, shareToken, onQuoteUpdate }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 300 }}>
+    <div className="pp-msg-wrap">
       {conversation.length === 0 ? (
-        <div style={{ padding: '40px 28px', textAlign: 'center', color: 'var(--doc-muted)', flex: 1 }}>
-          <div style={{ marginBottom: 12, color: 'var(--doc-muted)' }}><MessageSquare size={32} /></div>
-          <div style={{ fontSize: 'var(--text-md)', fontWeight: 600 }}>No messages yet</div>
-          <div style={{ fontSize: 'var(--text-sm)', marginTop: 4 }}>Send a message to {contractorName} about this project.</div>
+        <div className="pp-empty" style={{ flex: 1 }}>
+          <div className="pp-empty-icon"><MessageSquare size={32} /></div>
+          <div className="pp-empty-title">No messages yet</div>
+          <div className="pp-empty-desc">Send a message to {contractorName} about this project.</div>
         </div>
       ) : (
-        <div ref={scrollRef} style={{ flex: 1, padding: '16px 20px', overflowY: 'auto', maxHeight: 'calc(100vh - 320px)' }}>
+        <div ref={scrollRef} className="pp-msg-scroll">
           {conversation.map(entry => (
             <div key={entry.id} className={`pq-msg ${entry.role === 'contractor' ? 'pq-msg--right' : ''}`}>
               <div className={`pq-msg-avatar ${entry.role === 'contractor' ? 'pq-msg-avatar--contractor' : ''}`}>
                 {null /* replaced by ConvAvatar */}
               </div>
-              <div style={{ maxWidth: '78%' }}>
+              <div className="pp-msg-body">
                 <div className="pq-msg-meta" style={{ textAlign: entry.role === 'contractor' ? 'right' : 'left' }}>
                   <strong>{entry.name || (entry.role === 'customer' ? 'You' : contractorName)}</strong>
                   {' · '}{new Date(entry.timestamp).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -428,18 +428,18 @@ function MessagesTab({ quote, shareToken, onQuoteUpdate }) {
       )}
 
       {/* Compose */}
-      <div style={{ padding: '12px 20px', borderTop: '1px solid var(--doc-line)', background: 'var(--doc-bg)' }}>
-        {error && <div style={{ color: 'var(--doc-red)', fontSize: 'var(--text-xs)', marginBottom: 6 }}>{error}</div>}
-        <div style={{ display: 'flex', gap: 8 }}>
+      <div className="pp-msg-compose">
+        {error && <div className="pp-msg-error">{error}</div>}
+        <div className="pp-msg-row">
           <input
             type="text"
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             placeholder={`Message ${contractorName}…`}
-            style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--doc-line)', fontSize: 'var(--text-base)', outline: 'none', background: 'var(--doc-card-bg, #fff)' }}
+            className="pp-msg-input"
           />
-          <button type="button" className="doc-cta-primary" onClick={sendMessage} disabled={sending || !text.trim()} style={{ padding: '10px 18px', fontSize: 'var(--text-base)', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
+          <button type="button" className="doc-cta-primary" onClick={sendMessage} disabled={sending || !text.trim()} className="pp-msg-send">
             {sending ? '…' : 'Send'}
           </button>
         </div>
@@ -588,9 +588,9 @@ export default function ProjectPortalPage() {
             {/* Footer */}
             <div className="doc-footer">
               <div>
-                <div style={{ fontWeight: 600, color: 'var(--doc-text)' }}>{contractorDisplayName}</div>
-                {quote.contractor_phone && <div style={{ marginTop: 2 }}>{quote.contractor_phone}</div>}
-                {quote.contractor_email && <div style={{ marginTop: 2 }}>{quote.contractor_email}</div>}
+                <div className="pp-footer-name">{contractorDisplayName}</div>
+                {quote.contractor_phone && <div className="pp-footer-detail">{quote.contractor_phone}</div>}
+                {quote.contractor_email && <div className="pp-footer-detail">{quote.contractor_email}</div>}
               </div>
               <div className="doc-footer-actions">
                 <button type="button" className="doc-footer-link" onClick={() => {

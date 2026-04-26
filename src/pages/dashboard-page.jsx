@@ -656,7 +656,7 @@ export default function DashboardPage() {
               onSubmit={handleJobSubmit} data-testid="dash-job-form">
           <input ref={jobInputRef} className="dv2-job-input" type="text"
             placeholder="What's the job? e.g. Poly B repipe, panel upgrade…"
-            value={jobInput} onChange={e => setJobInput(e.target.value)} autoComplete="off" />
+            value={jobInput} onChange={e => setJobInput(e.target.value)} autoComplete="off" enterKeyHint="go" />
           <button className="dv2-job-go" type="submit">
             {jobInput.trim()
               ? <><span>Build quote</span><ArrowRight size={14} /></>
@@ -714,6 +714,11 @@ export default function DashboardPage() {
                 <CardSkeleton height={64} />
                 <CardSkeleton height={64} />
                 <CardSkeleton height={64} />
+              </div>
+            ) : todayActions.length === 0 && headlineMetric?.type === 'followups' ? (
+              <div className="dv2-slim-empty">
+                <CheckCircle2 size={16} className="dv2-slim-empty-icon" />
+                <span className="dv2-slim-empty-text">Nothing urgent right now</span>
               </div>
             ) : todayActions.length === 0 ? (
               <EmptyState

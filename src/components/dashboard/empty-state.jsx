@@ -23,7 +23,7 @@ export default function EmptyState({
 }) {
   return (
     <div className="dv2-section-empty">
-      <Icon size={48} strokeWidth={1.5} className="dv2-section-empty-icon" />
+      <Icon size={28} strokeWidth={1.5} className="dv2-section-empty-icon" />
       {title && <div className="dv2-section-empty-title">{title}</div>}
       {sub && <div className="dv2-section-empty-sub">{sub}</div>}
       {cta && cta.to && (

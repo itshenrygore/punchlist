@@ -1,5 +1,6 @@
 import { FunnelChart, Stat } from '../components/ui';
 import { useEffect, useMemo, useState } from 'react';
+import { Eye, DollarSign } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import PageSkeleton from '../components/page-skeleton';
 import EmptyState from '../components/empty-state';
@@ -21,7 +22,6 @@ function monthLabel(key) {
   const [y, m] = key.split('-');
   const d = new Date(Number(y), Number(m) - 1, 1);
   const mon = d.toLocaleDateString('en-CA', { month: 'short' });
-  // Only show year on Jan or for the first/last item
   return `${mon}`;
 }
 
@@ -32,16 +32,16 @@ function BarChart({ data, valueKey, labelKey, color, formatVal }) {
   const fmt = formatVal || (v => v);
   const [tooltip, setTooltip] = useState(null);
   return (
-    <div className="bar-chart-container analytics-bar-chart" style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 120, paddingBottom: 20, position: 'relative' }}>
+    <div className="an-bar-chart">
       {data.map((d, i) => {
         const h = Math.max(2, ((d[valueKey] || 0) / max) * 100);
         return (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', minWidth: 0 }}>
+          <div key={i} className="an-bar-col">
             <div
               title={`${d[labelKey]}: ${fmt(d[valueKey] || 0)}`}
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                const container = e.currentTarget.closest('.bar-chart-container')?.getBoundingClientRect();
+                const container = e.currentTarget.closest('.an-bar-chart')?.getBoundingClientRect();
                 setTooltip({
                   x: rect.left - (container?.left || 0) + rect.width / 2,
                   y: rect.top - (container?.top || 0) - 8,
@@ -50,42 +50,15 @@ function BarChart({ data, valueKey, labelKey, color, formatVal }) {
                 });
               }}
               onMouseLeave={() => setTooltip(null)}
-              style={{
-                width: '80%',
-                height: `${h}%`,
-                background: color || 'var(--primary)',
-                borderRadius: '4px 4px 0 0',
-                transition: 'height .4s ease',
-                cursor: 'default',
-              }}
+              className="an-bar"
+              style={{ height: `${h}%`, background: color || 'var(--primary)' }}
             />
-            <div style={{
-              position: 'absolute', bottom: -18, left: '50%', transform: 'translateX(-50%)',
-              fontSize: 'var(--text-2xs)', color: 'var(--subtle)', whiteSpace: 'nowrap', overflow: 'hidden',
-              maxWidth: '100%', textAlign: 'center',
-            }}>
-              {d[labelKey]}
-            </div>
+            <div className="an-bar-label">{d[labelKey]}</div>
           </div>
         );
       })}
       {tooltip && (
-        <div style={{
-          position: 'absolute',
-          left: tooltip.x,
-          top: tooltip.y,
-          transform: 'translateX(-50%) translateY(-100%)',
-          background: 'var(--panel)',
-          border: '1px solid var(--line)',
-          borderRadius: 6,
-          padding: '4px 8px',
-          fontSize: 'var(--text-xs)',
-          fontWeight: 600,
-          color: 'var(--text)',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-          zIndex: 10,
-        }}>
+        <div className="an-bar-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>
           {tooltip.label}: {tooltip.value}
         </div>
       )}
@@ -94,8 +67,7 @@ function BarChart({ data, valueKey, labelKey, color, formatVal }) {
 }
 
 function WinRateLine({ data }) {
-  // data = [{label, rate}]  rate 0-100
-  if (data.length < 2) return <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>Not enough data yet.</div>;
+  if (data.length < 2) return <div className="an-empty-hint">Not enough data yet.</div>;
   const W = 400, H = 80;
   const pts = data.map((d, i) => {
     const x = (i / (data.length - 1)) * W;
@@ -103,26 +75,25 @@ function WinRateLine({ data }) {
     return `${x},${y}`;
   });
   const polyline = pts.join(' ');
-  // Fill area under line
   const fillPts = `0,${H} ${pts.join(' ')} ${W},${H}`;
   return (
     <div style={{ overflowX: 'auto' }}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 80 }} preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${W} ${H}`} className="an-sparkline" preserveAspectRatio="none">
         <defs>
           <linearGradient id="winGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#059669" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#059669" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="var(--green)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="var(--green)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
         <polygon points={fillPts} fill="url(#winGrad)" />
-        <polyline points={polyline} fill="none" stroke="#059669" strokeWidth="2" strokeLinejoin="round" />
+        <polyline points={polyline} fill="none" stroke="var(--green)" strokeWidth="2" strokeLinejoin="round" />
         {data.map((d, i) => {
           const x = (i / (data.length - 1)) * W;
           const y = H - (d.rate / 100) * H;
-          return <circle key={i} cx={x} cy={y} r="3" fill="#059669" />;
+          return <circle key={i} cx={x} cy={y} r="3" fill="var(--green)" />;
         })}
       </svg>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-2xs)', color: 'var(--subtle)', marginTop: 2 }}>
+      <div className="an-sparkline-labels">
         <span>{data[0]?.label}</span>
         <span>{data[data.length - 1]?.label}</span>
       </div>
@@ -149,7 +120,6 @@ export default function AnalyticsPage() {
     return () => { cancelled = true; };
   }, [user]);
 
-  // Filter data by date range
   const { filteredQuotes, filteredInvoices } = useMemo(() => {
     if (dateRange === 'all') return { filteredQuotes: quotes, filteredInvoices: invoices };
     const now = new Date();
@@ -167,7 +137,6 @@ export default function AnalyticsPage() {
   const analytics = useMemo(() => {
     if (!filteredQuotes.length) return null;
 
-    // ── Conversion funnel ──
     const sent = filteredQuotes.filter(q => q.status !== 'draft').length;
     const viewed = filteredQuotes.filter(q => !['draft', 'sent'].includes(q.status)).length;
     const approved = filteredQuotes.filter(q => ['approved','approved_pending_deposit','scheduled','completed','invoiced','paid'].includes(q.status)).length;
@@ -182,15 +151,11 @@ export default function AnalyticsPage() {
       { label: 'Paid', count: paid, pct: completed > 0 ? Math.round(paid / completed * 100) : 0 },
     ];
 
-    // ── Win rate (approved / sent) ──
     const winRate = sent > 0 ? Math.round(approved / sent * 100) : 0;
-
-    // ── Average quote value ──
     const avgQuoteValue = filteredQuotes.length > 0
       ? filteredQuotes.reduce((s, q) => s + Number(q.total || 0), 0) / filteredQuotes.length
       : 0;
 
-    // ── Revenue by month (paid invoices) ──
     const revenueByMonth = {};
     for (const inv of filteredInvoices) {
       if (inv.status !== 'paid') continue;
@@ -199,7 +164,6 @@ export default function AnalyticsPage() {
       const k = monthKey(paidDate);
       revenueByMonth[k] = (revenueByMonth[k] || 0) + Number(inv.total || 0);
     }
-    // Last 12 months
     const now = new Date();
     const revenueData = [];
     for (let i = 11; i >= 0; i--) {
@@ -208,7 +172,6 @@ export default function AnalyticsPage() {
       revenueData.push({ label: monthLabel(k), revenue: revenueByMonth[k] || 0, key: k });
     }
 
-    // ── Win rate by month (quotes sent in that month) ──
     const quotesByMonth = {};
     const approvedByMonth = {};
     for (const q of filteredQuotes) {
@@ -227,7 +190,6 @@ export default function AnalyticsPage() {
         rate: quotesByMonth[d.key] ? Math.round((approvedByMonth[d.key] || 0) / quotesByMonth[d.key] * 100) : 0,
       }));
 
-    // ── Average time to close (approved_at or signed_at vs created_at) ──
     const closedQuotes = filteredQuotes.filter(q =>
       ['approved','approved_pending_deposit','scheduled','completed','invoiced','paid'].includes(q.status) &&
       (q.approved_at || q.signed_at) && q.created_at
@@ -242,17 +204,14 @@ export default function AnalyticsPage() {
       avgDaysToClose = (totalDays / closedQuotes.length).toFixed(1);
     }
 
-    // ── Total revenue collected ──
     const totalRevenue = filteredInvoices
       .filter(i => i.status === 'paid')
       .reduce((s, i) => s + Number(i.total || 0), 0);
 
-    // ── Pipeline (approved, not yet paid) ──
     const pipeline = filteredQuotes
       .filter(q => ['approved','approved_pending_deposit','scheduled','completed','invoiced'].includes(q.status))
       .reduce((s, q) => s + Number(q.total || 0), 0);
 
-    // ── Tracking metrics ──
     const viewedQuotes = filteredQuotes.filter(q => q.view_count > 0 && q.status !== 'draft');
     const avgViewsBeforeApproval = (() => {
       const approvedWithViews = filteredQuotes.filter(q =>
@@ -271,7 +230,6 @@ export default function AnalyticsPage() {
       return sentWithView.length > 0 ? Math.round((fast.length / sentWithView.length) * 100) : null;
     })();
 
-    // ── Financing metrics ──
     const quotesWithMonthly = filteredQuotes.filter(q => q.total >= 500 && q.status !== 'draft').length;
     const approvedWithMonthly = filteredQuotes.filter(q =>
       q.total >= 500 && ['approved','approved_pending_deposit','scheduled','completed','invoiced','paid'].includes(q.status)
@@ -301,7 +259,7 @@ export default function AnalyticsPage() {
           actionTo="/app/quotes/new"
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 900 }}>
+        <div className="an-layout">
 
           {/* ── Date range selector ── */}
           <div className="ql-status-pills" style={{ marginBottom: -12 }}>
@@ -322,7 +280,7 @@ export default function AnalyticsPage() {
             ))}
           </div>
 
-          {/* ── KPI row — close rate is the hero ── */}
+          {/* ── KPI row ── */}
           <div className="analytics-kpi-grid">
             <Stat label="Close rate" value={`${analytics.winRate}%`} hint={`${analytics.funnel[2].count} approved of ${analytics.funnel[0].count} sent`} tone="success" />
             <Stat label="Revenue collected" value={currency(analytics.totalRevenue)} hint="from paid invoices" tone="success" />
@@ -339,18 +297,18 @@ export default function AnalyticsPage() {
           {/* ── Tracking & financing insights ── */}
           {(analytics.viewedWithin1hr !== null || analytics.quotesWithMonthly > 0) && (
             <section className="analytics-section">
-              <h3 style={{ margin: '0 0 14px', fontSize: 'var(--text-base)', fontWeight: 700, letterSpacing: '-.02em' }}>Insights</h3>
-              <div style={{ display: 'grid', gap: 8 }}>
+              <h3 className="an-section-title">Insights</h3>
+              <div className="an-insight-grid">
                 {analytics.viewedWithin1hr !== null && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 'var(--text-sm)', color: 'var(--text-2)', padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)' }}>
-                    <span style={{ display:"inline-flex", color:"var(--muted)" }}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                    <span><strong style={{ color: 'var(--text)' }}>{analytics.viewedWithin1hr}%</strong> of quotes opened within 1 hour of sending</span>
+                  <div className="an-insight-card">
+                    <span className="an-insight-icon"><Eye size={16} /></span>
+                    <span><strong className="an-insight-value">{analytics.viewedWithin1hr}%</strong> of quotes opened within 1 hour of sending</span>
                   </div>
                 )}
                 {analytics.quotesWithMonthly > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 'var(--text-sm)', color: 'var(--text-2)', padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)' }}>
-                    <span style={{ display:"inline-flex", color:"var(--muted)" }}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-                    <span><strong style={{ color: 'var(--text)' }}>{analytics.approvedWithMonthly}</strong> of {analytics.quotesWithMonthly} quotes with monthly option were approved</span>
+                  <div className="an-insight-card">
+                    <span className="an-insight-icon"><DollarSign size={16} /></span>
+                    <span><strong className="an-insight-value">{analytics.approvedWithMonthly}</strong> of {analytics.quotesWithMonthly} quotes with monthly option were approved</span>
                   </div>
                 )}
               </div>
@@ -359,18 +317,18 @@ export default function AnalyticsPage() {
 
           {/* ── Conversion funnel ── */}
           <section className="analytics-section">
-            <h3 style={{ margin: '0 0 18px', fontSize: 'var(--text-base)', fontWeight: 700, letterSpacing: '-.02em' }}>Conversion Funnel</h3>
+            <h3 className="an-section-title">Conversion Funnel</h3>
             <FunnelChart data={analytics.funnel} />
-            <p style={{ margin: '14px 0 0', fontSize: 'var(--text-2xs)', color: 'var(--subtle)' }}>
+            <p className="an-section-footnote">
               Percentages show conversion rate from the previous stage.
             </p>
           </section>
 
           {/* ── Revenue by month ── */}
           <section className="analytics-section">
-            <h3 style={{ margin: '0 0 18px', fontSize: 'var(--text-base)', fontWeight: 700, letterSpacing: '-.02em' }}>Revenue by Month</h3>
+            <h3 className="an-section-title">Revenue by Month</h3>
             {analytics.revenueData.every(d => d.revenue === 0) ? (
-              <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>No paid invoices in the last 12 months.</div>
+              <div className="an-empty-hint">No paid invoices in the last 12 months.</div>
             ) : (
               <BarChart
                 data={analytics.revenueData}
@@ -384,10 +342,10 @@ export default function AnalyticsPage() {
 
           {/* ── Win rate trend ── */}
           <section className="analytics-section">
-            <h3 style={{ margin: '0 0 18px', fontSize: 'var(--text-base)', fontWeight: 700, letterSpacing: '-.02em' }}>Win Rate Trend</h3>
+            <h3 className="an-section-title">Win Rate Trend</h3>
             <WinRateLine data={analytics.winRateTrend} />
             {analytics.winRateTrend.length >= 2 && (
-              <p style={{ margin: '12px 0 0', fontSize: 'var(--text-2xs)', color: 'var(--subtle)' }}>
+              <p className="an-section-footnote" style={{ marginTop: 12 }}>
                 Monthly win rate (approved ÷ sent) over the past 12 months.
               </p>
             )}

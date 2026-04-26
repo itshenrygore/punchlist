@@ -18,7 +18,7 @@ const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 const HOUR_HEIGHT_DESKTOP = 60;
 const HOUR_HEIGHT_MOBILE = 52;
 const HOUR_HEIGHT = (typeof window !== 'undefined' && window.innerWidth < 768) ? HOUR_HEIGHT_MOBILE : HOUR_HEIGHT_DESKTOP;
-const DAY_START = 6;
+const DAY_START = 7;
 const DAY_END   = 20;
 const HOURS = Array.from({ length: DAY_END - DAY_START }, (_, i) => DAY_START + i);
 
@@ -130,7 +130,7 @@ function MonthView({ bookings, viewDate, onSelectDate, selectedDate, onNav, onBl
         <span className="pl-cal-title">{MONTHS[viewMonth]} {viewYear}</span>
         <div className="pl-cal-nav">
           <button className="pl-cal-nav-btn" type="button" onClick={() => onNav(-1)} aria-label="Previous month">‹</button>
-          <button className="pl-cal-nav-btn sched-today-btn" type="button" onClick={() => onNav(0)} aria-label="Today">Today</button>
+          <button className="pl-cal-nav-btn sched-today-btn" type="button" onClick={() => onNav(0)} aria-label="Today" style={{whiteSpace:'nowrap',padding:'6px 12px'}}>Today</button>
           <button className="pl-cal-nav-btn" type="button" onClick={() => onNav(1)} aria-label="Next month">›</button>
         </div>
       </div>

@@ -99,15 +99,12 @@
 
 .dv2-greeting {
   margin: 0;
-  /* 28–40px fluid display — single line, tight tracking */
+  /* 28–40px fluid display — tight tracking */
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 600;
   line-height: var(--lh-tight);
   letter-spacing: var(--tracking-tight);
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .dv2-greeting-sub {
@@ -122,6 +119,11 @@
   align-items: center;
   gap: var(--space-3);
   flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .dv2-greeting { font-size: 1.5rem; }
+  .dv2-row1 { flex-direction: column; gap: 4px; }
 }
 
 .dv2-new-btn { white-space: nowrap; }
@@ -224,7 +226,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-8) var(--space-4);
+  padding: var(--space-5) var(--space-4);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--dv2-radius);
@@ -989,4 +991,110 @@
 [data-theme="light"] .dv2-headline-metric {
   background: var(--panel-2);
   border-color: var(--line-2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   iPhone 8 / small-phone polish (≤ 390px)
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 390px) {
+  /* ── Greeting: refined sizing at 375px ── */
+  .dv2-greeting {
+    font-size: 1.4rem;
+    letter-spacing: -.02em;
+  }
+  .dv2-greeting-sub {
+    font-size: 12px;
+  }
+
+  /* ── Headline metric pill: snugger on small phones ── */
+  .dv2-headline-metric {
+    padding: 4px 8px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  /* ── Job input: clean proportions ── */
+  .dv2-job-input {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+  .dv2-job-go {
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* ── Action list rows: tighter but still 44px tap target ── */
+  .dv2-arow {
+    padding: 10px 12px;
+    min-height: 64px;
+    gap: 10px;
+  }
+  .dv2-arow-primary {
+    font-size: 13px;
+  }
+  .dv2-arow-secondary {
+    font-size: 11px;
+  }
+  .dv2-arow-dot {
+    width: 7px;
+    height: 7px;
+  }
+  .dv2-arow-dismiss {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* ── Section headers: cleaner spacing ── */
+  .dv2-section-header {
+    padding: 0 2px;
+  }
+
+  /* ── Cards: slightly tighter ── */
+  .dv2-week-card,
+  .dv2-revenue-card {
+    border-radius: 14px;
+  }
+  .dv2-card-header {
+    margin-bottom: 10px;
+  }
+  .dv2-card-label {
+    font-size: 10px;
+    letter-spacing: .04em;
+  }
+  .dv2-card-link {
+    font-size: 11px;
+  }
+
+  /* ── Week schedule days: compact ── */
+  .dv2-week-day {
+    padding: 6px 0;
+  }
+
+  /* ── Empty state: right-sized ── */
+  .dv2-section-empty {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  /* ── Insight cards: tighter ── */
+  .dv2-insight {
+    padding: 10px 12px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+}
+
+/* ── 375px exactly: final fine-tuning ── */
+@media (max-width: 375px) {
+  .dv2-greeting {
+    font-size: 1.3rem;
+  }
+  .dv2-headline-metric {
+    font-size: 11.5px;
+  }
+  .dv2-arow-primary {
+    font-size: 12.5px;
+  }
 }

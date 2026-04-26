@@ -216,34 +216,46 @@ export default function SignupPage() {
           <h1 style={{ margin: '8px 0 4px' }}>Create your account</h1>
           <div className="muted small" style={{ lineHeight: 1.5 }}>Build professional quotes in minutes. Your customer sees the total and a monthly option — and you get paid in full.</div>
         </div>
-        <input
-          className="input"
-          value={fullName}
-          onChange={e => setFullName(e.target.value)}
-          placeholder="Your name"
-          required
-          autoComplete="name"
-          autoFocus
-        />
-        <input
-          className="input"
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="Email address"
-          required
-          autoComplete="email"
-        />
-        <input
-          className="input"
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          placeholder="Password (8+ characters)"
-          minLength="8"
-          required
-          autoComplete="new-password"
-        />
+        <div>
+          <label htmlFor="signup-name" className="field-label">Your name</label>
+          <input
+            id="signup-name"
+            className="input"
+            value={fullName}
+            onChange={e => setFullName(e.target.value)}
+            placeholder="e.g. Mike Sullivan"
+            required
+            autoComplete="name"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label htmlFor="signup-email" className="field-label">Email address</label>
+          <input
+            id="signup-email"
+            className="input"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            autoComplete="email"
+          />
+        </div>
+        <div>
+          <label htmlFor="signup-password" className="field-label">Password</label>
+          <input
+            id="signup-password"
+            className="input"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="8+ characters"
+            minLength="8"
+            required
+            autoComplete="new-password"
+          />
+        </div>
         {error && (
           <div style={{
             background: 'var(--red-bg)',

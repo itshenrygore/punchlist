@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Check, X, MessageSquare } from 'lucide-react';
 import { currency as formatCurrency } from '../lib/format';
 import PublicPageShell from '../components/public-page-shell';
 import PublicLoadingState from '../components/public-loading-state';
@@ -65,32 +66,29 @@ export default function PublicAdditionalWorkPage() {
   const canAct = !isApproved && !isDeclined;
 
   const statusBanner = isApproved
-    ? { bg: 'var(--green-bg)', border: 'rgba(21,128,61,.2)', icon: '✅', color: 'var(--green)', title: 'Additional work approved', sub: 'Your contractor will proceed with the extra work.' }
+    ? { bg: 'var(--green-bg)', border: 'rgba(21,128,61,.2)', Icon: Check, color: 'var(--green)', title: 'Additional work approved', sub: 'Your contractor will proceed with the extra work.' }
     : isNeedsReview
-    ? { bg: 'var(--blue-bg)', border: 'rgba(72,120,208,.2)', icon: null, color: 'var(--blue)', title: 'Question sent', sub: 'Your contractor will reply to your question.' }
+    ? { bg: 'var(--blue-bg)', border: 'rgba(72,120,208,.2)', Icon: MessageSquare, color: 'var(--blue)', title: 'Question sent', sub: 'Your contractor will reply to your question.' }
     : isDeclined
-    ? { bg: 'var(--red-bg)', border: 'rgba(180,35,24,.15)', icon: null, color: 'var(--red)', title: 'Additional work declined', sub: 'This extra work will not be performed.' }
+    ? { bg: 'var(--red-bg)', border: 'rgba(180,35,24,.15)', Icon: X, color: 'var(--red)', title: 'Additional work declined', sub: 'This extra work will not be performed.' }
     : null;
-
-  const awStatusLabel = isApproved ? 'Approved' : isDeclined ? 'Declined' : isNeedsReview ? 'Needs Review' : 'Pending Approval';
-  const awStatusTone = isApproved ? 'approved' : isDeclined ? 'declined' : isNeedsReview ? 'revision' : 'sent';
 
   return (
     <PublicPageShell contractorName={request.contractor_company || request.contractor_name} logoUrl={null}>
-    <div className="marketing-shell">
+    <div className="doc-shell">
 
       <main className="container public-quote-layout">
         <section className="stack-lg">
 
-          {/* Context banner — per spec: show original quote vs additional work status */}
+          {/* Context banner */}
           <div className="panel" style={{ display: 'flex', gap: 12, padding: '14px 18px', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 120 }}>
               <div className="muted small" style={{ marginBottom: 3 }}>Original Quote</div>
-              <div style={{ fontWeight: 700, color: "var(--green)", fontSize: "var(--text-sm)" }}>Approved</div>
+              <div className="aw-status-label aw-status--approved">Approved</div>
             </div>
             <div style={{ flex: 1, minWidth: 120 }}>
               <div className="muted small" style={{ marginBottom: 3 }}>Additional Work</div>
-              <div style={{ fontWeight: 700, color: isApproved ? 'var(--green)' : isDeclined ? 'var(--red)' : 'var(--amber)', fontSize: 'var(--text-sm)' }}>
+              <div className={`aw-status-label ${isApproved ? 'aw-status--approved' : isDeclined ? 'aw-status--declined' : 'aw-status--pending'}`}>
                 {isApproved ? 'Approved' : isDeclined ? 'Declined' : isNeedsReview ? 'Question Sent' : 'Pending Approval'}
               </div>
             </div>
@@ -99,7 +97,7 @@ export default function PublicAdditionalWorkPage() {
           {statusBanner && (
             <div className="panel" style={{ background: statusBanner.bg, border: `1px solid ${statusBanner.border}`, padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.3rem' }}>{statusBanner.icon}</span>
+                <span style={{ color: statusBanner.color, display: 'inline-flex' }}><statusBanner.Icon size={20} /></span>
                 <div>
                   <strong style={{ color: statusBanner.color, display: 'block' }}>{statusBanner.title}</strong>
                   <span className="muted small">{statusBanner.sub}</span>
@@ -140,7 +138,7 @@ export default function PublicAdditionalWorkPage() {
                   {item.notes && <div className="muted small" style={{ marginTop: 3 }}>{item.notes}</div>}
                 </div>
                 <div className="list-card-right" style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div className="muted small">{item.quantity} × {currency(item.unit_price)}</div>
+                  <div className="muted small">{item.quantity} &times; {currency(item.unit_price)}</div>
                   <strong>{currency(Number(item.quantity || 0) * Number(item.unit_price || 0))}</strong>
                 </div>
               </div>
@@ -151,7 +149,7 @@ export default function PublicAdditionalWorkPage() {
               <div className="total-row grand"><span>Additional total</span><strong>{currency(request.total)}</strong></div>
             </div>
             {request.original_quote_total && (
-              <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,255,255,.04)', borderRadius: 8, border: '1px solid var(--line)' }}>
+              <div className="aw-combined-total">
                 <div className="muted small" style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Original quote total</span>
                   <span>{currency(request.original_quote_total)}</span>
@@ -170,7 +168,7 @@ export default function PublicAdditionalWorkPage() {
 
           {actionDone === 'approve' && (
             <div className="notice-banner" style={{ background: 'var(--green-bg)', borderColor: 'rgba(21,128,61,.2)', color: 'var(--green)' }}>
-              <strong>✓ Additional work approved.</strong> Your contractor will proceed.
+              <strong>&check; Additional work approved.</strong> Your contractor will proceed.
             </div>
           )}
           {actionDone === 'question' && (
@@ -197,7 +195,7 @@ export default function PublicAdditionalWorkPage() {
             <div className="stack">
               {canAct && !isNeedsReview && (
                 <button className="btn btn-primary full-width" type="button" disabled={sending && !mode} onClick={() => handleAction('approve')}>
-                  {sending && !mode ? 'Submitting…' : 'Approve additional work'}
+                  {sending && !mode ? 'Submitting\u2026' : 'Approve additional work'}
                 </button>
               )}
 
@@ -210,7 +208,7 @@ export default function PublicAdditionalWorkPage() {
                     <div className="stack" style={{ marginTop: 4 }}>
                       <textarea className="input textarea-md" value={feedback} onChange={e => setFeedback(e.target.value)} placeholder="What would you like to know? Your contractor will reply directly." rows={3} />
                       <button className="btn btn-primary full-width" type="button" disabled={sending || !feedback.trim()} onClick={() => handleAction('question', { feedback })}>
-                        {sending ? 'Sending…' : 'Send question'}
+                        {sending ? 'Sending\u2026' : 'Send question'}
                       </button>
                     </div>
                   )}
@@ -219,21 +217,21 @@ export default function PublicAdditionalWorkPage() {
 
               {canAct && !isNeedsReview && (
                 <>
-                  <button className="btn btn-secondary full-width" type="button" style={{ color: 'var(--muted)', fontSize: 'var(--text-xs)', marginTop: 4 }} onClick={() => { setMode(mode === 'decline' ? null : 'decline'); setFeedback(''); }}>
+                  <button className="btn btn-secondary full-width aw-decline-btn" type="button" onClick={() => { setMode(mode === 'decline' ? null : 'decline'); setFeedback(''); }}>
                     {mode === 'decline' ? 'Cancel' : 'Decline additional work'}
                   </button>
                   {mode === 'decline' && (
                     <div className="stack" style={{ marginTop: 4 }}>
                       <textarea className="input textarea-md" value={feedback} onChange={e => setFeedback(e.target.value)} placeholder="Optional: reason for declining." rows={2} />
                       <button className="btn btn-secondary full-width" type="button" style={{ color: 'var(--red)' }} disabled={sending} onClick={() => handleAction('decline', { feedback })}>
-                        {sending ? '…' : 'Confirm decline'}
+                        {sending ? '\u2026' : 'Confirm decline'}
                       </button>
                     </div>
                   )}
                 </>
               )}
 
-              {error && <div style={{ color: 'var(--red)', fontSize: 'var(--text-sm)', fontWeight: 600, padding: '6px 0' }}>{error}</div>}
+              {error && <div className="aw-error">{error}</div>}
             </div>
           </div>
 
@@ -257,7 +255,7 @@ export default function PublicAdditionalWorkPage() {
         {canAct && !isNeedsReview && (
           <div className="public-actions-mobile-bar">
             <button className="btn btn-primary" style={{ flex: 1 }} type="button" disabled={sending} onClick={() => handleAction('approve')}>
-              {sending ? '…' : 'Approve'}
+              {sending ? '\u2026' : 'Approve'}
             </button>
             <button className="btn btn-secondary" style={{ flex: 1 }} type="button" onClick={() => setMode(mode === 'question' ? null : 'question')}>
               Ask a question
@@ -266,7 +264,7 @@ export default function PublicAdditionalWorkPage() {
         )}
         {(isApproved || isDeclined || isNeedsReview) && (
           <div className="public-actions-mobile-bar">
-            <div style={{ padding: '8px 0', fontWeight: 700, color: 'var(--muted)', fontSize: 'var(--text-sm)', textAlign: 'center', flex: 1 }}>
+            <div className="aw-mobile-status">
               {isApproved ? 'Approved' : isDeclined ? 'Declined' : 'Question sent'}
             </div>
           </div>
