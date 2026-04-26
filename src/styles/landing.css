@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Inter is loaded in index.html via <link> — no @import needed */
 
 /* ═══════════════════════════════════════════
    Landing v3 — Tokens
@@ -64,7 +64,6 @@
 .rv {
   opacity:0; transform:translateY(20px);
   transition:opacity 0.7s var(--lp-ease), transform 0.7s var(--lp-ease);
-  will-change:transform,opacity;
 }
 .rv.vis { opacity:1; transform:translateY(0); }
 .rv-d1 { transition-delay:0.08s; }
@@ -95,27 +94,8 @@
   0% { transform:translateX(-100%); }
   100% { transform:translateX(100%); }
 }
-@keyframes lpGrain {
-  0%,100% { transform:translate(0,0) }
-  10% { transform:translate(-2%,-3%) }
-  30% { transform:translate(3%,1%) }
-  50% { transform:translate(-1%,3%) }
-  70% { transform:translate(2%,-2%) }
-  90% { transform:translate(-3%,1%) }
-}
 
-/* ═══ Noise / grain texture (subtle, GPU-only) ═══ */
-.lp::before {
-  content:''; position:fixed; inset:0; z-index:9999; pointer-events:none;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:180px 180px;
-  opacity:0.018;
-  animation:lpGrain 8s steps(10) infinite;
-  mix-blend-mode:multiply;
-}
-@media (prefers-reduced-motion: reduce) {
-  .lp::before { animation:none; }
-}
+/* Grain removed — was a full-viewport compositing layer on every frame */
 
 /* ═══ CTA shimmer sweep ═══ */
 .lp-btn-primary::after,
@@ -266,9 +246,9 @@
 /* Ambient glow behind the card */
 .lp-scene-wrap::before {
   content:''; position:absolute;
-  top:15%; left:-8%; right:-8%; bottom:10%;
-  background:radial-gradient(ellipse at 50% 50%, rgba(212,114,42,0.09) 0%, transparent 65%);
-  filter:blur(40px); border-radius:50%; pointer-events:none; z-index:0;
+  top:5%; left:-15%; right:-15%; bottom:0%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(212,114,42,0.06) 0%, transparent 55%);
+  border-radius:50%; pointer-events:none; z-index:0;
 }
 .lp-hero-chips { position:absolute; z-index:10; will-change:transform; }
 .lp-quote-card {
@@ -296,11 +276,10 @@
 }
 .lp-quote-content {
   min-height:340px;
-  will-change:transform,opacity;
+  transition:opacity 0.4s var(--lp-ease), transform 0.4s var(--lp-ease);
 }
-.lp-quote-content--entering {
-  animation:lpFadeUp 0.45s var(--lp-ease) forwards;
-}
+.lp-quote-content--in { opacity:1; transform:translateY(0); }
+.lp-quote-content--out { opacity:0; transform:translateY(10px); }
 .lp-quote-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .lp-meta { font-size:11px; color:var(--lp-text-3); font-weight:500; }
 .lp-trade-badge {
@@ -360,8 +339,7 @@
 .lp-chip {
   display:inline-flex; align-items:center; gap:7px;
   padding:7px 12px; border-radius:10px;
-  background:rgba(255,255,255,0.95);
-  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  background:#fff;
   box-shadow:var(--lp-sh-lg), 0 0 0 1px rgba(255,255,255,0.5) inset;
   border:1px solid var(--lp-border);
   font-size:11px; font-weight:600; white-space:nowrap;
@@ -448,8 +426,8 @@
 
 .lp-glow-orb {
   position:absolute; width:450px; height:450px; border-radius:50%;
-  background:radial-gradient(circle,rgba(212,114,42,0.09) 0%,transparent 70%);
-  filter:blur(80px); pointer-events:none;
+  background:radial-gradient(circle,rgba(212,114,42,0.06) 0%,transparent 60%);
+  pointer-events:none;
 }
 
 /* ═══════════════════════════════════════════
@@ -478,7 +456,7 @@
   background:#fff; border-radius:var(--lp-r-lg); border:1px solid var(--lp-border);
   box-shadow:var(--lp-sh-sm); display:flex; flex-direction:column;
   align-items:center; justify-content:center;
-  transition:opacity 0.6s var(--lp-ease), transform 0.6s var(--lp-ease), filter 0.6s var(--lp-ease);
+  transition:opacity 0.5s var(--lp-ease), transform 0.5s var(--lp-ease);
 }
 .lp-shock-card--accent {
   border:2px solid var(--lp-accent); box-shadow:var(--lp-sh-accent);
@@ -1079,10 +1057,10 @@
 /* Central radial glow */
 .lp-final-cta::before {
   content:''; position:absolute;
-  top:30%; left:50%; transform:translateX(-50%);
-  width:600px; height:400px; border-radius:50%;
-  background:radial-gradient(ellipse, rgba(212,114,42,0.08) 0%, transparent 65%);
-  filter:blur(60px); pointer-events:none;
+  top:20%; left:50%; transform:translateX(-50%);
+  width:700px; height:500px; border-radius:50%;
+  background:radial-gradient(ellipse, rgba(212,114,42,0.06) 0%, transparent 55%);
+  pointer-events:none;
 }
 /* Top edge accent */
 .lp-final-cta::after {
@@ -1242,5 +1220,6 @@
   .lp-btn-primary::after,
   .lp-btn-glow-dark::after,
   .lp-price-cta-pro::after { animation:none !important; }
-  .lp-quote-content--entering { animation:none !important; }
+  .lp-quote-content { transition-duration:0.01s !important; }
+  .lp-shock-card { transition-duration:0.01s !important; }
 }

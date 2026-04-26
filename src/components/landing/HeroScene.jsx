@@ -59,15 +59,16 @@ function useCountUp(target, duration = 900, active = false) {
 
 export default function HeroScene() {
   const [idx, setIdx] = useState(0);
-  const [entering, setEntering] = useState(true);
+  const [phase, setPhase] = useState('in'); // 'in' | 'out'
   const timerRef = useRef(null);
 
   const cycle = useCallback(() => {
-    setEntering(false);
+    setPhase('out');
     setTimeout(() => {
       setIdx(i => (i + 1) % JOBS.length);
-      setEntering(true);
-    }, 400);
+      // Brief delay so new data renders before fading in
+      requestAnimationFrame(() => setPhase('in'));
+    }, 450);
   }, []);
 
   useEffect(() => {
@@ -76,8 +77,8 @@ export default function HeroScene() {
   }, [cycle]);
 
   const job = JOBS[idx];
-  const totalVal = useCountUp(job.total, 800, entering);
-  const moVal = useCountUp(job.mo, 800, entering);
+  const totalVal = useCountUp(job.total, 800, phase === 'in');
+  const moVal = useCountUp(job.mo, 800, phase === 'in');
 
   return (
     <div className="lp-scene-wrap">
@@ -116,7 +117,7 @@ export default function HeroScene() {
         </div>
 
         {/* Content area — fixed min-height, crossfade */}
-        <div className={`lp-quote-content${entering ? ' lp-quote-content--entering' : ''}`}>
+        <div className={`lp-quote-content lp-quote-content--${phase}`}>
           <div className="lp-quote-header">
             <span className="lp-meta">Quote #Q-2847</span>
             <span className="lp-trade-badge">{job.trade}</span>

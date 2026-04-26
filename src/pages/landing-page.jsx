@@ -178,8 +178,7 @@ function StickerShock() {
               className="lp-shock-card"
               style={{
                 opacity: flipped ? 0 : 1,
-                transform: flipped ? 'scale(0.92)' : 'scale(1)',
-                filter: flipped ? 'blur(4px)' : 'blur(0)',
+                transform: flipped ? 'scale(0.95)' : 'scale(1)',
               }}
             >
               <div className="lp-shock-amount">$4,847</div>
@@ -193,8 +192,7 @@ function StickerShock() {
               className="lp-shock-card lp-shock-card--accent"
               style={{
                 opacity: flipped ? 1 : 0,
-                transform: flipped ? 'scale(1)' : 'scale(0.92)',
-                filter: flipped ? 'blur(0)' : 'blur(4px)',
+                transform: flipped ? 'scale(1)' : 'scale(0.95)',
               }}
             >
               <div className="lp-shock-amount" style={{ color: 'var(--lp-accent)' }}>~$404/mo</div>
