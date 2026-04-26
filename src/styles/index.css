@@ -1526,7 +1526,7 @@ a.sched-drawer-sec-btn{text-decoration:underline}
 /* ═══════════════════════════════════════════
    ONBOARDING
    ═══════════════════════════════════════════ */
-.ob-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:var(--z-overlay);display:grid;place-items:center;padding:16px}
+.ob-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);z-index:var(--z-overlay);display:grid;place-items:center;padding:16px}
 .ob-card{background:var(--panel);border-radius:var(--r-xl);padding:28px 26px;max-width:400px;width:100%;box-shadow:var(--shadow-float);border:1px solid var(--line-2)}
 .ob-icon{font-size:2rem;margin-bottom:14px}
 .ob-title{font-size:1.15rem;font-weight:800;letter-spacing:-.03em;margin:0 0 8px;color:var(--text)}
@@ -3100,7 +3100,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .notif-link-wrap:hover .notif-item{background:var(--panel-2)}
 .notif-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);transition:background var(--fast);cursor:pointer}
 .notif-item.unread{background:rgba(249,115,22,.04)}
-.notif-icon{flex-shrink:0;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--panel-2);border:1px solid var(--line)}
+.notif-icon{flex-shrink:0;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
 .notif-icon.tone-approved{background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.2);color:#15803d}
 .notif-icon.tone-declined{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2);color:#ef4444}
 .notif-icon.tone-revision{background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.2);color:#f97316}
@@ -9012,7 +9012,7 @@ kbd.pl-kbd {
    ═══════════════════════════════════════════════════════════════ */
 
 /* Describe phase */
-.qb-icon-inline { margin-right: 4px; vertical-align: middle; }
+.qb-icon-inline { vertical-align: middle; flex-shrink: 0; }
 .qb-job-title { font-size: var(--text-xs); color: var(--muted); padding: 6px 0; line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; }
 .qb-job-title strong { color: var(--text); }
 .qb-trade-details { margin-top: 4px; }
@@ -9463,3 +9463,73 @@ kbd.pl-kbd {
 .login-error { background: var(--red-bg); border: 1px solid rgba(192,64,64,.2); border-radius: 12px; padding: 10px 14px; color: var(--red); font-size: var(--text-sm); font-weight: 500; line-height: 1.5; }
 .login-tagline { font-size: var(--text-sm); color: var(--muted); margin-top: 6px; font-weight: 500; }
 .login-footer { font-size: var(--text-2xs); color: var(--subtle); margin-top: -4px; }
+
+/* ═══════════════════════════════════════════════════════════
+   v105 — Screenshot bug fixes
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Fix 1: QB helper buttons — icon + text on one line ──
+   On mobile the mic/camera icon was wrapping above the label
+   because the button lacked inline-flex. */
+.jd-helper-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Fix 2: QB footer bottom padding — too much dead space ──
+   62px padding was for fixed-position footer clearance, but
+   footer is now position:relative on mobile. Reduce to just
+   safe-area clearance. */
+@media (max-width: 768px) {
+  .qb-zone .jd-footer {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  }
+}
+
+/* ── Fix 3: Schedule toolbar mobile — keep nav on same row ──
+   Instead of forcing toolbar-left to 100% width which pushes
+   nav buttons to a second line, let both sides share the row.
+   Title truncates if needed to fit nav buttons. */
+@media (max-width: 768px) {
+  .sched-toolbar {
+    flex-wrap: nowrap;
+  }
+  .sched-toolbar-left {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .sched-toolbar-right {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .sched-title {
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ── Fix 4: Settings tabs mobile — better scroll affordance ──
+   Slightly increase right padding so the last tab peeks out
+   more obviously, hinting at scrollability. */
+@media (max-width: 768px) {
+  .settings-tabs {
+    padding-right: 24px;
+    scroll-padding-right: 24px;
+  }
+}
+
+/* ── Fix 5: Onboarding step indicator — prevent overlap ──
+   On mobile the "Step 2 of 2" text was partially hidden
+   behind the close button. Give the title area more room. */
+@media (max-width: 768px) {
+  .ob-card {
+    padding-top: 36px;
+  }
+  .ob-title {
+    padding-right: 28px;
+  }
+}

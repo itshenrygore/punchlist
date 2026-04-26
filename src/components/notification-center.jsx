@@ -9,10 +9,10 @@ const NOTIFICATION_ICONS = {
   quote_viewed: '👀',
   quote_approved: '✓',
   quote_declined: '✕',
-  revision_requested: 'edit',
-  customer_question: 'message',
-  booking_tomorrow: 'calendar',
-  payment_received: 'payment',
+  revision_requested: '✏️',
+  customer_question: '💬',
+  booking_tomorrow: '📅',
+  payment_received: '💰',
   quote_expiring: '⏳',
   additional_work_approved: '✓',
   additional_work_declined: '✕',
@@ -185,7 +185,7 @@ export default function NotificationCenter() {
           {(() => {
             let lastGroup = '';
             return notifications.map(n => {
-              const icon = NOTIFICATION_ICONS[n.type] || 'default';
+              const icon = NOTIFICATION_ICONS[n.type] || '🔔';
               const tone = NOTIFICATION_TONES[n.type] || 'draft';
               const nDate = n.created_at ? new Date(n.created_at) : null;
               const today = new Date();

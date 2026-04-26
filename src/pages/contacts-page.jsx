@@ -299,7 +299,7 @@ export default function ContactsPage() {
             )}
 
             <div className="ct-list-meta">
-              <span className="qb-muted">{filteredCustomers.length} contacts</span>
+              <span className="qb-muted">{filteredCustomers.length} {filteredCustomers.length === 1 ? 'contact' : 'contacts'}</span>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 <button className="ct-toggle-btn" type="button" onClick={() => setSortBy(s => s === 'alpha' ? 'recent' : 'alpha')}>{sortBy === 'alpha' ? 'A→Z' : 'Recent'}</button>
                 <label className="ct-csv-btn">Import CSV<input hidden type="file" accept=".csv" onChange={importCsv} /></label>
