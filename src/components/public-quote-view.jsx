@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { currency as formatCurrency, formatDate, formatQuoteNumber } from '../lib/format';
 import { estimateMonthly, showFinancing } from '../lib/financing';
 import { getCustomerActions } from '../lib/workflow';
-import { MessageSquare, Pencil, Link2, Phone } from 'lucide-react';
+import { MessageSquare, Pencil, Link2, Phone, Clock, Info } from 'lucide-react';
 import ConvAvatar from './conv-avatar';
 import PublicPageShell from './public-page-shell';
 import SignatureModal from './signature-modal';
@@ -486,7 +486,7 @@ export default function PublicQuoteView({
           </div>
 
           {/* ── Status banners ── */}
-          {isExpired && <div className="doc-status doc-status--warning"><span className="doc-status-icon">⏰</span><span>This quote has expired. Contact {contractorDisplayName} for an updated quote.</span></div>}
+          {isExpired && <div className="doc-status doc-status--warning"><span className="doc-status-icon" style={{display:'inline-flex'}}><Clock size={16} /></span><span>This quote has expired. Contact {contractorDisplayName} for an updated quote.</span></div>}
 
           {/* Persistent approved state — shows on refresh when quote is already signed */}
           {isApproved && !actionDone && (
@@ -564,7 +564,7 @@ export default function PublicQuoteView({
           )}
           {actionDone === 'revision_requested' && (
             <div className="pq-success-banner pq-success-banner--amber">
-              <div className="pq-success-check" style={{ background: 'var(--amber-bg, #fef3c7)', color: 'var(--amber-text, #92400e)' }}><Pencil size={16} /></div>
+              <div className="pq-success-check" style={{ background: 'var(--amber-bg)', color: 'var(--amber-text)' }}><Pencil size={16} /></div>
               <div>
                 <strong style={{ display: 'block' }}>Changes requested</strong>
                 <span style={{ fontSize: 'var(--text-sm)', opacity: .85, display: 'block', marginTop: 2 }}>{contractorDisplayName} will revise the quote and send you an updated version.</span>
@@ -613,7 +613,7 @@ export default function PublicQuoteView({
             </div>
           )}
           {depositConfirming && <div className="doc-status" style={{ background: 'var(--doc-accent-soft)', color: 'var(--doc-accent)' }}><span className="doc-status-icon" style={{ animation: 'doc-spin 0.8s linear infinite', display: 'inline-flex' }}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></span><span>Confirming your payment — just a moment…</span></div>}
-          {depositTimedOut && <div className="doc-status doc-status--info"><span className="doc-status-icon">ℹ</span><span>Payment received — confirmation may take a moment. Refresh this page or contact {contractorDisplayName} if you have questions.</span></div>}
+          {depositTimedOut && <div className="doc-status doc-status--info"><span className="doc-status-icon" style={{display:'inline-flex'}}><Info size={14} /></span><span>Payment received — confirmation may take a moment. Refresh this page or contact {contractorDisplayName} if you have questions.</span></div>}
 
           {quote.revision_summary && <div className="doc-revision"><strong>Updated:</strong> {quote.revision_summary}</div>}
 

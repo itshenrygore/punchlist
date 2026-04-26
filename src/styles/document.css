@@ -91,9 +91,9 @@
 
 /* ── Status banners ── */
 .doc-status { padding: 14px 20px; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--doc-line); }
-.doc-status--approved { background: var(--doc-green-soft); color: #15803d; }
-.doc-status--warning { background: #fef3c7; color: #92400e; }
-.doc-status--info { background: var(--doc-blue-soft); color: #1e40af; }
+.doc-status--approved { background: var(--doc-green-soft); color: var(--doc-green); }
+.doc-status--warning { background: var(--amber-bg); color: var(--amber-text); }
+.doc-status--info { background: var(--doc-blue-soft); color: var(--doc-blue); }
 .doc-status-icon { font-size: 18px; flex-shrink: 0; }
 .doc-revision { padding: 12px 20px; background: var(--doc-accent-soft); border-bottom: 1px solid var(--doc-accent-line); font-size: 13px; color: var(--doc-text-2); }
 
@@ -203,8 +203,8 @@
   color: var(--doc-red);
 }
 .doc-meta-chip--soon {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--amber-bg);
+  color: var(--amber-text);
 }
 
 /* Monthly inline in totals */
@@ -850,12 +850,12 @@
   padding: 20px 24px;
   background: var(--doc-green-soft);
   border-bottom: 1px solid rgba(22,163,74,.15);
-  color: #15803d;
+  color: var(--doc-green, #15803d);
   animation: pq-slide-in .3s ease-out;
 }
-.pq-success-banner--blue { background: var(--doc-blue-soft); color: #1e40af; border-color: rgba(37,99,235,.15); }
-.pq-success-banner--amber { background: #fffbeb; color: #92400e; border-color: rgba(245,158,11,.15); }
-.pq-success-banner--muted { background: #f4f4f5; color: #52525b; border-color: #e4e4e7; }
+.pq-success-banner--blue { background: var(--doc-blue-soft); color: var(--doc-blue, #1e40af); border-color: rgba(37,99,235,.15); }
+.pq-success-banner--amber { background: var(--amber-bg); color: var(--amber-text); border-color: rgba(245,158,11,.15); }
+.pq-success-banner--muted { background: var(--doc-line-soft, #f4f4f5); color: var(--doc-muted, #52525b); border-color: var(--doc-line, #e4e4e7); }
 
 .pq-success-check {
   width: 36px;
@@ -1120,7 +1120,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(0,0,0,.4);
+  background: rgba(0,0,0,.55);
   display: flex;
   align-items: flex-end;
   justify-content: center;
