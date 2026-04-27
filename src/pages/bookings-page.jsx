@@ -251,7 +251,6 @@ export default function BookingsPage() {
   function handleMonthDateClick(date) {
     setSelectedDate(date);
     setViewDate(date);
-    setView('day');
   }
 
   async function confirmCancelBooking() {
@@ -377,17 +376,12 @@ export default function BookingsPage() {
               onSelectDate={handleMonthDateClick}
             />
 
-            {/* Mobile: FAB for new booking + Needs Scheduling badge */}
-            {isMobile && (
-              <>
-                <button className="sched-fab" type="button" onClick={() => handleSlotClick(new Date())} aria-label="New booking">+</button>
-                {needsScheduling.length > 0 && (
+            {/* Mobile: Needs Scheduling badge (FAB removed — calendar has inline add) */}
+            {isMobile && needsScheduling.length > 0 && (
                   <button className="sched-mobile-rail-btn" type="button" onClick={() => setMobileRailOpen(true)}>
                     To schedule
                     {needsScheduling.length > 0 && <span className="qd-mobile-tab-badge">{needsScheduling.length}</span>}
                   </button>
-                )}
-              </>
             )}
 
             {/* Desktop: "+ Schedule job" button */}

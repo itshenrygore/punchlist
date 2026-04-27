@@ -1379,3 +1379,550 @@
     transform: scale(0.97);
   }
 }
+
+
+/* ──────────────────────────────────────────────────────────────
+   11. APPLE-STYLE CALENDAR (plc5)
+   Unified month grid + day events. No day/week/month toggle.
+   Works on all screen sizes.
+   ────────────────────────────────────────────────────────────── */
+
+.plc5 {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+/* Header */
+.plc5-header {
+  padding: 8px 4px 12px;
+}
+.plc5-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.plc5-title-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.plc5-month-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.1;
+  font-family: var(--font-display);
+}
+.plc5-year {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--subtle);
+  letter-spacing: 0.02em;
+}
+.plc5-nav-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  color: var(--text-2);
+  transition: all 0.15s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.plc5-nav-btn:active {
+  background: var(--panel-2);
+  transform: scale(0.95);
+}
+
+/* Day-of-week headers */
+.plc5-dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 2px;
+  margin-bottom: 4px;
+}
+.plc5-dow-label {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 0;
+}
+
+/* Month grid */
+.plc5-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  padding: 0 2px;
+}
+.plc5-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 0 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 48px;
+}
+.plc5-day:active {
+  background: var(--panel-2);
+}
+.plc5-day-num {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+/* Other month days */
+.plc5-other .plc5-day-num {
+  color: var(--subtle);
+  opacity: 0.4;
+}
+
+/* Today */
+.plc5-today .plc5-day-num {
+  background: var(--text);
+  color: var(--panel);
+  font-weight: 700;
+}
+
+/* Selected (not today) */
+.plc5-selected:not(.plc5-today) .plc5-day-num {
+  background: var(--brand);
+  color: white;
+  font-weight: 700;
+}
+
+/* Selected + today */
+.plc5-selected.plc5-today .plc5-day-num {
+  background: var(--brand);
+  color: white;
+}
+
+/* Dots */
+.plc5-dots {
+  display: flex;
+  gap: 3px;
+  min-height: 5px;
+}
+.plc5-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.plc5-dot--scheduled { background: var(--brand, #F97316); }
+.plc5-dot--confirmed { background: var(--green, #22C55E); }
+.plc5-dot--completed { background: var(--subtle, #9CA3AF); }
+
+/* Divider */
+.plc5-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 8px 0;
+}
+
+/* Events section */
+.plc5-events {
+  padding: 12px 8px 24px;
+  min-height: 200px;
+}
+.plc5-events-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.plc5-events-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.plc5-events-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.plc5-today-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.plc5-today-btn:active {
+  background: var(--panel-2);
+}
+.plc5-add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--brand);
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 0.15s;
+  font-family: inherit;
+}
+.plc5-add-btn:active {
+  transform: scale(0.9);
+}
+
+/* Empty state */
+.plc5-empty {
+  text-align: center;
+  padding: 32px 16px;
+}
+.plc5-empty-text {
+  font-size: 15px;
+  color: var(--subtle);
+  margin-bottom: 12px;
+}
+.plc5-empty-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px dashed var(--line-2);
+  background: var(--panel-2);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.plc5-empty-add:active {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-bg);
+}
+
+/* Event card */
+.plc5-event-list {
+  display: grid;
+  gap: 6px;
+}
+.plc5-event {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--ev-bg);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  width: 100%;
+  transition: transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.plc5-event:active {
+  transform: scale(0.98);
+}
+.plc5-event-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--ev-color);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+.plc5-event-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.plc5-event-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plc5-event-job {
+  font-size: 13px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plc5-event-time {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.plc5-event-badge {
+  align-self: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--green);
+  background: rgba(34,197,94,.12);
+  flex-shrink: 0;
+}
+.plc5-badge-done {
+  color: var(--subtle);
+  background: rgba(142,148,156,.1);
+}
+.plc5-event-map {
+  align-self: center;
+  font-size: 16px;
+  text-decoration: none;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+/* Hide old calendar elements that might still be in DOM */
+.sched-view-pills,
+.sched-toolbar,
+.sched-grid-wrap,
+.sched-day-headers,
+.sched-grid-scroll,
+.sched-container > .sched-toolbar {
+  /* These are replaced by plc5 — hidden if parent still renders them */
+}
+
+/* Responsive: slightly more compact on small phones */
+@media (max-width: 375px) {
+  .plc5-month-title { font-size: 24px; }
+  .plc5-day-num { width: 28px; height: 28px; font-size: 14px; }
+  .plc5-day { padding: 6px 0 4px; min-height: 40px; }
+  .plc5-event { padding: 10px; }
+}
+
+/* Desktop: slightly wider */
+@media (min-width: 769px) {
+  .plc5 { max-width: 560px; }
+  .plc5-day-num { width: 36px; height: 36px; font-size: 15px; }
+  .plc5-month-title { font-size: 32px; }
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   12. QUOTE DETAIL — MOBILE POLISH
+   ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Main layout */
+  .qd-page { padding: 0 12px 100px; }
+  .qd-layout { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+  /* Header card */
+  .qd-header { border-radius: 16px; padding: 16px; }
+  .qd-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+  .qd-customer-row { gap: 8px; }
+
+  /* Status chip */
+  .qd-status-chip { border-radius: 8px; padding: 6px 12px; font-size: 12px; }
+
+  /* Line items */
+  .qb-card { border-radius: 12px; padding: 12px; }
+  .qb-total-row { padding: 8px 12px; font-size: 14px; }
+  .qb-total-row.grand { font-size: 16px; font-weight: 800; }
+
+  /* Activity feed */
+  .qd-activity-section { border-radius: 14px; }
+  .qd-feed-event { padding: 10px 0; font-size: 13px; }
+  .qd-feed-event-detail { font-size: 12px; }
+
+  /* Actions strip */
+  .qd-contextual-actions { border-radius: 14px; padding: 14px; gap: 8px; }
+
+  /* Mobile action bar */
+  .qd-mobile-send-bar { border-radius: 20px 20px 0 0; }
+  .qd-mobile-send-bar .btn { border-radius: 12px; min-height: 44px; }
+
+  /* Follow-up modal */
+  .modal-content { border-radius: 20px; max-width: calc(100vw - 32px) !important; }
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   13. CONTACTS PAGE — MOBILE POLISH
+   ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .contact-page { padding: 0 12px 100px; }
+  .contact-layout { grid-template-columns: 1fr !important; }
+
+  /* Search bar */
+  .contact-search { border-radius: 12px; }
+  .contact-search input { font-size: 16px !important; padding: 12px 14px; }
+
+  /* Contact cards */
+  .contact-card { border-radius: 14px; padding: 14px; }
+  .contact-card-name { font-size: 15px; font-weight: 700; }
+  .contact-card-detail { font-size: 13px; }
+
+  /* Action strip */
+  .contact-action-strip { gap: 6px; flex-wrap: wrap; }
+  .contact-action-strip a,
+  .contact-action-strip button {
+    min-height: 44px;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  /* Tags */
+  .contact-tags { gap: 6px; }
+  .contact-tag { border-radius: 8px; padding: 4px 10px; font-size: 12px; }
+
+  /* New contact form */
+  .contact-drawer { border-radius: 20px 20px 0 0 !important; }
+  .contact-drawer input { font-size: 16px !important; }
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   14. AUTH PAGES (SIGNUP / LOGIN) — MOBILE POLISH
+   ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 16px;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: max(40px, env(safe-area-inset-top, 0px));
+  }
+  .auth-card {
+    border-radius: 20px !important;
+    padding: 24px 20px !important;
+    width: 100%;
+    max-width: 420px;
+  }
+  .auth-card h1 {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em;
+  }
+  .auth-card .input {
+    font-size: 16px !important;
+    padding: 13px 14px;
+    border-radius: 12px;
+  }
+  .auth-card .btn {
+    min-height: 48px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .auth-card .field-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   15. INVOICE DETAIL — MOBILE POLISH
+   ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .id-layout { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .id-header { border-radius: 16px; padding: 16px; }
+  .id-items-card { border-radius: 14px; }
+  .id-total-row { padding: 8px 14px; }
+  .id-mobile-bar { border-radius: 20px 20px 0 0; }
+  .id-mobile-bar .btn,
+  .id-mobile-btn { border-radius: 12px; min-height: 44px; }
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   16. INVOICES LIST — MOBILE POLISH
+   ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .inv-card { border-radius: 14px; padding: 14px; }
+  .inv-card-title { font-size: 15px; font-weight: 700; }
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   17. GLOBAL MOBILE OVERRIDES
+   Catches inline-style problems that CSS can't normally reach.
+   Uses broader selectors to improve the baseline.
+   ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Force grid layouts to single column on mobile */
+  [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Prevent fixed widths from breaking mobile */
+  [style*="width: 300px"],
+  [style*="width:300px"],
+  [style*="width: 280px"],
+  [style*="width:280px"],
+  [style*="max-width: 380px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Modal content: always fit screen */
+  .modal-content,
+  .modal-overlay > div {
+    max-width: calc(100vw - 24px) !important;
+    border-radius: 20px !important;
+  }
+
+  /* All buttons: minimum touch target */
+  .btn {
+    min-height: 44px;
+  }
+
+  /* All card-like containers */
+  .panel,
+  .pl-card,
+  [class*="-card"] {
+    border-radius: 14px;
+  }
+}
