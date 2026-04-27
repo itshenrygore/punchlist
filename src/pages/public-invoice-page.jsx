@@ -140,7 +140,7 @@ export default function PublicInvoicePage() {
           {/* ── Status banners ── */}
           {paymentSuccess && !isPaid && (
             <div className="doc-status doc-status--approved">
-              <span className="doc-status-icon" className="pi-status-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span className="doc-status-icon pi-status-icon" ><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
               <div>
                 <strong className="pi-status-strong">Payment processing</strong>
                 <span className="pi-status-sub">Your payment is being processed. This page will update once confirmed.</span>
@@ -149,7 +149,7 @@ export default function PublicInvoicePage() {
           )}
           {isPaid && (
             <div className="doc-status doc-status--approved">
-              <span className="doc-status-icon" className="pi-status-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span className="doc-status-icon pi-status-icon" ><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
               <div>
                 <strong className="pi-status-strong">Invoice paid</strong>
                 <span className="pi-status-sub">
@@ -317,7 +317,7 @@ export default function PublicInvoicePage() {
                     {/* Online payment buttons */}
                     {invoice.stripe_connect_enabled ? (
                       <div className="pi-pay-col">
-                        <button type="button" className="doc-cta-primary" onClick={handleConnectPay} disabled={payLoading} className="pi-pay-btn">
+                        <button type="button" className="doc-cta-primary pi-pay-btn" onClick={handleConnectPay} disabled={payLoading} >
                           {payLoading ? 'Loading…' : `Pay ${currency(invoiceBalance)}`}
                         </button>
                         {showFinancing(invoiceBalance) ? (
@@ -461,9 +461,9 @@ export default function PublicInvoicePage() {
           <div className="doc-actions">
             {!isPaid && invoice.contractor_email && (
               <a 
-                className="doc-cta-secondary" 
+                className="doc-cta-secondary pi-contact-link" 
                 href={`mailto:${invoice.contractor_email}?subject=Payment for ${invoice.invoice_number}`}
-                className="pi-contact-link"
+                
               >
                 Contact about payment
               </a>
@@ -500,28 +500,28 @@ export default function PublicInvoicePage() {
           <div className="doc-sticky-total">{currency(invoiceBalance)}</div>
           {invoice.contractor_stripe_link ? (
             <a 
-              className="doc-cta-primary" 
+              className="doc-cta-primary pi-sticky-link" 
               href={invoice.contractor_stripe_link}
               target="_blank" rel="noreferrer"
-              className="pi-sticky-link"
+              
             >
               Pay Online →
             </a>
           ) : invoice.square_payment_link ? (
             <a 
-              className="doc-cta-primary" 
+              className="doc-cta-primary pi-sticky-link" 
               href={invoice.square_payment_link}
               target="_blank" rel="noreferrer"
-              className="pi-sticky-link"
+              
             >
               Pay via Square
             </a>
           ) : invoice.paypal_link ? (
             <a 
-              className="doc-cta-primary" 
+              className="doc-cta-primary pi-sticky-link" 
               href={invoice.paypal_link.startsWith('http') ? invoice.paypal_link : `https://paypal.me/${invoice.paypal_link}`}
               target="_blank" rel="noreferrer"
-              className="pi-sticky-link"
+              
             >
               Pay via PayPal
             </a>

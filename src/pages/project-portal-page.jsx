@@ -111,7 +111,7 @@ function ActionSheet({ type, onSubmit, onClose, sending }) {
         </div>
         <textarea ref={taRef} className="pq-sheet-textarea" value={text} onChange={e => setText(e.target.value)} placeholder={c.placeholder} rows={4} />
         <div className="pq-sheet-footer">
-          <button type="button" className="doc-cta-secondary" onClick={onClose} className="pp-sheet-cancel">Cancel</button>
+          <button type="button" className="doc-cta-secondary pp-sheet-cancel" onClick={onClose} >Cancel</button>
           <button type="button" className={`doc-cta-primary ${type === 'decline' ? 'pq-btn-danger' : ''}`} style={{ flex: 1 }}
             disabled={sending || (required && !text.trim())} onClick={() => onSubmit(text.trim())}>
             {sending ? 'Sending…' : c.button}
@@ -152,7 +152,7 @@ function UpdatesTab({ quote, amendments, additionalWork, currency, shareToken, o
   if (!hasAny) return (
     <div className="pp-empty">
       <div className="pp-empty-icon"><FileText size={32} /></div>
-      <div className="pp-empty-title">Nothing's changed � yet</div>
+      <div className="pp-empty-title">Nothing's changed � yet</div>
       <div className="pp-empty-desc">Scope changes and extra work show up here when they come in.</div>
     </div>
   );
@@ -439,7 +439,7 @@ function MessagesTab({ quote, shareToken, onQuoteUpdate }) {
             placeholder={`Message ${contractorName}…`}
             className="pp-msg-input"
           />
-          <button type="button" className="doc-cta-primary" onClick={sendMessage} disabled={sending || !text.trim()} className="pp-msg-send">
+          <button type="button" className="doc-cta-primary pp-msg-send" onClick={sendMessage} disabled={sending || !text.trim()} >
             {sending ? '…' : 'Send'}
           </button>
         </div>

@@ -554,7 +554,15 @@ export default function DashboardPage() {
   const insights       = bundle ? (bundle.insights || []) : [];
 
   const hasAnyData = useMemo(() => {
-    if (bundle) return Object.entries(bundle.pipeline_counts || {}).some(([k,v]) => !k.startsWith('total') && typeof v === 'number' && v > 0);
+    // Check localStorage first — if user has ever sent a quote, they have data
+    try { if (localStorage.getItem('pl_has_sent_quote')) return true; } catch { /* no-op */ }
+    if (bundle) {
+      // Pipeline counts only track active statuses. Also check total if available,
+      // and revenue (which includes completed/invoiced/paid quotes).
+      const hasPipeline = Object.entries(bundle.pipeline_counts || {}).some(([k,v]) => !k.startsWith('total') && typeof v === 'number' && v > 0);
+      const hasRevenue = (bundle.revenue_this_month || 0) > 0 || (bundle.revenue_this_week || 0) > 0;
+      return hasPipeline || hasRevenue;
+    }
     return quotes.length > 0;
   }, [bundle, quotes]);
 

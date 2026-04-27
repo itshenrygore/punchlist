@@ -350,7 +350,7 @@ export default function InvoiceDetailPage() {
                     <button className="btn btn-secondary btn--xs" type="button" onClick={() => removeEditItem(idx)} className="id-edit-remove" aria-label="Remove item"><X size={12} /></button>
                   </div>
                 ))}
-                <button className="btn btn-secondary btn-sm" type="button" onClick={addEditItem} className="id-edit-add-btn">+ Add item</button>
+                <button className="btn btn-secondary btn-sm id-edit-add-btn" type="button" onClick={addEditItem} >+ Add item</button>
               </div>
               {editTotals && (
                 <div className="inv-totals id-edit-totals">
@@ -498,7 +498,7 @@ export default function InvoiceDetailPage() {
                 <>
                   <div className="id-send-row">
                     {invoice.customer?.phone && (
-                      <button className="btn btn-primary" type="button" className="id-mobile-btn" onClick={handleSendText}>
+                      <button className="btn btn-primary id-mobile-btn" type="button"  onClick={handleSendText}>
                         {['sent','viewed','partial','overdue'].includes(invoice.status) ? 'Resend text' : 'Text invoice'}
                       </button>
                     )}
@@ -516,7 +516,7 @@ export default function InvoiceDetailPage() {
                     window.location.href = `/api/export-pdf?invoice_token=${invoice.share_token}`;
                   }}>Download PDF</button>
                   <a href={customerUrl} target="_blank" rel="noreferrer" className="qd-share-link id-preview-link">Preview customer view ↗</a>
-                  <button className="btn btn-secondary full-width" type="button" onClick={startEditing} className="id-edit-btn">
+                  <button className="btn btn-secondary full-width id-edit-btn" type="button" onClick={startEditing} >
                     Edit invoice
                   </button>
                   {!showPartialForm && !showPayForm ? (
@@ -601,7 +601,7 @@ export default function InvoiceDetailPage() {
           {invoice.quote_id && (
             <div className="qb-card">
               <span className="qb-label">Related quote</span>
-              <Link className="btn btn-secondary full-width" to={`/app/quotes/${invoice.quote_id}`} className="id-related-link">
+              <Link className="btn btn-secondary full-width id-related-link" to={`/app/quotes/${invoice.quote_id}`} >
                 View original quote
               </Link>
             </div>
@@ -619,7 +619,7 @@ export default function InvoiceDetailPage() {
       </div>
       {invoice && invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
         <div className="qd-mobile-send-bar">
-          <button className="btn btn-primary" type="button" className="id-mobile-btn" onClick={() => setShowPayForm(true)}>
+          <button className="btn btn-primary id-mobile-btn" type="button"  onClick={() => setShowPayForm(true)}>
             Mark as paid
           </button>
         </div>

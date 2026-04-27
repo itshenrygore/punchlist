@@ -94,13 +94,13 @@ function PushToggle({ userId }) {
 
   if (status === 'loading') return null;
   if (status === 'unsupported') return <div className="muted small">Push notifications are not supported in this browser.</div>;
-  if (status === 'denied') return <div className="muted small" className="sp-push-denied">Notifications are blocked. Enable them in your browser settings to receive push alerts.</div>;
+  if (status === 'denied') return <div className="muted small sp-push-denied" >Notifications are blocked. Enable them in your browser settings to receive push alerts.</div>;
 
   if (status === 'subscribed') {
     return (
       <div>
         <div className="sp-push-enabled">✓ Push notifications enabled</div>
-        <button className="btn btn-secondary btn-sm" type="button" disabled={working} onClick={unsubscribe} className="sp-push-disable-btn">
+        <button className="btn btn-secondary btn-sm sp-push-disable-btn" type="button" disabled={working} onClick={unsubscribe} >
           {working ? 'Disabling…' : 'Disable push notifications'}
         </button>
       </div>
@@ -624,7 +624,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <span className="field-label">Account email (where approval notifications are sent)</span>
-              <input className="input" value={user?.email || ''} readOnly className="sp-readonly-input" />
+              <input className="input sp-readonly-input" value={user?.email || ''} readOnly  />
               <div className="muted small sp-hint">This is your login email. Change it through your account provider.</div>
             </div>
           </div>
@@ -718,7 +718,7 @@ export default function SettingsPage() {
                     <div className="muted-small">Paid upfront</div>
                   </div>
                 </div>
-                <Link className="btn btn-primary" to="/app/payments/setup" className="sp-pay-cta-full">
+                <Link className="btn btn-primary sp-pay-cta-full" to="/app/payments/setup" >
                   {connectStatus?.connected ? 'Finish setup — takes 2 minutes →' : 'Turn on customer financing →'}
                 </Link>
                 <div className="sp-pay-fine-print">
@@ -731,7 +731,7 @@ export default function SettingsPage() {
                   Customers can pay by card or choose monthly payments on jobs over $500. You get the full amount within 2 business days.
                 </p>
                 <div className="sp-pay-actions">
-                  <button type="button" className="btn btn-secondary" onClick={openStripeDashboard} disabled={stripeDashLoading} className="sp-pay-btn-sm">
+                  <button type="button" className="btn btn-secondary sp-pay-btn-sm" onClick={openStripeDashboard} disabled={stripeDashLoading} >
                     {stripeDashLoading ? 'Opening…' : 'View Stripe Dashboard →'}
                   </button>
                   <Link to="/app/payments-setup" className="btn btn-secondary sp-pay-link-btn">
@@ -846,8 +846,8 @@ export default function SettingsPage() {
           <div>
             <span className="field-label">Terms &amp; conditions text (optional)</span>
             <textarea
-              className="input textarea-md"
-              className="sp-terms-textarea"
+              className="input textarea-md sp-terms-textarea"
+              
               value={form.terms_conditions}
               onChange={e => setForm(p => ({ ...p, terms_conditions: e.target.value }))}
               placeholder="e.g. All work is guaranteed for 1 year from the date of completion. A 25% cancellation fee applies if work is cancelled within 48 hours of the scheduled date. Customer is responsible for providing clear access to the work area…"
@@ -885,13 +885,13 @@ export default function SettingsPage() {
               <div className="sp-pricing-card">
                 <div className="sp-pricing-amount">${PRICING.monthly}</div>
                 <div className="muted small">per month</div>
-                <button className="btn btn-secondary full-width" className="sp-pricing-btn" type="button" onClick={() => navigate('/app/billing')}>Monthly plan</button>
+                <button className="btn btn-secondary full-width sp-pricing-btn"  type="button" onClick={() => navigate('/app/billing')}>Monthly plan</button>
               </div>
               <div className="sp-pricing-card--featured">
                 <div className="sp-pricing-best">BEST VALUE</div>
                 <div className="sp-pricing-amount">${PRICING.annual}</div>
                 <div className="muted small">per year · save ${PRICING.annualSavings}</div>
-                <button className="btn btn-primary full-width" className="sp-pricing-btn" type="button" onClick={() => navigate('/app/billing')}>Yearly plan</button>
+                <button className="btn btn-primary full-width sp-pricing-btn"  type="button" onClick={() => navigate('/app/billing')}>Yearly plan</button>
               </div>
             </div>
             <div className="muted small sp-pricing-note">30-day free trial · no credit card required · cancel anytime</div>
