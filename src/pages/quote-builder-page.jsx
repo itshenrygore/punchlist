@@ -12,7 +12,7 @@ import { useUnsavedChanges } from '../hooks/use-unsaved-changes';
 import { useToast } from '../components/toast';
 import { currency, friendly } from '../lib/format';
 import { calculateTotals, buildConfidence } from '../lib/pricing';
-import { makeId } from '../lib/utils';
+import { makeId, genLineItemId } from '../lib/utils';
 import { TRADES, regionalize, normalizeTrade, anchorPrice } from '../../shared/tradeBrain';
 import { browseCatalog, searchCatalog } from '../../shared/systemCatalog';
 import { getSmartSuggestions, smartSearch } from '../../shared/smartCatalog';
@@ -89,7 +89,7 @@ function normSuggestion(raw, i) {
   const cat = raw.category || '';
   const confidence = (raw.include_confidence || 'high').toLowerCase();
   const tier = (raw.tier || 'standard').toLowerCase();
-  return { id: `sug_${i}_${Date.now()}`, name, category: cat, tab: classifyItem(name, cat), unit_price: mid, quantity: Math.max(1, Number(raw.quantity || 1)), typical_low: lo, typical_high: hi, why: raw.why || raw.reason || '', when_needed: raw.when || '', when_not_needed: raw.skip || '', notes: raw.pricing_basis || '', confidence, tier, source: raw.source_label || 'Based on similar jobs', selected: tier === 'optional' ? false : confidence !== 'low' };
+  return { id: genLineItemId(), name, category: cat, tab: classifyItem(name, cat), unit_price: mid, quantity: Math.max(1, Number(raw.quantity || 1)), typical_low: lo, typical_high: hi, why: raw.why || raw.reason || '', when_needed: raw.when || '', when_not_needed: raw.skip || '', notes: raw.pricing_basis || '', confidence, tier, source: raw.source_label || 'Based on similar jobs', selected: tier === 'optional' ? false : confidence !== 'low' };
 }
 
 // ── Smart catalog fallback (from build-scope-page) ──
@@ -99,7 +99,7 @@ function smartCatalogFallback(ctx, province) {
   if (!hasDispatch && result.core.length > 0) {
     const dp = { Plumber: { lo: 90, hi: 120, mid: 105 }, Electrician: { lo: 90, hi: 110, mid: 100 }, HVAC: { lo: 120, hi: 150, mid: 135 }, 'General Contractor': { lo: 60, hi: 80, mid: 70 } };
     const d = dp[ctx.trade] || { lo: 90, hi: 130, mid: 110 };
-    result.related.unshift({ id: `disp_${Date.now()}`, name: 'Dispatch / diagnostic', desc: 'Service call, travel, initial assessment', category: 'Services', lo: d.lo, hi: d.hi, mid: d.mid, score: 999, tier: 'related', reason: 'Standard on every job', why: 'Covers travel, site assessment, and initial diagnosis', pricing_basis: 'Market rate from contractor data' });
+    result.related.unshift({ id: genLineItemId(), name: 'Dispatch / diagnostic', desc: 'Service call, travel, initial assessment', category: 'Services', lo: d.lo, hi: d.hi, mid: d.mid, score: 999, tier: 'related', reason: 'Standard on every job', why: 'Covers travel, site assessment, and initial diagnosis', pricing_basis: 'Market rate from contractor data' });
   }
   return result;
 }
@@ -476,7 +476,7 @@ export default function QuoteBuilderPage() {
 
       let items = (r.items || r.line_items || []).map((it, i) => normSuggestion(it, i));
       items.sort((a, b) => ({ labour: 0, services: 1, materials: 2 }[a.tab] ?? 3) - ({ labour: 0, services: 1, materials: 2 }[b.tab] ?? 3));
-      const upgrades = (r.optional_upgrades || []).map((u, i) => ({ id: `upg_${i}_${Date.now()}`, name: u.description || '', category: u.category || 'Services', tab: classifyItem(u.description || '', u.category || ''), unit_price: Number(u.unit_price || 0), typical_low: 0, typical_high: 0, why: u.why || '', when_needed: '', when_not_needed: '', notes: '', confidence: 'medium', source: 'Recommended upgrade', selected: false, isUpgrade: true }));
+      const upgrades = (r.optional_upgrades || []).map((u, i) => ({ id: genLineItemId(), name: u.description || '', category: u.category || 'Services', tab: classifyItem(u.description || '', u.category || ''), unit_price: Number(u.unit_price || 0), typical_low: 0, typical_high: 0, why: u.why || '', when_needed: '', when_not_needed: '', notes: '', confidence: 'medium', source: 'Recommended upgrade', selected: false, isUpgrade: true }));
       setSuggestions([...items, ...upgrades]);
       setScopeGaps(r.gaps || []);
       setScopeMeta({ scope_summary: r.scope_summary || '', assumptions: (r.assumptions || []).join('\n'), exclusions: (r.exclusions || []).join('\n') });
@@ -566,7 +566,7 @@ export default function QuoteBuilderPage() {
       if (r?.name) toast(`Removed: ${r.name}`, 'info');
     }, Math.round((DUR?.base || 0.22) * 1000));
   }
-  function duplicateItem(id) { const o = lineItems.find(i => i.id === id); if (!o) return; setLineItems(p => { const idx = p.findIndex(i => i.id === id); const n = [...p]; n.splice(idx + 1, 0, { ...o, id: makeId() }); return n; }); markDirty(); }
+  function duplicateItem(id) { const o = lineItems.find(i => i.id === id); if (!o) return; setLineItems(p => { const idx = p.findIndex(i => i.id === id); const n = [...p]; n.splice(idx + 1, 0, { ...o, id: genLineItemId() }); return n; }); markDirty(); }
   function adjustQty(id, delta) { setLineItems(p => p.map(i => i.id === id ? { ...i, quantity: Math.max(0.25, Math.round(((i.quantity || 1) + delta * 0.25) * 100) / 100) } : i)); markDirty(); }
 
   // ── Foreman suggestions panel (Phase 1) ──
@@ -580,7 +580,7 @@ export default function QuoteBuilderPage() {
       setDismissedSugIds(prev => { const n = new Set(prev); n.add(sug.id); return n; });
       return;
     }
-    setLineItems(p => [...p, { id: makeId(), name: sug.name, quantity: Number(sug.quantity || 1), unit_price: Number(sug.unit_price || 0), notes: '', category: sug.category || '', included: true }]);
+    setLineItems(p => [...p, { id: genLineItemId(), name: sug.name, quantity: Number(sug.quantity || 1), unit_price: Number(sug.unit_price || 0), notes: '', category: sug.category || '', included: true }]);
     setDismissedSugIds(prev => { const n = new Set(prev); n.add(sug.id); return n; });
     markDirty();
     toast(`Added: ${sug.name}`, 'success');
@@ -621,7 +621,7 @@ export default function QuoteBuilderPage() {
     if (lineItems.some(li => li.name.toLowerCase() === item.name.toLowerCase())) return;
     const lo = item.lo || 0, hi = item.hi || 0;
     const price = hi > lo ? Math.round(lo + (hi - lo) * 0.55) : (item.mid || 0);
-    setLineItems(p => [...p, { id: makeId(), name: item.name, quantity: 1, unit_price: price, notes: '', category: item.category || '', included: true }]);
+    setLineItems(p => [...p, { id: genLineItemId(), name: item.name, quantity: 1, unit_price: price, notes: '', category: item.category || '', included: true }]);
     markDirty(); toast(`Added: ${item.name}`, 'success');
   }
 
@@ -846,32 +846,42 @@ export default function QuoteBuilderPage() {
   }, [phase, description, showKbdHelp]);
 
   // ── Send flow ──
-  async function handleQuickCreateCustomer() {
+  const [phoneDupMatch, setPhoneDupMatch] = useState(null); // { existing, newCust }
+  async function handleQuickCreateCustomer(forceCreate = false) {
     if (!newCust.name.trim()) return;
     if (!newCust.phone.trim()) return setError('Add a phone number — that\u2019s how the quote gets sent.');
     try {
-      // M7: dup-check by phone/email before creating
-      const existing = await findCustomerByContact(user.id, { phone: newCust.phone, email: newCust.email });
-      if (existing) {
-        if (!allCustomers.some(c => c.id === existing.id)) setLocalCustomers(p => [...p, existing]);
-        ud('customer_id', existing.id);
-        trackQuoteFlowCustomerSelected(existing.id); // B13
-        setShowNewCust(false);
-        setNewCust({ name: '', email: '', phone: '', address: '' });
-        setCustomerSearch('');
-        toast(`Using existing contact: ${existing.name}`, 'info');
-        return;
+      // M7: dup-check by phone/email before creating — but allow override
+      if (!forceCreate) {
+        const existing = await findCustomerByContact(user.id, { phone: newCust.phone, email: newCust.email });
+        if (existing) {
+          setPhoneDupMatch({ existing, newCust: { ...newCust } });
+          return;
+        }
       }
       const c = await createCustomer(user.id, newCust);
-      invalidateCustomers(); // Slice 11: bust hook cache so next mount re-fetches
-      setLocalCustomers(p => [...p, c]); // optimistic local add for instant UI
+      invalidateCustomers();
+      setLocalCustomers(p => [...p, c]);
       ud('customer_id', c.id);
-      trackQuoteFlowCustomerSelected(c.id); // B13
+      trackQuoteFlowCustomerSelected(c.id);
       setShowNewCust(false);
       setNewCust({ name: '', email: '', phone: '', address: '' });
       setCustomerSearch('');
+      setPhoneDupMatch(null);
       toast('Contact saved', 'success');
     } catch (e) { setError(friendly(e)); }
+  }
+  function handleUseExistingContact() {
+    if (!phoneDupMatch) return;
+    const { existing } = phoneDupMatch;
+    if (!allCustomers.some(c => c.id === existing.id)) setLocalCustomers(p => [...p, existing]);
+    ud('customer_id', existing.id);
+    trackQuoteFlowCustomerSelected(existing.id);
+    setShowNewCust(false);
+    setNewCust({ name: '', email: '', phone: '', address: '' });
+    setCustomerSearch('');
+    setPhoneDupMatch(null);
+    toast(`Using existing: ${existing.name}`, 'info');
   }
 
   function handleSend() {
@@ -1057,13 +1067,15 @@ export default function QuoteBuilderPage() {
         {/* ════════ ZONE 1: DESCRIBE THE JOB ════════ */}
         {phase === 'describe' && (
           <Card padding="loose" className="qb-zone pl-describe-stable" elevation={1}>
-            {/* B2 (Slice 12): gradient header strip */}
+            {/* B2 (Slice 12): gradient header strip — first-time only */}
+            {(() => { try { return !localStorage.getItem('pl_has_built_quote'); } catch { return true; } })() && (
             <div className="qb-describe-hero" aria-hidden="true">
               <div>
                 <div className="qb-describe-hero-title">Send professional quotes in 60 seconds</div>
                 <div className="qb-describe-hero-sub">Punchlist builds the scope, pricing, and send flow for you</div>
               </div>
             </div>
+            )}
             <div className="jd-section">
               <label className="jd-label" htmlFor="qb-desc">What's the job?</label>
               <textarea
@@ -1110,13 +1122,16 @@ export default function QuoteBuilderPage() {
               </div>
             </div>
             {title && <div className="qb-job-title">Job: <strong>{title}</strong></div>}
-            <details className="qb-trade-details">
-              <summary className="qb-trade-summary">Trade: {trade} · {country === 'US' ? 'State' : 'Province'}: {province}</summary>
-              <div className="jd-row qb-trade-row">
-                <div className="jd-section qb-trade-col"><select className="jd-input jd-select" value={trade} onChange={e => setTrade(e.target.value)} aria-label="Trade">{TRADES.map(t => <option key={t}>{t}</option>)}</select></div>
-                <div className="jd-section qb-trade-col"><select className="jd-input jd-select" value={province} onChange={e => setProvince(e.target.value)} aria-label="Province">{(country === 'US' ? US_STATES : CA_PROVINCES).map(p => <option key={p}>{p}</option>)}</select></div>
+            <div className="jd-row qb-trade-row" style={{ marginTop: 8, gap: 8 }}>
+              <div className="jd-section qb-trade-col" style={{ flex: 1 }}>
+                <label className="jd-label" style={{ fontSize: 'var(--text-xs)', marginBottom: 4 }}>Trade</label>
+                <select className="jd-input jd-select" value={trade} onChange={e => setTrade(e.target.value)} aria-label="Trade">{TRADES.map(t => <option key={t}>{t}</option>)}</select>
               </div>
-            </details>
+              <div className="jd-section qb-trade-col" style={{ flex: 1 }}>
+                <label className="jd-label" style={{ fontSize: 'var(--text-xs)', marginBottom: 4 }}>{country === 'US' ? 'State' : 'Province'}</label>
+                <select className="jd-input jd-select" value={province} onChange={e => setProvince(e.target.value)} aria-label="Province">{(country === 'US' ? US_STATES : CA_PROVINCES).map(p => <option key={p}>{p}</option>)}</select>
+              </div>
+            </div>
             {error && <div className="jd-error" role="alert">{error}</div>}
             <div className="jd-footer qb-footer-mt">
               <button className="btn btn-primary btn-lg full-width" type="button" onClick={handleBuildScope} disabled={!description.trim()}>{description.trim() ? `Build Quote →` : 'Describe the job to get started'}</button>
@@ -1219,8 +1234,8 @@ export default function QuoteBuilderPage() {
 
             {/* Quote settings — collapsed on mobile */}
             <details className="rq-meta-collapse">
-              <summary className="rq-meta-toggle pl-toggle-row" className="qb-meta-toggle">
-                <span>Quote details</span>
+              <summary className="qb-meta-toggle rq-meta-toggle pl-toggle-row">
+                <span>Scope, terms & notes</span>
                 <span className="pl-chevron" />
               </summary>
               {/* Scope Summary */}
@@ -1237,7 +1252,7 @@ export default function QuoteBuilderPage() {
 
               {/* Assumptions/Exclusions (collapsed) */}
               <div className="rq-scope-card qb-scope-mb">
-                <button type="button" className="rq-details-toggle pl-toggle-row" onClick={() => setShowDetails(!showDetails)} className="qb-details-btn">
+                <button type="button" className="qb-details-btn rq-details-toggle pl-toggle-row" onClick={() => setShowDetails(!showDetails)}>
                   <span>{showDetails ? 'Assumptions, exclusions & notes' : 'Assumptions, exclusions & notes'}</span>
                   <span className={`pl-chevron ${showDetails ? 'pl-chevron--open' : ''}`} />
                 </button>
@@ -1258,7 +1273,7 @@ export default function QuoteBuilderPage() {
                         draggable={!isLeaving} onDragStart={e => { e.dataTransfer.setData('text/plain', idx.toString()); e.currentTarget.style.opacity = '0.5'; }} onDragEnd={e => { e.currentTarget.style.opacity = '1'; }} onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('rq-card-dragover'); }} onDragLeave={e => { e.currentTarget.classList.remove('rq-card-dragover'); }} onDrop={e => { e.preventDefault(); e.currentTarget.classList.remove('rq-card-dragover'); const from = parseInt(e.dataTransfer.getData('text/plain')); if (isNaN(from) || from === idx) return; setLineItems(p => { const n = [...p]; const [m] = n.splice(from, 1); n.splice(idx, 0, m); return n; }); markDirty(); }}>
                         <div className="rq-card-drag-handle" title="Drag to reorder" aria-hidden="true">⠿</div>
                         <div className="rq-card-main">
-                          <div className="rq-card-top"><input className="rq-card-name" value={item.name} onChange={e => updateItem(item.id, { name: e.target.value })} placeholder="Item name" aria-label="Item name" data-item-idx={idx} onFocus={() => setEditingItemId(item.id)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && idx === lineItems.length - 1) { e.preventDefault(); setLineItems(p => [...p, { id: 'new_' + Date.now(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); } }} /><span className="rq-card-line-total tabular">{currency(itemTotal, country)}</span></div>
+                          <div className="rq-card-top"><input className="rq-card-name" value={item.name} onChange={e => updateItem(item.id, { name: e.target.value })} placeholder="Item name" aria-label="Item name" data-item-idx={idx} onFocus={() => setEditingItemId(item.id)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && idx === lineItems.length - 1) { e.preventDefault(); setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); } }} /><span className="rq-card-line-total tabular">{currency(itemTotal, country)}</span></div>
                           <div className="rq-card-controls"><div className="rq-qty-stepper"><button type="button" className="rq-qty-btn" aria-label="Decrease quantity" onClick={() => adjustQty(item.id, -1)}>−</button><span className="rq-qty-val tabular">{Number(item.quantity).toFixed(item.quantity % 1 === 0 ? 0 : 2)}</span><button type="button" className="rq-qty-btn" aria-label="Increase quantity" onClick={() => adjustQty(item.id, 1)}>+</button></div><span className="rq-card-times">×</span><div className="rq-price-wrap"><span className="rq-price-prefix">$</span><input className="rq-card-price-input tabular" type="number" min="0" step="1" value={item.unit_price} aria-label="Unit price" onChange={e => updateItem(item.id, { unit_price: Math.max(0, Number(e.target.value) || 0) })} onFocus={() => setEditingItemId(item.id)} /></div><div className="rq-card-item-actions"><button className="rq-card-action-btn" type="button" onClick={() => duplicateItem(item.id)} title="Duplicate" aria-label="Duplicate item">⧉</button><button className="rq-card-action-btn rq-card-action-del" type="button" onClick={() => removeItem(item.id)} title="Remove" aria-label={`Remove ${item.name || 'item'}`}>×</button></div></div>
                           {/* Price confidence hint — only when editing this item */}
                           {editingItemId === item.id && priceRanges[item.id] && (() => {
@@ -1274,17 +1289,18 @@ export default function QuoteBuilderPage() {
                       </div>
                     );
                   })}
-                  {lineItems.length === 0 && <div className="rq-empty"><div className="rq-empty-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div className="rq-empty-text">No items yet</div><div className="rq-empty-sub">Search the catalog, add custom items, or ask Foreman to help scope this job.</div></div>}
+                  {lineItems.length === 0 && !scopeError && <div className="rq-empty"><div className="rq-empty-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div className="rq-empty-text">No items yet</div><div className="rq-empty-sub">Search the catalog, add custom items, or ask Foreman to help scope this job.</div></div>}
+                  {lineItems.length === 0 && scopeError && <div className="rq-empty" style={{ borderLeft: '3px solid var(--red, #dc2626)', background: 'var(--red-bg, rgba(220,38,38,.06))' }}><div className="rq-empty-text" style={{ color: 'var(--red, #dc2626)' }}>AI couldn't generate items</div><div className="rq-empty-sub">This can happen with very short descriptions or network issues. Try adding more detail, or add items manually below.</div><div style={{ display: 'flex', gap: 8, marginTop: 12 }}><button type="button" className="btn btn-primary btn-sm" onClick={() => { setScopeError(false); setPhase('describe'); }}>✦ Edit &amp; retry</button><button type="button" className="btn btn-secondary btn-sm" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); setScopeError(false); }}>+ Add item manually</button></div></div>}
                 </div>
 
                 {/* Add Item Bar */}
                 <div className="rq-add-bar">
-                  {!addMode && (<div className="rq-add-triggers"><button type="button" className="rq-add-trigger rq-add-trigger-primary" onClick={() => setAddMode('catalog')}>Search catalog</button><button type="button" className="rq-add-trigger" onClick={() => { setLineItems(p => [...p, { id: 'new_' + Date.now(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); }}>+ Custom item</button><button type="button" className="rq-add-trigger rq-add-trigger-foreman" onClick={() => { if (window.__punchlistOpenForeman) { const jobDesc = description || title || ''; const itemsSummary = lineItems.filter(i => i.name?.trim()).map(i => `${i.name} (${i.quantity}× $${i.unit_price})`).join(', '); const ctx = { starters: [ `What else should I include for this ${trade.toLowerCase()} job?`, jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote', `What do ${trade.toLowerCase()}s commonly forget to quote?`, ], quoteContext: { description: jobDesc, trade, title: title || '', items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })), total: grandTotal, province, country } }; window.__punchlistOpenForeman(ctx); } }}><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="qb-icon-inline"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ask Foreman</button>{quoteId && scopeError && <button type="button" className="rq-add-trigger" onClick={() => setPhase('describe')}>✦ Retry AI scope</button>}</div>)}
+                  {!addMode && (<div className="rq-add-triggers"><button type="button" className="rq-add-trigger rq-add-trigger-primary" onClick={() => setAddMode('catalog')}>Search catalog</button><button type="button" className="rq-add-trigger" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); }}>+ Custom item</button><button type="button" className="rq-add-trigger rq-add-trigger-foreman" onClick={() => { if (window.__punchlistOpenForeman) { const jobDesc = description || title || ''; const itemsSummary = lineItems.filter(i => i.name?.trim()).map(i => `${i.name} (${i.quantity}× $${i.unit_price})`).join(', '); const ctx = { starters: [ `What else should I include for this ${trade.toLowerCase()} job?`, jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote', `What do ${trade.toLowerCase()}s commonly forget to quote?`, ], quoteContext: { description: jobDesc, trade, title: title || '', items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })), total: grandTotal, province, country } }; window.__punchlistOpenForeman(ctx); } }}><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="qb-icon-inline"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ask Foreman</button>{quoteId && scopeError && <button type="button" className="rq-add-trigger" onClick={() => setPhase('describe')}>✦ Retry AI scope</button>}</div>)}
                   {addMode === 'catalog' && (<div className="rq-catalog-overlay"><div className="rq-catalog-panel"><div className="rq-catalog-top"><input className="rq-catalog-input" value={catalogQuery} onChange={e => setCatalogQuery(e.target.value)} placeholder="Search items…" autoFocus autoComplete="off" /><button type="button" className="rq-catalog-close" onClick={() => { setAddMode(null); setCatalogQuery(''); }} aria-label="Close catalog"><X size={14} strokeWidth={2} /></button></div>{catalogResults.length > 0 && (<div className="rq-catalog-results">{catalogResults.map((item, i) => { const added = lineItems.some(li => li.name.toLowerCase() === item.name.toLowerCase()); return (<div key={`${item.name}-${i}`} className={`rq-catalog-item ${added ? 'added' : ''} ${item.isContextRelevant ? 'rq-catalog-relevant' : ''}`} onClick={() => !added && addCatalogItem(item)}><div className="rq-catalog-info"><span className="rq-catalog-name">{item.name}</span>{item.isContextRelevant && <span className="rq-catalog-match-tag">matches this job</span>}{item.desc && <span className="rq-catalog-desc">{item.desc}</span>}</div><div className="rq-catalog-right"><span className="rq-catalog-price">{currency(item.lo)}–{currency(item.hi)}</span><span className="rq-catalog-add">{added ? '✓' : '+'}</span></div></div>); })}</div>)}{catalogQuery.length >= 2 && catalogResults.length === 0 && <div className="rq-catalog-empty">No matches — try different keywords</div>}{!catalogQuery && <div className="rq-catalog-empty qb-catalog-hint">Type to search {trade.toLowerCase()} items</div>}</div></div>)}
                 </div>
 
                 {/* Scope Hints (collapsed) */}
-                {scopeHints.length > 0 && lineItems.length > 0 && (<details className="rq-hints"><summary className="pl-toggle-row" className="qb-hints-toggle"><span>Commonly added for {trade}</span><span className="pl-chevron pl-chevron--sm" /></summary><div className="rq-hints-chips">{scopeHints.slice(0, 5).map(hint => (<button key={hint} type="button" className="rq-hint-chip" onClick={() => { setLineItems(p => [...p, { id: makeId(), name: hint, quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); toast(`Added: ${hint} — set a price`, 'success'); }}>+ {hint}</button>))}</div></details>)}
+                {scopeHints.length > 0 && lineItems.length > 0 && (<details className="rq-hints"><summary className="qb-hints-toggle pl-toggle-row"><span>Commonly added for {trade}</span><span className="pl-chevron pl-chevron--sm" /></summary><div className="rq-hints-chips">{scopeHints.slice(0, 5).map(hint => (<button key={hint} type="button" className="rq-hint-chip" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: hint, quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); toast(`Added: ${hint} — set a price`, 'success'); }}>+ {hint}</button>))}</div></details>)}
 
                 {/* ── Foreman AI Suggestions (Phase 1) ──
                     Surfaces items the AI flagged as optional / upgrade / skipped
@@ -1335,8 +1351,8 @@ export default function QuoteBuilderPage() {
 
               {/* Right Sidebar: Customer preview + close helpers */}
               <div className="rq-builder-right">
-                <div className="rq-customer-preview-label">What your customer sees</div>
-                <Card padding="default" elevation={2} className="rq-totals-card pl-totals-stable" aria-label="Quote totals">
+                {itemCount > 0 && <div className="rq-customer-preview-label">What your customer sees</div>}
+                {itemCount > 0 && <Card padding="default" elevation={2} className="rq-totals-card pl-totals-stable" aria-label="Quote totals">
                   {/* Stat primitives handle count-up + stable width via
                       --min-ch + tabular-nums, so $10,000 never reflows. */}
                   <div className="pl-totals-stats motion-isolate">
@@ -1361,7 +1377,7 @@ export default function QuoteBuilderPage() {
                     </div>
                     );
                   })()}
-                </Card>
+                </Card>}
                 {/* Close helper tips */}
                 {lineItems.length > 0 && grandTotal > 0 && (
                   <div className="rq-close-tips">
@@ -1383,12 +1399,12 @@ export default function QuoteBuilderPage() {
                 <button className="btn btn-secondary full-width rq-preview-customer-btn" type="button" disabled={saving || isLocked || itemCount === 0} onClick={async () => { const q = await save(null, true); if (q?.share_token) { window.open('/public/' + q.share_token + '?preview=1', '_blank'); } else if (quoteId) { try { const ex = await getQuote(quoteId); if (ex?.share_token) window.open('/public/' + ex.share_token + '?preview=1', '_blank'); else toast('Save the quote first to preview', 'info'); } catch { toast('Save the quote first to preview', 'info'); } } else { toast('Save the quote first to preview', 'info'); } }}>
                   See what {selCustomer?.name?.split(' ')[0] || 'your customer'} will see
                 </button>
-                {lineItems.length > 0 && confidence && (confidence.readiness === 'ready' ? (<div className="rq-conf-inline-ok"><span>✓</span> Ready to send</div>) : (<details className={`rq-confidence rq-conf-${confidence.readiness}`}><summary className="rq-conf-top" className="qb-conf-toggle"><span className="rq-conf-badge">{confidence.score}%</span><span className="rq-conf-label">{confidence.readiness === 'review' ? 'Almost ready ▸' : 'Commonly missed items ▸'}</span></summary><div className="rq-conf-checks">{(confidence.checks || []).filter(c => c.state !== 'good').map((c, i) => <span key={i} className={`rq-conf-check ${c.state}`}>○ {c.label}</span>)}</div></details>))}
+                {lineItems.length > 0 && confidence && (confidence.readiness === 'ready' ? (<div className="rq-conf-inline-ok"><span>✓</span> Ready to send</div>) : (<details className={`rq-confidence rq-conf-${confidence.readiness}`}><summary className="qb-conf-toggle rq-conf-top"><span className="rq-conf-badge">{confidence.score}%</span><span className="rq-conf-label">{confidence.readiness === 'review' ? 'Almost ready ▸' : 'Commonly missed items ▸'}</span></summary><div className="rq-conf-checks">{(confidence.checks || []).filter(c => c.state !== 'good').map((c, i) => <span key={i} className={`rq-conf-check ${c.state}`}>○ {c.label}</span>)}</div></details>))}
               </div>
             </div>
 
             {error && error !== '__needs_phone__' && <div className="jd-error">{error}</div>}
-            {error === '__needs_phone__' && (<div className="jd-error qb-needs-phone"><div className="qb-needs-phone-title">Add a phone number to send via text</div><div className="qb-needs-phone-row"><input className="jd-input" type="tel" value={inlinePhone} onChange={e => setInlinePhone(e.target.value)} placeholder="e.g. (403) 555-0100" autoFocus className="qb-needs-phone-input" /><button className="btn btn-primary btn-sm" type="button" disabled={!inlinePhone.trim()} onClick={async () => { try { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust) return; await updateCustomer(cust.id, { phone: inlinePhone.trim() }); setLocalCustomers(prev => prev.map(c => c.id === cust.id ? { ...c, phone: inlinePhone.trim() } : c)); invalidateCustomers(); setError(''); toast('Phone saved', 'success'); setTimeout(() => handleSend(), 100); } catch (e) { toast(friendly(e), 'error'); } }}>Save & send</button></div><button type="button" onClick={() => { setDeliveryMethod('copy'); setError(''); handleSend(); }} className="qb-needs-phone-alt">Or copy link instead →</button></div>)}
+            {error === '__needs_phone__' && (<div className="jd-error qb-needs-phone"><div className="qb-needs-phone-title">Add a phone number to send via text</div><div className="qb-needs-phone-row"><input className="jd-input qb-needs-phone-input" type="tel" value={inlinePhone} onChange={e => setInlinePhone(e.target.value)} placeholder="e.g. (403) 555-0100" autoFocus /><button className="btn btn-primary btn-sm" type="button" disabled={!inlinePhone.trim()} onClick={async () => { try { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust) return; await updateCustomer(cust.id, { phone: inlinePhone.trim() }); setLocalCustomers(prev => prev.map(c => c.id === cust.id ? { ...c, phone: inlinePhone.trim() } : c)); invalidateCustomers(); setError(''); toast('Phone saved', 'success'); setTimeout(() => handleSend(), 100); } catch (e) { toast(friendly(e), 'error'); } }}>Save & send</button></div><button type="button" onClick={() => { setDeliveryMethod('copy'); setError(''); handleSend(); }} className="qb-needs-phone-alt">Or copy link instead →</button></div>)}
 
             {/* Sticky Footer */}
             <div className="rq-footer">
@@ -1408,7 +1424,7 @@ export default function QuoteBuilderPage() {
                   {showFinancing(grandTotal) && <span className="rq-footer-monthly">or from {currency(estimateMonthly(grandTotal), country)}/mo</span>}
                 </div>
                 {itemCount === 0 ? (
-                  <button className="btn btn-primary btn-lg" type="button" disabled className="qb-disabled-btn">Add items to send</button>
+                  <button className="btn btn-primary btn-lg qb-disabled-btn" type="button" disabled>Add items to send</button>
                 ) : !draft.customer_id ? (
                   <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={() => { setDeliveryMethod('copy'); handleSend(); }}>{sending ? 'Sending…' : 'Copy Quote Link'}</button>
                 ) : !selCustomer?.phone ? (
@@ -1624,6 +1640,25 @@ export default function QuoteBuilderPage() {
       </Section>
 
       <ConfirmModal open={zeroItemConfirm !== null} onConfirm={proceedToSend} onCancel={() => setZeroItemConfirm(null)} title="Items with $0 pricing" message={`${zeroItemConfirm || 0} item${(zeroItemConfirm || 0) > 1 ? 's have' : ' has'} $0 pricing. Send anyway?`} confirmLabel="Send Anyway" cancelLabel="Cancel" />
+
+      {/* Phone number dup confirmation */}
+      {phoneDupMatch && (
+        <div className="qb-modal-bg" onClick={() => setPhoneDupMatch(null)}>
+          <div className="qb-modal" onClick={e => e.stopPropagation()}>
+            <div className="qb-modal-top">
+              <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 700 }}>Phone number already in use</h3>
+              <button className="btn btn-secondary btn-sm" type="button" onClick={() => setPhoneDupMatch(null)} aria-label="Close">×</button>
+            </div>
+            <div style={{ padding: '12px 16px', fontSize: 'var(--text-sm)', color: 'var(--text-2)', lineHeight: 1.5 }}>
+              <strong>{phoneDupMatch.existing.name}</strong> already has this phone number. Would you like to use the existing contact or create a new one?
+            </div>
+            <div className="qb-modal-acts" style={{ gap: 8 }}>
+              <button className="btn btn-secondary btn-sm" type="button" style={{ flex: 1 }} onClick={handleUseExistingContact}>Use {phoneDupMatch.existing.name}</button>
+              <button className="btn btn-primary btn-sm" type="button" style={{ flex: 1 }} onClick={() => handleQuickCreateCustomer(true)}>Create new</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Slice 9 B11: Coachmarks — only shown during review phase */}
       {phase === 'review' && <QbCoachmarks />}

@@ -1,24 +1,7 @@
 import { supabase, friendly, _badCols, stripBadCols, learnBadColumns, _lineItemsBadCols } from './shared.js';
 import { calculateTotals } from '../pricing';
-import { makeId } from '../utils';
+import { makeId, genLineItemId, isValidUUID } from '../utils';
 import { summarizeDiff } from '../workflow';
-
-// RFC4122 v4 UUID. Used for line_items.id (which is a Postgres uuid column,
-// NOT the base64 id from makeId()). Prefers native crypto.randomUUID when
-// available (Chrome 92+, Safari 15.4+, Firefox 95+); falls back to a
-// getRandomValues-based generator for older iOS Safari and anything else
-// that exposes crypto but not randomUUID.
-function genLineItemId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  const buf = new Uint8Array(16);
-  (typeof crypto !== 'undefined' ? crypto : globalThis.msCrypto).getRandomValues(buf);
-  buf[6] = (buf[6] & 0x0f) | 0x40; // version 4
-  buf[8] = (buf[8] & 0x3f) | 0x80; // variant 10
-  const h = Array.from(buf, b => b.toString(16).padStart(2, '0')).join('');
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-}
 
 function mode(values) {
   const counts = new Map();
@@ -151,10 +134,13 @@ function normalizeLineItems(items, quoteId) {
       return true;
     })
     .map((item, index) => {
-      // H1: Preserve incoming id; generate a client-side UUID for new items.
+      // H1: Preserve incoming id IF it's a valid UUID; generate a new UUID otherwise.
       // Upsert relies on this id being present and stable across saves.
+      // Builder-generated IDs (sug_*, new_*, cat_*, etc.) are NOT valid UUIDs
+      // and will fail the Postgres uuid column constraint — replace them.
+      const id = (item.id && isValidUUID(item.id)) ? item.id : genLineItemId();
       const row = {
-        id: item.id || genLineItemId(),
+        id,
         quote_id: quoteId,
         sort_order: index,
         name: item.name || item.title,

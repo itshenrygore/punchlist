@@ -18,8 +18,8 @@ const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 const HOUR_HEIGHT_DESKTOP = 60;
 const HOUR_HEIGHT_MOBILE = 52;
 const HOUR_HEIGHT = (typeof window !== 'undefined' && window.innerWidth < 768) ? HOUR_HEIGHT_MOBILE : HOUR_HEIGHT_DESKTOP;
-const DAY_START = 7;
-const DAY_END   = 20;
+const DAY_START = 6;
+const DAY_END   = 22;
 const HOURS = Array.from({ length: DAY_END - DAY_START }, (_, i) => DAY_START + i);
 
 function startOfWeek(date) {
@@ -471,18 +471,12 @@ export default function PlCalendar({ bookings = [], view, viewDate, onViewChange
   if (view === 'week') {
     let displayDays;
     let monthLabel;
-    if (isMobile) {
-      const prev = new Date(viewDate); prev.setDate(prev.getDate() - 1);
-      const next = new Date(viewDate); next.setDate(next.getDate() + 1);
-      displayDays = [prev, new Date(viewDate), next];
-      monthLabel = `${MONTHS_SHORT[viewDate.getMonth()]} ${viewDate.getDate()}, ${viewDate.getFullYear()}`;
-    } else {
-      displayDays = getWeekDays(viewDate);
-      const ws = displayDays[0], we = displayDays[6];
-      monthLabel = ws.getMonth() === we.getMonth()
-        ? `${MONTHS[ws.getMonth()]} ${ws.getFullYear()}`
-        : `${MONTHS_SHORT[ws.getMonth()]} – ${MONTHS_SHORT[we.getMonth()]} ${we.getFullYear()}`;
-    }
+    // Always show full 7-day week — on mobile with narrower columns + horizontal scroll
+    displayDays = getWeekDays(viewDate);
+    const ws = displayDays[0], we = displayDays[6];
+    monthLabel = ws.getMonth() === we.getMonth()
+      ? `${MONTHS[ws.getMonth()]} ${ws.getFullYear()}`
+      : `${MONTHS_SHORT[ws.getMonth()]} – ${MONTHS_SHORT[we.getMonth()]} ${we.getFullYear()}`;
     return (
       <div className="sched-container" {...swipeHandlers}>
         <div className="sched-toolbar">
