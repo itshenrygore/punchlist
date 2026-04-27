@@ -475,7 +475,7 @@ export default function LandingPage() {
               <p className="lp-hero-sub rv rv-d2">
                 Build professional, branded quotes on-site before you leave the driveway.
                 Offer monthly payment options that remove sticker shock, and know the second
-                your customer opens it. No more PDFs nobody reads.
+                your customer opens it. They approve and sign from their phone.
               </p>
               <div className="lp-hero-ctas rv rv-d2">
                 <Link to="/signup" className="lp-btn-primary btn-glow">
