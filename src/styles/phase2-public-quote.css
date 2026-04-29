@@ -54,7 +54,7 @@
   to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   /* Full-height sheet feel on phones without animating height:
      the container is already full-height via max-height; scale
      origin moves to bottom for a sheet-like rise. */
@@ -246,7 +246,7 @@
   padding-top: 28px;
   flex-shrink: 0;
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .pl-hero-divider { display: none; }
 }
 
@@ -399,7 +399,7 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .pl-amendment-frame { margin: 0 16px 14px; padding: 12px; }
 }
 
@@ -432,7 +432,7 @@
   outline: none;
   box-shadow: 0 0 0 3px var(--brand-glow, rgba(249,115,22,0.35));
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .pl-photos { margin: 8px 16px 14px; grid-template-columns: repeat(2, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {

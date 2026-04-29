@@ -8,12 +8,12 @@ import { getPhase, getProgressSteps, getPrimaryAction, getSecondaryActions, getC
  *
  *  Shows:
  *    1. Horizontal stepper (Draft → Sent → Approved → Active → Invoice → Done)
+ *       - Mobile (≤640px): compact dot indicator [●●●○○○] Step 3 of 6 — Approved
+ *       - Desktop: full horizontal stepper with labels
  *    2. Context line ("Customer viewed 3×, 2h ago")
  *    3. Signal badges (deposit pending, viewed, signed)
  *    4. ONE primary action button
  *    5. "⋯" overflow menu for secondary actions
- *
- *  Mobile (375px): stepper compacts, action goes sticky-bottom.
  * ═══════════════════════════════════════════════════════════════ */
 
 export default function QuoteProgressBar({ quote, onAction }) {
@@ -25,6 +25,10 @@ export default function QuoteProgressBar({ quote, onAction }) {
   const signals = getSignals(quote);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  // Find current step index and label
+  const currentIdx = steps.findIndex(s => s.current);
+  const currentLabel = currentIdx >= 0 ? steps[currentIdx].label : steps[0]?.label || '';
 
   // Close overflow on outside click/tap
   useEffect(() => {
@@ -50,8 +54,8 @@ export default function QuoteProgressBar({ quote, onAction }) {
 
   return (
     <>
-      {/* ── Progress stepper ── */}
-      <div className="qpb-stepper" role="progressbar" aria-label={`Quote progress: ${PHASES[phase]?.label || phase}`}>
+      {/* ── Progress stepper — full (desktop) ── */}
+      <div className="qpb-stepper qpb-stepper--full" role="progressbar" aria-label={`Quote progress: ${PHASES[phase]?.label || phase}`}>
         {steps.map((step, i) => (
           <div
             key={step.label}
@@ -77,6 +81,16 @@ export default function QuoteProgressBar({ quote, onAction }) {
             )}
           </div>
         ))}
+      </div>
+
+      {/* ── Progress stepper — compact (mobile ≤640px) ── */}
+      <div className="qpb-stepper qpb-stepper--compact" role="progressbar" aria-label={`Quote progress: ${currentLabel}`} aria-valuenow={currentIdx + 1} aria-valuemin={1} aria-valuemax={steps.length}>
+        <div className="qpb-compact-dots">
+          {steps.map((step, i) => (
+            <span key={i} className={`qpb-compact-dot${step.done ? ' qpb-compact-dot--done' : step.current ? ' qpb-compact-dot--current' : ''}`} />
+          ))}
+        </div>
+        <span className="qpb-compact-label">Step {currentIdx + 1} of {steps.length} — {currentLabel}</span>
       </div>
 
       {/* ── Context + signals ── */}

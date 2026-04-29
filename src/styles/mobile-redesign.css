@@ -16,12 +16,22 @@
   .jd-input,
   .rq-card-name,
   .rq-card-price-input,
+  .rq-card-notes,
   .rq-catalog-input,
   .rq-scope-input,
   .rq-detail-input,
   .rq-discount-input,
   .rq-deposit-input,
   .fm-input,
+  .global-search-input,
+  .qb-inp,
+  .qb-ta,
+  .qb-desc,
+  .qb-title-input,
+  .qb-scope-sum,
+  .qd-feed-reply-input,
+  .settings-input,
+  .input,
   textarea,
   select {
     font-size: 16px !important;
@@ -158,7 +168,7 @@
     padding: 16px;
     font-size: 16px;
     font-weight: 800;
-    border-radius: 14px;
+    border-radius: var(--r-card, 16px);
     letter-spacing: -0.01em;
     min-height: 56px;
   }
@@ -259,7 +269,7 @@
     cursor: pointer;
     flex-shrink: 0;
     padding: 4px 8px;
-    border-radius: 6px;
+    border-radius: var(--r-pill, 8px);
     transition: background var(--dur-fast);
   }
   .qb-context-edit:active {
@@ -269,7 +279,7 @@
   /* Header card: title + customer */
   .rq-header-card {
     padding: 14px;
-    border-radius: 14px;
+    border-radius: var(--r-card, 16px);
     gap: 8px;
   }
   .rq-job-title-input {
@@ -457,7 +467,7 @@
   .rq-price-hint {
     font-size: 11px;
     padding: 4px 8px;
-    border-radius: 6px;
+    border-radius: var(--r-pill, 8px);
     background: var(--panel-2);
     color: var(--subtle);
     margin-top: 4px;
@@ -469,7 +479,7 @@
   .rq-empty {
     padding: 32px 20px;
     text-align: center;
-    border-radius: 14px;
+    border-radius: var(--r-card, 16px);
     background: var(--panel-2);
     border: 1px dashed var(--line-2);
   }
@@ -643,7 +653,7 @@
     color: var(--green);
     background: var(--green-bg);
     border: 1px solid var(--green-line);
-    border-radius: 6px;
+    border-radius: var(--r-pill, 8px);
     padding: 1px 6px;
     display: inline-block;
     margin-top: 2px;
@@ -704,9 +714,9 @@
   .rq-conf-badge {
     font-size: 13px;
     font-weight: 800;
-    color: var(--brand);
-    background: var(--brand-bg);
-    border: 1px solid var(--brand-line);
+    color: var(--amber, #D97706);
+    background: var(--amber-bg, rgba(245, 158, 11, 0.08));
+    border: 1px solid rgba(245, 158, 11, 0.2);
     border-radius: 8px;
     padding: 2px 8px;
     font-variant-numeric: tabular-nums;
@@ -760,7 +770,8 @@
   /* Sticky footer: premium treatment */
   .rq-footer {
     border-radius: 20px 20px 0 0;
-    padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 68px) !important;
+    bottom: var(--bottom-chrome-height);
+    padding: 8px 16px calc(env(safe-area-inset-bottom, 0px) + 4px);
     gap: 8px;
   }
   .rq-footer .btn-saved {
@@ -1003,7 +1014,7 @@
     padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px);
   }
   .rq-send-confirm-btn {
-    border-radius: 14px !important;
+    border-radius: var(--r-card, 16px) !important;
     font-size: 16px !important;
     font-weight: 800 !important;
     min-height: 52px !important;
@@ -1230,7 +1241,7 @@
   }
   .fm-starter {
     padding: 12px 16px;
-    border-radius: 14px;
+    border-radius: var(--r-card, 16px);
     border: 1px solid var(--line);
     background: var(--panel-2);
     font-size: 14px;
@@ -1355,7 +1366,7 @@
    ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .pl-sug-panel {
-    border-radius: 14px;
+    border-radius: var(--r-card, 16px);
     padding: 14px;
   }
   .pl-sug-item {
@@ -1646,7 +1657,7 @@
   align-items: stretch;
   gap: 12px;
   padding: 12px;
-  border-radius: 14px;
+  border-radius: var(--r-card, 16px);
   background: var(--ev-bg);
   border: none;
   cursor: pointer;
@@ -1696,7 +1707,7 @@
 .plc5-event-badge {
   align-self: center;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--r-pill, 8px);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1747,9 +1758,11 @@
    12. QUOTE DETAIL — MOBILE POLISH
    ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Main layout */
+  /* Main layout — phone only; tablets get 2-col in Phase 7 section */
   .qd-page { padding: 0 12px 100px; }
-  .qd-layout { grid-template-columns: 1fr !important; gap: 12px !important; }
+  @media (max-width: 640px) {
+    .qd-layout { grid-template-columns: 1fr !important; gap: 12px !important; }
+  }
 
   /* Header card */
   .qd-header { border-radius: 16px; padding: 16px; }
@@ -1765,16 +1778,19 @@
   .qb-total-row.grand { font-size: 16px; font-weight: 800; }
 
   /* Activity feed */
-  .qd-activity-section { border-radius: 14px; }
+  .qd-activity-section { border-radius: var(--r-card, 16px); }
   .qd-feed-event { padding: 10px 0; font-size: 13px; }
   .qd-feed-event-detail { font-size: 12px; }
 
   /* Actions strip */
-  .qd-contextual-actions { border-radius: 14px; padding: 14px; gap: 8px; }
+  .qd-contextual-actions { border-radius: var(--r-card, 16px); padding: 14px; gap: 8px; }
 
   /* Mobile action bar */
   .qd-mobile-send-bar { border-radius: 20px 20px 0 0; }
   .qd-mobile-send-bar .btn { border-radius: 12px; min-height: 44px; }
+
+  /* QW4: Hide duplicate "Continue editing" CTA inside draft card on mobile */
+  .qd-draft-inline-cta .btn-primary { display: none; }
 
   /* Follow-up modal */
   .modal-content { border-radius: 20px; max-width: calc(100vw - 32px) !important; }
@@ -1793,7 +1809,7 @@
   .contact-search input { font-size: 16px !important; padding: 12px 14px; }
 
   /* Contact cards */
-  .contact-card { border-radius: 14px; padding: 14px; }
+  .contact-card { border-radius: var(--r-card, 16px); padding: 14px; }
   .contact-card-name { font-size: 15px; font-weight: 700; }
   .contact-card-detail { font-size: 13px; }
 
@@ -1847,7 +1863,7 @@
   }
   .auth-card .btn {
     min-height: 48px;
-    border-radius: 14px;
+    border-radius: var(--r-card, 16px);
     font-size: 16px;
     font-weight: 700;
   }
@@ -1869,7 +1885,7 @@
 @media (max-width: 768px) {
   .id-layout { grid-template-columns: 1fr !important; gap: 12px !important; }
   .id-header { border-radius: 16px; padding: 16px; }
-  .id-items-card { border-radius: 14px; }
+  .id-items-card { border-radius: var(--r-card, 16px); }
   .id-total-row { padding: 8px 14px; }
   .id-mobile-bar { border-radius: 20px 20px 0 0; }
   .id-mobile-bar .btn,
@@ -1881,7 +1897,7 @@
    16. INVOICES LIST — MOBILE POLISH
    ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .inv-card { border-radius: 14px; padding: 14px; }
+  .inv-card { border-radius: var(--r-card, 16px); padding: 14px; }
   .inv-card-title { font-size: 15px; font-weight: 700; }
 }
 
@@ -1891,9 +1907,13 @@
    Catches inline-style problems that CSS can't normally reach.
    Uses broader selectors to improve the baseline.
    ────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  /* Force grid layouts to single column on mobile */
-  [style*="grid-template-columns"] {
+@media (max-width: 640px) {
+  /* Phase 2: Scoped to ≤640px (was 768px). Targeted selectors replace wildcard. */
+  .qd-layout,
+  .id-layout,
+  .settings-grid,
+  .inv-layout,
+  .ct-layout {
     grid-template-columns: 1fr !important;
   }
 
@@ -1923,6 +1943,330 @@
   .panel,
   .pl-card,
   [class*="-card"] {
-    border-radius: 14px;
+    border-radius: var(--r-card, 16px);
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Phase 2: SMALL PHONE OVERRIDES (≤375px — iPhone 8/SE floor)
+   Tighter spacing and font reductions for the narrowest devices.
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 375px) {
+  /* Tighter page padding */
+  .rq-page { padding: 10px; gap: 6px; }
+
+  /* Smaller fonts on labels that crowd at 375px */
+  .rq-card-name { font-size: 13px; }
+  .rq-footer-total { font-size: 13px; }
+  .rq-footer .btn { font-size: 12px; padding: 8px 10px; }
+
+  /* Stepper: already handled at 480px exception */
+
+  /* Tighter card spacing */
+  .rq-card { padding: 10px 10px 10px 8px; }
+  .rq-items-section { gap: 4px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Phase 3: STEPPER & NAVIGATION REDESIGN
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Mobile stepper: compact segment control (≤640px) ── */
+@media (max-width: 640px) {
+  .qb-stepper {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 0 4px;
+    background: var(--panel-2);
+    border-radius: 12px;
+    overflow: visible;
+  }
+  .qb-step {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    transition: background var(--dur-fast, 140ms);
+    -webkit-tap-highlight-color: transparent;
+    opacity: 1;
+  }
+  .qb-step:active { background: var(--line); }
+  .qb-step .qb-step-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  /* Hide labels for non-active steps on mobile */
+  .qb-step .qb-step-label {
+    display: none;
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 6px;
+    white-space: nowrap;
+  }
+  .qb-step.active .qb-step-label { display: inline; }
+  .qb-step.active {
+    background: var(--brand-bg, rgba(249, 115, 22, 0.08));
+    opacity: 1;
+  }
+  .qb-step.done { opacity: 1; }
+}
+
+/* ── Collapsible context breadcrumb (≤640px) ── */
+@media (max-width: 640px) {
+  .qb-context-desktop { display: none; }
+  .qb-context-collapsible {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 4px;
+  }
+  .qb-context-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    list-style: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    min-height: 28px;
+  }
+  .qb-context-summary::-webkit-details-marker { display: none; }
+  .qb-context-short { flex: 1; }
+  .qb-context-expand-hint {
+    font-size: 10px;
+    color: var(--muted);
+    transition: transform var(--dur-fast, 140ms);
+  }
+  .qb-context-collapsible[open] .qb-context-expand-hint { transform: rotate(90deg); }
+  .qb-context-full {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+    line-height: 1.5;
+  }
+}
+@media (min-width: 641px) {
+  .qb-context-collapsible { display: none; }
+  .qb-context-desktop { display: flex; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Phase 4: EMPTY STATES & CONTENT DENSITY
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Compact empty state (≤768px) ── */
+@media (max-width: 768px) {
+  .rq-empty--compact {
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--panel-2);
+    border: 1px dashed var(--line-2);
+  }
+  .rq-empty-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--text-2);
+  }
+  .rq-empty-inline-text {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .rq-empty-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .rq-empty-actions .btn {
+    font-size: 12px;
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  /* Phase 4: Tighter mobile spacing for quote builder */
+  .rq-header-card { padding: 12px; }
+  .rq-card { padding: 10px 10px 10px 8px; }
+  .rq-items-section { gap: 4px; }
+  .rq-page { gap: 6px; }
+}
+
+/* ── Compact calendar empty state ── */
+@media (max-width: 768px) {
+  .plc5-empty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    min-height: 44px;
+  }
+  .plc5-empty-text {
+    font-size: 14px;
+    margin: 0;
+  }
+  .plc5-empty-add {
+    font-size: 13px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Phase 7: TABLET LAYOUT (768px–1024px)
+   Restores multi-column layouts for iPad Mini / iPad Air.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Quote builder: two-column review on tablets ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .rq-builder-layout {
+    grid-template-columns: 1fr 240px;
+    gap: 12px;
+    align-items: start;
+  }
+  .rq-builder-right {
+    position: sticky;
+    top: 70px;
+  }
+
+  /* Full stepper labels visible on tablet */
+  .qb-stepper { gap: 24px; }
+  .qb-step .qb-step-label { display: inline; }
+
+  /* Footer constrained to content width */
+  .rq-footer { max-width: 960px; margin-left: auto; margin-right: auto; }
+}
+
+/* ── Quote detail: two-column on tablets ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .qd-grid {
+    grid-template-columns: 1fr 260px;
+    gap: 12px;
+  }
+  .qd-sidebar {
+    position: sticky;
+    top: 64px;
+  }
+  /* Show sidebar inline, don't hide behind tab on tablets */
+  .qd-zone-sidebar { display: block; }
+}
+
+/* ── Calendar: side-by-side layout on tablets ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .plc5 {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 0 16px;
+  }
+  .plc5-header { grid-column: 1; }
+  .plc5-dow { grid-column: 1; }
+  .plc5-grid { grid-column: 1; }
+  .plc5-divider { display: none; }
+  .plc5-events {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    border-left: 1px solid var(--line, #e0e0de);
+    padding-left: 16px;
+    align-self: start;
+    position: sticky;
+    top: 64px;
+  }
+}
+
+/* ── Dashboard: two-column metrics on tablets ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dv2-row4 {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .dv2-action-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+/* ── Phase 7: Override the ≤768px forced single-column for tablets ──
+   The nuclear override at ≤640px already handles phones (Batch 2).
+   Here we restore multi-column at 769px+ for layouts that the
+   mobile-redesign.css section 12 forces to 1fr. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .qd-layout { grid-template-columns: 1fr 260px !important; gap: 12px !important; }
+  .id-layout { grid-template-columns: 1fr 260px !important; gap: 12px !important; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PHASE 9 — VISUAL POLISH & MICRO-INTERACTIONS (Batch 4)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 9.1: Border-radius reference (see tokenized replacements above) ──
+   Cards/containers → var(--r-card, 16px)
+   Buttons          → var(--r-btn, 12px)
+   Inputs           → var(--r-input, 10px)
+   Pills/badges     → var(--r-pill, 8px)
+   Bottom sheets    → var(--r-sheet, 20px) on top corners only
+   ────────────────────────────────────────────────────────────── */
+
+/* ── 9.5: Keyboard-aware footer ──
+   When keyboard is open, footer sits at bottom:0 (no nav offset)
+   so users can still see the total/CTA while typing.
+   The mobile-bottom-nav hide is already handled upstream (Fix 1).
+   ────────────────────────────────────────────────────────────── */
+[data-keyboard="open"] .rq-footer {
+  bottom: 0 !important;
+}
+[data-keyboard="open"] .bs-footer {
+  bottom: 0 !important;
+}
+
+/* ── 9.6: Smooth page transitions ──
+   Subtle fade for main content area on route change.
+   The key={location.pathname} in app-shell triggers remount.
+   ────────────────────────────────────────────────────────────── */
+.app-content-enter {
+  animation: pl-page-fade var(--dur-fast, 140ms) var(--ease-standard, ease) both;
+}
+@keyframes pl-page-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 9.3: Catalog skeleton rows (shown while catalog filters) ── */
+.rq-catalog-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+}
+.rq-catalog-skel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-input, 10px);
+}
+.rq-catalog-skel-row .dv2-skeleton {
+  flex-shrink: 0;
 }

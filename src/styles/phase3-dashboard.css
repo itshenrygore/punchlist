@@ -24,7 +24,7 @@
   contain: layout paint;
   margin: 0 0 var(--space-5, 20px);
 }
-@media (min-width: 720px) {
+@media (min-width: 769px) {
   .pl-stat-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-4, 16px);
@@ -140,7 +140,7 @@
 .pl-search-safe input[type="text"] {
   font-size: 16px;  /* iOS zoom threshold */
 }
-@media (min-width: 720px) {
+@media (min-width: 769px) {
   .pl-search-safe .input,
   .pl-search-safe input[type="search"],
   .pl-search-safe input[type="text"] {

@@ -67,6 +67,12 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <!-- Phase 10: Pre-reserve bottom nav space from first paint to prevent CLS -->
+    <style>
+      @media(max-width:1024px){
+        #root{padding-bottom:calc(52px + env(safe-area-inset-bottom, 0px));}
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

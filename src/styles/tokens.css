@@ -140,6 +140,30 @@
   --ring:       0 0 0 3px var(--brand-glow, rgba(249, 115, 22, 0.20));
   --ring-focus: 0 0 0 3px rgba(249, 115, 22, 0.35);
 
+  /* ── Border-radius system (Phase 9 — unified radii) ──────── */
+  --r-card:  16px;   /* Cards, major containers */
+  --r-btn:   12px;   /* Buttons */
+  --r-input: 10px;   /* Input fields */
+  --r-pill:   8px;   /* Small pills, badges (alias existing --r-pill if set) */
+  --r-sheet: 20px;   /* Bottom sheets, top corners only */
+
+  /* ── Chrome shadow (bottom bars — lighter than content shadows) ── */
+  --elev-chrome: 0 -2px 12px rgba(28, 20, 12, 0.08);
+
+  /* ── Bottom chrome height (Phase 1) ──────────────────────── */
+  /* Desktop: no bottom nav → 0px.
+     Mobile (≤1024px): bottom nav is visible → 52px + safe area.
+     All page-specific footers use this to position above the nav. */
+  --bottom-chrome-height: 0px;
+
+  /* ── Breakpoints (reference — can't use custom props in @media) ──
+     --bp-xs:  375px    Small phones (iPhone 8/SE)
+     --bp-sm:  640px    Large phones
+     --bp-md:  768px    Tablets portrait
+     --bp-lg:  1024px   Tablets landscape, laptops
+     --bp-xl:  1280px   Desktop
+  */
+
   /* ── Container widths ─────────────────────────────────────── */
   --container-sm: 640px;
   --container-md: 768px;
@@ -148,11 +172,18 @@
   --container-2xl:1320px;
 }
 
+@media (max-width: 1024px) {
+  :root {
+    --bottom-chrome-height: calc(52px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ───────────────────────────────────────────────────────────────
    LIGHT-MODE SHADOW TINT ADJUSTMENT
    On warm off-white bg, shadows want slightly warmer tint.
    ─────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
+  --elev-chrome: 0 -2px 10px rgba(40, 28, 16, 0.06);
   --elev-1: 0 1px 2px rgba(40, 28, 16, 0.05),
             0 1px 3px rgba(40, 28, 16, 0.07);
   --elev-2: 0 2px 5px rgba(40, 28, 16, 0.06),

@@ -121,7 +121,7 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .dv2-greeting { font-size: 1.5rem; }
   .dv2-row1 { flex-direction: column; gap: 4px; }
 }
@@ -362,7 +362,7 @@
 .dv2-arow:focus-within         { border-color: var(--brand-line); }
 .dv2-arow:focus-within::before { opacity: 1; }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .dv2-arow {
     min-height: var(--dv2-row-h-mobile);
     padding: var(--space-3) var(--space-4);
@@ -428,7 +428,7 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .dv2-arow-num { display: none; }     /* secondary line already shows amount */
 }
 
@@ -769,7 +769,7 @@
 .dv2-revenue-delta--up   { color: var(--green); }
 .dv2-revenue-delta--down { color: var(--red); }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .dv2-revenue-val { font-size: var(--text-xl); }
 }
 
@@ -956,7 +956,7 @@
    RESPONSIVE OVERRIDES
    ═══════════════════════════════════════════════════════════════ */
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .dv2-row1-right {
     width: 100%;
     justify-content: space-between;
@@ -997,7 +997,7 @@
    iPhone 8 / small-phone polish (≤ 390px)
    ═══════════════════════════════════════════════════════════════ */
 
-@media (max-width: 390px) {
+@media (max-width: 375px) {
   /* ── Greeting: refined sizing at 375px ── */
   .dv2-greeting {
     font-size: 1.4rem;

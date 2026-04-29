@@ -358,6 +358,51 @@
 /* ═══════════════════════════════════════════════════════════════
  *  Mobile — 375px iPhone X
  * ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+ *  Mobile — compact dot stepper (≤640px)
+ *  Phase 3: [●●●○○○] Step 3 of 6 — Approved
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* Compact stepper — hidden on desktop, shown on mobile */
+.qpb-stepper--compact { display: none; }
+
+@media (max-width: 640px) {
+  /* Hide full stepper on mobile, show compact */
+  .qpb-stepper--full { display: none; }
+  .qpb-stepper--compact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0 8px;
+  }
+  .qpb-compact-dots {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .qpb-compact-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--line-2, #e0e0de);
+    transition: background 0.2s, transform 0.2s;
+  }
+  .qpb-compact-dot--done {
+    background: var(--brand, #c65d21);
+  }
+  .qpb-compact-dot--current {
+    background: var(--brand, #c65d21);
+    transform: scale(1.25);
+    box-shadow: 0 0 0 2px rgba(198, 93, 33, 0.2);
+  }
+  .qpb-compact-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text, #1a1a19);
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 480px) {
   .qpb-stepper {
     padding: 12px 0 8px;

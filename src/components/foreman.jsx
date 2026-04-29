@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { getProfile } from '../lib/api';
 import useScrollLock from '../hooks/use-scroll-lock';
+import { haptic } from '../hooks/use-mobile-ux';
 
 /* Only show Foreman FAB on screens where it adds value */
 const FOREMAN_ROUTES = ['/app', '/app/quotes'];
@@ -130,7 +131,7 @@ export default function Foreman() {
   }
 
   function handleTriggerClick() {
-    if (!dragMoved.current) setOpen(true);
+    if (!dragMoved.current) { try { haptic('selection'); } catch (_) {} setOpen(true); }
   }
 
   const trade = profile?.trade || 'Other';

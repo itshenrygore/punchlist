@@ -5,6 +5,7 @@
    PostCSS's @import plugin inlines this before Tailwind runs.
    ═══════════════════════════════════════════════════════════ */
 @import './tokens.css';
+@import './utilities.css';
 @import './document.css';
 @import './phase1-builder.css';
 @import './phase2-public-quote.css';
@@ -771,7 +772,7 @@ select.input{cursor:pointer}
 .ct-inv-status.overdue{color:var(--red)}
 .ct-inv-status.draft{color:var(--muted)}
 
-@media(max-width:980px){
+@media(max-width:1024px){
   .inv-layout{grid-template-columns:1fr}
   .inv-sidebar{position:static}
 }
@@ -798,7 +799,7 @@ select.input{cursor:pointer}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── Toast ── */
-.toast{position:fixed;bottom:130px;left:50%;transform:translateX(-50%);z-index:var(--z-toast);padding:12px 20px;border-radius:var(--r);font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center;animation:toast-in .25s var(--ease);min-width:200px;max-width:min(400px,90vw);box-shadow:var(--shadow-lg);backdrop-filter:blur(12px)}
+.toast{position:fixed;bottom:calc(var(--bottom-chrome-height) + 16px);left:50%;transform:translateX(-50%);z-index:var(--z-toast);padding:12px 20px;border-radius:var(--r);font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center;animation:toast-in .25s var(--ease);min-width:200px;max-width:min(400px,90vw);box-shadow:var(--shadow-lg);backdrop-filter:blur(12px)}
 .toast-success{background:rgba(15,15,16,.95);color:var(--green);border:1px solid var(--green-line)}
 .toast-error{background:rgba(15,15,16,.95);color:var(--red);border:1px solid rgba(239,68,68,.2)}
 .toast-info{background:rgba(15,15,16,.95);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
@@ -1109,14 +1110,14 @@ select.input{cursor:pointer}
   .qd-phase-title{font-size:13px}
 }
 /* Phone: banner wraps, button goes full-width */
-@media(max-width:600px){
+@media(max-width:640px){
   .qd-phase-banner{flex-wrap:wrap;gap:8px;padding:12px 14px}
   .qd-phase-banner .btn{width:100%;text-align:center;justify-content:center;min-height:40px;font-size:13px;border-radius:10px}
   .qd-phase-banner .btn.btn-sm{width:auto;flex:1;min-height:36px;font-size:12px}
   .qd-phase-icon{font-size:18px}
 }
 /* Ultra-narrow (iPhone SE, Galaxy Fold) */
-@media(max-width:380px){
+@media(max-width:375px){
   .qd-phase-banner{padding:10px 12px;gap:6px}
   .qd-phase-title{font-size:12px}
   .qd-phase-hint{font-size:11px}
@@ -1125,7 +1126,7 @@ select.input{cursor:pointer}
 }
 .qd-mobile-send-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:90;gap:8px;padding:12px 16px 12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 /* Offset for mobile bottom nav when present */
-.app-layout .qd-mobile-send-bar{bottom:calc(52px + env(safe-area-inset-bottom,0px));padding-bottom:8px}
+.app-layout .qd-mobile-send-bar{bottom:var(--bottom-chrome-height);padding-bottom:8px}
 .qd-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .qd-meta-item{font-size:12px;color:var(--text-2)}
 .qd-line-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
@@ -1464,7 +1465,7 @@ a.sched-drawer-sec-btn{text-decoration:underline}
 /* ═══════════════════════════════════════════
    SCHEDULE — Responsive
    ═══════════════════════════════════════════ */
-@media(max-width:980px){
+@media(max-width:1024px){
   .sched-layout.sched-rail-open{grid-template-columns:220px 1fr}
 }
 @media(max-width:768px){
@@ -1518,7 +1519,7 @@ a.sched-drawer-sec-btn{text-decoration:underline}
   .sched-grid-scroll{max-height:calc(100vh - 160px)}
   .sched-dur-pill{padding:6px 10px;font-size:10px}
 }
-@media(max-width:380px){
+@media(max-width:375px){
   .sched-pill{padding:5px 8px;font-size:10px}
   .sched-title{font-size:12px}
   .sched-view-pills{padding:2px}
@@ -1592,7 +1593,7 @@ a.sched-drawer-sec-btn{text-decoration:underline}
 .stage-pill{border:1px solid var(--line-2);background:var(--panel-2);border-radius:var(--r-pill);padding:6px 12px;font-weight:700;font-size:11px;cursor:pointer;color:var(--muted);transition:all var(--fast)}
 .stage-pill.active{background:var(--brand-bg);color:var(--brand);border-color:var(--brand-line)}
 .notice-banner{border:1px solid var(--brand-line);background:var(--brand-bg);color:var(--brand);border-radius:var(--r-sm);padding:9px 12px;font-weight:600;font-size:11px;line-height:1.5}
-.floating-error{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:50;max-width:min(440px,90vw);background:var(--red-bg);color:var(--red);padding:9px 14px;border-radius:var(--r-sm);font-weight:600;font-size:11px;box-shadow:var(--shadow-lg);border:1px solid rgba(239,68,68,.2)}
+.floating-error{position:fixed;bottom:calc(var(--bottom-chrome-height) + 16px);left:50%;transform:translateX(-50%);z-index:50;max-width:min(440px,90vw);background:var(--red-bg);color:var(--red);padding:9px 14px;border-radius:var(--r-sm);font-weight:600;font-size:11px;box-shadow:var(--shadow-lg);border:1px solid rgba(239,68,68,.2)}
 .error-text{color:var(--red)}
 .field-label{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.02em}
 .toggle-row{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2)}
@@ -1723,9 +1724,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* ═══════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════ */
-@media(max-width:980px){
+@media(max-width:1024px){
   .app-sidebar{display:none}
-  .app-layout{grid-template-columns:1fr;padding-bottom:calc(62px + env(safe-area-inset-bottom, 0px))}
+  .app-layout{grid-template-columns:1fr;padding-bottom:var(--bottom-chrome-height)}
   .mobile-menu-btn{display:inline-flex!important}
   .mobile-bottom-nav{display:flex}
   .qb-cols{grid-template-columns:1fr}
@@ -2452,7 +2453,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* ================================================================
    MOBILE BAR — consolidated (single canonical definition)
    ================================================================ */
-.qb-mobile-bar{display:none;position:fixed;bottom:56px;left:0;right:0;z-index:50;background:var(--panel-2);border-top:1px solid var(--line);padding:10px 16px;gap:8px;box-shadow:0 -4px 20px rgba(0,0,0,.3);backdrop-filter:blur(12px);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.qb-mobile-bar{display:none;position:fixed;bottom:var(--bottom-chrome-height);left:0;right:0;z-index:50;background:var(--panel-2);border-top:1px solid var(--line);padding:10px 16px;gap:8px;box-shadow:var(--elev-chrome);backdrop-filter:blur(12px);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
 .qb-mobile-bar .btn{font-size:13px;padding:10px 16px;flex:1}
 .qb-mobile-bar .btn-primary{flex:2;font-size:14px;font-weight:700}
 
@@ -2477,12 +2478,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .app-topbar-subtitle{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .cat-tag.helper{color:var(--green);border-color:rgba(74,144,96,.25);background:rgba(74,144,96,.12)}
 
-@media(max-width:980px){
+@media(max-width:1024px){
   .dash-sidebar{order:-1;grid-template-columns:1fr}
   .dash-quicknav{display:none}
   .dash-jobs-widget{order:-1}
 }
-@media(min-width:981px){
+@media(min-width:1025px){
   .dash-jobs-widget .dash-widget-head{margin-bottom:10px}
 }
 
@@ -2625,7 +2626,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .pq-footer-meta{padding:20px 24px;text-align:center;font-size:12px;color:var(--subtle);display:grid;gap:2px}
 
 /* Mobile sticky CTA */
-.pq-sticky-cta{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--panel);border-top:1px solid var(--line-2);padding:12px 20px;gap:12px;align-items:center;box-shadow:0 -4px 24px rgba(0,0,0,.4);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+.pq-sticky-cta{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--panel);border-top:1px solid var(--line-2);padding:12px 20px;gap:12px;align-items:center;box-shadow:var(--elev-chrome);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 .pq-sticky-total{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.02em}
 .pq-sticky-cta .pq-cta-primary{flex:1}
 
@@ -2744,9 +2745,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .bs-catalog-desc{font-size:12px;color:var(--muted);line-height:1.4}
 .bs-catalog-range{font-size:12px;color:var(--text-2);font-weight:600}
 .bs-manual{display:grid;gap:10px;margin-bottom:16px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);animation:if-enter .15s var(--ease)}
-.bs-footer{position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--panel);border-top:1px solid var(--line-2);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -4px 24px rgba(0,0,0,.35)}
+.bs-footer{position:fixed;bottom:var(--bottom-chrome-height);left:0;right:0;z-index:50;background:var(--panel);border-top:1px solid var(--line-2);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:var(--elev-chrome)}
 @media(min-width:769px){.bs-footer{left:190px}}
-@media(max-width:768px){.bs-footer{bottom:56px}}
+@media(max-width:768px){.bs-footer{/* bottom now via --bottom-chrome-height */}}
 .bs-footer-count{font-size:14px;font-weight:700;color:var(--text-2)}
 
 /* ================================================================
@@ -2759,15 +2760,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .rq-page{max-width:880px;margin:0 auto;display:grid;gap:10px;padding-bottom:110px}
 
 /* Quote builder progress stepper */
-.qb-stepper{display:flex;justify-content:center;align-items:center;gap:28px;padding:10px 0 6px}
-.qb-step{display:flex;align-items:center;gap:7px;opacity:.35;transition:opacity .2s}
+.qb-stepper{display:flex;justify-content:center;align-items:center;gap:28px;padding:10px 0 6px;overflow:hidden}
+.qb-step{display:flex;align-items:center;gap:7px;opacity:.35;transition:opacity .2s;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
 .qb-step.active{opacity:1}
 .qb-step.done{opacity:.65}
 .qb-step.active .qb-step-dot{background:var(--brand);color:#fff;box-shadow:0 0 12px var(--brand-glow)}
 .qb-step.done .qb-step-dot{background:var(--green);color:#fff;font-size:11px}
 .qb-step-label{font-size:12px;font-weight:600;color:var(--muted)}
 .qb-step.active .qb-step-label{color:var(--text)}
-@media(max-width:480px){.qb-stepper{gap:16px}.qb-step-label{font-size:10px}}
+@media(max-width:480px){/* exception: stepper needs tight spacing at ≤480px */.qb-stepper{gap:12px}.qb-step-label{font-size:10px;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .rq-header-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px}
 
 /* ── 2-column builder layout — desktop only ── */
@@ -2802,7 +2803,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* Customer */
 .rq-cust-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .rq-cust-info{display:flex;align-items:center;gap:10px;min-width:0}
-.rq-cust-avatar{width:30px;height:30px;border-radius:50%;background:var(--brand);color:white;display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0}
+.rq-cust-avatar{width:30px;height:30px;border-radius:50%;background:var(--brand);color:white;display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0;aspect-ratio:1}
 .rq-cust-name{font-size:14px;font-weight:600;color:var(--text)}
 .rq-cust-detail{font-size:12px;color:var(--muted)}
 .rq-cust-change{background:none;border:none;font-size:12px;color:var(--blue);cursor:pointer;font-weight:700;flex-shrink:0}
@@ -2830,7 +2831,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .rq-deposit-input{width:56px;border:1px solid var(--line);border-radius:var(--r-xs);background:var(--input-bg);padding:5px 8px;font-size:13px;color:var(--text);outline:none;text-align:right;font-family:inherit}
 
 /* Items section */
-.rq-items-section{display:grid;gap:6px}
+.rq-items-section{display:grid;gap:6px;contain:layout}
 .rq-items-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px}
 .rq-items-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 
@@ -2859,10 +2860,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .rq-card-notes{width:100%;border:1px solid var(--line);border-radius:var(--r-xs);background:var(--input-bg);padding:5px 8px;font-size:12px;color:var(--text-2);outline:none;font-family:inherit;transition:border-color var(--fast);margin-top:2px;box-sizing:border-box}
 .rq-card-notes:focus{border-color:var(--input-focus-border)}
 .rq-card-notes::placeholder{color:var(--subtle);font-style:italic}
-.rq-card-add-note{background:none;border:none;color:var(--subtle);font-size:11px;font-weight:600;cursor:pointer;padding:2px 0;text-align:left;transition:color var(--fast)}
+.rq-card-add-note{background:none;border:none;color:var(--subtle);font-size:11px;font-weight:600;cursor:pointer;padding:2px 0;text-align:left;transition:color var(--fast);min-height:44px;display:flex;align-items:center}
 
 /* Price confidence hints */
-.rq-price-hint{font-size:10px;font-weight:500;color:var(--muted);padding:2px 0 0;animation:hintFade .2s ease}
+.rq-price-hint{font-size:11px;font-weight:500;color:var(--text-2, #555);padding:2px 0 0;animation:hintFade .2s ease}
 .rq-price-low{color:var(--amber,#F59E0B)}
 .rq-price-high{color:var(--amber,#F59E0B)}
 @keyframes hintFade{from{opacity:0}to{opacity:1}}
@@ -2906,7 +2907,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .rq-catalog-desc{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rq-catalog-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .rq-catalog-price{font-size:11px;color:var(--subtle);font-weight:500}
-.rq-catalog-add{width:24px;height:24px;border-radius:50%;background:var(--brand);color:white;display:grid;place-items:center;font-size:14px;font-weight:700;flex-shrink:0}
+.rq-catalog-add{width:44px;height:44px;border-radius:50%;background:var(--brand);color:white;display:grid;place-items:center;font-size:14px;font-weight:700;flex-shrink:0}
 .rq-catalog-item.added .rq-catalog-add{background:var(--green)}
 .rq-catalog-empty{padding:20px;text-align:center;font-size:13px;color:var(--muted)}
 
@@ -2943,16 +2944,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .rq-confidence summary::-webkit-details-marker{display:none}
 .rq-conf-ready{background:var(--green-bg);border-color:var(--green-line)}
 .rq-conf-review{background:var(--amber-bg);border-color:rgba(176,112,48,.2)}
-.rq-conf-attention{background:var(--red-bg);border-color:rgba(220,38,38,.15)}
+.rq-conf-attention{background:var(--amber-bg, rgba(245, 158, 11, 0.08));border-color:rgba(245, 158, 11, 0.2)}
 .rq-conf-top{display:flex;align-items:center;gap:8px}
 .rq-conf-badge{font-size:14px;font-weight:800;padding:2px 8px;border-radius:var(--r-sm);background:rgba(255,255,255,.4)}
 .rq-conf-ready .rq-conf-badge{color:var(--green)}
 .rq-conf-review .rq-conf-badge{color:var(--amber)}
-.rq-conf-attention .rq-conf-badge{color:var(--red)}
+.rq-conf-attention .rq-conf-badge{color:var(--amber, #D97706)}
 .rq-conf-label{font-size:12px;font-weight:700}
 .rq-conf-ready .rq-conf-label{color:var(--green)}
 .rq-conf-review .rq-conf-label{color:var(--amber)}
-.rq-conf-attention .rq-conf-label{color:var(--red)}
+.rq-conf-attention .rq-conf-label{color:var(--amber, #D97706)}
 .rq-conf-checks{display:flex;flex-wrap:wrap;gap:6px}
 .rq-conf-check{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(255,255,255,.3)}
 .rq-conf-check.good{color:var(--green)}
@@ -2984,14 +2985,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
    the padding-bottom lifts the Send button above the keyboard instead of
    being covered by it. Graceful fallback on browsers that don't know the
    token (they treat it as 0px). */
-.rq-footer{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(15,15,16,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:12px 20px calc(env(safe-area-inset-bottom,0px) + env(keyboard-inset-height,0px));display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 -4px 24px rgba(0,0,0,.45)}
+.rq-footer{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(15,15,16,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:12px 20px calc(env(safe-area-inset-bottom,0px) + env(keyboard-inset-height,0px));display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:var(--elev-chrome)}
 .rq-footer-left{display:flex;gap:6px;align-items:center}
 .rq-footer-right{display:flex;gap:10px;align-items:center}
 .rq-footer-total{font-size:17px;font-weight:800;color:var(--brand);letter-spacing:-.02em}
 .rq-footer-monthly{display:block;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:0;line-height:1.3}
 .rq-preview-btn{display:none}
 @media(min-width:769px){.rq-footer{left:190px}.rq-preview-btn{display:inline-flex}}
-@media(max-width:768px){.rq-footer{bottom:62px;padding:10px 68px calc(env(safe-area-inset-bottom,0px) + env(keyboard-inset-height,0px) + 4px) 16px}.rq-footer .btn{font-size:13px;padding:10px 14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+@media(max-width:768px){.rq-footer{bottom:var(--bottom-chrome-height);padding:8px 16px calc(env(safe-area-inset-bottom,0px) + env(keyboard-inset-height,0px) + 4px) 16px;height:56px;box-sizing:border-box}.rq-footer .btn{font-size:13px;padding:10px 14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rq-footer .btn-saved{font-size:12px;padding:6px 10px}}
 
 /* Send modal */
 .rq-send-body{display:grid;gap:16px;padding:4px 0}
@@ -3916,7 +3917,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* ── AI badge ── */
 .id-ai-badge{font-size:9px;font-weight:700;color:var(--brand);padding:2px 7px;border-radius:var(--rp);background:var(--brand-bg);border:1px solid var(--brand-line);margin-left:auto;white-space:nowrap}
 
-@media(max-width:480px){
+@media(max-width:640px){
   .id-textarea{font-size:15px}
   .id-trades{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;gap:6px}
   .id-presets{overflow-x:auto;flex-wrap:nowrap}
@@ -3933,7 +3934,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
    ═══════════════════════════════════════════ */
 
 /* Fix 1: Line items on very small screens — stack name above qty/price row */
-@media(max-width:400px){
+@media(max-width:375px){
   .lr-main{grid-template-columns:22px 1fr 1fr 32px;grid-template-rows:auto auto;gap:2px 4px}
   .lr-name{grid-column:2/4;font-size:13px !important}
   .lr-qty{grid-column:2;font-size:14px !important}
@@ -3944,12 +3945,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* Fix 2: Quote detail — sticky action bar on mobile so primary action is always reachable */
 .qd-mobile-action-bar{display:none}
-@media(max-width:980px){
+@media(max-width:1024px){
   .qd-mobile-action-bar{
-    display:flex;position:fixed;bottom:58px;left:0;right:0;z-index:45;
+    display:flex;position:fixed;bottom:var(--bottom-chrome-height);left:0;right:0;z-index:45;
     background:var(--panel);border-top:1px solid var(--line);
     padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px));
-    gap:8px;box-shadow:0 -4px 20px rgba(0,0,0,.15);
+    gap:8px;box-shadow:var(--elev-chrome);
     backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)
   }
   .qd-mobile-action-bar .btn{flex:1;min-height:44px;font-size:13px;font-weight:700}
@@ -3985,7 +3986,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
    ═══════════════════════════════════════════ */
 
 /* ── LOGIN / SIGNUP: auth card centering + mobile keyboard handling ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .auth-page{align-items:flex-start;padding:24px 12px}
   .auth-card{padding:20px 16px}
   .auth-card h1{font-size:1.5rem}
@@ -4139,19 +4140,19 @@ input[type="number"]{-moz-appearance:textfield}
   .analytics-funnel-label{width:50px!important;min-width:40px!important;font-size:10px!important}
   .analytics-bar-chart{height:160px!important}
 }
-@media(max-width:400px){
+@media(max-width:375px){
   .analytics-kpi-grid{grid-template-columns:1fr}
 }
 
 /* ── #2: Quotes list — raise table breakpoint to match sidebar ── */
-@media(max-width:980px){
+@media(max-width:1024px){
   .ql-table{display:none!important}
   .ql-cards{display:block!important}
   .ql-desktop-filters{display:none!important}
   #ql-filter-toggle{display:block!important}
   .ql-mobile-filters[aria-hidden="false"]{display:flex!important}
 }
-@media(min-width:981px){
+@media(min-width:1025px){
   .ql-table{display:block}
   .ql-cards{display:none}
   .ql-mobile-filters{display:none!important}
@@ -4179,7 +4180,7 @@ input[type="number"]{-moz-appearance:textfield}
 }
 
 /* ── #5: Settings — pricing grid collapses on mobile ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .settings-pricing-grid{grid-template-columns:1fr!important}
 }
 
@@ -4203,19 +4204,15 @@ input[type="number"]{-moz-appearance:textfield}
 
 /* ── #9: Bookings week view — already 3-day on mobile via JS (isMobile check in pl-calendar) ── */
 
-/* ── #11 + #18: Build scope footer + QB mobile bar — correct bottom offset ── */
-@media(max-width:768px){
-  .bs-footer{bottom:calc(58px + env(safe-area-inset-bottom,0px))!important}
-  .qb-mobile-bar{bottom:calc(58px + env(safe-area-inset-bottom,0px))!important}
-}
+/* ── #11 + #18: Build scope footer + QB mobile bar — bottom offset now via --bottom-chrome-height ── */
 
 /* ── #12: Quote detail meta — single column on very small ── */
-@media(max-width:400px){
+@media(max-width:375px){
   .qd-meta{grid-template-columns:1fr!important;gap:4px}
 }
 
 /* ── #13: Billing pricing grid — stack on small ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .billing-pricing-grid{grid-template-columns:1fr!important}
   .billing-pricing-grid>div:last-child{order:-1}
 }
@@ -4270,7 +4267,7 @@ input[type="number"]{-moz-appearance:textfield}
 
 /* ── #24: Pricing page — lower min-width on cards ── */
 .pricing-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-@media(max-width:480px){
+@media(max-width:640px){
   .pricing-cards-grid{grid-template-columns:1fr}
 }
 
@@ -4314,7 +4311,7 @@ input[type="number"]{-moz-appearance:textfield}
 }
 
 /* ── #16: Auth pages — bigger touch targets on mobile ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .auth-card .input,.auth-card select.input{min-height:48px;font-size:16px}
   .auth-card .btn{min-height:48px;font-size:15px}
   .auth-card .btn-primary.full-width{min-height:52px;font-size:16px;font-weight:800}
@@ -4348,7 +4345,7 @@ input[type="number"]{-moz-appearance:textfield}
   .ds-scorecard-val{font-size:15px}
   .ds-scorecard-label{font-size:8px;letter-spacing:.04em}
 }
-@media(max-width:380px){
+@media(max-width:375px){
   .ds-scorecard-item{padding:8px 4px}
   .ds-scorecard-val{font-size:13px}
   .ds-scorecard-label{font-size:7px}
@@ -4649,8 +4646,8 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
   .rq-conf-check{font-size:10px;padding:2px 6px}
 }
 
-/* ── 7. SMALL SCREEN (< 380px) extra tightening ── */
-@media(max-width:380px){
+/* ── 7. SMALL SCREEN (≤ 375px) extra tightening ── */
+@media(max-width:375px){
   .ds-greeting{font-size:15px}
   .ds-qa-row{grid-template-columns:repeat(4,1fr);gap:3px}
   .ds-qa-btn{padding:6px 2px}
@@ -4772,7 +4769,7 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
 }
 
 /* Very small screens: additional compaction */
-@media(max-width:380px){
+@media(max-width:375px){
   .ds-scorecard-val{font-size:12px}
   .ds-scorecard-label{font-size:7px}
   .rq-footer-total{font-size:13px}
@@ -4820,7 +4817,7 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
 .ql-view-badge{font-size:10px;font-weight:600;color:var(--blue,#3B82F6);background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15);padding:1px 6px;border-radius:var(--r-pill);white-space:nowrap}
 
 /* ── Improved dash job input: full-width on mobile ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .dash-job-input{flex-wrap:nowrap}
   .dash-job-field{font-size:16px!important} /* prevents iOS zoom */
 }
@@ -4855,7 +4852,7 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
 .inv-card-total.paid{color:var(--green)}
 
 /* ── Dashboard: scorecard tap targets on mobile ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .ds-scorecard-item{min-height:56px;padding:10px 4px}
 }
 
@@ -4878,7 +4875,7 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
 .foreman-input-hint{font-size:10px;color:var(--subtle);text-align:center;padding:3px 0;display:block}
 
 /* ── Public quote: sticky CTA improvement ── */
-@media(max-width:600px){
+@media(max-width:640px){
   .pq-sticky-cta{padding:12px 16px;gap:8px}
   .pq-sticky-cta .doc-cta-primary{font-size:15px;padding:13px 18px}
 }
@@ -4935,7 +4932,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 .v2-job-go{white-space:nowrap;padding:0 20px;font-size:14px;font-weight:700;border-radius:var(--r-lg,18px);background:var(--brand);color:#fff;border:none;cursor:pointer;transition:background .15s,transform .1s;font-family:inherit}
 .v2-job-go:hover{background:var(--brand-dark)}
 .v2-job-go:active{transform:scale(.97)}
-@media(max-width:480px){
+@media(max-width:640px){
   .v2-job-input{flex-direction:column}
   .v2-job-go{width:100%;padding:14px}
 }
@@ -4965,7 +4962,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 .v2-quick-btn{flex:1;padding:10px 8px;font-size:12px;font-weight:600;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r,14px);color:var(--text-2);text-decoration:none;transition:all .15s;cursor:pointer;white-space:nowrap}
 .v2-quick-btn:hover{border-color:var(--brand-line);color:var(--brand);background:var(--brand-bg)}
 .v2-quick-btn:active{transform:scale(.97)}
-@media(max-width:480px){
+@media(max-width:640px){
   .v2-quick-row{display:none}
 }
 
@@ -5059,7 +5056,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 .v2-stat-num{font-size:24px;font-weight:800;letter-spacing:-.03em;color:var(--text);line-height:1}
 .v2-stat-card--green .v2-stat-num{color:var(--green,#22C55E)}
 .v2-stat-label{font-size:11px;font-weight:600;color:var(--muted);margin-top:6px;letter-spacing:.01em}
-@media(max-width:600px){.v2-stats-grid{grid-template-columns:1fr 1fr 1fr;gap:6px}.v2-stat-card{padding:14px 8px}.v2-stat-num{font-size:18px}}
+@media(max-width:640px){.v2-stats-grid{grid-template-columns:1fr 1fr 1fr;gap:6px}.v2-stat-card{padding:14px 8px}.v2-stat-num{font-size:18px}}
 
 /* ── V2 Responsive adjustments ── */
 @media(max-width:375px){
@@ -5118,7 +5115,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 .rq-send-method{min-height:48px;border-radius:var(--r,14px);font-size:14px;gap:8px}
 .rq-send-method.active{border-color:var(--brand-line);background:var(--brand-bg);color:var(--brand)}
 .rq-send-method:active{transform:scale(.97)}
-@media(max-width:480px){.rq-send-method{min-height:52px;font-size:13px}}
+@media(max-width:640px){.rq-send-method{min-height:52px;font-size:13px}}
 
 /* ── Send Modal — bottom sheet on mobile, editable area ── */
 @media(max-width:768px){
@@ -5149,7 +5146,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 
 /* ── Cards — consistent premium feel ── */
 .qb-card{border-radius:var(--r,14px);padding:16px;transition:box-shadow .15s;box-shadow:var(--shadow-sm)}
-@media(max-width:480px){
+@media(max-width:640px){
   .qb-card{padding:14px;border-radius:12px}
 }
 
@@ -5169,7 +5166,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 }
 
 /* ── Build Scope — cleaner suggestion cards ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .bs-catalog-fallback-item{padding:10px 12px;border-radius:12px}
   .bs-cf-name{font-size:13px}
   .bs-cf-price{font-size:12px}
@@ -5197,7 +5194,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 }
 
 /* ── Schedule Calendar — cleaner on mobile ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .bk-cal-header{padding:10px 12px}
   .bk-week-head th{font-size:10px;padding:6px 0}
   .bk-week-cell{min-height:36px;font-size:12px}
@@ -5205,7 +5202,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 
 /* ── Invoice Page — keep clean, minor refinements ── */
 .inv-detail-card{border-radius:var(--r,14px);overflow:hidden}
-@media(max-width:480px){
+@media(max-width:640px){
   .inv-detail-card{border-radius:12px}
 }
 
@@ -5278,7 +5275,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Settings: tighter panels on mobile ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .settings-grid{gap:10px}
   .settings-grid .panel{padding:14px}
   .settings-grid .eyebrow{font-size:11px;margin-bottom:4px}
@@ -5291,7 +5288,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 .settings-grid input[type="checkbox"]{width:18px;height:18px;accent-color:var(--brand);cursor:pointer;border-radius:4px}
 
 /* ── Calendar: tighter mobile layout ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .sched-layout{min-height:calc(100vh - 130px)}
   .sched-fab{bottom:76px;right:12px;width:48px;height:48px;font-size:22px}
   .sched-mobile-rail-btn{bottom:132px;right:12px;font-size:10px;padding:6px 12px}
@@ -5313,13 +5310,13 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 }
 
 /* ── Calendar: week view header ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .pl-cal-week-header{font-size:10px}
   .pl-cal-week-day{min-width:0;padding:4px 2px;font-size:11px}
 }
 
 /* ── Calendar: month view ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .pl-cal-month-cell{min-height:40px;font-size:12px}
   .pl-cal-month-dots{gap:2px}
   .pl-cal-month-dot{width:4px;height:4px}
@@ -5332,7 +5329,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 .sched-email-tag.off{color:var(--muted);background:var(--panel-2)}
 
 /* ── Build scope: cleaner catalog cards ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .bs-catalog-fallback{border-radius:var(--r,14px);margin:0}
   .bs-catalog-fallback-header{padding:10px 12px}
   .bs-smart-tier-label{padding:5px 12px;font-size:9px}
@@ -5343,7 +5340,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 }
 
 /* ── Analytics: stat cards mobile ── */
-@media(max-width:480px){
+@media(max-width:640px){
   .analytics-kpi-grid > div{padding:14px 12px;border-radius:var(--r,14px)}
   .analytics-kpi-grid > div > div:first-child{font-size:10px}
   .analytics-kpi-grid > div > div:nth-child(2){font-size:22px}
@@ -5351,7 +5348,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 
 /* ── Global: form-row responsive ── */
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:480px){.form-row{grid-template-columns:1fr;gap:8px}}
+@media(max-width:640px){.form-row{grid-template-columns:1fr;gap:8px}}
 
 /* ── Global: textarea ── */
 .textarea-md{min-height:80px;resize:vertical;font-family:inherit;line-height:1.5}
@@ -5423,7 +5420,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 
 /* Phase 2: Copy link button with label text */
 .qd-copy-link-text{font-size:11px;font-weight:600;margin-left:4px}
-@media(max-width:380px){.qd-copy-link-text{display:none}}
+@media(max-width:375px){.qd-copy-link-text{display:none}}
 
 /* Phase 2: Activity section in Details tab */
 .qd-activity-section{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
@@ -5627,7 +5624,7 @@ details > summary::-webkit-details-marker{display:none}
 }
 
 /* ── Totals card on mobile — more compact ── */
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .rq-builder-right {
     margin-top: 8px;
     padding-top: 12px;
@@ -5673,7 +5670,7 @@ details > summary::-webkit-details-marker{display:none}
   font-weight: 800;
   letter-spacing: -0.03em;
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .rq-job-title-input {
     font-size: 18px;
   }
@@ -5760,25 +5757,25 @@ details > summary::-webkit-details-marker{display:none}
 
 /* ────────────────────────────────────────────
    3. FOOTER / NAV STACKING — consistent bottom offset
-   Mobile bottom nav = 62px + safe-area.
-   All fixed-bottom bars must clear it.
+   Mobile bottom nav height is now managed by --bottom-chrome-height.
+   All fixed-bottom bars use it automatically.
    ──────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Ensure rq-footer clears the mobile nav + safe area */
+  /* Ensure rq-footer clears the mobile nav via token */
   .rq-footer {
-    bottom: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: 10px !important;
+    bottom: var(--bottom-chrome-height);
+    padding-bottom: 10px;
   }
   
   /* Quote detail mobile send bar */
   .qd-mobile-send-bar {
-    bottom: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: 10px !important;
+    bottom: var(--bottom-chrome-height);
+    padding-bottom: 10px;
   }
   
   /* Page content needs padding to not be hidden behind footer */
   .rq-page {
-    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -6579,7 +6576,7 @@ details > summary::-webkit-details-marker{display:none}
   opacity: 0.9;
   margin-top: 2px;
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .qb-describe-hero { margin: -20px -20px 14px; padding: 16px 20px; min-height: 64px; }
   .qb-describe-hero-title { font-size: 15px; }
 }
@@ -6662,6 +6659,12 @@ details > summary::-webkit-details-marker{display:none}
   opacity: 1;        /* state now conveyed via dot color, not opacity */
   transition: opacity .2s;
   position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 /* Reset earlier active/done opacity nudges */
 .qb-step.active,
@@ -6734,7 +6737,7 @@ details > summary::-webkit-details-marker{display:none}
 /* Completed segment: filled with brand */
 .qb-step.done::after { background: var(--brand); }
 
-@media (max-width: 480px) {
+@media (max-width: 480px) /* exception: stepper sizing needs 480px */ {
   .qb-stepper { padding: 10px 0 8px; }
   .qb-step { gap: 6px; }
   .qb-step-dot { width: 24px; height: 24px; font-size: 11px; }
@@ -6813,7 +6816,7 @@ details > summary::-webkit-details-marker{display:none}
   0%   { width: 0%; }
   100% { width: 85%; }
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .qb-build-progress { margin: -20px -20px 14px; }
 }
 
@@ -7828,7 +7831,7 @@ kbd.pl-kbd {
 
 /* Smaller-phone safety: tighten FAB so it doesn't clobber section "All →"
    chevrons that float to the right edge of dashboard cards. */
-@media(max-width:380px){
+@media(max-width:375px){
   .fm-trigger{width:44px;height:44px;right:10px}
 }
 
@@ -8610,7 +8613,7 @@ kbd.pl-kbd {
    ──────────────────────────────────────────── */
 
 /* ═══════════════════════════════════════════════════════════════
-   Phase 1+2: iPhone 8 / small-phone polish (≤ 390px)
+   Phase 1+2: iPhone 8 / small-phone polish (≤ 375px)
    ———————————————————————————————————————————————————————————————
    iPhone 8 = 375×667 @ 2x, no notch, no home indicator.
    iPhone SE 3 = 375×667, same viewport.
@@ -8618,7 +8621,7 @@ kbd.pl-kbd {
    and ensure every pixel earns its place on a 375px viewport.
    ═══════════════════════════════════════════════════════════════ */
 
-@media (max-width: 390px) {
+@media (max-width: 375px) {
 
   /* ── Quote detail: Hero ── */
   .qd-hero {
@@ -9324,7 +9327,7 @@ kbd.pl-kbd {
 .pi-section-no-mt { margin-top: 0; }
 
 /* Mobile optimization for public invoice */
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .doc-card { border-radius: 0; }
   .doc-items-header { padding: 12px 16px; }
   .doc-item { padding: 10px 16px; }
@@ -9534,3 +9537,23 @@ kbd.pl-kbd {
     padding-right: 28px;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Phase 6: Accessibility — Global focus-visible fallback
+   Ensures all interactive elements that suppress outline via
+   outline:none still show a visible focus ring for keyboard nav.
+   ══════════════════════════════════════════════════════════════ */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--brand, #f97316);
+  outline-offset: 2px;
+  box-shadow: var(--ring-focus, 0 0 0 3px rgba(249, 115, 22, 0.35));
+}
+
+/* Phase 6: ARIA — line items list semantics (applied via className) */
+.rq-items-section[role="list"] .rq-card { display: list-item; list-style: none; }

@@ -98,7 +98,7 @@ export function ToastProvider({ children }) {
           <span className="toast-icon">
             {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : toast.type === 'undo' ? '⏱' : 'ℹ'}
           </span>
-          <span className="toast-msg" data-testid="toast-msg">{toast.message}</span>
+          <span className="toast-msg" data-testid="toast-msg">{typeof toast.message === 'string' && toast.message.length > 60 ? toast.message.slice(0, 57) + '…' : toast.message}</span>
           {toast.undo && (
             <button
               type="button"

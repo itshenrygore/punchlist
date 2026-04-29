@@ -158,7 +158,7 @@
 /* Describe intake card: matches roughly the height of the textarea
    + helpers row + details, so toggling error/hint doesn't shift. */
 .pl-describe-stable { min-height: 280px; }
-@media (max-width: 480px) { .pl-describe-stable { min-height: 260px; } }
+@media (max-width: 640px) { .pl-describe-stable { min-height: 260px; } }
 
 /* Building (loading) card: fixed min-height so it doesn't shrink
    when scopeLoadingMsg text changes. */
