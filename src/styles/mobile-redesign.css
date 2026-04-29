@@ -1928,321 +1928,585 @@
 }
 
 
-/* ══════════════════════════════════════════════════════════════
-   MOBILE LAYOUT HOTFIX — April 2026
-   Addresses: stepper clipping, sidebar dump on mobile,
-   discount card bloat, calendar narrowness, content density.
-   Append this to the end of mobile-redesign.css.
-   ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   PUNCHLIST MOBILE LAYOUT REDESIGN
+   Contest-grade mobile experience. Drop-in override block.
+   Appended to mobile-redesign.css — cascades over everything above.
+   Target: iPhone 8 (375×667) through iPhone 15 Pro Max (430×932)
+   ══════════════════════════════════════════════════════════════════ */
 
 
-/* ──────────────────────────────────────────────────────────────
-   FIX 1: STEPPER — fits 3 steps in 375px without clipping
-   ────────────────────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   A. PROGRESS STEPPER — segmented pill, never clips
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 768px) {
   .qb-stepper {
-    gap: 12px !important;
-    padding: 6px 8px !important;
+    display: flex !important;
+    gap: 0 !important;
+    padding: 4px !important;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
     overflow: hidden;
+    justify-content: stretch;
+  }
+  .qb-step {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 4px;
+    border-radius: 9px;
+    transition: all 0.15s;
+    opacity: 1 !important;
+    min-height: 36px;
+  }
+  .qb-step.active {
+    background: var(--brand);
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+  }
+  .qb-step.done {
+    opacity: 0.7 !important;
   }
   .qb-step-dot {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 10px !important;
+    border-width: 1.5px;
     flex-shrink: 0;
   }
-  .qb-step-label {
-    font-size: 10px;
-    max-width: 52px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .qb-step.active .qb-step-dot {
+    background: rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.3) !important;
+    box-shadow: none !important;
   }
-  /* Hide connector lines between steps — they eat space */
-  .qb-step::after {
-    max-width: 20px;
+  .qb-step.active .qb-step-label {
+    color: #fff !important;
+    font-weight: 800;
+  }
+  .qb-step.done .qb-step-dot {
+    background: var(--green) !important;
+    color: #fff !important;
+    border-color: var(--green) !important;
+    font-size: 9px !important;
+  }
+  .qb-step-label {
+    font-size: 11px !important;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
   }
 }
 
 
-/* ──────────────────────────────────────────────────────────────
-   FIX 2: CONTEXT BAR — only one instance, not doubled
-   The breadcrumb ("Plumber · AB · Relocate...") and the
-   context bar are both showing. Hide the breadcrumb on mobile.
-   ────────────────────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   B. CONTEXT BAR — single compact line, not duplicated
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 768px) {
-  /* The raw breadcrumb text that sits ABOVE the context bar card */
-  .rq-page > .qb-step-badge,
-  .rq-page > [class*="qb-step-row"],
+  /* The step-badge / breadcrumb that duplicates the context bar */
+  .qb-step-badge,
   .qb-step-row {
     display: none !important;
   }
 
-  /* Tighten the context bar itself */
   .qb-context-bar {
-    padding: 6px 12px !important;
-    margin-bottom: 2px !important;
-    font-size: 12px;
-  }
-}
-
-
-/* ──────────────────────────────────────────────────────────────
-   FIX 3: RIGHT SIDEBAR — hide redundant content on mobile
-   On desktop this is a 320px sticky sidebar. On mobile it
-   dumps everything vertically creating a massive scroll area.
-   Most of this is redundant with the footer bar.
-   ────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  /* Hide the "What your customer sees" label */
-  .rq-customer-preview-label {
-    display: none !important;
-  }
-
-  /* Hide close helper tips — not needed on mobile */
-  .rq-close-tips {
-    display: none !important;
-  }
-
-  /* Hide tracking teaser */
-  .rq-tracking-teaser {
-    display: none !important;
-  }
-
-  /* TOTALS CARD: Hide the full card on mobile since the footer 
-     already shows the total. Keep discount inline only. */
-  .rq-totals-card {
-    display: none !important;
-  }
-
-  /* DISCOUNT: Since we hid the totals card which contains the
-     discount input, we need a compact inline discount row.
-     This targets the standalone discount section if it exists. */
-  .rq-builder-right {
-    gap: 6px !important;
-    margin-top: 4px !important;
-    padding-top: 0 !important;
-    border-top: none !important;
-  }
-
-  /* Make the preview button more compact */
-  .rq-preview-customer-btn {
-    font-size: 13px !important;
-    padding: 10px 14px !important;
-    min-height: 40px !important;
-    border-radius: 10px !important;
-  }
-}
-
-
-/* ──────────────────────────────────────────────────────────────
-   FIX 4: DISCOUNT ROW — compact inline instead of giant card
-   When the totals card is hidden on mobile, the discount
-   input needs to appear as a compact inline row.
-   ────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  /* Standalone discount section in the review area */
-  .rq-discount-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    gap: 8px;
+    padding: 7px 12px;
     background: var(--panel-2);
     border: 1px solid var(--line);
     border-radius: 10px;
-    min-height: 40px;
+    margin-bottom: 4px;
   }
-  .rq-discount-row .qb-discount-prefix {
-    font-size: 14px;
+  .qb-context-label {
+    font-size: 12px;
     color: var(--text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
   }
-  .rq-discount-row .rq-discount-input {
-    width: 64px;
-    text-align: right;
-    font-size: 15px;
+  .qb-context-edit {
+    font-size: 12px;
     font-weight: 700;
-    border: none;
+    color: var(--brand);
     background: none;
-    padding: 4px 0;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border-radius: 6px;
   }
 }
 
 
-/* ──────────────────────────────────────────────────────────────
-   FIX 5: CALENDAR — full width on phones, not capped at 480px
-   ────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .plc5 {
-    max-width: 100% !important;
-    padding: 0 12px !important;
-  }
-
-  /* Day numbers slightly larger for better tappability */
-  .plc5-day {
-    min-height: 50px;
-  }
-  .plc5-day-num {
-    width: 34px;
-    height: 34px;
-    font-size: 15px;
-  }
-
-  /* Empty state: more compact, single row */
-  .plc5-empty {
-    padding: 20px 12px !important;
-  }
-  .plc5-empty-text {
-    font-size: 14px;
-    margin-bottom: 8px;
-  }
-
-  /* Reduce gap between calendar and events section */
-  .plc5-events {
-    padding-top: 8px;
-  }
-}
-
-
-/* ──────────────────────────────────────────────────────────────
-   FIX 6: HEADER CARD — tighter spacing, less wasted space
-   ────────────────────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   C. HEADER CARD — title + customer, compact
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 768px) {
   .rq-header-card {
     padding: 10px 12px !important;
     gap: 6px !important;
+    border-radius: 12px;
   }
   .rq-job-title-input {
     font-size: 16px !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     padding: 2px 0 !important;
+    min-height: 32px;
   }
-
-  /* Customer section: tighter */
-  .rq-customer-section {
+  /* Customer row */
+  .rq-cust-row {
     gap: 6px;
   }
-
-  /* Scope accordion: collapsed by default hint */
-  .rq-scope-card {
-    margin-top: 2px;
+  .rq-cust-avatar {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+  }
+  .rq-cust-name {
+    font-size: 13px !important;
+  }
+  .rq-cust-change {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
   }
 }
 
 
-/* ──────────────────────────────────────────────────────────────
-   FIX 7: LINE ITEMS — tighter cards, less vertical waste
-   ────────────────────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   D. SCOPE/SETTINGS ACCORDION — tight toggle
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .qb-meta-toggle,
+  .rq-meta-toggle {
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+    border-radius: 10px !important;
+    margin-bottom: 4px !important;
+  }
+  .rq-scope-card {
+    margin-bottom: 4px;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   E. LINE ITEMS — tight, clean cards
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 768px) {
   .rq-items-section {
-    gap: 4px !important;
+    gap: 3px !important;
   }
+  .rq-items-head {
+    padding: 0 2px 2px !important;
+  }
+  .rq-items-title {
+    font-size: 11px !important;
+  }
+
   .rq-card {
-    padding: 10px !important;
+    padding: 10px 10px 10px 6px !important;
     border-radius: 10px !important;
+    border: 1px solid var(--line);
+  }
+  .rq-card-drag-handle {
+    display: none !important;
   }
   .rq-card-name {
     font-size: 14px !important;
     font-weight: 700;
+    padding: 1px 0 !important;
   }
-
-  /* Qty + price row: tighter */
+  .rq-card-line-total {
+    font-size: 14px !important;
+    font-weight: 800;
+  }
   .rq-card-controls {
     gap: 6px !important;
     padding-top: 4px !important;
   }
-
-  /* Note links: bigger tap target */
-  .rq-card-note-btn,
-  .rq-card [class*="note"] {
-    min-height: 36px;
+  .rq-card-add-note {
+    font-size: 12px;
+    min-height: 32px;
     display: inline-flex;
     align-items: center;
+    padding: 0 4px;
+    color: var(--text-2);
   }
 }
 
 
-/* ──────────────────────────────────────────────────────────────
-   FIX 8: FOOTER BAR — slimmer, no wasted space
-   ────────────────────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   F. RIGHT SIDEBAR — HIDE on mobile, critical fix
+   The desktop sidebar (totals, discount, financing, tips, tracking,
+   preview button) dumps vertically on mobile creating ~500px of
+   redundant content. The footer already shows the total + CTA.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 768px) {
-  .rq-footer {
-    padding: 8px 16px calc(env(safe-area-inset-bottom, 0px) + 56px) !important;
-    gap: 8px !important;
-    border-radius: 0 !important;
+  /* Hide the entire desktop sidebar on mobile */
+  .rq-builder-right {
+    display: none !important;
   }
-  .rq-footer .btn-primary {
-    flex: 1;
-    min-height: 42px;
-    font-size: 14px !important;
-    border-radius: 10px !important;
-  }
-  .rq-footer-total {
-    font-size: 15px !important;
-  }
-  /* Hide save draft button on mobile — autosave handles it */
-  .rq-footer .btn-saved,
-  .rq-footer .btn-secondary:not(.rq-preview-btn) {
-    display: none;
-  }
+
+  /* Show ONLY the confidence panel — extract it from the sidebar
+     by making it visible even though parent is hidden.
+     We'll duplicate its key info in the footer instead. */
 }
 
-
-/* ──────────────────────────────────────────────────────────────
-   FIX 9: OVERALL PAGE DENSITY — less padding, tighter gaps
-   ────────────────────────────────────────────────────────────── */
+/* Re-show confidence panel outside the sidebar flow */
 @media (max-width: 768px) {
-  .rq-page {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    gap: 6px !important;
-  }
-
-  /* Remove excessive top padding on the review phase container */
-  .qb-zone.pl-describe-stable,
-  .rq-builder-layout {
-    gap: 8px;
-  }
-
-  /* Commonly added for Trade — compact */
-  .rq-hints {
-    margin-top: 2px;
-  }
-  .qb-hints-toggle {
-    padding: 8px 12px !important;
-    font-size: 11px !important;
-  }
-  .rq-hint-chip {
-    padding: 6px 10px !important;
-    font-size: 11px !important;
-  }
-}
-
-
-/* ──────────────────────────────────────────────────────────────
-   FIX 10: CONFIDENCE / MISSED ITEMS — amber not red
-   ────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
+  /* The confidence panel needs to be visible. 
+     Since we hid rq-builder-right, we'll style the confidence
+     panel via the rq-page flow instead. The JSX change will
+     move it outside rq-builder-right. For now, keep the 
+     styling ready for both positions. */
   .rq-confidence {
-    border-radius: 10px !important;
-    padding: 8px 12px !important;
-    background: rgba(245, 158, 11, 0.06) !important;
-    border: 1px solid rgba(245, 158, 11, 0.15) !important;
+    border-radius: 10px;
+    padding: 8px 12px;
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    margin-top: 4px;
   }
   .rq-conf-badge {
     color: #D97706 !important;
     background: rgba(245, 158, 11, 0.1) !important;
     border-color: rgba(245, 158, 11, 0.2) !important;
+    font-size: 12px !important;
+    padding: 2px 6px !important;
   }
   .rq-conf-label {
     color: #D97706 !important;
+    font-size: 11px !important;
+  }
+  .rq-conf-inline-ok {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--green-bg);
+    border: 1px solid var(--green-line);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green);
+    margin-top: 4px;
   }
 }
 
 
-/* ──────────────────────────────────────────────────────────────
-   FIX 11: FOREMAN BOTTOM SHEET — half-height, not fullscreen
-   ────────────────────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   G. EMPTY STATE — compact, action-forward
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .rq-empty {
+    padding: 20px 16px !important;
+    border-radius: 12px;
+  }
+  .rq-empty-icon {
+    margin-bottom: 4px !important;
+  }
+  .rq-empty-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .rq-empty-text {
+    font-size: 14px !important;
+    margin-bottom: 2px !important;
+  }
+  .rq-empty-sub {
+    font-size: 12px !important;
+    line-height: 1.4;
+    max-width: 260px;
+    margin: 0 auto;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   H. ADD ITEM BAR — cleaner grid
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .rq-add-triggers {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+  .rq-add-trigger {
+    padding: 10px 8px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    min-height: 42px !important;
+  }
+  .rq-add-trigger-primary {
+    grid-column: 1 / -1 !important;
+    font-weight: 700;
+    background: var(--brand-bg) !important;
+    border-color: var(--brand-line) !important;
+    color: var(--brand) !important;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   I. SCOPE HINTS — compact chips
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .qb-hints-toggle {
+    padding: 7px 12px !important;
+    font-size: 11px !important;
+    border-radius: 10px !important;
+  }
+  .rq-hint-chip {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   J. STICKY FOOTER — clean, slim, one-row
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .rq-footer {
+    bottom: 52px !important;
+    padding: 8px 12px calc(env(safe-area-inset-bottom, 0px) + 4px) 12px !important;
+    gap: 8px !important;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
+    border-radius: 0 !important;
+  }
+  /* Hide save draft + timestamp on mobile — autosave handles it */
+  .rq-footer-left .btn-saved,
+  .rq-footer-left .btn-secondary,
+  .rq-footer-left .btn:not(.rq-preview-btn),
+  .qb-save-ts {
+    display: none !important;
+  }
+  /* Show only total + send button */
+  .rq-footer-total {
+    font-size: 16px !important;
+    font-weight: 800;
+  }
+  .rq-footer-monthly {
+    font-size: 9px !important;
+  }
+  .rq-footer .btn-primary {
+    flex: 1;
+    min-height: 40px !important;
+    font-size: 14px !important;
+    font-weight: 800;
+    border-radius: 10px !important;
+    padding: 8px 16px !important;
+    letter-spacing: -0.01em;
+  }
+  .rq-footer .btn-lg {
+    font-size: 14px !important;
+    padding: 8px 16px !important;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   K. OVERALL PAGE DENSITY
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .rq-page {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    gap: 4px !important;
+    padding-bottom: 130px !important;
+  }
+  .rq-builder-layout {
+    gap: 4px !important;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   L. CALENDAR — full-width, breathable
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .plc5 {
+    max-width: 100% !important;
+    padding: 0 10px !important;
+  }
+  .plc5-header {
+    padding: 4px 0 8px !important;
+  }
+  .plc5-month-title {
+    font-size: 26px !important;
+  }
+  .plc5-nav-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Day cells — generous touch targets */
+  .plc5-day {
+    min-height: 48px;
+    padding: 6px 0 4px !important;
+  }
+  .plc5-day-num {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 15px !important;
+  }
+  .plc5-today .plc5-day-num {
+    font-weight: 800;
+  }
+
+  /* Events section */
+  .plc5-events {
+    padding: 8px 4px 20px !important;
+    min-height: 160px !important;
+  }
+  .plc5-events-title {
+    font-size: 17px !important;
+  }
+
+  /* Empty state: inline, not centered block */
+  .plc5-empty {
+    padding: 16px 8px !important;
+    text-align: left !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .plc5-empty-text {
+    font-size: 14px !important;
+    margin-bottom: 0 !important;
+    color: var(--text-2);
+  }
+  .plc5-empty-add {
+    padding: 8px 14px !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Add button: always visible */
+  .plc5-add-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+}
+
+/* Small phones (iPhone 8/SE) */
+@media (max-width: 375px) {
+  .plc5-month-title { font-size: 22px !important; }
+  .plc5-day-num { width: 30px !important; height: 30px !important; font-size: 14px !important; }
+  .plc5-day { min-height: 42px; }
+  .plc5-nav-btn { width: 36px !important; height: 36px !important; }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   M. CATALOG PICKER — better overlay
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .rq-catalog-panel {
+    max-height: 80vh !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+  .rq-catalog-top {
+    padding: 12px 12px 10px !important;
+  }
+  .rq-catalog-input {
+    font-size: 16px !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+  }
+  .rq-catalog-item {
+    padding: 10px !important;
+    border-radius: 10px !important;
+    min-height: 48px;
+  }
+  .rq-catalog-name {
+    font-size: 14px !important;
+  }
+  .rq-catalog-add {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    font-size: 18px !important;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   N. FOREMAN BOTTOM SHEET — half-screen, not overwhelming
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 768px) {
   .fm-panel {
-    height: min(400px, 55vh) !important;
+    height: min(380px, 50vh) !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+  .fm-starter {
+    padding: 10px 14px !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   O. MOBILE NAV — ensure proper spacing
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    height: 52px;
+  }
+  .mobile-nav-action {
+    width: 42px;
+    height: 42px;
+    margin: 5px 4px;
+    border-radius: 50%;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   P. TOP BAR — tighter on mobile
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 640px) {
+  .app-topbar-inner {
+    min-height: 44px !important;
+    gap: 4px !important;
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Q. INPUT ZOOM PREVENTION — 16px minimum
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .rq-card-price-input,
+  .rq-discount-input,
+  .rq-deposit-input,
+  .rq-card-name,
+  .rq-card-notes,
+  .rq-catalog-input,
+  .rq-scope-input,
+  .rq-detail-input,
+  .jd-input,
+  .fm-input,
+  textarea,
+  select,
+  .global-search-input,
+  .settings-input,
+  .input {
+    font-size: 16px !important;
   }
 }
