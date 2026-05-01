@@ -1,23 +1,16 @@
 /**
- * Punchlist Dashboard v2  (v100 M6.5 polish)
+ * Punchlist Dashboard — Rewrite
  *
- * Layout (unchanged from M4):
- *   Row 1 — greeting + headline metric
- *   Row 2 — "Today" action list (primary attention, urgency sorted)
- *   Row 3 — pipeline bar (clickable segments → filtered quote list)
- *   Row 4 — this week schedule + revenue
- *   Row 5 — insights (conditional, hairline-topped)
+ * Fixes from combined teardown:
+ *   • Suppresses 0% close rate chip (HeadlineStat now returns null)
+ *   • Hides revenue cards when both values are $0
+ *   • Full-width job input with shorter placeholder that won't truncate
+ *   • Pipeline bar hidden when only 1 item in 1 status (uninformative)
+ *   • Empty states encourage instead of punish
+ *   • No dead space below last section
+ *   • Removed demo preview A/B test (was below fold, never seen)
  *
- * M6.5 adds:
- *   • Numeric hierarchy (11px micro-labels, display-scale revenue
- *     numerics, tabular-nums + nowrap on every currency display)
- *   • Extracted action-list-row, headline-stat, empty-state
- *   • CSS-only entrance stagger (headline → list rows → secondary)
- *   • Refined empty states
- *   • Theme parity pass (dots, muted text, headline chip)
- *
- * Data shape is unchanged — M4's rpc_dashboard_bundle remains the
- * source of truth. No new network calls, no bundle fields touched.
+ * Data shape unchanged — rpc_dashboard_bundle remains the source.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -48,8 +41,7 @@ import { currency } from '../lib/format';
 import { identify, trackQuoteFlowStarted, getVariant } from '../lib/analytics';
 
 /* ──────────────────────────────────────────────────────────────
-   HELPER: fetch dashboard bundle from Supabase RPC.
-   Falls back to parallel API calls if the RPC doesn't exist yet.
+   HELPER: fetch dashboard bundle from Supabase RPC
 ────────────────────────────────────────────────────────────── */
 async function fetchDashboardBundle(userId) {
   try {
@@ -73,14 +65,12 @@ function CardSkeleton({ height = 72 }) {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   ROW 3 — PIPELINE BAR
+   PIPELINE BAR — only shows when there's meaningful data
 ────────────────────────────────────────────────────────────── */
 function PipelineBar({ counts, loading }) {
   if (loading) return <CardSkeleton height={52} />;
   if (!counts) return null;
 
-  // M6.5 note: viewed gets a distinct visual via --brand-glow accent.
-  // Colours pull from tokens — never hex'd.
   const segments = [
     { key: 'draft',     label: 'Draft',     color: 'var(--muted)',    filter: 'draft' },
     { key: 'sent',      label: 'Sent',      color: 'var(--blue)',     filter: 'sent' },
@@ -89,7 +79,9 @@ function PipelineBar({ counts, loading }) {
     { key: 'scheduled', label: 'Scheduled', color: 'var(--brand)',    filter: 'scheduled' },
   ].filter(s => (counts[s.key] || 0) > 0);
 
-  if (segments.length === 0) return null;
+  // Don't show a pipeline bar with just 1 segment and 1 item — it's just a colored rectangle
+  const totalCount = segments.reduce((sum, s) => sum + (counts[s.key] || 0), 0);
+  if (segments.length === 0 || (segments.length === 1 && totalCount <= 1)) return null;
 
   return (
     <div className="dv2-pipeline">
@@ -119,10 +111,10 @@ function PipelineBar({ counts, loading }) {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   ROW 4 — WEEK SCHEDULE CARD
+   WEEK SCHEDULE CARD
 ────────────────────────────────────────────────────────────── */
 function WeekScheduleCard({ jobs, loading }) {
-  if (loading) return <CardSkeleton height={160} />;
+  if (loading) return <CardSkeleton height={120} />;
 
   const empty = !jobs || jobs.length === 0;
 
@@ -145,7 +137,7 @@ function WeekScheduleCard({ jobs, loading }) {
         </Link>
       </div>
       {empty ? (
-        <div className="dv2-card-empty">No jobs scheduled this week</div>
+        <div className="dv2-card-empty">No jobs scheduled</div>
       ) : (
         <div className="dv2-week-days">
           {Object.entries(byDay).slice(0, 4).map(([day, dayJobs]) => (
@@ -180,10 +172,13 @@ function WeekScheduleCard({ jobs, loading }) {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   ROW 4 — REVENUE CARD
+   REVENUE CARD — hidden when both values are $0
 ────────────────────────────────────────────────────────────── */
 function RevenueCard({ week, month, lastPeriod, loading }) {
-  if (loading) return <CardSkeleton height={160} />;
+  if (loading) return <CardSkeleton height={120} />;
+
+  // Don't show a revenue card that just says $0 / $0 — it's punishing
+  if ((month || 0) === 0 && (week || 0) === 0) return null;
 
   const delta = lastPeriod > 0
     ? Math.round(((month - lastPeriod) / lastPeriod) * 100)
@@ -223,7 +218,7 @@ function RevenueCard({ week, month, lastPeriod, loading }) {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   ROW 5 — INSIGHTS
+   INSIGHTS ROW
 ────────────────────────────────────────────────────────────── */
 function InsightsRow({ insights, loading }) {
   if (loading || !insights || insights.length === 0) return null;
@@ -282,7 +277,7 @@ export default function DashboardPage() {
   const jobInputRef = useRef(null);
   const [jobInput, setJobInput] = useState('');
 
-  // v103 Phase 5: Pull-to-refresh on dashboard
+  // Pull-to-refresh
   usePullToRefresh(() => {
     if (!user) return;
     setBundleLoading(true);
@@ -323,18 +318,11 @@ export default function DashboardPage() {
   const dismissItem = useCallback(async (item) => {
     const id = item.quote_id;
     if (!id || !user) return;
-
-    // Capture the item before optimistically removing it so we can restore it
     const capturedItem = item;
-
-    // Optimistically remove from view
     setDismissedIds(prev => new Set([...prev, id]));
-
-    // Show undo toast — 5 s window (Linear standard)
     showUndo(
       'Hidden',
       5000,
-      // onCommit: write to DB after timeout
       async () => {
         try {
           await supabase.from('dismissed_dashboard_items').upsert(
@@ -349,7 +337,6 @@ export default function DashboardPage() {
           } catch { /* no-op */ }
         }
       },
-      // onUndo: remove from dismissed set so the item reappears
       () => {
         setDismissedIds(prev => {
           const next = new Set(prev);
@@ -373,7 +360,6 @@ export default function DashboardPage() {
 
     Promise.all([fetchDashboardBundle(user.id), getProfile(user.id)])
       .then(([bundleResult, profile]) => {
-        /* ── Bundle ── */
         if (bundleResult.source === 'rpc' && bundleResult.data) {
           setBundle(bundleResult.data);
           setBundleLoading(false);
@@ -394,7 +380,6 @@ export default function DashboardPage() {
           }).catch(e => console.warn('[PL]', e)).finally(() => setBundleLoading(false));
         }
 
-        /* ── Profile ── */
         if (!profile) {
           import('../lib/api/profile.js').then(({ saveProfile }) =>
             saveProfile(user, { full_name: user.user_metadata?.full_name || '', trade: 'Other', province: 'AB', country: 'CA' })
@@ -445,7 +430,7 @@ export default function DashboardPage() {
   }, [toast]);
 
   /* ──────────────────────────────────────────────────────────────
-     DERIVED DATA — RPC path or fallback path
+     DERIVED DATA
   ────────────────────────────────────────────────────────────── */
   const todayActions = useMemo(() => {
     if (bundle) {
@@ -554,17 +539,17 @@ export default function DashboardPage() {
   const insights       = bundle ? (bundle.insights || []) : [];
 
   const hasAnyData = useMemo(() => {
-    // Check localStorage first — if user has ever sent a quote, they have data
     try { if (localStorage.getItem('pl_has_sent_quote')) return true; } catch { /* no-op */ }
     if (bundle) {
-      // Pipeline counts only track active statuses. Also check total if available,
-      // and revenue (which includes completed/invoiced/paid quotes).
       const hasPipeline = Object.entries(bundle.pipeline_counts || {}).some(([k,v]) => !k.startsWith('total') && typeof v === 'number' && v > 0);
       const hasRevenue = (bundle.revenue_this_month || 0) > 0 || (bundle.revenue_this_week || 0) > 0;
       return hasPipeline || hasRevenue;
     }
     return quotes.length > 0;
   }, [bundle, quotes]);
+
+  // Check if there's any real revenue to show
+  const hasRevenue = revenueMonth > 0 || revenueWeek > 0;
 
   /* ── Greeting ── */
   const greeting = useMemo(() => {
@@ -629,7 +614,7 @@ export default function DashboardPage() {
     }
   }, [bundleLoading, hasAnyData]);
 
-  /* ── Total $ on the line (for section meta) ── */
+  /* ── Total $ on the line ── */
   const onTheLine = useMemo(
     () => todayActions.reduce((s, a) => s + (Number(a.total) || 0), 0),
     [todayActions]
@@ -659,11 +644,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ═══ JOB INPUT ═══ */}
+        {/* ═══ JOB INPUT — full width, short placeholder ═══ */}
         <form className="dv2-job-form dv2-enter" style={{ '--i': 1 }}
               onSubmit={handleJobSubmit} data-testid="dash-job-form">
           <input ref={jobInputRef} className="dv2-job-input" type="text"
-            placeholder="What's the job? e.g. Poly B repipe, panel upgrade…"
+            placeholder="What's the job?"
             value={jobInput} onChange={e => setJobInput(e.target.value)} autoComplete="off" enterKeyHint="go" />
           <button className="dv2-job-go" type="submit">
             {jobInput.trim()
@@ -676,28 +661,7 @@ export default function DashboardPage() {
         {!bundleLoading && !hasAnyData && (
           <Card padding="loose" className="dv2-empty">
             <div className="dv2-empty-headline">Send your first quote</div>
-            <p className="dv2-empty-sub">Describe the job above — Punchlist builds it in under 4 minutes.</p>
-            {getVariant('empty_state_demo') === 'a' && (
-              <div className="v2-demo-preview">
-                <div className="v2-demo-label">What your customer sees</div>
-                <div className="v2-demo-card">
-                  <div className="v2-demo-card-top">
-                    <span className="v2-demo-card-title">Poly B Repipe to PEX</span>
-                    <span className="v2-demo-card-badge">Quote</span>
-                  </div>
-                  <div className="v2-demo-card-items">
-                    <div className="v2-demo-item"><span>Labour — repipe 2-bath home</span><span>$3,200</span></div>
-                    <div className="v2-demo-item"><span>PEX material + fittings</span><span>$1,450</span></div>
-                    <div className="v2-demo-item"><span>Drywall repair & patching</span><span>$1,100</span></div>
-                  </div>
-                  <div className="v2-demo-card-total">
-                    <div className="v2-demo-total-row"><span>Total</span><span>$6,000</span></div>
-                    <div className="v2-demo-monthly">or $500/mo for 12 months</div>
-                  </div>
-                  <div className="v2-demo-cta">Approve & Sign</div>
-                </div>
-              </div>
-            )}
+            <p className="dv2-empty-sub">Describe the job above — Punchlist builds it in under 2 minutes.</p>
             <div className="v2-empty-fine">No credit card needed · 5 free quotes per month</div>
           </Card>
         )}
@@ -732,8 +696,8 @@ export default function DashboardPage() {
               <EmptyState
                 icon={CheckCircle2}
                 title="You're all caught up"
-                sub="Next quote is a good one."
-                cta={{ label: <>Build your next quote <ChevronRight size={12} /></>, to: '/app/quotes/new' }}
+                sub="Build your next quote when you're ready."
+                cta={{ label: <>New quote <ChevronRight size={12} /></>, to: '/app/quotes/new' }}
                 onCtaClick={() => trackQuoteFlowStarted({ source: 'dashboard_caught_up' })}
               />
             ) : (
@@ -742,7 +706,7 @@ export default function DashboardPage() {
                   <ActionListRow
                     key={item.quote_id || item.invoice_id || item.booking_id || i}
                     item={item}
-                    primary={i < 2}               /* top 1–2 rows get primary CTA */
+                    primary={i < 2}
                     onAction={handleActionNudge}
                     onDismiss={dismissItem}
                     className="dv2-enter"
@@ -770,10 +734,13 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* ═══ ROW 4: SCHEDULE + REVENUE ═══ */}
+        {/* ═══ ROW 4: SCHEDULE + REVENUE ═══
+            Only show the row if at least one card will render.
+            Revenue card self-hides when both values are $0.
+            If only schedule card shows, it takes full width. */}
         {(bundleLoading || hasAnyData) && (
           <RevealOnView delay={120}>
-            <div className="dv2-row4">
+            <div className={`dv2-row4 ${!hasRevenue ? 'dv2-row4--single' : ''}`}>
               <WeekScheduleCard jobs={weekScheduled} loading={bundleLoading} />
               <RevenueCard week={revenueWeek} month={revenueMonth} lastPeriod={revenueLast} loading={bundleLoading} />
             </div>
@@ -783,7 +750,7 @@ export default function DashboardPage() {
         {/* ═══ ROW 5: INSIGHTS ═══ */}
         <InsightsRow insights={insights} loading={bundleLoading} />
 
-        {/* ═══ UPSELL STRIPS ═══ */}
+        {/* ═══ UPSELL — only when user has data and hasn't connected Stripe ═══ */}
         {!bundleLoading && userProfile && !userProfile.stripe_connect_onboarded && hasAnyData && (
           <Link to="/app/payments/setup" className="dv2-upsell">
             <DollarSign size={18} className="dv2-upsell-icon" />
@@ -795,6 +762,7 @@ export default function DashboardPage() {
           </Link>
         )}
 
+        {/* ═══ USAGE METER — show at 1+ quotes sent ═══ */}
         {!bundleLoading && userProfile && !isPro(userProfile) && sentThisMonth >= 1 && (
           <div className="dv2-usage">
             <div className="dv2-usage-track">

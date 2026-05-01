@@ -31,7 +31,7 @@ const SORT_OPTIONS = [
   { value: 'number',  label: 'Quote number' },
 ];
 
-// Status pill labels (shorter for mobile)
+// Simplified status pills — fewer options, all fit on screen
 const STATUS_PILLS = [
   { value: null,                     label: 'All' },
   { value: 'needs_followup',         label: 'Needs follow-up' },
@@ -39,13 +39,9 @@ const STATUS_PILLS = [
   { value: 'sent',                   label: 'Sent' },
   { value: 'viewed',                 label: 'Viewed' },
   { value: 'approved',              label: 'Approved' },
-  { value: 'revision_requested',    label: 'Revision requested' },
   { value: 'scheduled',             label: 'Scheduled' },
-  { value: 'completed',             label: 'Completed' },
-  { value: 'invoiced',              label: 'Invoiced' },
-  { value: 'paid',                   label: 'Paid' },
+  { value: 'completed',             label: 'Done' },
   { value: 'declined',              label: 'Declined' },
-  { value: 'expired',               label: 'Expired' },
 ];
 
 function sortQuotes(quotes, sortBy) {
@@ -53,7 +49,6 @@ function sortQuotes(quotes, sortBy) {
     if (sortBy === 'total')   return (b.total || 0) - (a.total || 0);
     if (sortBy === 'number')  return (b.quote_number || 0) - (a.quote_number || 0);
     if (sortBy === 'created') return new Date(b.created_at) - new Date(a.created_at);
-    // default: updated
     return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
   });
 }
@@ -114,28 +109,36 @@ function QuoteRow({ quote }) {
   );
 }
 
-/* ─── Mobile card ─── */
+/* ─── Mobile card — FIXED: theme-aware, no "No contact" in italic ─── */
 function QuoteCard({ quote }) {
   const num = quote.quote_number ? formatQuoteNumber(quote.quote_number) : null;
   const viewBadge = quote.view_count > 0 && ['sent','viewed','question_asked'].includes(quote.status);
+  const hasCustomer = quote.customer?.name;
+
   return (
     <Link to={`/app/quotes/${quote.id}`} className="ql-card-v2" style={{ textDecoration: 'none' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="ql-card-title">{quote.title || 'Untitled quote'}</div>
           <div className="ql-card-meta">
-            <span>{quote.customer?.name || <span style={{ fontStyle: 'italic' }}>No contact</span>}</span>
-            {num && <span style={{ opacity: 0.6 }}>· {num}</span>}
+            {/* Show customer name prominently, or just the quote number if no customer */}
+            {hasCustomer
+              ? <span style={{ fontWeight: 500 }}>{quote.customer.name}</span>
+              : <span style={{ color: 'var(--text-3)' }}>Draft</span>
+            }
+            {num && <span style={{ opacity: 0.5 }}> · {num}</span>}
           </div>
         </div>
-        <div className="ql-card-total">{currency(quote.total || 0)}</div>
+        <div className="ql-card-total tabular">
+          {(quote.total || 0) > 0 ? currency(quote.total) : '—'}
+        </div>
       </div>
       <div className="ql-card-bottom">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <StatusBadge status={quote.status} />
           {viewBadge && <span className="ql-view-badge">{quote.view_count}×</span>}
         </div>
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>{formatDate(quote.updated_at || quote.created_at)}</span>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-3)' }}>{formatDate(quote.updated_at || quote.created_at)}</span>
       </div>
     </Link>
   );
@@ -203,7 +206,6 @@ export default function QuotesListPage() {
 
   useEffect(() => { fetchQuotes(); }, [fetchQuotes]);
 
-  // Persist statusFilter to sessionStorage (Phase 3)
   useEffect(() => {
     try {
       if (statusFilter) sessionStorage.setItem('pl_quotes_filter', statusFilter);
@@ -211,16 +213,13 @@ export default function QuotesListPage() {
     } catch (e) { /* sessionStorage blocked */ }
   }, [statusFilter]);
 
-  // Debounce search input — 180ms (Phase 3)
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 180);
     return () => clearTimeout(t);
   }, [search]);
 
-  // Pull to refresh
   usePullToRefresh(fetchQuotes);
 
-  // Swipe to archive
   async function handleArchive(quoteId) {
     try {
       await updateQuote(quoteId, { archived_at: new Date().toISOString() });
@@ -230,7 +229,6 @@ export default function QuotesListPage() {
     } catch { toast('Could not archive', 'error'); }
   }
 
-  // Delete draft
   async function handleDeleteDraft(quoteId) {
     try {
       await deleteQuote(quoteId);
@@ -247,6 +245,9 @@ export default function QuotesListPage() {
       result = result.filter(q => ['viewed','question_asked','revision_requested'].includes(q.status) || (q.status === 'sent' && q.view_count > 0));
     } else if (statusFilter === 'approved') {
       result = result.filter(q => ['approved','approved_pending_deposit'].includes(q.status));
+    } else if (statusFilter === 'completed') {
+      // "Done" pill captures completed + invoiced + paid
+      result = result.filter(q => ['completed','invoiced','paid'].includes(q.status));
     } else if (statusFilter) {
       result = result.filter(q => q.status === statusFilter);
     }
@@ -254,13 +255,26 @@ export default function QuotesListPage() {
     return sortQuotes(result, sortBy);
   }, [quotes, statusFilter, hideCompleted, debouncedSearch, sortBy]);
 
-  // Close rate summary
-  const closeRateSummary = useMemo(() => {
+  // Build a summary that doesn't punish — no "0%" anywhere
+  const summary = useMemo(() => {
+    const total = quotes.length;
+    if (total === 0) return null;
+
     const sent = quotes.filter(q => q.status !== 'draft').length;
     const approved = quotes.filter(q => ['approved','approved_pending_deposit','scheduled','completed','invoiced','paid'].includes(q.status)).length;
     const rate = sent > 0 ? Math.round((approved / sent) * 100) : 0;
-    return { sent, approved, rate };
+
+    // Only show close rate if it's meaningful (>0% and at least 2 sent)
+    if (rate > 0 && sent >= 2) {
+      return `${total} quote${total !== 1 ? 's' : ''} · ${rate}% close rate`;
+    }
+    return `${total} quote${total !== 1 ? 's' : ''}`;
   }, [quotes]);
+
+  const isFiltered = !!statusFilter || !!search.trim() || hideCompleted;
+  const filteredSummary = isFiltered
+    ? `${filtered.length} of ${quotes.length} quote${quotes.length !== 1 ? 's' : ''}`
+    : null;
 
   function toggleHideCompleted() {
     setHideCompleted(prev => {
@@ -269,11 +283,6 @@ export default function QuotesListPage() {
       return next;
     });
   }
-
-  const isFiltered = !!statusFilter || !!search.trim() || hideCompleted;
-  const summary = isFiltered
-    ? `Showing ${filtered.length} of ${quotes.length} quote${quotes.length !== 1 ? 's' : ''}`
-    : `${quotes.length} quote${quotes.length !== 1 ? 's' : ''}${closeRateSummary.sent > 0 ? ` · ${closeRateSummary.approved} of ${closeRateSummary.sent} approved (${closeRateSummary.rate}%)` : ''}`;
 
   return (
     <AppShell hideTitle>
@@ -284,7 +293,7 @@ export default function QuotesListPage() {
         actions={<Link to="/app/quotes/new" className="btn btn-primary pl-hide-mobile">New quote</Link>}
       />
 
-      {/* ── Status tabs (all screen sizes, scrollable on mobile) ── */}
+      {/* ── Status tabs ── */}
       <div className="pl-tabstrip" ref={tabstripRef} role="tablist" aria-label="Filter quotes by status">
         {STATUS_PILLS.map(p => {
           const active = statusFilter === p.value;
@@ -336,18 +345,10 @@ export default function QuotesListPage() {
         </div>
       </div>
 
-      {/* ── Mobile filter controls (hidden on desktop where ql-desktop-filters shows) ── */}
+      {/* ── Mobile filter controls ── */}
       <div className="ql-mobile-filters" style={mobileFiltersOpen ? { display: 'flex' } : undefined}>
-        <select
-          className="input"
-          value={sortBy}
-          onChange={e => setSortBy(e.target.value)}
-          style={{ flex: 1, minWidth: 0, fontSize: 'var(--text-xs)', height: 36 }}
-          aria-label="Sort quotes"
-        >
-          {SORT_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
+        <select className="input" value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ flex: 1, minWidth: 0, fontSize: 'var(--text-xs)', height: 36 }} aria-label="Sort quotes">
+          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' }}>
           <input type="checkbox" checked={hideCompleted} onChange={toggleHideCompleted} style={{ accentColor: 'var(--brand)', width: 16, height: 16 }} />
@@ -355,10 +356,10 @@ export default function QuotesListPage() {
         </label>
       </div>
 
-      {/* ── Summary line (only when filters are active — unfiltered summary lives in PageHeader) ── */}
+      {/* ── Filtered results summary ── */}
       {!loading && quotes.length > 0 && isFiltered && (
         <div style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)', marginBottom: 12 }}>
-          {summary}
+          {filteredSummary}
           <button
             type="button"
             className="btn-link"
@@ -373,17 +374,15 @@ export default function QuotesListPage() {
       {/* ── Content ── */}
       {loading ? (
         <div className="pl-skel-list">
-          <div key="sk-a" className="pl-skel-row" />
-          <div key="sk-b" className="pl-skel-row" />
-          <div key="sk-c" className="pl-skel-row" />
-          <div key="sk-d" className="pl-skel-row" />
-          <div key="sk-e" className="pl-skel-row" />
+          {[...Array(5)].map((_, i) => <div key={i} className="pl-skel-row" />)}
         </div>
       ) : quotes.length === 0 ? (
         <Card padding="loose" minH="260px" className="pl-empty-card">
-          <div className="pl-empty-glyph" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+          <div className="pl-empty-glyph" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
           <h2 className="pl-empty-title font-display">No quotes yet</h2>
-          <p className="pl-empty-body">Describe a job and Punchlist builds the quote. Your first one takes under 4 minutes.</p>
+          <p className="pl-empty-body">Describe a job and Punchlist builds the quote in under 2 minutes.</p>
           <div className="pl-empty-actions">
             <Link to="/app/quotes/new" className="btn btn-primary">Create your first quote →</Link>
           </div>
@@ -394,17 +393,13 @@ export default function QuotesListPage() {
           <h2 className="pl-empty-title font-display">No quotes match</h2>
           <p className="pl-empty-body">Try adjusting your search or filters.</p>
           <div className="pl-empty-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => { setSearch(''); setStatusFilter(null); setHideCompleted(false); try { localStorage.removeItem('pl_hide_completed'); } catch (e) { console.warn("[PL]", e); } }}
-            >
+            <button type="button" className="btn btn-secondary" onClick={() => { setSearch(''); setStatusFilter(null); setHideCompleted(false); }}>
               Clear filters
             </button>
           </div>
         </Card>
       ) : (
-        <div className="panel" style={{ overflow: 'hidden', padding: 0 }}>
+        <div className="panel ql-panel-themed" style={{ overflow: 'hidden', padding: 0 }}>
           {/* Desktop table */}
           <div className="ql-table">
             <TableHeader />
@@ -422,8 +417,6 @@ export default function QuotesListPage() {
           </div>
         </div>
       )}
-
-      {/* Responsive styles handled in index.css (980px breakpoint) */}
     </AppShell>
   );
 }
