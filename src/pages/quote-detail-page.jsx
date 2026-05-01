@@ -467,12 +467,13 @@ export default function QuoteDetailPage() {
            {mobileTab === 'details' ? (<>
             <div className="qd-hero-top">
               <div style={{flex:1,minWidth:0}}>
-                <h1 className="qd-hero-title" style={{display:'flex',alignItems:'center'}}>{quote.title||'Untitled'}{inlineEditBtn}</h1>
+                <h1 className="qd-hero-title">{quote.title||'Untitled'}</h1>
                 <div className="qd-hero-meta">
                   {quote.quote_number && <span className="qd-hero-qnum">{formatQuoteNumber(quote.quote_number)}</span>}
                   <span>{quote.customer?.name||'No customer'}</span>
                   {quote.trade && <span>· {quote.trade}</span>}
-                  <span>· {currency(quote.total)}</span>
+                  {(quote.total || 0) > 0 && <span>· {currency(quote.total)}</span>}
+                  {!isLocked && <Link className="btn-link qd-edit-link" to={`/app/quotes/${quote.id}/edit`} style={{marginLeft: 4, fontSize: 'var(--text-xs)', fontWeight: 600}}>Edit</Link>}
                 </div>
               </div>
               <div style={{display:'flex',gap:4,flexShrink:0}}>

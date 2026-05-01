@@ -113,14 +113,18 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
   }
 
   const navLinks = [
-    { to: '/app',              label: 'Dashboard', end: true },
-    { to: '/app/quotes',       label: 'Quotes' },
-    { to: '/app/bookings',     label: 'Schedule' },
-    { to: '/app/contacts',     label: 'Customers' },
-    { to: '/app/invoices',     label: 'Invoices' },
-    { to: '/app/analytics',    label: 'Analytics' },
-    { to: '/app/settings',     label: 'Settings' },
+    { to: '/app',              label: 'Dashboard', end: true, icon: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z' },
+    { to: '/app/quotes',       label: 'Quotes', icon: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
+    { to: '/app/bookings',     label: 'Schedule', icon: 'M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2z M16 2v4 M8 2v4 M3 10h18' },
+    { to: '/app/contacts',     label: 'Customers', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8 M23 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75' },
+    { to: '/app/invoices',     label: 'Invoices', icon: 'M12 1v22 M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6' },
+    { to: '/app/analytics',    label: 'Analytics', icon: 'M18 20V10 M12 20V4 M6 20v-6' },
+    { to: '/app/settings',     label: 'Settings', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z' },
   ];
+
+  const NavIcon = ({ d }) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}><path d={d} /></svg>
+  );
 
   return (
     <div className="app-shell">
@@ -157,11 +161,14 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
           <div className="mobile-menu" onClick={e => e.stopPropagation()} role="dialog" aria-label="Navigation menu">
             <div className="mobile-menu-who">
               <Logo size="sm" />
-              {companyName && <div className="mobile-menu-company">{companyName}</div>}
-              {user?.email && <div className="mobile-menu-email">{user.email}</div>}
+              {companyName && <div className="mobile-menu-company" style={{ color: 'var(--text)', fontWeight: 600 }}>{companyName}</div>}
+              {user?.email && <div className="mobile-menu-email" style={{ color: 'var(--text-2)' }}>{user.email}</div>}
             </div>
-            {navLinks.map(({ to, label }) => (
-              <Link key={to} className="mobile-menu-item" to={to} onClick={() => setMobileOpen(false)}>{label}</Link>
+            {navLinks.map(({ to, label, icon }) => (
+              <Link key={to} className="mobile-menu-item" to={to} onClick={() => setMobileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text)' }}>
+                <NavIcon d={icon} />
+                {label}
+              </Link>
             ))}
             <hr className="mobile-menu-divider" />
             <button className="mobile-theme-toggle" type="button" onClick={() => { toggleTheme(); setMobileOpen(false); }}>
@@ -178,8 +185,11 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
             <LogoMark size={28} />
             {companyName && <div className="app-sidebar-company">{companyName}</div>}
           </div>
-          {navLinks.map(({ to, label, end }) => (
-            <NavLink key={to} to={to} end={end} className={({ isActive }) => isActive ? 'active' : ''}>{label}</NavLink>
+          {navLinks.map(({ to, label, end, icon }) => (
+            <NavLink key={to} to={to} end={end} className={({ isActive }) => isActive ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <NavIcon d={icon} />
+              {label}
+            </NavLink>
           ))}
           <div style={{ flex:1 }} />
           {showClassicLink && (

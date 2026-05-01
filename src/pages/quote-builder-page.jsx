@@ -1087,7 +1087,7 @@ export default function QuoteBuilderPage() {
                 value={description}
                 onChange={e => { setDescription(e.target.value); }}
                 onBlur={() => { if (description.trim() && !descCommittedRef.current) { descCommittedRef.current = true; trackQuoteFlowDescriptionCommitted(description.trim().length); } }}
-                placeholder={DESC_PLACEHOLDERS[trade] || DESC_PLACEHOLDERS.Other}
+                placeholder="e.g. Replace hot water tank, install kitchen faucet"
                 rows={4}
                 autoFocus
               />
@@ -1451,9 +1451,9 @@ export default function QuoteBuilderPage() {
                 {itemCount === 0 ? (
                   <button className="btn btn-primary btn-lg qb-disabled-btn" type="button" disabled>Add items to send</button>
                 ) : !draft.customer_id ? (
-                  <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={() => { setDeliveryMethod('copy'); handleSend(); }}>{sending ? 'Sending…' : 'Copy Quote Link'}</button>
+                  <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={handleSend}>{sending ? 'Sending…' : 'Send Quote →'}</button>
                 ) : !selCustomer?.phone ? (
-                  <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={() => { setDeliveryMethod('copy'); handleSend(); }}>{sending ? 'Sending…' : 'Send Quote →'}</button>
+                  <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={handleSend}>{sending ? 'Sending…' : 'Send Quote →'}</button>
                 ) : (
                   <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={handleSend}>{sending ? 'Sending…' : `Text to ${selCustomer?.name?.split(' ')[0] || 'customer'} →`}</button>
                 )}

@@ -4,19 +4,26 @@
 
 ```
 rewrite/
+├── IMPLEMENTATION-GUIDE.md           ← This file
 ├── src/
 │   ├── components/
+│   │   ├── app-shell.jsx             ← Side menu: icons + visible text + name color
 │   │   ├── dashboard/
 │   │   │   └── headline-stat.jsx     ← Suppresses 0% close rate
 │   │   └── compact-line-item.jsx     ← Receipt-style rows (replaces chunky cards)
 │   ├── pages/
 │   │   ├── dashboard-page.jsx        ← Full rewrite
-│   │   └── quotes-list-page.jsx      ← Full rewrite
+│   │   ├── quotes-list-page.jsx      ← Full rewrite
+│   │   ├── quote-builder-page.jsx    ← Targeted fixes (CTA + placeholder)
+│   │   ├── quote-detail-page.jsx     ← Title wrapping + Revise dedup + $0 fix
+│   │   └── bookings-page.jsx         ← Copy (CSS fixes handle the rest)
 │   └── styles/
 │       ├── dashboard-fixes.css       ← Dashboard CSS patches
 │       ├── quotes-list-fixes.css     ← Quote list theme fixes
 │       ├── compact-line-item.css     ← New component styles
-│       └── quote-builder-fixes.css   ← 11 targeted CSS fixes
+│       ├── quote-builder-fixes.css   ← 11 targeted CSS fixes
+│       ├── schedule-fixes.css        ← Calendar empty state + button styling
+│       └── quote-detail-and-menu-fixes.css ← Title, footer clip, menu ghost text
 ```
 
 ---
@@ -61,22 +68,22 @@ rewrite/
 ### Side Menu
 | # | Issue | Fix | File |
 |---|-------|-----|------|
-| 24 | Ghost text looks disabled | Needs color fix in app-shell CSS: use `var(--text)` not `var(--text-3)` | Manual fix |
-| 25 | No icons next to menu items | Add Lucide icons matching bottom nav | Manual fix |
-| 26 | "Henry Gore" in nearly invisible red | Use `var(--text)` for user name, `var(--text-2)` for email | Manual fix |
+| 24 | Ghost text looks disabled | Fixed color to `var(--text)`, added inline style override | `app-shell.jsx` + `quote-detail-and-menu-fixes.css` |
+| 25 | No icons next to menu items | Added SVG path icons matching bottom nav to navLinks array | `app-shell.jsx` |
+| 26 | "Henry Gore" in nearly invisible red | Fixed company name to `var(--text)`, email to `var(--text-2)` | `app-shell.jsx` |
 
 ### Quote Detail (Declined)
 | # | Issue | Fix | File |
 |---|-------|-----|------|
-| 27 | Title wraps 4 lines because "Revise →" is inline | Move Revise button below title, full width | Manual fix |
-| 28 | THREE "Revise" buttons visible | Keep only the footer CTA, remove header + inline card buttons | Manual fix |
-| 29 | "WHAT DO YOU WANT TO DO?" clipped by sticky footer | Add `padding-bottom` equal to sticky footer height | Manual fix |
+| 27 | Title wraps 4 lines because "Revise →" is inline | Removed inline button, title gets full width, Edit link in meta | `quote-detail-page.jsx` + CSS |
+| 28 | THREE "Revise" buttons visible | Removed inline title button, kept phase banner + footer | `quote-detail-page.jsx` |
+| 29 | "WHAT DO YOU WANT TO DO?" clipped by sticky footer | Added `padding-bottom` for sticky footer clearance | `quote-detail-and-menu-fixes.css` |
 
 ### Schedule
 | # | Issue | Fix | File |
 |---|-------|-----|------|
-| 30 | Calendar owns 65% of screen with no bookings | Collapse calendar on mobile when no bookings, show list view | Manual fix |
-| 31 | Dashed "Schedule a job" button looks like wireframe | Use solid button style with `btn btn-secondary` | Manual fix |
+| 30 | Calendar owns 65% of screen with no bookings | Reduced grid row height on mobile, compact day cells | `schedule-fixes.css` |
+| 31 | Dashed "Schedule a job" button looks like wireframe | Replaced with solid brand-colored button | `schedule-fixes.css` |
 
 ---
 
@@ -85,8 +92,11 @@ rewrite/
 ### Step 1: Drop-in replacements (immediate)
 Copy these files directly over their existing counterparts:
 - `src/components/dashboard/headline-stat.jsx`
+- `src/components/app-shell.jsx` — icons + visible menu text
 - `src/pages/dashboard-page.jsx`
 - `src/pages/quotes-list-page.jsx`
+- `src/pages/quote-builder-page.jsx` — CTA + placeholder fixes
+- `src/pages/quote-detail-page.jsx` — title wrapping + $0 + deduped buttons
 
 ### Step 2: Add new files
 - `src/components/compact-line-item.jsx` (new component)
@@ -99,38 +109,11 @@ import './styles/dashboard-fixes.css';
 import './styles/quotes-list-fixes.css';
 import './styles/quote-builder-fixes.css';
 import './styles/compact-line-item.css';
+import './styles/schedule-fixes.css';
+import './styles/quote-detail-and-menu-fixes.css';
 ```
 
-### Step 4: Quote Builder JSX changes (manual)
-These changes are in the existing `quote-builder-page.jsx` and require manual edits:
-
-**4a. Fix the sticky footer CTA** (around line 1540-1560):
-```jsx
-// BEFORE:
-<button className="..." onClick={...}>Copy Quote Link</button>
-
-// AFTER:
-{draft.customer_id ? (
-  <button className="btn btn-primary qb-send-btn" type="button" onClick={handleSend}>
-    Send Quote →
-  </button>
-) : (
-  <button className="btn btn-secondary qb-send-btn" type="button" onClick={...}>
-    Copy Link
-  </button>
-)}
-```
-
-**4b. Fix the describe placeholder** (around line 1080):
-```jsx
-// BEFORE:
-placeholder={DESC_PLACEHOLDERS[trade] || DESC_PLACEHOLDERS['Other']}
-
-// AFTER:
-placeholder="e.g. Replace hot water tank, install new faucet"
-```
-
-**4c. Integrate CompactLineItem** (optional, for full line item redesign):
+### Step 4: CompactLineItem integration (optional, for full line item redesign)
 Replace the `lineItems.map(...)` block (around line 1292) with:
 ```jsx
 import CompactLineItem from '../components/compact-line-item';
@@ -181,12 +164,10 @@ In `app-shell.jsx` or the relevant CSS, fix the menu text color:
 
 ## What's NOT in this package (needs separate work)
 
-1. **Full quote builder decomposition** — splitting the 1,712-line monolith into `QuoteFlow.jsx`, `DescribeStep.jsx`, `ReviewStep.jsx`, `SendSheet.jsx`. The CSS patches fix the visual issues; the architectural cleanup is a separate sprint.
+1. **Full quote builder decomposition** — splitting the 1,712-line monolith into `QuoteFlow.jsx`, `DescribeStep.jsx`, `ReviewStep.jsx`, `SendSheet.jsx`. The CSS patches and targeted JSX fixes address the visual issues; the architectural cleanup is a separate sprint.
 
 2. **CSS consolidation** — the 504K `index.css` needs to be split into page-scoped modules. The patches in this package are additive (loaded after existing styles).
 
-3. **Schedule page redesign** — replacing the month-grid-first view with an agenda/list view on mobile.
+3. **Schedule page agenda view** — adding a list/agenda view option on mobile as an alternative to the month grid. The calendar is improved but not fundamentally restructured.
 
-4. **Quote detail page** — removing duplicate Revise buttons, fixing the title/button collision.
-
-5. **Side menu icon integration** — adding Lucide icons to match bottom nav.
+4. **Quote builder CompactLineItem full integration** — the component is ready but requires replacing the `lineItems.map(...)` block in the quote builder (instructions above). This is optional — the CSS patches already shrink the existing controls.
