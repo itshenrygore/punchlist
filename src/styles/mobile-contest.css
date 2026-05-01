@@ -1,1175 +1,374 @@
-/* ═══════════════════════════════════════════════════════════════════════
-   PUNCHLIST — Mobile Contest Overrides (v2 — Full Rewrite)
-   ─────────────────────────────────────────────────────────────────────
-   Last CSS import in main.jsx. High-specificity + !important overrides.
-   All rules scoped to @media (max-width: 768px) to protect desktop.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   PUNCHLIST — Mobile Contest v5 (ID-based nuclear overrides)
+   ─────────────────────────────────────────────────────────────
+   Strategy: ID selectors (#id) have specificity 1,0,0,0.
+   They ALWAYS beat class selectors. No amount of chained
+   classes or [data-theme] attributes can override them.
+   ═══════════════════════════════════════════════════════════════ */
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §1  STEPPER — Fix "DESCRI..." truncation (Images 8, 11, 13)
-   Strategy: Numbered pill bar, hide labels on <430px, abbreviated on larger
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §1 STEPPER — "DESCRI..." fix via ID ────────────────────── */
 @media (max-width: 768px) {
-  .rq-page .qb-stepper {
+  #qb-stepper-bar {
     display: flex !important;
     gap: 0 !important;
-    padding: 3px !important;
-    background: var(--panel-2, #f5f3ef) !important;
-    border: 1px solid var(--line, #e5e2dc) !important;
+    padding: 4px !important;
+    background: var(--panel-2) !important;
+    border: 1px solid var(--line) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    max-width: 320px !important;
-    margin: 0 auto 6px !important;
+    max-width: 260px !important;
+    margin: 0 auto 8px !important;
+    justify-content: center !important;
   }
-
-  .rq-page .qb-step {
+  #qb-stepper-bar .qb-step {
     flex: 1 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 5px !important;
-    padding: 7px 4px !important;
+    padding: 7px 8px !important;
     border-radius: 9px !important;
     min-width: 0 !important;
-    transition: background 0.2s ease, color 0.15s ease !important;
+    background: transparent !important;
+    opacity: 1 !important;
   }
-
-  .rq-page .qb-step.active {
-    background: var(--brand, #F97316) !important;
+  #qb-stepper-bar .qb-step.active {
+    background: var(--brand) !important;
     color: #fff !important;
     box-shadow: 0 1px 4px rgba(249,115,22,0.3) !important;
   }
-
-  .rq-page .qb-step.done {
-    opacity: 0.7 !important;
-  }
-
-  .rq-page .qb-step-dot {
-    width: 18px !important;
-    height: 18px !important;
-    min-width: 18px !important;
-    font-size: 10px !important;
-    line-height: 18px !important;
-    border-radius: 50% !important;
-    display: grid !important;
-    place-items: center !important;
+  #qb-stepper-bar .qb-step.done { opacity: 0.6 !important; }
+  #qb-stepper-bar .qb-step-dot {
+    width: 22px !important; height: 22px !important; min-width: 22px !important;
+    font-size: 11px !important; line-height: 22px !important;
+    border-radius: 50% !important; display: grid !important; place-items: center !important;
     flex-shrink: 0 !important;
   }
-
-  .rq-page .qb-step.active .qb-step-label {
+  #qb-stepper-bar .qb-step.active .qb-step-dot {
+    background: rgba(255,255,255,0.2) !important;
+    color: #fff !important; border-color: rgba(255,255,255,0.25) !important;
+  }
+  #qb-stepper-bar .qb-step.done .qb-step-dot {
+    background: var(--green) !important; color: #fff !important;
+    border-color: var(--green) !important;
+  }
+  #qb-stepper-bar .qb-step-label {
+    font-size: 11px !important; font-weight: 700 !important;
+    text-transform: uppercase !important; letter-spacing: 0.02em !important;
+    white-space: nowrap !important; overflow: visible !important;
+    max-width: none !important;
+  }
+  #qb-stepper-bar .qb-step.active .qb-step-label {
     color: #fff !important;
-    font-weight: 700 !important;
-  }
-
-  .rq-page .qb-step-label {
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.02em !important;
-    text-transform: uppercase !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 60px !important;
   }
 }
 
-/* Extra-small phones: hide labels entirely */
-@media (max-width: 389px) {
-  .rq-page .qb-step-label {
-    display: none !important;
-  }
-  .rq-page .qb-stepper {
-    max-width: 180px !important;
-  }
-  .rq-page .qb-step {
-    padding: 7px 8px !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §2  CONTEXT BAR — Kill the duplicate breadcrumb (Images 8, 13)
-   The review step shows BOTH a collapsed "Plumber · AB▸" AND a full
-   "Plumber · AB · Relocate kitchen sink…" line. Only keep the compact one.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §2 ADD-TRIGGERS — "Ask Fore..." clip fix via ID ─────────── */
 @media (max-width: 768px) {
-  .rq-page .qb-context-bar {
-    padding: 6px 10px !important;
+  #qb-add-btns {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    grid-template-columns: none !important;
+  }
+  #qb-add-btns .rq-add-trigger {
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+  }
+  #qb-add-btns .rq-add-trigger-primary {
+    grid-column: unset !important;
+  }
+}
+
+/* ── §3 CONTEXT BAR — single line ────────────────────────────── */
+@media (max-width: 768px) {
+  html body .rq-page .qb-context-bar {
+    padding: 5px 10px !important;
     border-radius: 8px !important;
     margin-bottom: 4px !important;
     font-size: 12px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
   }
-
-  .rq-page .qb-context-label {
-    white-space: nowrap !important;
+  html body .rq-page .qb-context-label {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    flex: 1 !important;
-    min-width: 0 !important;
-    font-size: 12px !important;
-    color: var(--text-2, #6b7280) !important;
+    white-space: nowrap !important;
     max-width: 100% !important;
   }
-
-  .rq-page .qb-context-edit {
-    font-size: 12px !important;
-    padding: 4px 10px !important;
-    flex-shrink: 0 !important;
-    min-height: 28px !important;
-  }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §3  HEADER CARD — Tighter title + customer area
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §4 HEADER + CUSTOMER ────────────────────────────────────── */
 @media (max-width: 768px) {
-  .rq-page .rq-header-card {
+  html body .rq-page .rq-header-card {
     padding: 10px 12px !important;
-    border-radius: 14px !important;
-    margin-bottom: 4px !important;
-  }
-
-  .rq-page .rq-job-title-input {
-    font-size: 18px !important;
-    padding: 4px 0 !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.02em !important;
-  }
-
-  .rq-page .rq-customer-section {
-    margin-top: 6px !important;
-  }
-
-  .rq-page .rq-cust-row {
-    padding: 4px 0 !important;
-    gap: 6px !important;
-  }
-
-  .rq-page .rq-cust-avatar {
-    width: 26px !important;
-    height: 26px !important;
-    font-size: 11px !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §4  META COLLAPSE — Tighter scope/terms/notes accordion
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .rq-page .rq-meta-collapse {
-    margin-bottom: 2px !important;
-  }
-
-  .rq-page .rq-meta-collapse > summary,
-  .rq-page .rq-meta-toggle {
-    padding: 10px 12px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    border-radius: 10px !important;
-    min-height: 44px !important;
-  }
-
-  .rq-page .rq-scope-card {
-    padding: 8px 10px !important;
-  }
-
-  .rq-page .qb-settings-grid {
-    gap: 8px !important;
-    padding: 6px 0 !important;
-  }
-
-  .rq-page .qb-scope-mb {
-    margin-bottom: 4px !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §5  LINE ITEMS — Hide drag handles, compact cards, bigger tap targets
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .rq-page .rq-items-section {
-    margin-bottom: 2px !important;
-  }
-
-  .rq-page .rq-items-head {
-    padding: 6px 2px !important;
-    margin-bottom: 2px !important;
-  }
-
-  .rq-page .rq-items-title {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    color: var(--text-2, #6b7280) !important;
-  }
-
-  /* Kill drag handles on mobile */
-  .rq-page .rq-card-drag-handle {
-    display: none !important;
-  }
-
-  .rq-page .rq-card {
-    padding: 10px 10px !important;
     border-radius: 12px !important;
     margin-bottom: 4px !important;
   }
-
-  .rq-page .rq-card-main {
-    gap: 6px !important;
+  html body .rq-page .rq-job-title-input {
+    font-size: 17px !important;
+    padding: 3px 0 !important;
   }
+}
 
-  .rq-page .rq-card-top {
-    gap: 6px !important;
+/* ── §5 SCOPE COLLAPSE ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  html body .rq-page .rq-meta-collapse { margin-bottom: 2px !important; }
+  html body .rq-page .rq-meta-toggle,
+  html body .rq-page .qb-meta-toggle {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    min-height: 40px !important;
   }
+  html body .rq-page .rq-scope-card { padding: 6px 8px !important; }
+}
 
-  .rq-page .rq-card-name {
+/* ── §6 LINE ITEMS ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  html body .rq-page .rq-card-drag-handle { display: none !important; }
+  html body .rq-page .rq-card {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+    margin-bottom: 4px !important;
+  }
+  html body .rq-page .rq-card-main { gap: 4px !important; }
+  html body .rq-page .rq-card-name {
     font-size: 14px !important;
-    font-weight: 600 !important;
     padding: 2px 0 !important;
-    min-height: 28px !important;
   }
-
-  .rq-page .rq-card-line-total {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-
-  .rq-page .rq-card-controls {
-    gap: 4px !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-  }
-
-  .rq-page .rq-qty-btn {
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    font-size: 16px !important;
-  }
-
-  .rq-page .rq-qty-val {
-    min-width: 24px !important;
-    font-size: 14px !important;
-    text-align: center !important;
-  }
-
-  .rq-page .rq-price-wrap {
-    flex: 1 !important;
-    min-width: 60px !important;
-  }
-
-  .rq-page .rq-card-price-input {
-    width: 100% !important;
-    font-size: 16px !important;
-    padding: 6px 6px !important;
-    min-height: 36px !important;
-  }
-
-  .rq-page .rq-card-action-btn {
-    width: 34px !important;
-    height: 34px !important;
+  html body .rq-page .rq-qty-btn {
+    width: 34px !important; height: 34px !important;
     min-width: 34px !important;
-    font-size: 15px !important;
-    border-radius: 8px !important;
   }
-
-  /* "+ note" links — bigger tap area */
-  .rq-page .rq-card [class*="note"] {
-    min-height: 32px !important;
-    padding: 6px 10px !important;
-    font-size: 13px !important;
+  html body .rq-page .rq-card-price-input {
+    font-size: 16px !important;
+    min-height: 34px !important;
+  }
+  html body .rq-page .rq-card-action-btn {
+    width: 32px !important; height: 32px !important; min-width: 32px !important;
+  }
+  html body .rq-page .rq-empty {
+    padding: 16px 12px !important; min-height: auto !important;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §6  SIDEBAR DUMP — THE BIG FIX (Images 14, 15, 19)
-   Hide the entire rq-builder-right on mobile. The totals card, discount
-   card (~400px of whitespace!), financing, close tips, preview button,
-   and tracking teaser all vertically dump. This is the worst problem.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §7 SIDEBAR — HIDE ON MOBILE ────────────────────────────── */
 @media (max-width: 768px) {
-  .rq-page .rq-builder-layout {
+  html body .rq-page .rq-builder-right { display: none !important; }
+  html body .rq-page .rq-builder-left {
+    width: 100% !important; max-width: none !important;
+  }
+}
+
+/* ── §8 STICKY FOOTER — SINGLE ROW ─────────────────────────── */
+@media (max-width: 768px) {
+  #qb-send-btn {
     display: flex !important;
-    flex-direction: column !important;
-    gap: 2px !important;
-  }
-
-  .rq-page .rq-builder-left {
-    width: 100% !important;
-    max-width: none !important;
-    flex: none !important;
-  }
-
-  /* ═══ HIDE THE ENTIRE RIGHT SIDEBAR ═══ */
-  .rq-page .rq-builder-right {
-    display: none !important;
-  }
-
-  /* Suggestions panel — keep visible but compact */
-  .rq-page .pl-sug-panel {
-    border-radius: 12px !important;
-    margin-bottom: 2px !important;
-  }
-
-  .rq-page .pl-sug-head {
-    padding: 8px 10px !important;
-    font-size: 12px !important;
-  }
-
-  .rq-page .pl-sug-item {
-    padding: 8px 10px !important;
+    align-items: center !important;
     gap: 8px !important;
+    width: 100% !important;
   }
-
-  .rq-page .pl-sug-btn {
-    min-height: 36px !important;
-    padding: 6px 12px !important;
-    font-size: 12px !important;
-    border-radius: 8px !important;
-  }
-
-  .rq-page .pl-sug-btn-add {
-    min-width: 52px !important;
-  }
-
-  /* Confidence panel — outside sidebar, visible */
-  .rq-page .rq-conf-inline-ok {
-    padding: 8px 12px !important;
-    border-radius: 10px !important;
-    font-size: 13px !important;
-    margin: 4px 0 !important;
-  }
-
-  .rq-page .rq-confidence {
-    border-radius: 10px !important;
-    margin: 4px 0 !important;
-  }
-
-  .rq-page .rq-conf-top {
-    padding: 10px 12px !important;
-    min-height: 44px !important;
-    font-size: 13px !important;
-    border-radius: 10px !important;
-  }
-
-  .rq-page .rq-conf-badge {
-    font-size: 13px !important;
-    padding: 2px 8px !important;
-    border-radius: 6px !important;
-  }
-
-  .rq-page .rq-conf-checks {
-    padding: 6px 10px 10px !important;
-  }
-
-  .rq-page .rq-conf-check {
-    font-size: 12px !important;
-    padding: 2px 0 !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §7  STICKY FOOTER — Single-row, no duplicate controls (Images 15, 19)
-   Problem: Two-row footer = Save draft + timestamp + Preview on row 1,
-   total + CTA on row 2. That's 120px+ above the 52px nav = 170px chrome.
-   Fix: Hide left section. Single row: $total + primary CTA.
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .rq-page .rq-footer {
+  html body .rq-page .rq-footer {
     position: fixed !important;
     bottom: var(--bottom-chrome-height, 52px) !important;
-    left: 0 !important;
-    right: 0 !important;
+    left: 0 !important; right: 0 !important;
     z-index: 90 !important;
-    background: var(--panel, #fff) !important;
-    border-top: 1px solid var(--line, #e5e2dc) !important;
-    box-shadow: 0 -2px 16px rgba(28,20,12,0.10) !important;
-    padding: 8px 12px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 10px !important;
-    min-height: 52px !important;
-    max-height: 56px !important;
-    flex-wrap: nowrap !important;
-  }
-
-  /* HIDE left section (Save draft, saved timestamp, Preview btn) */
-  .rq-page .rq-footer-left {
-    display: none !important;
-  }
-
-  .rq-page .rq-footer-right {
+    padding: 6px 10px !important;
+    min-height: 48px !important; max-height: 52px !important;
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
-    width: 100% !important;
   }
-
-  .rq-page .rq-footer-total {
-    font-size: 18px !important;
+  html body .rq-page .rq-footer-left { display: none !important; }
+  html body .rq-page .rq-footer-total {
+    font-size: 17px !important;
     font-weight: 800 !important;
-    letter-spacing: -0.02em !important;
     flex-shrink: 0 !important;
-    color: var(--text, #1a1a1a) !important;
   }
-
-  /* Hide monthly financing in footer — too cramped */
-  .rq-page .rq-footer-monthly {
-    display: none !important;
-  }
-
-  .rq-page .rq-footer-right .btn {
+  html body .rq-page .rq-footer-monthly { display: none !important; }
+  html body .rq-page .rq-footer-right .btn {
     flex: 1 !important;
-    min-height: 44px !important;
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    border-radius: 12px !important;
-    padding: 0 16px !important;
+    min-height: 40px !important;
+    font-size: 14px !important;
+    border-radius: 10px !important;
   }
-
-  /* Page content clearance for fixed footer + nav */
-  .rq-page {
-    padding-bottom: calc(60px + var(--bottom-chrome-height, 52px) + 8px) !important;
+  html body .rq-page {
+    padding-bottom: calc(56px + var(--bottom-chrome-height, 52px)) !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §8  QUOTE DETAIL — Fix header crunch, duplicate CTAs (Images 3, 17)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §9 QUOTE DETAIL ────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Stack title + actions vertically */
-  .qd-grid .qd-hero-top {
+  html body .qd-grid .qd-hero-top {
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 10px !important;
-  }
-
-  .qd-grid .qd-hero-title {
-    font-size: 20px !important;
-    line-height: 1.25 !important;
-    flex-wrap: wrap !important;
     gap: 8px !important;
-    display: flex !important;
-    align-items: center !important;
   }
-
-  /* Inline edit/revise button — smaller, secondary */
-  .qd-grid .qd-hero-title .btn-sm {
-    font-size: 12px !important;
-    padding: 4px 10px !important;
-    flex-shrink: 0 !important;
+  html body .qd-grid .qd-hero-title { font-size: 18px !important; }
+  html body .qd-grid .qd-hero-top > div:last-child {
+    width: 100% !important; display: flex !important; gap: 6px !important;
   }
-
-  /* Contact icons — full-width row */
-  .qd-grid .qd-hero-top > div:last-child {
-    gap: 8px !important;
-    width: 100% !important;
-    display: flex !important;
+  html body .qd-grid .qd-hero-top > div:last-child .btn {
+    flex: 1 !important; min-height: 40px !important;
+    justify-content: center !important; border-radius: 8px !important;
   }
-
-  .qd-grid .qd-hero-top > div:last-child .btn {
-    flex: 1 !important;
-    min-height: 44px !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
-    border-radius: 10px !important;
-  }
-
-  /* Phase banners — full width, stacked */
-  .qd-grid .qd-phase-banner {
+  html body .qd-grid .qd-phase-banner {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 10px !important;
-    padding: 12px !important;
-    border-radius: 12px !important;
+    gap: 8px !important; padding: 10px !important;
   }
-
-  .qd-grid .qd-phase-banner .btn {
-    width: 100% !important;
-    min-height: 44px !important;
+  html body .qd-grid .qd-phase-banner .btn {
+    width: 100% !important; min-height: 40px !important;
     justify-content: center !important;
-    text-align: center !important;
-    border-radius: 10px !important;
-    display: flex !important;
-    align-items: center !important;
   }
-
-  .qd-grid .qd-phase-banner > div[style*="display:flex"][style*="gap"] {
-    width: 100% !important;
-    flex-direction: column !important;
-  }
-
-  .qd-grid .qd-phase-banner > div[style*="display:flex"][style*="gap"] .btn {
-    width: 100% !important;
-  }
-
-  /* HIDE the inline draft CTA button — keep only the sticky bar CTA */
-  .qd-grid .qd-draft-inline-cta .btn-primary,
-  .qd-grid .qd-phase-draft .btn-primary {
-    display: none !important;
-  }
-
-  /* Mobile send bar — positioned correctly */
-  .qd-mobile-send-bar {
+  html body .qd-grid .qd-draft-inline-cta .btn-primary { display: none !important; }
+  html body .qd-mobile-send-bar {
     position: fixed !important;
     bottom: var(--bottom-chrome-height, 52px) !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 89 !important;
-    padding: 8px 14px !important;
-    background: var(--panel, #fff) !important;
-    border-top: 1px solid var(--line, #e5e2dc) !important;
-    box-shadow: 0 -2px 12px rgba(28,20,12,0.08) !important;
-    display: flex !important;
-    gap: 8px !important;
-    align-items: center !important;
+    left: 0 !important; right: 0 !important;
+    z-index: 89 !important; padding: 6px 12px !important;
   }
-
-  .qd-mobile-send-bar .btn {
-    min-height: 44px !important;
-    font-size: 15px !important;
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-  }
-
-  /* Bottom clearance */
-  .qd-grid .qd-main {
-    padding-bottom: calc(56px + var(--bottom-chrome-height, 52px) + 12px) !important;
-  }
-
-  /* Contextual actions — stack */
-  .qd-grid .qd-contextual-actions {
-    flex-direction: column !important;
-    gap: 6px !important;
-    align-items: stretch !important;
-  }
-
-  .qd-grid .qd-contextual-actions .btn {
-    width: 100% !important;
-    min-height: 44px !important;
-    justify-content: center !important;
-  }
-
-  /* Lifecycle strip — scroll horizontally */
-  .qd-grid .ql-strip {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-    padding: 4px 0 !important;
-  }
-  .qd-grid .ql-strip::-webkit-scrollbar { display: none !important; }
-
-  .qd-grid .ql-step {
-    flex-shrink: 0 !important;
-    font-size: 10px !important;
-  }
-
-  .qd-grid .ql-dot { width: 8px !important; height: 8px !important; }
-  .qd-grid .ql-connector { width: 14px !important; min-width: 14px !important; }
-
-  /* Customer feedback card */
-  .qd-grid .qd-customer-feedback {
-    padding: 12px !important;
-    border-radius: 12px !important;
+  html body .qd-grid .qd-main {
+    padding-bottom: calc(52px + var(--bottom-chrome-height, 52px)) !important;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §9  CALENDAR — Full-width, bigger cells, tight empty state
-   (Images 6, 12, 20)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §10 CALENDAR ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .plc5 {
-    max-width: none !important;
+  html body .plc5 {
+    max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 8px !important;
+    padding: 0 6px !important;
   }
-
-  .plc5-header { padding: 10px 4px 6px !important; }
-
-  .plc5-month-title {
-    font-size: 22px !important;
-    font-weight: 800 !important;
-  }
-
-  .plc5-nav-btn {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    font-size: 20px !important;
-    border-radius: 12px !important;
-  }
-
-  .plc5-dow { gap: 0 !important; margin-bottom: 2px !important; }
-  .plc5-dow-label { font-size: 12px !important; font-weight: 600 !important; }
-
-  .plc5-grid { gap: 2px !important; }
-
-  .plc5-day {
-    min-height: 44px !important;
-    padding: 4px 2px !important;
-    border-radius: 10px !important;
-  }
-
-  .plc5-day-num { font-size: 15px !important; }
-
-  .plc5-today .plc5-day-num,
-  .plc5-selected:not(.plc5-today) .plc5-day-num,
-  .plc5-selected.plc5-today .plc5-day-num {
-    width: 32px !important;
-    height: 32px !important;
-    line-height: 32px !important;
-    font-size: 15px !important;
-  }
-
-  .plc5-dots { gap: 3px !important; }
-  .plc5-dot { width: 5px !important; height: 5px !important; }
-
-  .plc5-divider { margin: 6px 0 !important; }
-
-  .plc5-events { padding: 0 !important; min-height: auto !important; }
-  .plc5-events-header { padding: 2px 0 6px !important; }
-  .plc5-events-title { font-size: 16px !important; font-weight: 700 !important; }
-
-  /* Empty state — inline, compact */
-  .plc5-empty {
-    padding: 10px 0 !important;
-    text-align: left !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    justify-content: flex-start !important;
-  }
-
-  .plc5-empty-text { font-size: 14px !important; }
-
-  .plc5-empty-add {
-    min-height: 40px !important;
-    padding: 8px 16px !important;
-    font-size: 14px !important;
-    border-radius: 10px !important;
-    white-space: nowrap !important;
-  }
-
-  .plc5-event {
-    min-height: 52px !important;
-    padding: 10px 12px !important;
-    border-radius: 10px !important;
-    margin-bottom: 4px !important;
-  }
-
-  .plc5-today-btn {
-    min-height: 36px !important;
-    padding: 6px 14px !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §10  DASHBOARD — Tighter gaps, compact empty state (Images 4, 5)
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .dv2-page, .dv2-grid, .dashboard-page { gap: 10px !important; }
-
-  .dv2-caught-up,
-  [class*="caught-up"] {
-    padding: 14px !important;
-    min-height: auto !important;
-  }
-
-  .dv2-caught-up-icon {
-    width: 28px !important;
-    height: 28px !important;
-    margin-bottom: 4px !important;
-  }
-
-  .dv2-section { margin-bottom: 0 !important; }
-  .dv2-section-header { padding: 0 0 4px !important; }
-  .dv2-pipeline { padding: 6px 0 !important; }
-
-  .dv2-week-card, .dv2-revenue-card,
-  .dv2-insight, [class*="week-card"] {
-    padding: 12px !important;
-  }
-
-  .dv2-qstart { gap: 6px !important; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §11  COMMAND PALETTE — Hide keyboard shortcuts on mobile (Image 1)
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .pl-cmdk-shortcut { display: none !important; }
-  .pl-cmdk-footer { display: none !important; }
-  .pl-kbd { display: none !important; }
-
-  .pl-cmdk-action,
-  .search-result-item {
-    min-height: 48px !important;
-    padding: 10px 14px !important;
-  }
-
-  .pl-cmdk-label { font-size: 15px !important; }
-
-  .search-modal .search-input,
-  .pl-cmdk-modal input[type="text"] {
-    font-size: 16px !important;
-    min-height: 48px !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §12  MOBILE MENU — Make links visible (Image 2)
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .mobile-menu {
-    padding: 20px 16px !important;
-    gap: 2px !important;
-  }
-
-  .mobile-menu-who {
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    color: var(--text, #1a1a1a) !important;
-    padding-bottom: 12px !important;
-  }
-
-  .mobile-menu-company {
-    font-size: 14px !important;
-    color: var(--text, #1a1a1a) !important;
-  }
-
-  .mobile-menu-email {
-    font-size: 12px !important;
-    color: var(--text-2, #6b7280) !important;
-  }
-
-  /* THE FIX: visible link text */
-  .mobile-menu-item {
-    color: var(--text, #1a1a1a) !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    padding: 12px 12px !important;
-    min-height: 44px !important;
-    display: flex !important;
-    align-items: center !important;
-    border-radius: 10px !important;
-  }
-
-  .mobile-menu-item:hover,
-  .mobile-menu-item:active {
-    background: var(--panel-2, #f5f3ef) !important;
-    color: var(--brand, #F97316) !important;
-  }
-
-  .mobile-menu-item.danger {
-    color: var(--red, #ef4444) !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §13  CATALOG PICKER — Enlarge add/check buttons (Images 10, 16)
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .rq-catalog-item .rq-catalog-add-btn,
-  .rq-catalog-item [class*="add"],
-  .rq-catalog-item [class*="check"],
-  .rq-catalog-check {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-    border-radius: 12px !important;
-    font-size: 18px !important;
-    display: grid !important;
-    place-items: center !important;
-  }
-
-  .rq-catalog-item {
-    min-height: 52px !important;
-    padding: 10px 10px !important;
-    gap: 8px !important;
-  }
-
-  .rq-catalog-item-name { font-size: 14px !important; font-weight: 600 !important; }
-  .rq-catalog-item-desc { font-size: 12px !important; }
-  .rq-catalog-item-price { font-size: 13px !important; white-space: nowrap !important; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14  SEND MODAL — Bottom-sheet style
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .qb-modal-bg {
-    align-items: flex-end !important;
+  html body .sched-main {
     padding: 0 !important;
   }
-
-  .qb-modal.qb-send-modal {
-    width: 100% !important;
-    max-width: none !important;
-    max-height: 92vh !important;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-    margin: 0 !important;
-    animation: mc-slideUp 0.3s cubic-bezier(0.22,1,0.36,1) !important;
+  html body .plc5-nav-btn {
+    width: 40px !important; height: 40px !important; min-width: 40px !important;
   }
-
-  .qb-modal.qb-send-modal::before {
-    content: '' !important;
-    display: block !important;
-    width: 36px !important;
-    height: 4px !important;
-    background: var(--line-2, #d1cdc5) !important;
-    border-radius: 2px !important;
-    margin: 4px auto 10px !important;
+  html body .plc5-day {
+    min-height: 42px !important;
+    padding: 3px 1px !important;
   }
-
-  .rq-send-methods .btn,
-  .rq-send-methods button {
+  html body .plc5-day-num { font-size: 15px !important; }
+  html body .plc5-today .plc5-day-num,
+  html body .plc5-selected .plc5-day-num {
+    width: 30px !important; height: 30px !important; line-height: 30px !important;
+  }
+  html body .plc5-empty {
+    padding: 8px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+  html body .plc5-event {
     min-height: 48px !important;
-    font-size: 14px !important;
-    border-radius: 12px !important;
-  }
-
-  .qb-send-modal .btn-primary.btn-lg {
-    min-height: 50px !important;
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    border-radius: 14px !important;
-    width: 100% !important;
-  }
-}
-
-@keyframes mc-slideUp {
-  from { transform: translateY(100%); opacity: 0.8; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14b  ADD-ITEM TRIGGERS — Fix clipping (Image 7)
-   "Ask Foreman" text overflows in the 2-col grid on narrow screens
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .rq-page .rq-add-triggers {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 6px !important;
-  }
-
-  .rq-page .rq-add-trigger {
-    min-height: 44px !important;
-    padding: 10px 8px !important;
-    font-size: 13px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  .rq-page .rq-add-trigger-primary {
-    grid-column: 1 / -1 !important;
-    min-height: 44px !important;
-  }
-
-  /* On very narrow screens, stack to single column */
-  @media (max-width: 374px) {
-    .rq-page .rq-add-triggers {
-      grid-template-columns: 1fr !important;
-    }
-  }
-
-  /* Scope hints ("Commonly added for Plumber") — compact */
-  .rq-page .rq-hints {
-    margin: 2px 0 !important;
-    border-radius: 10px !important;
-  }
-
-  .rq-page .rq-hints > summary,
-  .rq-page .qb-hints-toggle {
     padding: 8px 10px !important;
-    min-height: 40px !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-  }
-
-  .rq-page .rq-hints-chips {
-    padding: 4px 8px 8px !important;
-    gap: 6px !important;
-  }
-
-  .rq-page .rq-hint-chip {
-    min-height: 36px !important;
-    padding: 6px 12px !important;
-    font-size: 12px !important;
     border-radius: 8px !important;
   }
-
-  /* Catalog overlay — ensure full coverage */
-  .rq-page .rq-catalog-overlay {
-    z-index: 100 !important;
-  }
-
-  .rq-page .rq-catalog-panel {
-    border-radius: 18px 18px 0 0 !important;
-    max-height: 85vh !important;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  .rq-page .rq-catalog-input {
-    font-size: 16px !important;
-    min-height: 48px !important;
-    padding: 12px 14px !important;
-  }
-
-  .rq-page .rq-catalog-close {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    border-radius: 12px !important;
-  }
-
-  .rq-page .rq-catalog-item {
-    min-height: 52px !important;
-    padding: 10px 10px !important;
-  }
-
-  .rq-page .rq-catalog-add {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    border-radius: 12px !important;
-    font-size: 18px !important;
-    display: grid !important;
-    place-items: center !important;
-  }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14c  BUILDING STATE — Loading animation (tighten)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §11 DASHBOARD ──────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .rq-page .pl-building-stable {
-    padding: 20px 14px !important;
-    border-radius: 14px !important;
-  }
+  html body .dv2-page, html body .dv2-grid { gap: 8px !important; }
+  html body .dv2-caught-up { padding: 12px !important; min-height: auto !important; }
+  html body .dv2-section { margin-bottom: 0 !important; }
+}
 
-  .rq-page .qb-loading-wrap {
-    gap: 10px !important;
-    padding: 10px 0 !important;
-  }
+/* ── §12 COMMAND PALETTE ────────────────────────────────────── */
+@media (max-width: 768px) {
+  html body .pl-cmdk-shortcut { display: none !important; }
+  html body .pl-kbd { display: none !important; }
+  html body .pl-cmdk-footer { display: none !important; }
+  html body .search-esc { display: none !important; }
+  html body .search-result-item,
+  html body .pl-cmdk-action { min-height: 44px !important; }
+  html body .search-input { font-size: 16px !important; min-height: 44px !important; }
+}
 
-  .rq-page .qb-loading-msg {
+/* ── §13 MOBILE MENU ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  html body .mobile-menu-item {
+    color: var(--text) !important;
     font-size: 14px !important;
-  }
-
-  .rq-page .qb-loading-sub {
-    font-size: 12px !important;
-  }
-
-  .rq-page .qb-skel-wrap {
-    gap: 6px !important;
-  }
-
-  .rq-page .qb-back-btn {
+    font-weight: 600 !important;
     min-height: 40px !important;
-    font-size: 14px !important;
+    display: flex !important;
+    align-items: center !important;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14d  SENT STATE — Celebration screen
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §14 FOREMAN ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .rq-page .qb-sent-card {
-    padding: 24px 16px !important;
-    border-radius: 16px !important;
-    text-align: center !important;
+  html body .fm-panel {
+    max-width: 100% !important; width: 100% !important;
+    height: min(500px, calc(100dvh - 90px)) !important;
+    max-height: min(500px, calc(100dvh - 90px)) !important;
+    border-radius: 18px 18px 0 0 !important;
   }
+  html body .fm-welcome {
+    justify-content: flex-start !important;
+    padding-top: 32px !important;
+    gap: 10px !important;
+  }
+  html body .fm-starter {
+    min-height: 40px !important; font-size: 13px !important;
+    text-align: left !important;
+  }
+  html body .fm-input { font-size: 16px !important; }
+}
 
-  .rq-page .qb-sent-card .btn {
-    min-height: 48px !important;
-    font-size: 15px !important;
-    width: 100% !important;
-    border-radius: 12px !important;
+/* ── §15 SEND MODAL ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  html body .qb-modal-bg { align-items: flex-end !important; padding: 0 !important; }
+  html body .qb-modal.qb-send-modal {
+    width: 100% !important; max-width: none !important;
+    max-height: 90vh !important;
+    border-radius: 18px 18px 0 0 !important;
+    margin: 0 !important;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14e  QUOTE LIST PAGE — Tighter cards
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §16 COACHMARKS ────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .ql-card, .quote-card {
-    padding: 10px 12px !important;
-    border-radius: 12px !important;
-  }
-
-  .ql-card-title { font-size: 14px !important; font-weight: 600 !important; }
-  .ql-card-meta { font-size: 12px !important; }
-  .ql-card-amount { font-size: 14px !important; font-weight: 700 !important; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14f  INVOICE PAGES — Consistent with quote detail
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .invoice-detail .btn { min-height: 44px !important; }
-  .invoice-detail .invoice-total { font-size: 20px !important; font-weight: 800 !important; }
-
-  .invoices-list .inv-card { padding: 10px 12px !important; border-radius: 12px !important; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14g  BOOKING DRAWER — Better mobile bottom-sheet
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .booking-drawer-panel {
-    border-radius: 20px 20px 0 0 !important;
-    max-height: 92vh !important;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  .booking-drawer-panel::before {
-    content: '' !important;
-    display: block !important;
-    width: 36px !important;
-    height: 4px !important;
-    background: var(--line-2, #d1cdc5) !important;
-    border-radius: 2px !important;
-    margin: 6px auto 8px !important;
-  }
-
-  .booking-drawer-panel .btn {
-    min-height: 44px !important;
-    border-radius: 12px !important;
-  }
-
-  .booking-drawer-panel input,
-  .booking-drawer-panel select,
-  .booking-drawer-panel textarea {
-    font-size: 16px !important;
-    min-height: 44px !important;
+  html body .qb-coachmark, html body [class*="coachmark"] {
+    max-width: calc(100vw - 20px) !important;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §14h  TOAST NOTIFICATIONS — Above fixed chrome
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §17 SCOPE HINTS ───────────────────────────────────────── */
 @media (max-width: 768px) {
-  .pl-toast-container,
-  .toast-container,
-  [class*="toast-container"] {
-    bottom: calc(var(--bottom-chrome-height, 52px) + 60px) !important;
+  html body .rq-page .rq-hints { margin: 2px 0 !important; }
+  html body .rq-page .rq-hint-chip {
+    min-height: 32px !important;
+    font-size: 11px !important;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §15  GLOBAL MOBILE POLISH
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── §18 CATALOG ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* All buttons — minimum 40px touch area */
-  .btn { min-height: 40px !important; }
-  .btn-lg { min-height: 48px !important; font-size: 15px !important; }
-  .btn-sm { min-height: 36px !important; font-size: 13px !important; }
+  html body .rq-catalog-add {
+    width: 40px !important; height: 40px !important; min-width: 40px !important;
+  }
+  html body .rq-catalog-input { font-size: 16px !important; }
+}
 
-  /* Consistent card radius */
-  .pl-card { border-radius: 14px !important; }
-
-  /* iOS zoom prevention — covered by mobile-redesign but reinforce */
-  input, textarea, select {
+/* ── §19 GLOBAL ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  html body input, html body textarea, html body select {
     font-size: max(16px, inherit) !important;
   }
-
-  /* Tighter page padding */
-  .rq-page {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    gap: 4px !important;
-  }
-
-  /* Bottom nav height enforcement */
-  .mobile-bottom-nav {
+  html body .mobile-bottom-nav {
     height: calc(52px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §16  COACHMARKS — Don't clip off-screen (Image 9)
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .qb-coachmark, [class*="coachmark"] {
-    max-width: calc(100vw - 24px) !important;
-    border-radius: 14px !important;
-    font-size: 13px !important;
-    box-shadow: var(--elev-3, 0 4px 8px rgba(0,0,0,.06), 0 10px 24px rgba(0,0,0,.09)) !important;
-  }
-
-  .qb-coachmark .btn { min-height: 40px !important; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §17  EMPTY-STATE LINE ITEMS (Image 18) — Compact
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .rq-page .rq-items-empty,
-  .rq-page .rq-empty-state {
-    padding: 20px 14px !important;
-    min-height: auto !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §18  TABLET REFINEMENTS (769px–1024px)
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .plc5 { max-width: none !important; }
-  .plc5-day { min-height: 48px !important; }
-  .rq-page .rq-builder-right { min-width: 260px !important; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════════
-   §19  ACCESSIBILITY
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
-  @keyframes mc-slideUp { from { transform: none; } to { transform: none; } }
-  .qb-modal.qb-send-modal { animation: none !important; }
-}
-
-@media (max-width: 768px) {
-  :focus-visible {
-    outline: 3px solid var(--brand, #F97316) !important;
-    outline-offset: 2px !important;
   }
 }
