@@ -1,7 +1,7 @@
 // Punchlist Service Worker — PWA shell cache + push notifications
 // NOTE: Bump CACHE_NAME on every deploy so clients purge stale assets
 // (especially after fixing bad font URLs or hashed bundle filenames).
-const CACHE_NAME = 'punchlist-v97';
+const CACHE_NAME = 'punchlist-v98';
 const SHELL_ASSETS = [
   '/',
   '/app',
