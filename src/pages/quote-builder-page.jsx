@@ -28,6 +28,7 @@ import { ChevronRight, X, Mic, Camera } from 'lucide-react';
 import { estimateMonthly, showFinancing } from '../lib/financing';
 import { identify, trackFirstDescribe, trackFirstBuild, trackFirstSend, trackQuoteSent, trackPushEnabled, getVariant, trackQuoteFlowStarted, setQuoteFlowQuoteId, trackQuoteFlowCustomerSelected, trackQuoteFlowDescriptionCommitted, trackQuoteFlowScopeReady, trackQuoteFlowSent, trackQuoteFlowAbandoned, endQuoteFlowSession, hasActiveFlowSession, restoreFlowSession } from '../lib/analytics';
 import { Card, Section, Stat, SmsComposerField } from '../components/ui';
+import MobileQuoteReview from '../components/mobile-quote-review';
 import { DUR, isReducedMotion } from '../lib/motion';
 import { listTemplates, renderTemplate, getSystemDefaults } from '../lib/api/templates';
 
@@ -138,6 +139,7 @@ export default function QuoteBuilderPage() {
   // Slice 10: check SR availability once — hide mic button instead of showing error
   const SR_AVAILABLE = typeof window !== 'undefined' &&
     !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   // ── Zone 2: AI Scope ──
   const [suggestions, setSuggestions] = useState([]);
@@ -1043,7 +1045,7 @@ export default function QuoteBuilderPage() {
 
         {/* ════════ PROGRESS STEPPER ════════ */}
         {phase !== 'sent' && (
-          <div id="qb-stepper-bar" className="qb-stepper">
+          <div className="qb-stepper">
             {[
               { key: 'describe', label: 'Job' },
               { key: 'building', label: 'Build' },
@@ -1186,7 +1188,29 @@ export default function QuoteBuilderPage() {
         })()}
 
         {/* ════════ ZONE 2+3: REVIEW (scope + details + send) ════════ */}
-        {phase === 'review' && (
+        {phase === 'review' && isMobile && (
+          <MobileQuoteReview ctx={{
+            lineItems, draft, title, trade, province, country,
+            selCustomer, grandTotal, totals, itemCount, confidence,
+            addMode, catalogQuery, catalogResults, editingItemId,
+            priceRanges, sending, saving, isLocked, error,
+            customerSearch, allCustomers, customersLoading,
+            showNewCust, newCust, scopeError, quoteId, description,
+            setLineItems, ud, setPhase, setAddMode, setCatalogQuery,
+            addCatalogItem, markDirty, genLineItemId, updateItem,
+            adjustQty, removeItem, setEditingItemId, handleSend,
+            save, setCustomerSearch, setShowNewCust, setNewCust,
+            handleQuickCreateCustomer, searchCustomers,
+            trackQuoteFlowCustomerSelected, setLocalCustomers,
+            invalidateCustomers, setScopeError, setError,
+            setTitle, setDeliveryMethod: setDeliveryMethod,
+            showSend, setShowSend, handleConfirmSend,
+            smsBody, setSmsBody, deliveryMethod,
+            SmsComposerField,
+            toast, currency,
+          }} />
+        )}
+        {phase === 'review' && !isMobile && (
           <div style={isLocked ? { pointerEvents: 'none', opacity: 0.65 } : undefined}>
             {/* Collapsed Zone 1 summary */}
             <div className="qb-context-bar">
@@ -1295,7 +1319,7 @@ export default function QuoteBuilderPage() {
 
                 {/* Add Item Bar */}
                 <div className="rq-add-bar">
-                  {!addMode && (<div id="qb-add-btns" className="rq-add-triggers"><button type="button" className="rq-add-trigger rq-add-trigger-primary" onClick={() => setAddMode('catalog')}>Search catalog</button><button type="button" className="rq-add-trigger" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); }}>+ Custom item</button><button type="button" className="rq-add-trigger rq-add-trigger-foreman" onClick={() => { if (window.__punchlistOpenForeman) { const jobDesc = description || title || ''; const itemsSummary = lineItems.filter(i => i.name?.trim()).map(i => `${i.name} (${i.quantity}× $${i.unit_price})`).join(', '); const ctx = { starters: [ `What else should I include for this ${trade.toLowerCase()} job?`, jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote', `What do ${trade.toLowerCase()}s commonly forget to quote?`, ], quoteContext: { description: jobDesc, trade, title: title || '', items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })), total: grandTotal, province, country } }; window.__punchlistOpenForeman(ctx); } }}><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="qb-icon-inline"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ask Foreman</button>{quoteId && scopeError && <button type="button" className="rq-add-trigger" onClick={() => setPhase('describe')}>✦ Retry AI scope</button>}</div>)}
+                  {!addMode && (<div className="rq-add-triggers"><button type="button" className="rq-add-trigger rq-add-trigger-primary" onClick={() => setAddMode('catalog')}>Search catalog</button><button type="button" className="rq-add-trigger" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); }}>+ Custom item</button><button type="button" className="rq-add-trigger rq-add-trigger-foreman" onClick={() => { if (window.__punchlistOpenForeman) { const jobDesc = description || title || ''; const itemsSummary = lineItems.filter(i => i.name?.trim()).map(i => `${i.name} (${i.quantity}× $${i.unit_price})`).join(', '); const ctx = { starters: [ `What else should I include for this ${trade.toLowerCase()} job?`, jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote', `What do ${trade.toLowerCase()}s commonly forget to quote?`, ], quoteContext: { description: jobDesc, trade, title: title || '', items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })), total: grandTotal, province, country } }; window.__punchlistOpenForeman(ctx); } }}><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="qb-icon-inline"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ask Foreman</button>{quoteId && scopeError && <button type="button" className="rq-add-trigger" onClick={() => setPhase('describe')}>✦ Retry AI scope</button>}</div>)}
                   {addMode === 'catalog' && (<div className="rq-catalog-overlay"><div className="rq-catalog-panel"><div className="rq-catalog-top"><input className="rq-catalog-input" value={catalogQuery} onChange={e => setCatalogQuery(e.target.value)} placeholder="Search items…" autoFocus autoComplete="off" /><button type="button" className="rq-catalog-close" onClick={() => { setAddMode(null); setCatalogQuery(''); }} aria-label="Close catalog"><X size={14} strokeWidth={2} /></button></div>{catalogResults.length > 0 && (<div className="rq-catalog-results">{catalogResults.map((item, i) => { const added = lineItems.some(li => li.name.toLowerCase() === item.name.toLowerCase()); return (<div key={`${item.name}-${i}`} className={`rq-catalog-item ${added ? 'added' : ''} ${item.isContextRelevant ? 'rq-catalog-relevant' : ''}`} onClick={() => !added && addCatalogItem(item)}><div className="rq-catalog-info"><span className="rq-catalog-name">{item.name}</span>{item.isContextRelevant && <span className="rq-catalog-match-tag">matches this job</span>}{item.desc && <span className="rq-catalog-desc">{item.desc}</span>}</div><div className="rq-catalog-right"><span className="rq-catalog-price">{currency(item.lo)}–{currency(item.hi)}</span><span className="rq-catalog-add">{added ? '✓' : '+'}</span></div></div>); })}</div>)}{catalogQuery.length >= 2 && catalogResults.length === 0 && <div className="rq-catalog-empty">No matches — try different keywords</div>}{!catalogQuery && <div className="rq-catalog-empty qb-catalog-hint">Type to search {trade.toLowerCase()} items</div>}</div></div>)}
                 </div>
 
