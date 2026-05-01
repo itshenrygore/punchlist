@@ -8,9 +8,15 @@ rewrite/
 ├── src/
 │   ├── components/
 │   │   ├── app-shell.jsx             ← Side menu: icons + visible text + name color
+│   │   ├── compact-line-item.jsx     ← Receipt-style rows (replaces chunky cards)
 │   │   ├── dashboard/
 │   │   │   └── headline-stat.jsx     ← Suppresses 0% close rate
-│   │   └── compact-line-item.jsx     ← Receipt-style rows (replaces chunky cards)
+│   │   └── quote-builder/            ← NEW: decomposed from 1,712-line monolith
+│   │       ├── index.js              ← Barrel export
+│   │       ├── describe-step.jsx     ← "What's the job?" input (185 lines)
+│   │       ├── customer-picker.jsx   ← Search/select/create customer (175 lines)
+│   │       ├── review-step.jsx       ← Items + scope + sticky footer (240 lines)
+│   │       └── send-sheet.jsx        ← Bottom sheet: SMS + confirm (155 lines)
 │   ├── pages/
 │   │   ├── dashboard-page.jsx        ← Full rewrite
 │   │   ├── quotes-list-page.jsx      ← Full rewrite
@@ -20,8 +26,10 @@ rewrite/
 │   └── styles/
 │       ├── dashboard-fixes.css       ← Dashboard CSS patches
 │       ├── quotes-list-fixes.css     ← Quote list theme fixes
-│       ├── compact-line-item.css     ← New component styles
-│       ├── quote-builder-fixes.css   ← 11 targeted CSS fixes
+│       ├── compact-line-item.css     ← Receipt-style item rows
+│       ├── quote-builder-fixes.css   ← 11 targeted CSS fixes for existing builder
+│       ├── quote-builder-components.css ← NEW: CustomerPicker + SendSheet styles
+│       ├── review-step.css           ← NEW: ReviewStep layout + sticky footer
 │       ├── schedule-fixes.css        ← Calendar empty state + button styling
 │       └── quote-detail-and-menu-fixes.css ← Title, footer clip, menu ghost text
 ```
@@ -164,10 +172,125 @@ In `app-shell.jsx` or the relevant CSS, fix the menu text color:
 
 ## What's NOT in this package (needs separate work)
 
-1. **Full quote builder decomposition** — splitting the 1,712-line monolith into `QuoteFlow.jsx`, `DescribeStep.jsx`, `ReviewStep.jsx`, `SendSheet.jsx`. The CSS patches and targeted JSX fixes address the visual issues; the architectural cleanup is a separate sprint.
+1. **CSS consolidation** — the 504K `index.css` needs to be split into page-scoped modules. The patches in this package are additive (loaded after existing styles).
 
-2. **CSS consolidation** — the 504K `index.css` needs to be split into page-scoped modules. The patches in this package are additive (loaded after existing styles).
+2. **Schedule page agenda view** — adding a list/agenda view option on mobile as an alternative to the month grid. The calendar is improved but not fundamentally restructured.
 
-3. **Schedule page agenda view** — adding a list/agenda view option on mobile as an alternative to the month grid. The calendar is improved but not fundamentally restructured.
+---
 
-4. **Quote builder CompactLineItem full integration** — the component is ready but requires replacing the `lineItems.map(...)` block in the quote builder (instructions above). This is optional — the CSS patches already shrink the existing controls.
+## Quote Builder Decomposition (NEW)
+
+The 1,712-line `quote-builder-page.jsx` monolith has been broken into focused components. These are in `src/components/quote-builder/`:
+
+```
+quote-builder/
+├── index.js             ← Barrel export
+├── describe-step.jsx    ← "What's the job?" textarea + voice + photo (185 lines)
+├── customer-picker.jsx  ← Search/select/create customer (175 lines)
+├── review-step.jsx      ← Customer + items + scope + footer (240 lines)
+└── send-sheet.jsx       ← Delivery method + SMS composer + confirm (155 lines)
+```
+
+Plus supporting CSS:
+```
+styles/
+├── compact-line-item.css         ← Receipt-style item rows
+├── quote-builder-components.css  ← CustomerPicker + SendSheet styles
+└── review-step.css               ← ReviewStep layout + sticky footer
+```
+
+### Architecture
+
+The existing `quote-builder-page.jsx` remains the **orchestrator** — it owns all the state, data fetching, save logic, and phase transitions. The extracted components are **presentational** — they receive props and emit events.
+
+To integrate, import the new components in the existing orchestrator:
+
+```jsx
+import { DescribeStep, ReviewStep, SendSheet } from '../components/quote-builder';
+
+// In the render, replace the describe phase JSX:
+{phase === 'describe' && (
+  <DescribeStep
+    description={description}
+    onDescriptionChange={setDescription}
+    title={title}
+    trade={trade}
+    onTradeChange={setTrade}
+    province={province}
+    onProvinceChange={setProvince}
+    country={country}
+    photo={photo}
+    onPhotoChange={setPhoto}
+    photoSaved={photoSaved}
+    error={error}
+    onBuildScope={handleBuildScope}
+    onManualAdd={() => setPhase('review')}
+    isFirstTime={isFirstTime}
+  />
+)}
+
+// Replace the review phase JSX:
+{phase === 'review' && (
+  <ReviewStep
+    draft={draft}
+    onDraftChange={ud}
+    lineItems={lineItems}
+    onLineItemsChange={setLineItems}
+    customers={allCustomers}
+    customersLoading={customersLoading}
+    onCustomerSelect={handleCustomerSelect}
+    onCustomerCreate={handleCustomerCreate}
+    selectedCustomer={selCustomer}
+    scopeMeta={scopeMeta}
+    country={country}
+    grandTotal={grandTotal}
+    onSend={handleSend}
+    onSave={() => save()}
+    saving={saving}
+    saveState={saveState}
+    lastSavedAt={lastSavedAt}
+    isLocked={isLocked}
+    sending={sending}
+    error={error}
+    onAddCatalogItem={() => setAddMode('catalog')}
+    onAddCustomItem={() => {
+      setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '' }]);
+      markDirty();
+    }}
+  />
+)}
+
+// Replace the send modal:
+<SendSheet
+  open={showSend}
+  onClose={() => setShowSend(false)}
+  onConfirmSend={handleConfirmSend}
+  customer={selCustomer}
+  lineItems={lineItems}
+  grandTotal={grandTotal}
+  country={country}
+  smsBody={smsBody}
+  onSmsBodyChange={setSmsBody}
+  sending={sending}
+  saving={saving}
+/>
+```
+
+### What this achieves
+
+| Before | After |
+|--------|-------|
+| 1,712 lines, 1 file | ~750 lines orchestrator + 4 focused components |
+| 200+ state variables in one render | State in orchestrator, components are pure |
+| Describe phase is 100 lines of inline JSX | `DescribeStep` is a standalone 185-line file |
+| Review zone is 400+ lines of inline JSX | `ReviewStep` + `CompactLineItem` + `CustomerPicker` |
+| Send modal is 200 lines of inline JSX | `SendSheet` is 155 lines, slides up from bottom |
+| Every keystroke re-renders 1,712 lines | Components memo-isolate, only re-render what changed |
+
+### New CSS to import
+
+```js
+import './styles/quote-builder-components.css';
+import './styles/review-step.css';
+```
+
