@@ -1,0 +1,961 @@
+/* ═══════════════════════════════════════════════════════════════
+   QUOTE EDITOR — Self-contained styles.
+   
+   Mobile-first. Baseline: 375px (iPhone X).
+   No !important. No dependency on external rq-* classes.
+   Uses Punchlist design tokens from tokens.css.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Root container ── */
+.qe-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+}
+
+/* ═══════════════════════════════════════════════
+   ITEMS SECTION
+   ═══════════════════════════════════════════════ */
+
+.qe-items-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.qe-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-1, 4px) var(--space-2, 8px);
+}
+
+.qe-items-count {
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  color: var(--muted, #6b6459);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.qe-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+
+/* ═══════════════════════════════════════════════
+   LINE ITEM CARD
+   ═══════════════════════════════════════════════ */
+
+.qe-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-card, 16px);
+  background: var(--card, #fff);
+  box-shadow: var(--elev-1, 0 1px 2px rgba(28,20,12,0.04), 0 1px 3px rgba(28,20,12,0.06));
+  /* Prevent any horizontal overflow */
+  contain: inline-size;
+}
+
+.qe-item--editing {
+  box-shadow: var(--elev-2, 0 2px 4px rgba(28,20,12,0.05), 0 4px 10px rgba(28,20,12,0.07));
+  border: 1px solid var(--brand, #c45a2d);
+}
+
+/* ── Swipe-revealed action buttons ── */
+.qe-item-actions-revealed {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  display: flex;
+  z-index: 0;
+}
+
+.qe-action-dup,
+.qe-action-del {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+}
+
+.qe-action-dup {
+  background: var(--muted, #6b6459);
+}
+
+.qe-action-del {
+  background: var(--red, #dc2626);
+}
+
+/* ── Main content (slides on swipe) ── */
+.qe-item-content {
+  position: relative;
+  z-index: 1;
+  background: var(--card, #fff);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  transform: translateX(0);
+  will-change: transform;
+  border-radius: var(--r-card, 16px);
+}
+
+/* ── Row 1: Item name ── */
+.qe-item-name {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--text-base, 14px);
+  font-weight: 600;
+  color: var(--fg, #1c140c);
+  padding: 0;
+  margin: 0 0 var(--space-2, 8px);
+  outline: none;
+  line-height: var(--lh-snug, 1.25);
+  /* Prevent zoom on iOS */
+  font-size: max(16px, var(--text-base, 14px));
+}
+
+.qe-item-name::placeholder {
+  color: var(--subtle, #a39888);
+  font-weight: 400;
+}
+
+/* ── Row 2: Qty × Price = Total ── */
+.qe-item-row2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  /* This is the critical row — must never overflow 375px */
+  min-width: 0;
+}
+
+/* Quantity stepper */
+.qe-qty {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--bg, #faf8f5);
+  border-radius: var(--r-btn, 12px);
+  border: 1px solid var(--line, #e8e2d9);
+  flex-shrink: 0;
+  height: 36px;
+}
+
+.qe-qty-btn {
+  width: 32px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg, #1c140c);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--dur-fast, 140ms) ease;
+}
+
+.qe-qty-btn:active {
+  background: var(--line, #e8e2d9);
+}
+
+.qe-qty-val {
+  min-width: 24px;
+  text-align: center;
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg, #1c140c);
+  user-select: none;
+}
+
+/* Multiply sign */
+.qe-times {
+  font-size: var(--text-xs, 12px);
+  color: var(--subtle, #a39888);
+  flex-shrink: 0;
+}
+
+/* Price input */
+.qe-price {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg, #faf8f5);
+  border-radius: var(--r-input, 10px);
+  border: 1px solid var(--line, #e8e2d9);
+  padding: 0 var(--space-2, 8px);
+  height: 36px;
+  /* Allow this to shrink if needed */
+  min-width: 0;
+  flex: 1;
+  max-width: 120px;
+}
+
+.qe-price-dollar {
+  font-size: var(--text-sm, 13px);
+  color: var(--muted, #6b6459);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.qe-price-input {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: max(16px, var(--text-base, 14px));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg, #1c140c);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  outline: none;
+  /* Remove number input spinners */
+  -moz-appearance: textfield;
+}
+
+.qe-price-input::-webkit-inner-spin-button,
+.qe-price-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Line total */
+.qe-line-total {
+  font-size: var(--text-sm, 13px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg, #1c140c);
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ── Price hint ── */
+.qe-price-hint {
+  font-size: var(--text-xs, 12px);
+  color: var(--muted, #6b6459);
+  margin-top: var(--space-1, 4px);
+  padding-left: 2px;
+}
+
+.qe-price-low {
+  color: var(--orange, #ea580c);
+}
+
+.qe-price-high {
+  color: var(--red, #dc2626);
+}
+
+/* ── Row 3: Note ── */
+.qe-item-note {
+  display: block;
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--line, #e8e2d9);
+  background: none;
+  font-family: inherit;
+  font-size: max(16px, var(--text-xs, 12px));
+  color: var(--muted, #6b6459);
+  padding: var(--space-2, 8px) 0 0;
+  margin-top: var(--space-2, 8px);
+  outline: none;
+}
+
+.qe-item-note::placeholder {
+  color: var(--subtle, #a39888);
+}
+
+.qe-note-toggle {
+  display: inline-block;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--text-2xs, 11px);
+  color: var(--subtle, #a39888);
+  cursor: pointer;
+  padding: var(--space-1, 4px) 0 0;
+  margin-top: var(--space-1, 4px);
+  transition: color var(--dur-fast, 140ms) ease;
+}
+
+.qe-note-toggle:hover,
+.qe-note-toggle:focus-visible {
+  color: var(--brand, #c45a2d);
+}
+
+
+/* ═══════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════ */
+
+.qe-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8, 32px) var(--space-4, 16px);
+  background: var(--card, #fff);
+  border-radius: var(--r-card, 16px);
+  box-shadow: var(--elev-1);
+}
+
+.qe-empty--error {
+  border-left: 3px solid var(--red, #dc2626);
+  background: rgba(220, 38, 38, 0.04);
+}
+
+.qe-empty-icon {
+  color: var(--subtle, #a39888);
+  margin-bottom: var(--space-3, 12px);
+  opacity: 0.6;
+}
+
+.qe-empty-title {
+  font-size: var(--text-md, 15px);
+  font-weight: 700;
+  color: var(--fg, #1c140c);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.qe-empty--error .qe-empty-title {
+  color: var(--red, #dc2626);
+}
+
+.qe-empty-desc {
+  font-size: var(--text-sm, 13px);
+  color: var(--muted, #6b6459);
+  line-height: var(--lh-normal, 1.5);
+  max-width: 260px;
+}
+
+.qe-empty-actions {
+  display: flex;
+  gap: var(--space-2, 8px);
+  margin-top: var(--space-4, 16px);
+}
+
+
+/* ═══════════════════════════════════════════════
+   ADD ITEM BAR
+   ═══════════════════════════════════════════════ */
+
+.qe-add-bar {
+  display: flex;
+  gap: var(--space-2, 8px);
+  padding: var(--space-1, 4px) 0;
+  /* Allow wrapping on very small screens */
+  flex-wrap: wrap;
+}
+
+.qe-add-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border: 1.5px dashed var(--line, #e8e2d9);
+  border-radius: var(--r-btn, 12px);
+  background: var(--card, #fff);
+  font-family: inherit;
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  color: var(--muted, #6b6459);
+  cursor: pointer;
+  transition: border-color var(--dur-fast, 140ms) ease, color var(--dur-fast, 140ms) ease, background-color var(--dur-fast, 140ms) ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  /* Ensure buttons flex-shrink on small screens */
+  min-width: 0;
+}
+
+.qe-add-btn:active {
+  background: var(--bg, #faf8f5);
+}
+
+.qe-add-btn--primary {
+  border-color: var(--brand, #c45a2d);
+  color: var(--brand, #c45a2d);
+  background: rgba(196, 90, 45, 0.05);
+}
+
+.qe-add-btn--primary:active {
+  background: rgba(196, 90, 45, 0.12);
+}
+
+.qe-add-btn--foreman {
+  border-style: solid;
+  border-color: var(--line, #e8e2d9);
+}
+
+.qe-add-btn svg {
+  flex-shrink: 0;
+}
+
+
+/* ═══════════════════════════════════════════════
+   CONFIDENCE PANEL
+   ═══════════════════════════════════════════════ */
+
+.qe-confidence {
+  border-radius: var(--r-card, 16px);
+  overflow: hidden;
+}
+
+.qe-confidence--ready {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  background: rgba(34, 197, 94, 0.08);
+  color: #16a34a;
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  border-radius: var(--r-card, 16px);
+}
+
+.qe-confidence--needs_review,
+.qe-confidence--review {
+  background: rgba(249, 115, 22, 0.06);
+  border: 1px solid rgba(249, 115, 22, 0.15);
+}
+
+.qe-confidence--low {
+  background: rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.12);
+}
+
+.qe-conf-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  width: 100%;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.qe-conf-score {
+  font-size: var(--text-sm, 13px);
+  font-weight: 800;
+  color: var(--brand, #c45a2d);
+  background: rgba(196, 90, 45, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.qe-conf-label {
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  color: var(--fg, #1c140c);
+  flex: 1;
+}
+
+.qe-conf-chevron {
+  display: flex;
+  color: var(--muted, #6b6459);
+  transition: transform var(--dur-base, 220ms) var(--ease-standard);
+}
+
+.qe-conf-chevron--open {
+  transform: rotate(180deg);
+}
+
+.qe-conf-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  padding: 0 var(--space-4, 16px) var(--space-3, 12px);
+}
+
+.qe-conf-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-size: var(--text-sm, 13px);
+  color: var(--muted, #6b6459);
+}
+
+.qe-conf-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.qe-conf-check--warn .qe-conf-dot { background: var(--orange, #ea580c); }
+.qe-conf-check--fail .qe-conf-dot { background: var(--red, #dc2626); }
+.qe-conf-check--info .qe-conf-dot { background: var(--muted, #6b6459); }
+
+
+/* ═══════════════════════════════════════════════
+   FOREMAN SUGGESTIONS
+   ═══════════════════════════════════════════════ */
+
+.qe-suggestions {
+  background: var(--card, #fff);
+  border-radius: var(--r-card, 16px);
+  box-shadow: var(--elev-1);
+  overflow: hidden;
+}
+
+.qe-sug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-2, 8px);
+}
+
+.qe-sug-title {
+  font-size: var(--text-sm, 13px);
+  font-weight: 700;
+  color: var(--fg, #1c140c);
+}
+
+.qe-sug-count {
+  font-size: var(--text-2xs, 11px);
+  font-weight: 700;
+  color: var(--brand, #c45a2d);
+  background: rgba(196, 90, 45, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.qe-sug-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.qe-sug-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3, 12px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-top: 1px solid var(--line, #e8e2d9);
+}
+
+.qe-sug-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qe-sug-name {
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  color: var(--fg, #1c140c);
+}
+
+.qe-sug-meta {
+  font-size: var(--text-xs, 12px);
+  color: var(--muted, #6b6459);
+  font-variant-numeric: tabular-nums;
+}
+
+.qe-sug-why {
+  font-size: var(--text-xs, 12px);
+  color: var(--subtle, #a39888);
+  line-height: var(--lh-normal, 1.5);
+}
+
+.qe-sug-actions {
+  display: flex;
+  gap: var(--space-1, 4px);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.qe-sug-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--line, #e8e2d9);
+  border-radius: var(--r-pill, 8px);
+  background: var(--card, #fff);
+  font-family: inherit;
+  font-size: var(--text-2xs, 11px);
+  font-weight: 600;
+  color: var(--muted, #6b6459);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all var(--dur-fast, 140ms) ease;
+}
+
+.qe-sug-btn:active {
+  background: var(--bg, #faf8f5);
+}
+
+.qe-sug-btn--add {
+  background: var(--brand, #c45a2d);
+  border-color: var(--brand, #c45a2d);
+  color: #fff;
+}
+
+.qe-sug-btn--add:active {
+  opacity: 0.85;
+}
+
+
+/* ═══════════════════════════════════════════════
+   CATALOG BOTTOM SHEET
+   ═══════════════════════════════════════════════ */
+
+.qe-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(28, 20, 12, 0.4);
+  display: flex;
+  align-items: flex-end;
+  animation: qe-fade-in 0.2s ease;
+}
+
+.qe-sheet-backdrop--closing {
+  animation: qe-fade-out 0.25s ease forwards;
+}
+
+@keyframes qe-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes qe-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.qe-sheet {
+  width: 100%;
+  max-height: 90vh;
+  max-height: 90dvh;
+  background: var(--card, #fff);
+  border-radius: var(--r-sheet, 20px) var(--r-sheet, 20px) 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: qe-slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.qe-sheet--closing {
+  animation: qe-slide-down 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes qe-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes qe-slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+/* Drag handle */
+.qe-sheet-handle-area {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3, 12px) 0 var(--space-2, 8px);
+  cursor: grab;
+}
+
+.qe-sheet-handle {
+  width: 36px;
+  height: 5px;
+  background: var(--line, #e8e2d9);
+  border-radius: 3px;
+}
+
+/* Search bar */
+.qe-sheet-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: 0 var(--space-4, 16px) var(--space-3, 12px);
+  border-bottom: 1px solid var(--line, #e8e2d9);
+}
+
+.qe-sheet-search-icon {
+  color: var(--subtle, #a39888);
+  flex-shrink: 0;
+}
+
+.qe-sheet-input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: max(16px, var(--text-base, 14px));
+  color: var(--fg, #1c140c);
+  outline: none;
+  padding: var(--space-2, 8px) 0;
+  min-width: 0;
+}
+
+.qe-sheet-input::placeholder {
+  color: var(--subtle, #a39888);
+}
+
+.qe-sheet-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg, #faf8f5);
+  color: var(--muted, #6b6459);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.qe-sheet-close {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--text-sm, 13px);
+  font-weight: 700;
+  color: var(--brand, #c45a2d);
+  cursor: pointer;
+  padding: var(--space-2, 8px);
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Results */
+.qe-sheet-results {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.qe-sheet-empty {
+  padding: var(--space-8, 32px) var(--space-4, 16px);
+  text-align: center;
+  font-size: var(--text-sm, 13px);
+  color: var(--subtle, #a39888);
+}
+
+/* Catalog item row */
+.qe-cat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  width: 100%;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: none;
+  border-bottom: 1px solid var(--line, #e8e2d9);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--dur-fast, 140ms) ease;
+}
+
+.qe-cat-item:active:not(.qe-cat-item--added) {
+  background: var(--bg, #faf8f5);
+}
+
+.qe-cat-item--added {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.qe-cat-item--relevant {
+  background: rgba(196, 90, 45, 0.03);
+}
+
+.qe-cat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qe-cat-name {
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  color: var(--fg, #1c140c);
+  line-height: var(--lh-snug, 1.25);
+}
+
+.qe-cat-match {
+  font-size: var(--text-2xs, 11px);
+  font-weight: 600;
+  color: var(--brand, #c45a2d);
+  display: inline-block;
+}
+
+.qe-cat-desc {
+  font-size: var(--text-2xs, 11px);
+  color: var(--subtle, #a39888);
+  line-height: var(--lh-normal, 1.5);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.qe-cat-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1, 4px);
+  flex-shrink: 0;
+}
+
+.qe-cat-price {
+  font-size: var(--text-xs, 12px);
+  font-weight: 600;
+  color: var(--muted, #6b6459);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qe-cat-add-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--brand, #c45a2d);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.qe-cat-add-icon--done {
+  background: #16a34a;
+}
+
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════ */
+
+.qe-btn {
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  border-radius: var(--r-btn, 12px);
+  border: none;
+  font-family: inherit;
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--dur-fast, 140ms) ease;
+}
+
+.qe-btn--primary {
+  background: var(--brand, #c45a2d);
+  color: #fff;
+}
+
+.qe-btn--secondary {
+  background: var(--bg, #faf8f5);
+  color: var(--fg, #1c140c);
+  border: 1px solid var(--line, #e8e2d9);
+}
+
+.qe-btn:active {
+  opacity: 0.8;
+}
+
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — DESKTOP (≥768px)
+   ═══════════════════════════════════════════════ */
+
+@media (min-width: 768px) {
+  .qe-sheet {
+    max-width: 480px;
+    margin: 0 auto;
+    max-height: 70vh;
+    border-radius: var(--r-card, 16px) var(--r-card, 16px) 0 0;
+  }
+
+  .qe-item-name {
+    /* Desktop can use smaller font since no iOS zoom */
+    font-size: var(--text-base, 14px);
+  }
+
+  .qe-price {
+    max-width: 140px;
+  }
+
+  /* Desktop: show delete/duplicate inline instead of swipe */
+  .qe-item:hover .qe-item-content::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, var(--card, #fff) 30%);
+    pointer-events: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SMALL PHONE (≤375px, iPhone SE/X)
+   Extra compact to prevent any overflow
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 375px) {
+  .qe-item-content {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+  }
+
+  .qe-qty-btn {
+    width: 28px;
+  }
+
+  .qe-price {
+    max-width: 100px;
+    padding: 0 6px;
+  }
+
+  .qe-item-row2 {
+    gap: 6px;
+  }
+
+  .qe-add-bar {
+    gap: 6px;
+  }
+
+  .qe-add-btn {
+    padding: var(--space-2, 8px) var(--space-2, 8px);
+    font-size: var(--text-xs, 12px);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════
+   SAFE AREA (notch devices)
+   ═══════════════════════════════════════════════ */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .qe-sheet {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
