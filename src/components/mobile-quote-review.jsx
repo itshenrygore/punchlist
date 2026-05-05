@@ -168,16 +168,16 @@ const itm = {
   card: {
     background: 'var(--panel, #fff)',
     border: '1px solid var(--line, rgba(17,24,39,.08))',
-    borderRadius: 12,
-    marginBottom: 6,
+    borderRadius: 10,
+    marginBottom: 4,
     overflow: 'hidden',
     position: 'relative',
   },
   cardEditing: {
     background: 'var(--panel, #fff)',
     border: '1.5px solid var(--brand-line, rgba(184,81,40,.18))',
-    borderRadius: 12,
-    marginBottom: 6,
+    borderRadius: 10,
+    marginBottom: 4,
     overflow: 'hidden',
     position: 'relative',
     boxShadow: '0 0 0 1px var(--brand-line, rgba(184,81,40,.18))',
@@ -204,7 +204,7 @@ const itm = {
   content: {
     position: 'relative', zIndex: 1,
     background: 'var(--panel, #fff)',
-    padding: '10px 14px',
+    padding: '8px 12px',
     transition: 'transform 0.25s cubic-bezier(0.32,0.72,0,1)',
     borderRadius: 12,
   },
@@ -212,7 +212,7 @@ const itm = {
     display: 'flex', alignItems: 'flex-start', gap: 8,
   },
   nameInput: {
-    flex: 1, minWidth: 0,
+    width: '100%',
     fontSize: 16,            // ← prevents iOS zoom
     fontWeight: 600,
     color: 'var(--text, #161616)',
@@ -221,15 +221,16 @@ const itm = {
     fontFamily: 'inherit', lineHeight: 1.3,
   },
   totalLabel: {
-    fontSize: 14, fontWeight: 700,
+    fontSize: 13, fontWeight: 700,
     color: 'var(--text, #161616)',
     whiteSpace: 'nowrap',
     fontVariantNumeric: 'tabular-nums',
-    flexShrink: 0, paddingTop: 3,
+    flexShrink: 0,
+    marginLeft: 'auto',
   },
   controls: {
     display: 'flex', alignItems: 'center',
-    gap: 6, marginTop: 6,
+    gap: 5, marginTop: 4,
   },
   qtyStepper: {
     display: 'inline-flex', alignItems: 'center',
@@ -237,13 +238,13 @@ const itm = {
     borderRadius: 8, overflow: 'hidden', flexShrink: 0,
   },
   qtyBtn: {
-    width: 34, height: 34, display: 'grid', placeItems: 'center',
-    background: 'none', border: 'none', fontSize: 17, fontWeight: 600,
+    width: 30, height: 30, display: 'grid', placeItems: 'center',
+    background: 'none', border: 'none', fontSize: 16, fontWeight: 600,
     color: 'var(--text-2, #344054)', cursor: 'pointer', fontFamily: 'inherit',
     WebkitTapHighlightColor: 'transparent',
   },
   qtyVal: {
-    minWidth: 24, textAlign: 'center', fontSize: 14, fontWeight: 700,
+    minWidth: 20, textAlign: 'center', fontSize: 13, fontWeight: 700,
     color: 'var(--text, #161616)', fontVariantNumeric: 'tabular-nums',
     userSelect: 'none',
   },
@@ -252,9 +253,9 @@ const itm = {
   },
   priceWrap: {
     display: 'flex', alignItems: 'center', gap: 2,
-    flex: 1, minWidth: 0, maxWidth: 120,
+    flex: 1, minWidth: 0, maxWidth: 90,
     border: '1px solid var(--line-2, rgba(17,24,39,.14))',
-    borderRadius: 8, padding: '0 8px', height: 34,
+    borderRadius: 8, padding: '0 8px', height: 30,
     background: 'var(--input-bg, #fff)',
   },
   pricePrefix: {
@@ -625,26 +626,23 @@ function ItemCard({ li, idx, isEditing, priceRange, cur, isLast,
 
       {/* Main content (slides on swipe) */}
       <div ref={contentRef} style={itm.content} onClick={() => swiped && closeSwipe()}>
-        {/* Row 1: Name + Total */}
-        <div style={itm.topRow}>
-          <input
-            style={itm.nameInput}
-            value={li.name}
-            onChange={e => updateItem(li.id, { name: e.target.value })}
-            placeholder="Item name"
-            onFocus={() => setEditingItemId(li.id)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey && isLast) {
-                e.preventDefault();
-                setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]);
-                markDirty();
-              }
-            }}
-          />
-          <span style={itm.totalLabel}>{cur(lineTotal)}</span>
-        </div>
+        {/* Row 1: Name (full width — no truncation) */}
+        <input
+          style={itm.nameInput}
+          value={li.name}
+          onChange={e => updateItem(li.id, { name: e.target.value })}
+          placeholder="Item name"
+          onFocus={() => setEditingItemId(li.id)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey && isLast) {
+              e.preventDefault();
+              setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]);
+              markDirty();
+            }
+          }}
+        />
 
-        {/* Row 2: Qty × $ Price */}
+        {/* Row 2: Qty × $ Price → Total */}
         <div style={itm.controls}>
           <div style={itm.qtyStepper}>
             <button type="button" style={itm.qtyBtn} onClick={() => adjustQty(li.id, -1)}>−</button>
@@ -661,6 +659,7 @@ function ItemCard({ li, idx, isEditing, priceRange, cur, isLast,
               onFocus={() => setEditingItemId(li.id)}
             />
           </div>
+          <span style={itm.totalLabel}>{cur(lineTotal)}</span>
         </div>
 
         {/* Price hint */}
@@ -935,15 +934,15 @@ export default function MobileQuoteReview({ ctx }) {
         {/* ── Scope & Terms ── */}
         <div style={chr.collapse} onClick={() => setScopeOpen(!scopeOpen)}>
           <span style={chr.collapseLabel}>Scope, terms & notes</span>
-          <span style={{ fontSize: 14, color: 'var(--muted)', transform: scopeOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>▸</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted, #667085)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: scopeOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="9 18 15 12 9 6"/></svg>
         </div>
         {scopeOpen && (
           <div style={{ padding: '0 16px 8px' }}>
             <textarea
-              style={{ ...hdr.custSearch, minHeight: 60, resize: 'vertical' }}
+              style={{ ...hdr.custSearch, minHeight: 100, maxHeight: 200, resize: 'vertical', lineHeight: 1.5 }}
               value={draft.scope_summary}
               onChange={e => ud('scope_summary', e.target.value)}
-              rows={2}
+              rows={4}
               placeholder="Brief description of work (shown to customer)"
             />
           </div>
@@ -970,7 +969,7 @@ export default function MobileQuoteReview({ ctx }) {
                 <span style={{ ...chr.confLabel, color: 'var(--amber-text, var(--amber))' }}>
                   Commonly missed items
                 </span>
-                <span style={{ fontSize: 12, color: 'var(--amber)', transform: confOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>▸</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber, #D97706)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: confOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="9 18 15 12 9 6"/></svg>
               </div>
               {confOpen && issues.length > 0 && (
                 <div style={chr.confChecks}>
