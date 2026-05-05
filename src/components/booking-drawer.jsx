@@ -429,7 +429,7 @@ export default function BookingDrawer({
         </form>
 
         {/* Sticky footer — always visible */}
-        <div style={{ padding: '12px 20px', paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))', borderTop: '1px solid var(--line)', flexShrink: 0, background: 'inherit' }}>
+        <div style={{ padding: '12px 20px', paddingBottom: 'calc(16px + 52px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--line)', flexShrink: 0, background: 'inherit' }}>
           <button
             type="button"
             disabled={saving || !scheduledFor}

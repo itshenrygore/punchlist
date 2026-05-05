@@ -5,7 +5,7 @@ import StatusBadge from '../components/status-badge';
 import EmptyState from '../components/empty-state';
 import PageSkeleton from '../components/page-skeleton';
 import SwipeableRow from '../components/swipeable-row';
-import { listQuotes, expireStaleDrafts, updateQuote, deleteQuote } from '../lib/api';
+import { listQuotes, expireStaleDrafts, updateQuote, updateQuoteStatus, deleteQuote } from '../lib/api';
 import { currency, formatDate, formatQuoteNumber } from '../lib/format';
 import { chipForStatus, toneForStatus } from '../lib/workflow';
 import { useAuth } from '../hooks/use-auth';
@@ -116,12 +116,11 @@ function QuoteCard({ quote }) {
   const hasCustomer = quote.customer?.name;
 
   return (
-    <Link to={`/app/quotes/${quote.id}`} className="ql-card-v2" style={{ textDecoration: 'none' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+    <Link to={`/app/quotes/${quote.id}`} className="ql-card-v2" style={{ textDecoration: 'none', padding: '10px 14px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div className="ql-card-title">{quote.title || 'Untitled quote'}</div>
-          <div className="ql-card-meta">
-            {/* Show customer name prominently, or just the quote number if no customer */}
+          <div className="ql-card-title" style={{ fontSize: 13 }}>{quote.title || 'Untitled quote'}</div>
+          <div className="ql-card-meta" style={{ marginTop: 1 }}>
             {hasCustomer
               ? <span style={{ fontWeight: 500 }}>{quote.customer.name}</span>
               : <span style={{ color: 'var(--text-3)' }}>Draft</span>
@@ -129,11 +128,11 @@ function QuoteCard({ quote }) {
             {num && <span style={{ opacity: 0.5 }}> · {num}</span>}
           </div>
         </div>
-        <div className="ql-card-total tabular">
+        <div className="ql-card-total tabular" style={{ fontSize: 14 }}>
           {(quote.total || 0) > 0 ? currency(quote.total) : '—'}
         </div>
       </div>
-      <div className="ql-card-bottom">
+      <div className="ql-card-bottom" style={{ marginTop: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <StatusBadge status={quote.status} />
           {viewBadge && <span className="ql-view-badge">{quote.view_count}×</span>}
@@ -222,7 +221,7 @@ export default function QuotesListPage() {
 
   async function handleArchive(quoteId) {
     try {
-      await updateQuote(quoteId, { archived_at: new Date().toISOString() });
+      await updateQuoteStatus(quoteId, { archived_at: new Date().toISOString() });
       setQuotes(prev => prev.filter(q => q.id !== quoteId));
       haptic('success');
       toast('Quote archived', 'success');
