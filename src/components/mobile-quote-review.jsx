@@ -1,791 +1,591 @@
 /**
- * MobileQuoteReview — Receipt-style quote editor for phones.
+ * MobileQuoteReview — Premium quote editor for mobile.
  *
- * Clean rebuild — all inline styles, no external CSS dependency.
- * Designed for 375px (iPhone X/SE) as minimum viewport.
+ * Design: Refined Warmth — Stripe Dashboard meets Apple Wallet.
+ * - Borderless cards with warm shadow depth
+ * - Typography-driven hierarchy
+ * - Brand orange reserved for CTAs only
+ * - Tabular numbers everywhere prices appear
+ * - 44px minimum tap targets throughout
+ * - Frosted-glass footer
  *
- * Fixes from prior version:
- * - Controls row: qty + price sized to never overflow 375px
- * - "Ask Foreman" button text never clips (shortened to "Foreman")
- * - Catalog is a proper drag-to-dismiss bottom sheet
- * - Confidence panel expands to show individual checks
- * - All inputs fontSize:16 to prevent iOS auto-zoom
- * - Swipe-to-delete on line items (iOS convention)
- * - No text clipping on any viewport ≥ 320px
- *
- * Receives a single `ctx` prop containing all state and handlers
- * from quote-builder-page.jsx.
+ * Built for 375px (iPhone X) minimum. No external CSS needed.
  */
 import { useState, useRef, useCallback } from 'react';
 import { currency } from '../lib/format';
 
 /* ═══════════════════════════════════════════════════════
-   Inline style objects — grouped by section
+   DESIGN TOKENS (inline — no external dependency)
+   ═══════════════════════════════════════════════════════ */
+const T = {
+  shadow: '0 1px 3px rgba(28,20,12,0.04), 0 3px 10px rgba(28,20,12,0.07)',
+  shadowLift: '0 2px 6px rgba(28,20,12,0.06), 0 8px 24px rgba(28,20,12,0.10)',
+  radius: 14,
+  radiusSm: 10,
+  radiusPill: 20,
+  brand: 'var(--brand, #B85128)',
+  brandBg: 'var(--brand-bg, rgba(184,81,40,.06))',
+  brandLine: 'var(--brand-line, rgba(184,81,40,.15))',
+  text: 'var(--text, #161616)',
+  text2: 'var(--text-2, #344054)',
+  muted: 'var(--muted, #667085)',
+  subtle: 'var(--subtle, #8A8F98)',
+  panel: 'var(--panel, #fff)',
+  panel2: 'var(--panel-2, #F9F9F7)',
+  panel3: 'var(--panel-3, #F0EFEC)',
+  bg: 'var(--bg, #F6F5F2)',
+  line: 'var(--line, rgba(17,24,39,.06))',
+  line2: 'var(--line-2, rgba(17,24,39,.12))',
+  green: 'var(--green, #0F7A50)',
+  greenBg: 'var(--green-bg, rgba(15,122,80,.06))',
+  red: 'var(--red, #DC2626)',
+  amber: 'var(--amber, #D97706)',
+  amberBg: 'var(--amber-bg, rgba(217,119,6,.06))',
+  amberText: 'var(--amber-text, #92400e)',
+  tap: 'transparent',
+  font: 'inherit',
+  ease: 'cubic-bezier(0.32, 0.72, 0, 1)',
+};
+
+/* ═══════════════════════════════════════════════════════
+   STYLES
    ═══════════════════════════════════════════════════════ */
 
-// ── Layout ──
-const layout = {
+const S = {
+  // ── Page ──
   page: {
-    display: 'flex',
-    flexDirection: 'column',
+    display: 'flex', flexDirection: 'column',
     minHeight: '100%',
-    paddingBottom: 'calc(60px + 52px + env(safe-area-inset-bottom, 0px))',
-    background: 'var(--bg, #F6F5F2)',
+    paddingBottom: 'calc(64px + 52px + env(safe-area-inset-bottom, 0px))',
+    background: T.bg,
   },
-  backRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '10px 16px 6px',
-    fontSize: 13,
-    color: 'var(--text-2, #344054)',
-    cursor: 'pointer',
-    WebkitTapHighlightColor: 'transparent',
-  },
-  tradeBadge: {
-    fontSize: 10,
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-    color: 'var(--muted, #667085)',
-    background: 'var(--panel-2, #F9F9F7)',
-    borderRadius: 4,
-    padding: '2px 6px',
-    marginLeft: 'auto',
-    flexShrink: 0,
-  },
-  headerWrap: {
-    padding: '0 16px 10px',
-  },
-  divider: {
-    height: 1,
-    background: 'var(--line, rgba(17,24,39,.08))',
-    margin: '0 16px',
-  },
-  section: {
-    padding: '6px 16px',
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    color: 'var(--muted, #667085)',
-    padding: '8px 0 6px',
-  },
-};
 
-// ── Title / Customer ──
-const hdr = {
-  titleInput: {
-    width: '100%',
-    border: 'none',
-    background: 'transparent',
-    fontSize: 20,
-    fontWeight: 800,
-    color: 'var(--text, #161616)',
-    letterSpacing: '-0.02em',
-    padding: '4px 0',
-    outline: 'none',
-    fontFamily: 'inherit',
-    lineHeight: 1.25,
+  // ── Back row ──
+  back: {
+    display: 'flex', alignItems: 'center', gap: 8,
+    padding: '12px 20px 4px',
+    fontSize: 13, fontWeight: 500, color: T.text2,
+    cursor: 'pointer', WebkitTapHighlightColor: T.tap,
   },
-  custRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 6,
+  backArrow: {
+    fontSize: 18, lineHeight: 1, color: T.muted,
   },
+  badge: {
+    marginLeft: 'auto', flexShrink: 0,
+    fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+    textTransform: 'uppercase', color: T.muted,
+    background: T.panel, borderRadius: 6, padding: '3px 8px',
+    boxShadow: `0 0 0 1px ${T.line}`,
+  },
+
+  // ── Header ──
+  header: { padding: '4px 20px 14px' },
+  title: {
+    width: '100%', border: 'none', background: 'none',
+    fontSize: 22, fontWeight: 800, color: T.text,
+    letterSpacing: '-0.03em', padding: '6px 0 2px',
+    outline: 'none', fontFamily: T.font, lineHeight: 1.2,
+  },
+  custRow: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 },
   custPill: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '5px 10px 5px 5px',
-    borderRadius: 20,
-    background: 'var(--brand-bg, rgba(184,81,40,.07))',
-    border: '1px solid var(--brand-line, rgba(184,81,40,.18))',
-    fontSize: 13,
-    fontWeight: 600,
-    color: 'var(--brand, #B85128)',
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+    padding: '6px 14px 6px 6px', borderRadius: T.radiusPill,
+    background: T.panel, boxShadow: T.shadow,
+    fontSize: 14, fontWeight: 600, color: T.text,
   },
   custAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: '50%',
-    background: 'var(--brand, #B85128)',
-    color: '#fff',
-    display: 'grid',
-    placeItems: 'center',
-    fontSize: 10,
-    fontWeight: 700,
+    width: 26, height: 26, borderRadius: '50%',
+    background: T.brand, color: '#fff',
+    display: 'grid', placeItems: 'center',
+    fontSize: 11, fontWeight: 700,
   },
-  custChangeBtn: {
-    fontSize: 12,
-    color: 'var(--text-2, #344054)',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '6px 8px',
-    fontFamily: 'inherit',
+  custChange: {
+    fontSize: 13, color: T.brand, background: 'none',
+    border: 'none', cursor: 'pointer', padding: '6px 8px',
+    fontFamily: T.font, fontWeight: 600,
   },
-  custSearch: {
-    width: '100%',
-    padding: '10px 12px',
-    fontSize: 16,           // ← prevents iOS zoom
-    border: '1px solid var(--line-2, rgba(17,24,39,.14))',
-    borderRadius: 10,
-    background: 'var(--input-bg, #fff)',
-    color: 'var(--text, #161616)',
-    outline: 'none',
-    fontFamily: 'inherit',
-    marginTop: 6,
+  custInput: {
+    width: '100%', padding: '12px 14px', fontSize: 16,
+    border: 'none', borderRadius: T.radius,
+    background: T.panel, boxShadow: `inset 0 0 0 1px ${T.line2}`,
+    color: T.text, outline: 'none', fontFamily: T.font, marginTop: 6,
   },
-  custList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-    marginTop: 4,
+  custList: { display: 'flex', flexDirection: 'column', gap: 2, marginTop: 6 },
+  custItem: {
+    padding: '12px 14px', fontSize: 14, color: T.text,
+    borderRadius: T.radiusSm, cursor: 'pointer', border: 'none',
+    background: T.panel, textAlign: 'left', fontFamily: T.font,
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    minHeight: 44, boxShadow: `0 0 0 1px ${T.line}`,
   },
-  custListItem: {
-    padding: '10px 12px',
-    fontSize: 14,
-    color: 'var(--text, #161616)',
-    borderRadius: 8,
-    cursor: 'pointer',
-    border: 'none',
-    background: 'var(--panel-2, #F9F9F7)',
-    textAlign: 'left',
-    fontFamily: 'inherit',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    minHeight: 44,
-  },
-};
 
-// ── Line Item Card ──
-const itm = {
-  card: {
-    background: 'var(--panel, #fff)',
-    border: '1px solid var(--line, rgba(17,24,39,.08))',
-    borderRadius: 10,
-    marginBottom: 4,
-    overflow: 'hidden',
-    position: 'relative',
+  // ── Section ──
+  section: { padding: '0 20px' },
+  label: {
+    fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
+    textTransform: 'uppercase', color: T.muted, padding: '14px 0 8px',
   },
-  cardEditing: {
-    background: 'var(--panel, #fff)',
-    border: '1.5px solid var(--brand-line, rgba(184,81,40,.18))',
-    borderRadius: 10,
-    marginBottom: 4,
-    overflow: 'hidden',
-    position: 'relative',
-    boxShadow: '0 0 0 1px var(--brand-line, rgba(184,81,40,.18))',
+
+  // ── Item Card ──
+  card: {
+    background: T.panel, borderRadius: T.radius,
+    boxShadow: T.shadow, marginBottom: 8,
+    overflow: 'hidden', position: 'relative',
+    border: 'none',
+  },
+  cardActive: {
+    background: T.panel, borderRadius: T.radius,
+    boxShadow: T.shadowLift, marginBottom: 8,
+    overflow: 'hidden', position: 'relative',
+    border: 'none',
   },
   swipeActions: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 120,
-    display: 'flex',
-    zIndex: 0,
+    position: 'absolute', right: 0, top: 0, bottom: 0,
+    width: 130, display: 'flex', zIndex: 0,
   },
-  swipeDup: {
+  swipeCopy: {
     flex: 1, display: 'grid', placeItems: 'center',
-    background: 'var(--muted, #667085)', border: 'none', color: '#fff',
-    fontSize: 11, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+    background: T.muted, border: 'none', color: '#fff',
+    fontSize: 12, fontWeight: 600, fontFamily: T.font, cursor: 'pointer',
+    flexDirection: 'column', gap: 2,
   },
   swipeDel: {
     flex: 1, display: 'grid', placeItems: 'center',
-    background: 'var(--red, #DC2626)', border: 'none', color: '#fff',
-    fontSize: 11, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+    background: T.red, border: 'none', color: '#fff',
+    fontSize: 12, fontWeight: 600, fontFamily: T.font, cursor: 'pointer',
+    flexDirection: 'column', gap: 2,
   },
-  content: {
+  cardInner: {
     position: 'relative', zIndex: 1,
-    background: 'var(--panel, #fff)',
-    padding: '8px 12px',
-    transition: 'transform 0.25s cubic-bezier(0.32,0.72,0,1)',
-    borderRadius: 12,
+    background: T.panel, padding: '12px 16px',
+    transition: `transform 0.28s ${T.ease}`,
+    borderRadius: T.radius,
   },
-  topRow: {
-    display: 'flex', alignItems: 'flex-start', gap: 8,
+  itemName: {
+    width: '100%', fontSize: 16, fontWeight: 600,
+    color: T.text, border: 'none', background: 'none',
+    padding: '0 0 6px', outline: 'none', fontFamily: T.font,
+    lineHeight: 1.35,
   },
-  nameInput: {
-    width: '100%',
-    fontSize: 16,            // ← prevents iOS zoom
-    fontWeight: 600,
-    color: 'var(--text, #161616)',
-    border: 'none', background: 'transparent',
-    padding: '2px 0', outline: 'none',
-    fontFamily: 'inherit', lineHeight: 1.3,
+  controlsRow: {
+    display: 'flex', alignItems: 'center', gap: 0,
   },
-  totalLabel: {
-    fontSize: 13, fontWeight: 700,
-    color: 'var(--text, #161616)',
-    whiteSpace: 'nowrap',
-    fontVariantNumeric: 'tabular-nums',
-    flexShrink: 0,
-    marginLeft: 'auto',
-  },
-  controls: {
-    display: 'flex', alignItems: 'center',
-    gap: 5, marginTop: 4,
-  },
-  qtyStepper: {
+  stepper: {
     display: 'inline-flex', alignItems: 'center',
-    border: '1px solid var(--line-2, rgba(17,24,39,.14))',
-    borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+    background: T.panel2, borderRadius: 8,
+    overflow: 'hidden', flexShrink: 0,
   },
-  qtyBtn: {
-    width: 30, height: 30, display: 'grid', placeItems: 'center',
-    background: 'none', border: 'none', fontSize: 16, fontWeight: 600,
-    color: 'var(--text-2, #344054)', cursor: 'pointer', fontFamily: 'inherit',
-    WebkitTapHighlightColor: 'transparent',
+  stepBtn: {
+    width: 32, height: 32, display: 'grid', placeItems: 'center',
+    background: 'none', border: 'none', fontSize: 16,
+    color: T.text2, cursor: 'pointer', fontFamily: T.font,
+    WebkitTapHighlightColor: T.tap, fontWeight: 500,
   },
-  qtyVal: {
-    minWidth: 20, textAlign: 'center', fontSize: 13, fontWeight: 700,
-    color: 'var(--text, #161616)', fontVariantNumeric: 'tabular-nums',
-    userSelect: 'none',
+  stepVal: {
+    minWidth: 22, textAlign: 'center', fontSize: 14, fontWeight: 700,
+    color: T.text, fontVariantNumeric: 'tabular-nums', userSelect: 'none',
   },
-  times: {
-    fontSize: 12, color: 'var(--muted, #667085)', flexShrink: 0,
+  multiply: {
+    padding: '0 6px', fontSize: 12, color: T.subtle,
+    fontWeight: 400, flexShrink: 0,
   },
-  priceWrap: {
-    display: 'flex', alignItems: 'center', gap: 2,
-    flex: 1, minWidth: 0, maxWidth: 90,
-    border: '1px solid var(--line-2, rgba(17,24,39,.14))',
-    borderRadius: 8, padding: '0 8px', height: 30,
-    background: 'var(--input-bg, #fff)',
+  priceArea: {
+    display: 'flex', alignItems: 'center', gap: 1,
+    minWidth: 0,
   },
-  pricePrefix: {
-    fontSize: 13, color: 'var(--muted, #667085)',
-    fontWeight: 500, flexShrink: 0,
+  priceCurrency: {
+    fontSize: 14, color: T.subtle, fontWeight: 500, flexShrink: 0,
   },
   priceInput: {
-    flex: 1, minWidth: 0, width: '100%',
-    fontSize: 16,            // ← prevents iOS zoom
-    fontWeight: 600,
-    fontVariantNumeric: 'tabular-nums',
-    color: 'var(--text, #161616)',
-    border: 'none', background: 'transparent',
-    outline: 'none', fontFamily: 'inherit',
-    padding: 0, textAlign: 'right',
+    width: 70, fontSize: 16, fontWeight: 600,
+    fontVariantNumeric: 'tabular-nums', color: T.text,
+    border: 'none', background: 'none', outline: 'none',
+    fontFamily: T.font, padding: 0, textAlign: 'left',
     MozAppearance: 'textfield',
   },
-  priceHint: {
-    fontSize: 11, color: 'var(--muted, #667085)',
-    marginTop: 4, fontStyle: 'italic',
+  lineTotal: {
+    marginLeft: 'auto', fontSize: 15, fontWeight: 700,
+    color: T.text, fontVariantNumeric: 'tabular-nums',
+    whiteSpace: 'nowrap', flexShrink: 0,
+  },
+  hint: {
+    fontSize: 12, color: T.subtle, padding: '4px 0 0',
+    fontStyle: 'italic',
   },
   noteBtn: {
-    fontSize: 12, color: 'var(--brand, #B85128)',
-    background: 'none', border: 'none', cursor: 'pointer',
-    padding: '4px 0 0', fontFamily: 'inherit', minHeight: 24,
-    WebkitTapHighlightColor: 'transparent',
+    fontSize: 12, color: T.subtle, background: 'none',
+    border: 'none', cursor: 'pointer', padding: '6px 0 0',
+    fontFamily: T.font, WebkitTapHighlightColor: T.tap,
   },
   noteInput: {
-    width: '100%', fontSize: 16, // ← prevents iOS zoom
-    padding: '6px 0 0',
-    border: 'none',
-    borderTop: '1px solid var(--line, rgba(17,24,39,.08))',
-    background: 'transparent',
-    color: 'var(--text-2, #344054)',
-    outline: 'none', fontFamily: 'inherit', marginTop: 6,
+    width: '100%', fontSize: 16, padding: '8px 0 0',
+    border: 'none', borderTop: `1px solid ${T.line}`,
+    background: 'none', color: T.text2, outline: 'none',
+    fontFamily: T.font, marginTop: 8,
   },
-};
 
-// ── Add Buttons ──
-const addS = {
-  wrap: {
-    display: 'flex', flexDirection: 'column', gap: 6,
-    padding: '4px 16px 8px',
+  // ── Empty ──
+  empty: {
+    padding: '40px 24px', textAlign: 'center',
+    background: T.panel, borderRadius: T.radius,
+    boxShadow: T.shadow,
   },
-  primary: {
-    padding: '12px 14px', borderRadius: 10,
-    border: '1.5px solid var(--brand-line, rgba(184,81,40,.18))',
-    background: 'var(--brand-bg, rgba(184,81,40,.07))',
-    color: 'var(--brand, #B85128)',
-    fontSize: 14, fontWeight: 700, textAlign: 'center',
-    cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-    WebkitTapHighlightColor: 'transparent',
+  emptyTitle: {
+    fontSize: 16, fontWeight: 700, color: T.text, marginBottom: 4,
   },
-  row: { display: 'flex', gap: 6 },
-  secondary: {
-    flex: 1, padding: '10px 8px', borderRadius: 10,
-    border: '1px dashed var(--line-2, rgba(17,24,39,.14))',
-    background: 'var(--panel, #fff)',
-    color: 'var(--text-2, #344054)', fontSize: 13, fontWeight: 600,
-    textAlign: 'center', cursor: 'pointer', fontFamily: 'inherit',
-    minHeight: 44, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', gap: 4,
-    WebkitTapHighlightColor: 'transparent',
-    overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0,
+  emptyDesc: {
+    fontSize: 13, color: T.muted, lineHeight: 1.6,
   },
-  foreman: {
-    flex: 1, padding: '10px 8px', borderRadius: 10,
-    border: '1px solid var(--brand-line, rgba(184,81,40,.18))',
-    background: 'var(--brand-bg, rgba(184,81,40,.07))',
-    color: 'var(--brand, #B85128)', fontSize: 13, fontWeight: 600,
-    textAlign: 'center', cursor: 'pointer', fontFamily: 'inherit',
-    minHeight: 44, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', gap: 4,
-    WebkitTapHighlightColor: 'transparent',
-    overflow: 'hidden', whiteSpace: 'nowrap', minWidth: 0,
-  },
-};
 
-// ── Chrome (scope, confidence, footer) ──
-const chr = {
+  // ── Add Buttons ──
+  addWrap: {
+    display: 'flex', flexDirection: 'column', gap: 8, padding: '8px 20px 12px',
+  },
+  addPrimary: {
+    padding: '13px 16px', borderRadius: T.radiusSm,
+    border: 'none', background: T.brand, color: '#fff',
+    fontSize: 15, fontWeight: 700, textAlign: 'center',
+    cursor: 'pointer', fontFamily: T.font, minHeight: 48,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    WebkitTapHighlightColor: T.tap, boxShadow: '0 2px 8px rgba(184,81,40,0.25)',
+  },
+  addRow: { display: 'flex', gap: 8 },
+  addSecondary: {
+    flex: 1, padding: '11px 10px', borderRadius: T.radiusSm,
+    border: 'none', background: T.panel,
+    boxShadow: T.shadow,
+    color: T.text2, fontSize: 14, fontWeight: 600,
+    textAlign: 'center', cursor: 'pointer', fontFamily: T.font,
+    minHeight: 44, display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 6,
+    WebkitTapHighlightColor: T.tap,
+  },
+  addForeman: {
+    flex: 1, padding: '11px 10px', borderRadius: T.radiusSm,
+    border: 'none', background: T.brandBg,
+    color: T.brand, fontSize: 14, fontWeight: 600,
+    textAlign: 'center', cursor: 'pointer', fontFamily: T.font,
+    minHeight: 44, display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 6,
+    WebkitTapHighlightColor: T.tap,
+  },
+
+  // ── Scope collapse ──
   collapse: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '10px 14px', cursor: 'pointer', margin: '4px 16px',
-    borderRadius: 10, background: 'var(--panel, #fff)',
-    border: '1px solid var(--line, rgba(17,24,39,.08))', minHeight: 44,
-    WebkitTapHighlightColor: 'transparent',
+    padding: '12px 16px', cursor: 'pointer', margin: '4px 20px',
+    borderRadius: T.radiusSm, background: T.panel, boxShadow: T.shadow,
+    minHeight: 48, WebkitTapHighlightColor: T.tap,
   },
-  collapseLabel: { fontSize: 13, fontWeight: 600, color: 'var(--text-2, #344054)' },
+  collapseLabel: { fontSize: 14, fontWeight: 600, color: T.text2 },
+  scopeText: {
+    width: '100%', padding: '12px 14px', fontSize: 16,
+    border: 'none', borderRadius: T.radiusSm,
+    background: T.panel, boxShadow: `inset 0 0 0 1px ${T.line2}`,
+    color: T.text, outline: 'none', fontFamily: T.font,
+    minHeight: 100, maxHeight: 200, resize: 'vertical', lineHeight: 1.6,
+  },
+
+  // ── Confidence ──
+  confReady: {
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '12px 16px', margin: '6px 20px',
+    borderRadius: T.radiusSm, background: T.greenBg,
+    minHeight: 44,
+  },
   confBar: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    padding: '10px 14px', margin: '4px 16px', borderRadius: 10,
-    minHeight: 44, cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '12px 16px', margin: '6px 20px',
+    borderRadius: T.radiusSm, background: T.amberBg,
+    minHeight: 48, cursor: 'pointer', WebkitTapHighlightColor: T.tap,
   },
   confBadge: {
-    fontSize: 12, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
-    fontVariantNumeric: 'tabular-nums',
+    fontSize: 13, fontWeight: 800, padding: '3px 10px',
+    borderRadius: 8, fontVariantNumeric: 'tabular-nums',
+    background: 'rgba(217,119,6,0.12)', color: T.amberText,
   },
-  confLabel: { fontSize: 13, fontWeight: 600, flex: 1 },
+  confLabel: { fontSize: 14, fontWeight: 600, flex: 1, color: T.amberText },
   confChecks: {
-    margin: '0 16px 4px', padding: '8px 14px 12px',
-    background: 'var(--amber-bg, rgba(217,119,6,.04))',
-    border: '1px solid var(--amber, rgba(217,119,6,.2))',
-    borderTop: 'none', borderRadius: '0 0 10px 10px',
+    margin: '0 20px 6px', padding: '10px 16px 14px',
+    background: T.amberBg, borderRadius: `0 0 ${T.radiusSm}px ${T.radiusSm}px`,
     display: 'flex', flexDirection: 'column', gap: 8,
   },
   confCheck: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    fontSize: 13, color: 'var(--text-2, #344054)',
+    display: 'flex', alignItems: 'center', gap: 10,
+    fontSize: 13, color: T.text2,
   },
+
+  // ── Footer ──
   footer: {
     position: 'fixed',
     bottom: 'calc(52px + env(safe-area-inset-bottom, 0px))',
     left: 0, right: 0, zIndex: 90,
-    background: 'var(--panel, #fff)',
-    borderTop: '1px solid var(--line, rgba(17,24,39,.08))',
-    boxShadow: '0 -2px 16px rgba(0,0,0,0.1)',
-    padding: '8px 12px', display: 'flex',
-    alignItems: 'center', gap: 10, minHeight: 52,
+    background: 'rgba(246,245,242,0.85)',
+    backdropFilter: 'blur(20px) saturate(1.4)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+    borderTop: `1px solid ${T.line}`,
+    padding: '10px 16px', display: 'flex',
+    alignItems: 'center', gap: 12, minHeight: 56,
   },
   footerTotal: {
-    fontSize: 18, fontWeight: 800, color: 'var(--text, #161616)',
-    fontVariantNumeric: 'tabular-nums', flexShrink: 0, letterSpacing: '-0.02em',
+    fontSize: 22, fontWeight: 800, color: T.text,
+    fontVariantNumeric: 'tabular-nums', flexShrink: 0,
+    letterSpacing: '-0.03em',
   },
   footerCta: {
-    flex: 1, padding: '12px 16px', borderRadius: 12,
-    background: 'var(--brand, #B85128)', color: '#fff',
-    fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
-    fontFamily: 'inherit', textAlign: 'center', minHeight: 44,
-    WebkitTapHighlightColor: 'transparent',
+    flex: 1, padding: '14px 16px', borderRadius: 12,
+    background: T.brand, color: '#fff',
+    fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer',
+    fontFamily: T.font, textAlign: 'center', minHeight: 48,
+    WebkitTapHighlightColor: T.tap,
+    boxShadow: '0 2px 8px rgba(184,81,40,0.25)',
   },
-  footerCtaDisabled: {
-    flex: 1, padding: '12px 16px', borderRadius: 12,
-    background: 'var(--panel-3, #E8E7E4)', color: 'var(--muted, #667085)',
-    fontSize: 15, fontWeight: 700, border: 'none', fontFamily: 'inherit',
-    textAlign: 'center', minHeight: 44, cursor: 'default',
+  footerCtaOff: {
+    flex: 1, padding: '14px 16px', borderRadius: 12,
+    background: T.panel3, color: T.muted,
+    fontSize: 16, fontWeight: 700, border: 'none',
+    fontFamily: T.font, textAlign: 'center', minHeight: 48,
+    cursor: 'default',
   },
-  emptyState: {
-    padding: '32px 20px', textAlign: 'center',
-    color: 'var(--text-2, #344054)', fontSize: 14, lineHeight: 1.6,
-    border: '1px dashed var(--line-2, rgba(17,24,39,.14))',
-    borderRadius: 12, margin: '4px 0', background: 'var(--panel, #fff)',
+  error: {
+    margin: '6px 20px', padding: '12px 16px', borderRadius: T.radiusSm,
+    background: 'var(--red-bg, rgba(220,38,38,.06))',
+    color: T.red, fontSize: 13, lineHeight: 1.5,
   },
-  errorBox: {
-    margin: '4px 16px', padding: '10px 14px', borderRadius: 10,
-    background: 'var(--red-bg, rgba(220,38,38,.07))',
-    color: 'var(--red, #DC2626)', fontSize: 13, lineHeight: 1.5,
-  },
-};
 
-// ── Catalog sheet ──
-const cat = {
-  backdrop: {
+  // ── Catalog sheet ──
+  sheetBackdrop: {
     position: 'fixed', inset: 0, zIndex: 200,
-    background: 'rgba(0,0,0,0.45)',
+    background: 'rgba(22,22,22,0.5)',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
   },
-  panel: {
-    background: 'var(--panel, #fff)',
-    borderRadius: '20px 20px 0 0',
-    maxHeight: '88vh', display: 'flex', flexDirection: 'column',
+  sheetPanel: {
+    background: T.panel, borderRadius: '22px 22px 0 0',
+    maxHeight: '90dvh', display: 'flex', flexDirection: 'column',
     overflow: 'hidden', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
   },
-  handle: {
-    width: 36, height: 5,
-    background: 'var(--line-2, rgba(17,24,39,.14))',
-    borderRadius: 3, margin: '10px auto 6px',
+  sheetHandle: {
+    width: 40, height: 5, background: T.line2,
+    borderRadius: 3, margin: '10px auto 4px',
   },
-  searchRow: {
+  sheetSearch: {
     display: 'flex', alignItems: 'center', gap: 8,
-    padding: '4px 14px 10px',
-    borderBottom: '1px solid var(--line, rgba(17,24,39,.08))',
+    padding: '8px 16px 12px',
+    borderBottom: `1px solid ${T.line}`,
   },
-  searchInput: {
+  sheetInput: {
     flex: 1, padding: '10px 0', fontSize: 16,
-    border: 'none', background: 'transparent',
-    color: 'var(--text, #161616)', outline: 'none',
-    fontFamily: 'inherit', minWidth: 0,
+    border: 'none', background: 'none', color: T.text,
+    outline: 'none', fontFamily: T.font, minWidth: 0,
   },
-  doneBtn: {
-    fontSize: 14, fontWeight: 700, color: 'var(--brand, #B85128)',
+  sheetDone: {
+    fontSize: 15, fontWeight: 700, color: T.brand,
     background: 'none', border: 'none', cursor: 'pointer',
-    padding: '8px 4px', fontFamily: 'inherit', flexShrink: 0,
-    WebkitTapHighlightColor: 'transparent',
+    padding: '8px 4px', fontFamily: T.font, flexShrink: 0,
+    WebkitTapHighlightColor: T.tap,
   },
-  clearBtn: {
-    width: 26, height: 26, borderRadius: '50%', border: 'none',
-    background: 'var(--panel-3, #E8E7E4)', color: 'var(--muted)', fontSize: 12,
+  sheetClear: {
+    width: 28, height: 28, borderRadius: '50%', border: 'none',
+    background: T.panel3, color: T.muted, fontSize: 13,
     display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0,
   },
-  results: {
+  sheetResults: {
     flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch',
   },
-  itemRow: (added) => ({
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '12px 14px', width: '100%', textAlign: 'left',
-    fontFamily: 'inherit', cursor: added ? 'default' : 'pointer',
-    opacity: added ? 0.45 : 1, background: 'none',
-    border: 'none', borderBottom: '1px solid var(--line, rgba(17,24,39,.08))',
-    WebkitTapHighlightColor: 'transparent',
+  catRow: (added) => ({
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '14px 16px', width: '100%', textAlign: 'left',
+    fontFamily: T.font, cursor: added ? 'default' : 'pointer',
+    opacity: added ? 0.4 : 1, background: 'none',
+    border: 'none', borderBottom: `1px solid ${T.line}`,
+    WebkitTapHighlightColor: T.tap,
   }),
-  itemInfo: {
-    flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2,
-  },
-  itemName: {
-    fontSize: 14, fontWeight: 600, color: 'var(--text, #161616)', lineHeight: 1.3,
-  },
-  itemMatch: { fontSize: 11, fontWeight: 600, color: 'var(--brand, #B85128)' },
-  itemDesc: {
-    fontSize: 12, color: 'var(--muted, #667085)', lineHeight: 1.4,
+  catInfo: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 },
+  catName: { fontSize: 15, fontWeight: 600, color: T.text, lineHeight: 1.3 },
+  catMatch: { fontSize: 11, fontWeight: 700, color: T.brand },
+  catDesc: {
+    fontSize: 12, color: T.muted, lineHeight: 1.4,
     overflow: 'hidden', display: '-webkit-box',
     WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
   },
-  itemRight: {
-    display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
-    gap: 4, flexShrink: 0,
-  },
-  itemPrice: {
-    fontSize: 12, fontWeight: 600, color: 'var(--muted, #667085)',
-    fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
-  },
-  addIcon: (added) => ({
-    width: 30, height: 30, borderRadius: '50%',
-    background: added ? 'var(--green, #0F7A50)' : 'var(--brand, #B85128)',
+  catRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 },
+  catPrice: { fontSize: 13, fontWeight: 600, color: T.muted, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' },
+  catAdd: (done) => ({
+    width: 32, height: 32, borderRadius: '50%',
+    background: done ? T.green : T.brand,
     color: '#fff', display: 'grid', placeItems: 'center',
-    fontSize: 16, fontWeight: 700, flexShrink: 0,
+    fontSize: 17, fontWeight: 700, flexShrink: 0,
+    boxShadow: done ? 'none' : '0 2px 6px rgba(184,81,40,0.3)',
   }),
-  empty: {
-    padding: '32px 16px', textAlign: 'center',
-    color: 'var(--muted, #667085)', fontSize: 13,
-  },
-};
+  sheetEmpty: { padding: '40px 20px', textAlign: 'center', color: T.muted, fontSize: 14 },
 
-// ── Send sheet ──
-const snd = {
-  handle: {
-    width: 36, height: 4,
-    background: 'var(--line-2, rgba(17,24,39,.14))',
-    borderRadius: 2, margin: '6px auto 14px',
+  // ── Send sheet ──
+  sendHandle: { width: 40, height: 5, background: T.line2, borderRadius: 3, margin: '8px auto 16px' },
+  sendTitle: { fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 16, letterSpacing: '-0.02em' },
+  sendTo: { fontSize: 14, color: T.text2, marginBottom: 16 },
+  sendSummary: { background: T.panel2, borderRadius: T.radius, padding: '14px 16px', marginBottom: 16 },
+  sendRow: { display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14, color: T.text2 },
+  sendRowName: { flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  sendRowAmt: { fontVariantNumeric: 'tabular-nums', flexShrink: 0, marginLeft: 10, fontWeight: 600 },
+  sendTotal: {
+    display: 'flex', justifyContent: 'space-between', padding: '10px 0 0',
+    borderTop: `1px solid ${T.line}`, marginTop: 8,
+    fontSize: 18, fontWeight: 800, color: T.text,
   },
-  title: { fontSize: 18, fontWeight: 700, color: 'var(--text, #161616)', marginBottom: 14 },
-  to: { fontSize: 13, color: 'var(--text-2, #344054)', marginBottom: 14 },
-  summary: {
-    background: 'var(--panel-2, #F9F9F7)', borderRadius: 12,
-    padding: '12px 14px', marginBottom: 14,
-  },
-  summaryRow: {
-    display: 'flex', justifyContent: 'space-between',
-    padding: '3px 0', fontSize: 13, color: 'var(--text-2, #344054)',
-  },
-  summaryRowName: {
-    flex: 1, minWidth: 0, overflow: 'hidden',
-    textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-  },
-  summaryRowAmount: {
-    fontVariantNumeric: 'tabular-nums', flexShrink: 0, marginLeft: 8,
-  },
-  summaryTotal: {
-    display: 'flex', justifyContent: 'space-between',
-    padding: '8px 0 0',
-    borderTop: '1px solid var(--line, rgba(17,24,39,.08))',
-    marginTop: 6, fontSize: 16, fontWeight: 700, color: 'var(--text, #161616)',
-  },
-  methods: { display: 'flex', gap: 4, marginBottom: 14 },
-  methodBtn: (active) => ({
-    flex: 1, padding: '10px 6px', borderRadius: 10,
-    fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-    textAlign: 'center', minHeight: 40,
-    border: active ? '2px solid var(--brand, #B85128)' : '1px solid var(--line-2, rgba(17,24,39,.14))',
-    background: active ? 'var(--brand-bg, rgba(184,81,40,.07))' : 'var(--panel, #fff)',
-    color: active ? 'var(--brand, #B85128)' : 'var(--text-2, #344054)',
-    WebkitTapHighlightColor: 'transparent',
+  sendMethods: { display: 'flex', gap: 6, marginBottom: 16 },
+  sendMethod: (on) => ({
+    flex: 1, padding: '11px 8px', borderRadius: T.radiusSm,
+    fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
+    textAlign: 'center', minHeight: 44,
+    border: on ? `2px solid ${T.brand}` : 'none',
+    background: on ? T.brandBg : T.panel2,
+    color: on ? T.brand : T.text2,
+    WebkitTapHighlightColor: T.tap,
   }),
-  confirmBtn: (disabled) => ({
-    width: '100%', padding: '14px 16px', borderRadius: 12,
-    background: disabled ? 'var(--panel-3, #E8E7E4)' : 'var(--brand, #B85128)',
-    color: disabled ? 'var(--muted, #667085)' : '#fff',
-    fontSize: 16, fontWeight: 700, border: 'none',
-    cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit',
-    minHeight: 50, WebkitTapHighlightColor: 'transparent',
+  sendConfirm: (off) => ({
+    width: '100%', padding: '16px 18px', borderRadius: 14,
+    background: off ? T.panel3 : T.brand,
+    color: off ? T.muted : '#fff',
+    fontSize: 17, fontWeight: 700, border: 'none',
+    cursor: off ? 'default' : 'pointer', fontFamily: T.font,
+    minHeight: 54, WebkitTapHighlightColor: T.tap,
+    boxShadow: off ? 'none' : '0 2px 10px rgba(184,81,40,0.3)',
   }),
 };
 
+/* Chevron SVG — reusable */
+const Chevron = ({ size = 18, color = T.muted, open = false }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.25s' }}><polyline points="9 18 15 12 9 6"/></svg>
+);
 
 /* ═══════════════════════════════════════════════════════
-   Sub-components
+   ITEM CARD
    ═══════════════════════════════════════════════════════ */
-
 function ItemCard({ li, idx, isEditing, priceRange, cur, isLast,
   updateItem, adjustQty, removeItem, setEditingItemId,
   setLineItems, markDirty, genLineItemId }) {
 
-  const lineTotal = Number(li.quantity || 0) * Number(li.unit_price || 0);
-  const qtyDisplay = Number(li.quantity).toFixed(li.quantity % 1 === 0 ? 0 : 2);
-  const contentRef = useRef(null);
-  const touchRef = useRef({ sx: 0, sy: 0, active: false });
+  const total = Number(li.quantity || 0) * Number(li.unit_price || 0);
+  const qtyStr = Number(li.quantity).toFixed(li.quantity % 1 === 0 ? 0 : 2);
+  const ref = useRef(null);
+  const t = useRef({ x: 0, y: 0, on: false });
   const [swiped, setSwiped] = useState(false);
   const [noteOpen, setNoteOpen] = useState(!!li.notes?.trim());
 
   const onTS = useCallback(e => {
     if (swiped) return;
-    const t = e.touches[0];
-    touchRef.current = { sx: t.clientX, sy: t.clientY, active: false };
+    const p = e.touches[0];
+    t.current = { x: p.clientX, y: p.clientY, on: false };
   }, [swiped]);
-
   const onTM = useCallback(e => {
-    const { sx, sy } = touchRef.current;
-    const t = e.touches[0];
-    const dx = t.clientX - sx;
-    const dy = t.clientY - sy;
-    if (!touchRef.current.active && Math.abs(dy) > Math.abs(dx)) return;
+    const dx = e.touches[0].clientX - t.current.x;
+    const dy = e.touches[0].clientY - t.current.y;
+    if (!t.current.on && Math.abs(dy) > Math.abs(dx)) return;
     if (dx < -8) {
-      touchRef.current.active = true;
-      e.preventDefault();
-      const off = Math.max(-120, dx);
-      if (contentRef.current) {
-        contentRef.current.style.transform = `translateX(${off}px)`;
-        contentRef.current.style.transition = 'none';
-      }
+      t.current.on = true; e.preventDefault();
+      if (ref.current) { ref.current.style.transform = `translateX(${Math.max(-130, dx)}px)`; ref.current.style.transition = 'none'; }
     }
   }, []);
-
   const onTE = useCallback(() => {
-    if (!touchRef.current.active) return;
-    const el = contentRef.current;
-    if (!el) return;
+    if (!t.current.on) return;
+    const el = ref.current; if (!el) return;
     const m = new DOMMatrix(getComputedStyle(el).transform);
-    el.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
-    if (m.m41 < -50) {
-      el.style.transform = 'translateX(-120px)';
-      setSwiped(true);
-    } else {
-      el.style.transform = 'translateX(0)';
-    }
-    touchRef.current.active = false;
+    el.style.transition = `transform 0.28s ${T.ease}`;
+    if (m.m41 < -55) { el.style.transform = 'translateX(-130px)'; setSwiped(true); }
+    else el.style.transform = 'translateX(0)';
+    t.current.on = false;
   }, []);
-
-  const closeSwipe = () => {
-    if (contentRef.current) {
-      contentRef.current.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
-      contentRef.current.style.transform = 'translateX(0)';
-    }
-    setSwiped(false);
-  };
+  const close = () => { if (ref.current) { ref.current.style.transition = `transform 0.28s ${T.ease}`; ref.current.style.transform = 'translateX(0)'; } setSwiped(false); };
 
   const price = Number(li.unit_price || 0);
 
   return (
-    <div
-      style={isEditing ? itm.cardEditing : itm.card}
-      onTouchStart={onTS}
-      onTouchMove={onTM}
-      onTouchEnd={onTE}
-    >
-      {/* Revealed actions (behind content) */}
-      <div style={itm.swipeActions}>
-        <button type="button" style={itm.swipeDup} onClick={() => {
-          setLineItems(p => {
-            const n = [...p];
-            n.splice(idx + 1, 0, { ...li, id: genLineItemId() });
-            return n;
-          });
-          markDirty();
-          closeSwipe();
-        }}>Copy</button>
-        <button type="button" style={itm.swipeDel} onClick={() => removeItem(li.id)}>Delete</button>
+    <div style={isEditing ? S.cardActive : S.card} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}>
+      <div style={S.swipeActions}>
+        <button type="button" style={S.swipeCopy} onClick={() => { setLineItems(p => { const n = [...p]; n.splice(idx+1,0,{...li,id:genLineItemId()}); return n; }); markDirty(); close(); }}>Copy</button>
+        <button type="button" style={S.swipeDel} onClick={() => removeItem(li.id)}>Delete</button>
       </div>
-
-      {/* Main content (slides on swipe) */}
-      <div ref={contentRef} style={itm.content} onClick={() => swiped && closeSwipe()}>
-        {/* Row 1: Name (full width — no truncation) */}
-        <input
-          style={itm.nameInput}
-          value={li.name}
-          onChange={e => updateItem(li.id, { name: e.target.value })}
-          placeholder="Item name"
-          onFocus={() => setEditingItemId(li.id)}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey && isLast) {
-              e.preventDefault();
-              setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]);
-              markDirty();
-            }
-          }}
-        />
-
-        {/* Row 2: Qty × $ Price → Total */}
-        <div style={itm.controls}>
-          <div style={itm.qtyStepper}>
-            <button type="button" style={itm.qtyBtn} onClick={() => adjustQty(li.id, -1)}>−</button>
-            <span style={itm.qtyVal}>{qtyDisplay}</span>
-            <button type="button" style={itm.qtyBtn} onClick={() => adjustQty(li.id, 1)}>+</button>
+      <div ref={ref} style={S.cardInner} onClick={() => swiped && close()}>
+        <input style={S.itemName} value={li.name} onChange={e => updateItem(li.id, { name: e.target.value })} placeholder="Item name" onFocus={() => setEditingItemId(li.id)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && isLast) { e.preventDefault(); setLineItems(p => [...p,{id:genLineItemId(),name:'',quantity:1,unit_price:0,notes:'',included:true,category:''}]); markDirty(); }}} />
+        <div style={S.controlsRow}>
+          <div style={S.stepper}>
+            <button type="button" style={S.stepBtn} onClick={() => adjustQty(li.id,-1)}>−</button>
+            <span style={S.stepVal}>{qtyStr}</span>
+            <button type="button" style={S.stepBtn} onClick={() => adjustQty(li.id,1)}>+</button>
           </div>
-          <span style={itm.times}>× $</span>
-          <div style={itm.priceWrap}>
-            <input
-              style={itm.priceInput}
-              type="number" min="0" step="1" inputMode="decimal"
-              value={li.unit_price}
-              onChange={e => updateItem(li.id, { unit_price: Math.max(0, Number(e.target.value) || 0) })}
-              onFocus={() => setEditingItemId(li.id)}
-            />
+          <span style={S.multiply}>×</span>
+          <div style={S.priceArea}>
+            <span style={S.priceCurrency}>$</span>
+            <input style={S.priceInput} type="number" min="0" step="1" inputMode="decimal" value={li.unit_price}
+              onChange={e => updateItem(li.id, { unit_price: Math.max(0, Number(e.target.value)||0) })}
+              onFocus={() => setEditingItemId(li.id)} />
           </div>
-          <span style={itm.totalLabel}>{cur(lineTotal)}</span>
+          <span style={S.lineTotal}>{cur(total)}</span>
         </div>
-
-        {/* Price hint */}
         {isEditing && priceRange && (() => {
-          if (price === 0) return <div style={itm.priceHint}>Typical: ${priceRange.lo}–${priceRange.hi}</div>;
-          if (price < priceRange.lo * 0.6) return <div style={{ ...itm.priceHint, color: 'var(--amber)' }}>Below typical (${priceRange.lo}–${priceRange.hi})</div>;
-          if (price > priceRange.hi * 1.8) return <div style={{ ...itm.priceHint, color: 'var(--red)' }}>Above typical (${priceRange.lo}–${priceRange.hi})</div>;
+          if (price === 0) return <div style={S.hint}>Typical: ${priceRange.lo}–${priceRange.hi}</div>;
+          if (price < priceRange.lo * 0.6) return <div style={{...S.hint,color:T.amber}}>Below typical (${priceRange.lo}–${priceRange.hi})</div>;
+          if (price > priceRange.hi * 1.8) return <div style={{...S.hint,color:T.red}}>Above typical (${priceRange.lo}–${priceRange.hi})</div>;
           return null;
         })()}
-
-        {/* Note */}
         {noteOpen || li.notes?.trim() ? (
-          <input
-            style={itm.noteInput}
-            value={li.notes || ''}
-            onChange={e => updateItem(li.id, { notes: e.target.value })}
-            placeholder="Note (shown to customer)"
-          />
+          <input style={S.noteInput} value={li.notes||''} onChange={e => updateItem(li.id,{notes:e.target.value})} placeholder="Note (shown to customer)" />
         ) : (
-          <button type="button" style={itm.noteBtn} onClick={() => { setNoteOpen(true); updateItem(li.id, { notes: '' }); }}>+ note</button>
+          <button type="button" style={S.noteBtn} onClick={() => {setNoteOpen(true); updateItem(li.id,{notes:''});}}>+ add note</button>
         )}
       </div>
     </div>
   );
 }
 
-
+/* ═══════════════════════════════════════════════════════
+   CATALOG SHEET
+   ═══════════════════════════════════════════════════════ */
 function CatalogSheet({ open, onClose, query, onQuery, results, lineItems, trade, onAdd, cur }) {
-  const panelRef = useRef(null);
-  const inputRef = useRef(null);
-  const touchRef = useRef({ startY: 0, active: false });
-
-  // Auto-focus on open
-  if (open && inputRef.current) {
-    setTimeout(() => inputRef.current?.focus(), 80);
-  }
-
+  const panel = useRef(null); const inp = useRef(null);
+  const drag = useRef({ y: 0, on: false });
+  if (open && inp.current) setTimeout(() => inp.current?.focus(), 80);
   if (!open) return null;
-
-  const isAdded = (name) => lineItems.some(li => (li.name || '').toLowerCase() === name.toLowerCase());
-
+  const added = n => lineItems.some(l => (l.name||'').toLowerCase() === n.toLowerCase());
   return (
-    <div style={cat.backdrop} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div
-        ref={panelRef}
-        style={cat.panel}
-        onClick={e => e.stopPropagation()}
-        onTouchStart={e => {
-          const rect = panelRef.current?.getBoundingClientRect();
-          if (!rect || e.touches[0].clientY - rect.top > 48) return;
-          touchRef.current = { startY: e.touches[0].clientY, active: true };
-        }}
-        onTouchMove={e => {
-          if (!touchRef.current.active) return;
-          const dy = e.touches[0].clientY - touchRef.current.startY;
-          if (dy > 0 && panelRef.current) {
-            panelRef.current.style.transform = `translateY(${dy}px)`;
-            panelRef.current.style.transition = 'none';
-          }
-        }}
-        onTouchEnd={() => {
-          if (!touchRef.current.active) return;
-          touchRef.current.active = false;
-          if (!panelRef.current) return;
-          const m = new DOMMatrix(getComputedStyle(panelRef.current).transform);
-          panelRef.current.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
-          if (m.m41 > 120) {
-            panelRef.current.style.transform = 'translateY(100%)';
-            setTimeout(onClose, 250);
-          } else {
-            panelRef.current.style.transform = 'translateY(0)';
-          }
-        }}
-      >
-        <div style={cat.handle} />
-        <div style={cat.searchRow}>
-          <span style={{ color: 'var(--muted)', flexShrink: 0, fontSize: 15 }}>🔍</span>
-          <input
-            ref={inputRef}
-            style={cat.searchInput}
-            value={query}
-            onChange={e => onQuery(e.target.value)}
-            placeholder={`Search ${trade?.toLowerCase() || ''} items…`}
-            autoComplete="off" autoCorrect="off" autoFocus
-          />
-          {query && <button type="button" onClick={() => onQuery('')} style={cat.clearBtn}>✕</button>}
-          <button type="button" style={cat.doneBtn} onClick={onClose}>Done</button>
+    <div style={S.sheetBackdrop} onClick={e => { if (e.target===e.currentTarget) onClose(); }}>
+      <div ref={panel} style={S.sheetPanel} onClick={e => e.stopPropagation()}
+        onTouchStart={e => { const r = panel.current?.getBoundingClientRect(); if (!r||e.touches[0].clientY-r.top>50) return; drag.current={y:e.touches[0].clientY,on:true}; }}
+        onTouchMove={e => { if (!drag.current.on) return; const dy=e.touches[0].clientY-drag.current.y; if (dy>0&&panel.current){panel.current.style.transform=`translateY(${dy}px)`;panel.current.style.transition='none';} }}
+        onTouchEnd={() => { if (!drag.current.on) return; drag.current.on=false; if (!panel.current) return; const m=new DOMMatrix(getComputedStyle(panel.current).transform); panel.current.style.transition=`transform 0.28s ${T.ease}`; if(m.m41>120){panel.current.style.transform='translateY(100%)';setTimeout(onClose,280);}else panel.current.style.transform='translateY(0)'; }}>
+        <div style={S.sheetHandle} />
+        <div style={S.sheetSearch}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.subtle} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input ref={inp} style={S.sheetInput} value={query} onChange={e=>onQuery(e.target.value)} placeholder={`Search ${trade?.toLowerCase()||''} items…`} autoComplete="off" autoCorrect="off" autoFocus />
+          {query && <button type="button" onClick={()=>onQuery('')} style={S.sheetClear}>✕</button>}
+          <button type="button" style={S.sheetDone} onClick={onClose}>Done</button>
         </div>
-        <div style={cat.results}>
-          {results.length > 0 ? results.map((ci, i) => {
-            const added = isAdded(ci.name);
-            return (
-              <button
-                key={`${ci.name}-${i}`}
-                type="button"
-                style={cat.itemRow(added)}
-                onClick={() => !added && onAdd(ci)}
-                disabled={added}
-              >
-                <div style={cat.itemInfo}>
-                  <span style={cat.itemName}>{ci.name}</span>
-                  {ci.isContextRelevant && <span style={cat.itemMatch}>Matches this job</span>}
-                  {ci.desc && <span style={cat.itemDesc}>{ci.desc}</span>}
-                </div>
-                <div style={cat.itemRight}>
-                  <span style={cat.itemPrice}>{cur(ci.lo)}–{cur(ci.hi)}</span>
-                  <span style={cat.addIcon(added)}>{added ? '✓' : '+'}</span>
-                </div>
-              </button>
-            );
-          }) : (
-            <div style={cat.empty}>
-              {query && query.length >= 2 ? 'No matches — try different keywords' : `Type to search ${trade?.toLowerCase() || ''} items`}
-            </div>
-          )}
+        <div style={S.sheetResults}>
+          {results.length > 0 ? results.map((ci,i) => { const a=added(ci.name); return (
+            <button key={`${ci.name}-${i}`} type="button" style={S.catRow(a)} onClick={()=>!a&&onAdd(ci)} disabled={a}>
+              <div style={S.catInfo}>
+                <span style={S.catName}>{ci.name}</span>
+                {ci.isContextRelevant && <span style={S.catMatch}>Matches this job</span>}
+                {ci.desc && <span style={S.catDesc}>{ci.desc}</span>}
+              </div>
+              <div style={S.catRight}>
+                <span style={S.catPrice}>{cur(ci.lo)}–{cur(ci.hi)}</span>
+                <span style={S.catAdd(a)}>{a?'✓':'+'}</span>
+              </div>
+            </button>
+          );}) : <div style={S.sheetEmpty}>{query&&query.length>=2?'No matches — try different keywords':`Type to search ${trade?.toLowerCase()||''} items`}</div>}
         </div>
       </div>
     </div>
   );
 }
 
-
 /* ═══════════════════════════════════════════════════════
-   Main export
+   MAIN COMPONENT
    ═══════════════════════════════════════════════════════ */
-
 export default function MobileQuoteReview({ ctx }) {
   const {
     lineItems, draft, title, trade, province, country,
@@ -807,267 +607,160 @@ export default function MobileQuoteReview({ ctx }) {
     toast, currency: currencyFn,
   } = ctx;
 
-  const cur = (v) => (currencyFn || currency)(v, country);
+  const cur = v => (currencyFn || currency)(v, country);
   const [scopeOpen, setScopeOpen] = useState(false);
   const [confOpen, setConfOpen] = useState(false);
 
   return (
     <>
-      <div style={layout.page}>
-        {/* ── Back link ── */}
-        <div style={layout.backRow} onClick={() => setPhase('describe')}>
-          <span style={{ fontSize: 16, lineHeight: 1 }}>←</span>
+      <div style={S.page}>
+        {/* ── Back ── */}
+        <div style={S.back} onClick={() => setPhase('describe')}>
+          <span style={S.backArrow}>‹</span>
           <span>Edit job details</span>
-          <span style={layout.tradeBadge}>{trade}</span>
+          <span style={S.badge}>{trade}</span>
         </div>
 
         {/* ── Header ── */}
-        <div style={layout.headerWrap}>
-          <input
-            style={hdr.titleInput}
-            value={title || draft.title || ''}
-            onChange={e => { if (typeof setTitle === 'function') setTitle(e.target.value); ud('title', e.target.value); }}
-            placeholder="Job title"
-          />
-          <div style={hdr.custRow}>
-            {selCustomer ? (
-              <>
-                <div style={hdr.custPill}>
-                  <span style={hdr.custAvatar}>{selCustomer.name?.[0]?.toUpperCase() || '?'}</span>
-                  {selCustomer.name}
-                </div>
-                <button style={hdr.custChangeBtn} type="button" onClick={() => { ud('customer_id', ''); setCustomerSearch(''); }}>Change</button>
-              </>
-            ) : (
-              <div style={{ width: '100%' }}>
-                <input
-                  style={hdr.custSearch}
-                  value={customerSearch}
-                  onChange={e => setCustomerSearch(e.target.value)}
-                  placeholder="Search or add customer…"
-                  autoComplete="off"
-                />
-                {customerSearch.trim() && (() => {
-                  const matches = searchCustomers(allCustomers, customerSearch, 6);
-                  return matches.length > 0 ? (
-                    <div style={hdr.custList}>
-                      {matches.map(c => (
-                        <button key={c.id} style={hdr.custListItem} type="button" onClick={() => { ud('customer_id', c.id); trackQuoteFlowCustomerSelected(c.id); setCustomerSearch(''); }}>
-                          <span>{c.name}</span>
-                          {c.phone && <span style={{ fontSize: 12, color: 'var(--muted)' }}>{c.phone}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <button style={{ ...hdr.custListItem, marginTop: 4, color: 'var(--brand)' }} type="button" onClick={() => { setNewCust(p => ({ ...p, name: customerSearch })); setShowNewCust(true); }}>
-                      + New: "{customerSearch}"
-                    </button>
-                  );
+        <div style={S.header}>
+          <input style={S.title} value={title||draft.title||''} onChange={e => {if(typeof setTitle==='function')setTitle(e.target.value); ud('title',e.target.value);}} placeholder="Job title" />
+          <div style={S.custRow}>
+            {selCustomer ? (<>
+              <div style={S.custPill}>
+                <span style={S.custAvatar}>{selCustomer.name?.[0]?.toUpperCase()||'?'}</span>
+                {selCustomer.name}
+              </div>
+              <button style={S.custChange} type="button" onClick={()=>{ud('customer_id','');setCustomerSearch('');}}>Change</button>
+            </>) : (
+              <div style={{width:'100%'}}>
+                <input style={S.custInput} value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Search or add customer…" autoComplete="off" />
+                {customerSearch.trim() && (()=>{
+                  const m = searchCustomers(allCustomers,customerSearch,6);
+                  return m.length>0 ? (
+                    <div style={S.custList}>{m.map(c=>(
+                      <button key={c.id} style={S.custItem} type="button" onClick={()=>{ud('customer_id',c.id);trackQuoteFlowCustomerSelected(c.id);setCustomerSearch('');}}>
+                        <span>{c.name}</span>
+                        {c.phone&&<span style={{fontSize:12,color:T.muted}}>{c.phone}</span>}
+                      </button>))}</div>
+                  ) : (<button style={{...S.custItem,marginTop:4,color:T.brand}} type="button" onClick={()=>{setNewCust(p=>({...p,name:customerSearch}));setShowNewCust(true);}}>+ New: "{customerSearch}"</button>);
                 })()}
               </div>
             )}
           </div>
         </div>
 
-        <div style={layout.divider} />
-
         {/* ── Line Items ── */}
-        <div style={layout.section}>
-          <div style={layout.sectionLabel}>
-            {itemCount > 0 ? `${itemCount} item${itemCount !== 1 ? 's' : ''}` : 'Line items'}
-          </div>
-
-          {lineItems.map((li, idx) => (
-            <ItemCard
-              key={li.id}
-              li={li}
-              idx={idx}
-              isEditing={editingItemId === li.id}
-              priceRange={priceRanges?.[li.id]}
-              cur={cur}
-              isLast={idx === lineItems.length - 1}
-              updateItem={updateItem}
-              adjustQty={adjustQty}
-              removeItem={removeItem}
-              setEditingItemId={setEditingItemId}
-              setLineItems={setLineItems}
-              markDirty={markDirty}
-              genLineItemId={genLineItemId}
-            />
+        <div style={S.section}>
+          <div style={S.label}>{itemCount>0?`${itemCount} item${itemCount!==1?'s':''}`:'Line items'}</div>
+          {lineItems.map((li,idx) => (
+            <ItemCard key={li.id} li={li} idx={idx} isEditing={editingItemId===li.id} priceRange={priceRanges?.[li.id]} cur={cur} isLast={idx===lineItems.length-1}
+              updateItem={updateItem} adjustQty={adjustQty} removeItem={removeItem} setEditingItemId={setEditingItemId} setLineItems={setLineItems} markDirty={markDirty} genLineItemId={genLineItemId} />
           ))}
-
-          {lineItems.length === 0 && (
-            <div style={chr.emptyState}>
-              <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>📋</div>
-              <strong>No items yet</strong><br />
-              Search the catalog, add custom items, or ask Foreman.
+          {lineItems.length===0 && (
+            <div style={S.empty}>
+              <div style={{fontSize:32,marginBottom:12,opacity:0.35}}>📋</div>
+              <div style={S.emptyTitle}>No items yet</div>
+              <div style={S.emptyDesc}>Search the catalog or add items to build your quote.</div>
             </div>
           )}
         </div>
 
-        {/* ── Add Buttons ── */}
-        <div style={addS.wrap}>
-          <button style={addS.primary} type="button" onClick={() => setAddMode('catalog')}>
-            🔍 Search catalog
+        {/* ── Add ── */}
+        <div style={S.addWrap}>
+          <button style={S.addPrimary} type="button" onClick={()=>setAddMode('catalog')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Search catalog
           </button>
-          <div style={addS.row}>
-            <button style={addS.secondary} type="button" onClick={() => {
-              setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]);
-              markDirty();
-            }}>+ Custom</button>
-            <button style={addS.foreman} type="button" onClick={() => {
-              if (window.__punchlistOpenForeman) {
-                const jobDesc = description || title || '';
-                window.__punchlistOpenForeman({
-                  starters: [
-                    `What else should I include for this ${trade.toLowerCase()} job?`,
-                    jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote',
-                    `What do ${trade.toLowerCase()}s commonly forget to quote?`,
-                  ],
-                  quoteContext: { description: jobDesc, trade, title: title || '', items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })), total: grandTotal, province, country },
-                });
-              }
-            }}>💬 Foreman</button>
+          <div style={S.addRow}>
+            <button style={S.addSecondary} type="button" onClick={()=>{setLineItems(p=>[...p,{id:genLineItemId(),name:'',quantity:1,unit_price:0,notes:'',included:true,category:''}]);markDirty();}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Custom
+            </button>
+            <button style={S.addForeman} type="button" onClick={()=>{
+              if(window.__punchlistOpenForeman){const j=description||title||'';window.__punchlistOpenForeman({starters:[`What else should I include for this ${trade.toLowerCase()} job?`,j?`Review my scope: "${j.slice(0,80)}${j.length>80?'…':''}"` :'Help me scope this quote',`What do ${trade.toLowerCase()}s commonly forget to quote?`],quoteContext:{description:j,trade,title:title||'',items:lineItems.filter(i=>i.name?.trim()).map(i=>({name:i.name,qty:i.quantity,price:i.unit_price})),total:grandTotal,province,country}});}
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Foreman
+            </button>
           </div>
         </div>
 
-        {/* ── Scope & Terms ── */}
-        <div style={chr.collapse} onClick={() => setScopeOpen(!scopeOpen)}>
-          <span style={chr.collapseLabel}>Scope, terms & notes</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted, #667085)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: scopeOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="9 18 15 12 9 6"/></svg>
+        {/* ── Scope ── */}
+        <div style={S.collapse} onClick={()=>setScopeOpen(!scopeOpen)}>
+          <span style={S.collapseLabel}>Scope, terms & notes</span>
+          <Chevron open={scopeOpen} />
         </div>
-        {scopeOpen && (
-          <div style={{ padding: '0 16px 8px' }}>
-            <textarea
-              style={{ ...hdr.custSearch, minHeight: 100, maxHeight: 200, resize: 'vertical', lineHeight: 1.5 }}
-              value={draft.scope_summary}
-              onChange={e => ud('scope_summary', e.target.value)}
-              rows={4}
-              placeholder="Brief description of work (shown to customer)"
-            />
+        {scopeOpen && <div style={{padding:'6px 20px 12px'}}><textarea style={S.scopeText} value={draft.scope_summary} onChange={e=>ud('scope_summary',e.target.value)} rows={4} placeholder="Brief description of work (shown to customer)" /></div>}
+
+        {/* ── Confidence ── */}
+        {lineItems.length>0 && confidence && confidence.readiness==='ready' && (
+          <div style={S.confReady}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style={{fontSize:14,fontWeight:600,color:T.green}}>Ready to send</span>
           </div>
         )}
-
-        {/* ── Confidence / Commonly Missed ── */}
-        {lineItems.length > 0 && confidence && confidence.readiness !== 'ready' && (() => {
-          const issues = (confidence.checks || []).filter(c => c.state !== 'good');
-          return (
-            <>
-              <div
-                style={{
-                  ...chr.confBar,
-                  background: 'var(--amber-bg, rgba(217,119,6,.07))',
-                  border: '1px solid var(--amber, rgba(217,119,6,.2))',
-                  borderRadius: confOpen ? '10px 10px 0 0' : 10,
-                  marginBottom: confOpen ? 0 : undefined,
-                }}
-                onClick={() => setConfOpen(!confOpen)}
-              >
-                <span style={{ ...chr.confBadge, background: 'var(--amber-bg)', color: 'var(--amber-text, var(--amber))', border: '1px solid var(--amber)' }}>
-                  {confidence.score}%
-                </span>
-                <span style={{ ...chr.confLabel, color: 'var(--amber-text, var(--amber))' }}>
-                  Commonly missed items
-                </span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber, #D97706)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: confOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="9 18 15 12 9 6"/></svg>
+        {lineItems.length>0 && confidence && confidence.readiness!=='ready' && (()=>{
+          const issues = (confidence.checks||[]).filter(c=>c.state!=='good');
+          return (<>
+            <div style={{...S.confBar,borderRadius:confOpen?`${T.radiusSm}px ${T.radiusSm}px 0 0`:T.radiusSm,marginBottom:confOpen?0:undefined}} onClick={()=>setConfOpen(!confOpen)}>
+              <span style={S.confBadge}>{confidence.score}%</span>
+              <span style={S.confLabel}>Commonly missed items</span>
+              <Chevron size={16} color={T.amberText} open={confOpen} />
+            </div>
+            {confOpen && issues.length>0 && (
+              <div style={S.confChecks}>
+                {issues.map((c,i)=>(
+                  <div key={i} style={S.confCheck}>
+                    <span style={{width:7,height:7,borderRadius:'50%',flexShrink:0,background:c.state==='warn'?T.amber:c.state==='fail'?T.red:T.muted}} />
+                    <span>{c.label}</span>
+                  </div>
+                ))}
               </div>
-              {confOpen && issues.length > 0 && (
-                <div style={chr.confChecks}>
-                  {issues.map((c, i) => (
-                    <div key={i} style={chr.confCheck}>
-                      <span style={{
-                        width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                        background: c.state === 'warn' ? 'var(--amber)' : c.state === 'fail' ? 'var(--red)' : 'var(--muted)',
-                      }} />
-                      <span>{c.label}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          );
+            )}
+          </>);
         })()}
-        {lineItems.length > 0 && confidence?.readiness === 'ready' && (
-          <div style={{ ...chr.confBar, background: 'var(--green-bg, rgba(15,122,80,.07))', border: '1px solid var(--green-line, rgba(15,122,80,.18))' }}>
-            <span style={{ fontSize: 15, color: 'var(--green)' }}>✓</span>
-            <span style={{ ...chr.confLabel, color: 'var(--green)' }}>Ready to send</span>
-          </div>
-        )}
 
-        {/* Error */}
-        {error && error !== '__needs_phone__' && (
-          <div style={chr.errorBox}>{error}</div>
-        )}
+        {error && error!=='__needs_phone__' && <div style={S.error}>{error}</div>}
       </div>
 
-      {/* ── Sticky Footer ── */}
-      <div style={chr.footer}>
-        <span style={chr.footerTotal}>{cur(grandTotal)}</span>
-        {itemCount === 0 ? (
-          <button style={chr.footerCtaDisabled} type="button" disabled>Add items to send</button>
+      {/* ── Footer ── */}
+      <div style={S.footer}>
+        <span style={S.footerTotal}>{cur(grandTotal)}</span>
+        {itemCount===0 ? (
+          <button style={S.footerCtaOff} type="button" disabled>Add items to send</button>
         ) : !draft.customer_id ? (
-          <button style={chr.footerCta} type="button" disabled={sending || isLocked} onClick={() => { ctx.setDeliveryMethod?.('copy'); handleSend(); }}>
-            {sending ? 'Sending…' : 'Copy Quote Link'}
+          <button style={S.footerCta} type="button" disabled={sending||isLocked} onClick={()=>{ctx.setDeliveryMethod?.('copy');handleSend();}}>
+            {sending?'Sending…':'Copy Quote Link'}
           </button>
         ) : (
-          <button style={chr.footerCta} type="button" disabled={sending || isLocked} onClick={handleSend}>
-            {sending ? 'Sending…' : `Text to ${selCustomer?.name?.split(' ')[0] || 'customer'} →`}
+          <button style={S.footerCta} type="button" disabled={sending||isLocked} onClick={handleSend}>
+            {sending?'Sending…':`Text to ${selCustomer?.name?.split(' ')[0]||'customer'} →`}
           </button>
         )}
       </div>
 
-      {/* ── Catalog Sheet ── */}
-      <CatalogSheet
-        open={addMode === 'catalog'}
-        onClose={() => { setAddMode(null); setCatalogQuery(''); }}
-        query={catalogQuery}
-        onQuery={setCatalogQuery}
-        results={catalogResults}
-        lineItems={lineItems}
-        trade={trade}
-        onAdd={addCatalogItem}
-        cur={cur}
-      />
+      {/* ── Catalog ── */}
+      <CatalogSheet open={addMode==='catalog'} onClose={()=>{setAddMode(null);setCatalogQuery('');}} query={catalogQuery} onQuery={setCatalogQuery} results={catalogResults} lineItems={lineItems} trade={trade} onAdd={addCatalogItem} cur={cur} />
 
-      {/* ── Send Bottom Sheet ── */}
+      {/* ── Send Sheet ── */}
       {showSend && (
-        <div style={cat.backdrop} onClick={() => setShowSend(false)}>
-          <div style={{ ...cat.panel, padding: '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }} onClick={e => e.stopPropagation()}>
-            <div style={snd.handle} />
-            <div style={snd.title}>Send Quote</div>
-            {selCustomer && (
-              <div style={snd.to}>
-                To <strong style={{ color: 'var(--text)' }}>{selCustomer.name}</strong>{selCustomer.phone ? ` · ${selCustomer.phone}` : ''}
-              </div>
-            )}
-            <div style={snd.summary}>
-              {lineItems.filter(i => i.name?.trim()).slice(0, 3).map(i => (
-                <div key={i.id} style={snd.summaryRow}>
-                  <span style={snd.summaryRowName}>{i.name}</span>
-                  <span style={snd.summaryRowAmount}>{cur(Number(i.quantity || 0) * Number(i.unit_price || 0))}</span>
-                </div>
-              ))}
-              {lineItems.length > 3 && <div style={{ fontSize: 12, color: 'var(--muted)', padding: '2px 0' }}>+{lineItems.length - 3} more</div>}
-              <div style={snd.summaryTotal}>
-                <span>Total</span>
-                <span style={{ fontVariantNumeric: 'tabular-nums' }}>{cur(grandTotal)}</span>
-              </div>
+        <div style={S.sheetBackdrop} onClick={()=>setShowSend(false)}>
+          <div style={{...S.sheetPanel,padding:'0 20px calc(20px + env(safe-area-inset-bottom,0px))'}} onClick={e=>e.stopPropagation()}>
+            <div style={S.sendHandle} />
+            <div style={S.sendTitle}>Send Quote</div>
+            {selCustomer && <div style={S.sendTo}>To <strong style={{color:T.text}}>{selCustomer.name}</strong>{selCustomer.phone?` · ${selCustomer.phone}`:''}</div>}
+            <div style={S.sendSummary}>
+              {lineItems.filter(i=>i.name?.trim()).slice(0,3).map(i=>(<div key={i.id} style={S.sendRow}><span style={S.sendRowName}>{i.name}</span><span style={S.sendRowAmt}>{cur(Number(i.quantity||0)*Number(i.unit_price||0))}</span></div>))}
+              {lineItems.length>3 && <div style={{fontSize:12,color:T.muted,padding:'4px 0'}}>+{lineItems.length-3} more</div>}
+              <div style={S.sendTotal}><span>Total</span><span style={{fontVariantNumeric:'tabular-nums'}}>{cur(grandTotal)}</span></div>
             </div>
-            <div style={snd.methods}>
-              {[{ v: 'text', l: '💬 Text' }, { v: 'email', l: '✉️ Email' }, { v: 'copy', l: '🔗 Copy' }].map(o => (
-                <button key={o.v} type="button" onClick={() => setDeliveryMethod(o.v)} style={snd.methodBtn(deliveryMethod === o.v)}>{o.l}</button>
-              ))}
+            <div style={S.sendMethods}>
+              {[{v:'text',l:'💬 Text'},{v:'email',l:'✉️ Email'},{v:'copy',l:'🔗 Copy'}].map(o=>(<button key={o.v} type="button" onClick={()=>setDeliveryMethod(o.v)} style={S.sendMethod(deliveryMethod===o.v)}>{o.l}</button>))}
             </div>
-            {deliveryMethod === 'text' && SmsComposerField && (
-              <div style={{ marginBottom: 14 }}>
-                <SmsComposerField id="qb-sms-mobile" label="Message" value={smsBody} onChange={setSmsBody} rows={4} showLinkHint={true} />
-              </div>
-            )}
-            {deliveryMethod === 'text' && !SmsComposerField && (
-              <textarea style={{ ...hdr.custSearch, minHeight: 80, resize: 'vertical', marginBottom: 14 }} value={smsBody} onChange={e => setSmsBody(e.target.value)} placeholder="Message..." />
-            )}
-            <button type="button" disabled={sending || saving} onClick={handleConfirmSend} style={snd.confirmBtn(sending || saving)}>
-              {sending ? 'Sending…' : saving ? 'Saving…' : deliveryMethod === 'text' ? `Text ${cur(grandTotal)} Quote` : deliveryMethod === 'email' ? `Email ${cur(grandTotal)} Quote` : 'Copy Quote Link'}
+            {deliveryMethod==='text'&&SmsComposerField&&<div style={{marginBottom:16}}><SmsComposerField id="qb-sms-mobile" label="Message" value={smsBody} onChange={setSmsBody} rows={4} showLinkHint={true} /></div>}
+            {deliveryMethod==='text'&&!SmsComposerField&&<textarea style={{...S.custInput,minHeight:80,resize:'vertical',marginBottom:16}} value={smsBody} onChange={e=>setSmsBody(e.target.value)} placeholder="Message..." />}
+            <button type="button" disabled={sending||saving} onClick={handleConfirmSend} style={S.sendConfirm(sending||saving)}>
+              {sending?'Sending…':saving?'Saving…':deliveryMethod==='text'?`Text ${cur(grandTotal)} Quote`:deliveryMethod==='email'?`Email ${cur(grandTotal)} Quote`:'Copy Quote Link'}
             </button>
           </div>
         </div>

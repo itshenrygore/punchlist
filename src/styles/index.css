@@ -11,7 +11,7 @@
 @import './phase2-public-quote.css';
 @import './phase3-dashboard.css';
 @import './mobile-redesign.css';
-@import './calendar-fixes.css';
+@import './premium-ui.css';
 
 @tailwind base;
 @tailwind components;
