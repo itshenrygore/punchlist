@@ -1395,7 +1395,7 @@
 
 /* Header */
 .plc5-header {
-  padding: 8px 4px 12px;
+  padding: 4px 4px 8px;
 }
 .plc5-title-row {
   display: flex;
@@ -1410,7 +1410,7 @@
   gap: 0;
 }
 .plc5-month-title {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text);
@@ -1425,15 +1425,15 @@
   letter-spacing: 0.02em;
 }
 .plc5-nav-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   border: 1px solid var(--line);
   background: var(--panel);
   cursor: pointer;
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-2);
   transition: all 0.15s;
   font-family: inherit;
@@ -1449,7 +1449,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   padding: 0 2px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .plc5-dow-label {
   text-align: center;
@@ -1458,7 +1458,7 @@
   color: var(--subtle);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 
 /* Month grid */
@@ -1472,26 +1472,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 8px 0 6px;
+  gap: 2px;
+  padding: 4px 0 3px;
   border: none;
   background: none;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.1s;
-  border-radius: 12px;
+  border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
-  min-height: 48px;
+  min-height: 38px;
 }
 .plc5-day:active {
   background: var(--panel-2);
 }
 .plc5-day-num {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text);
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1529,12 +1529,12 @@
 /* Dots */
 .plc5-dots {
   display: flex;
-  gap: 3px;
-  min-height: 5px;
+  gap: 2px;
+  min-height: 4px;
 }
 .plc5-dot {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
 }
 .plc5-dot--scheduled { background: var(--brand, #F97316); }
@@ -1550,8 +1550,8 @@
 
 /* Events section */
 .plc5-events {
-  padding: 12px 8px 24px;
-  min-height: 200px;
+  padding: 8px 8px 24px;
+  min-height: 180px;
 }
 .plc5-events-header {
   display: flex;
@@ -1729,17 +1729,17 @@
 
 /* Responsive: slightly more compact on small phones */
 @media (max-width: 375px) {
-  .plc5-month-title { font-size: 24px; }
-  .plc5-day-num { width: 28px; height: 28px; font-size: 14px; }
-  .plc5-day { padding: 6px 0 4px; min-height: 40px; }
-  .plc5-event { padding: 10px; }
+  .plc5-month-title { font-size: 20px; }
+  .plc5-day-num { width: 26px; height: 26px; font-size: 13px; }
+  .plc5-day { padding: 3px 0 2px; min-height: 34px; }
+  .plc5-event { padding: 8px; }
 }
 
 /* Desktop: slightly wider */
 @media (min-width: 769px) {
   .plc5 { max-width: 560px; }
-  .plc5-day-num { width: 36px; height: 36px; font-size: 15px; }
-  .plc5-month-title { font-size: 32px; }
+  .plc5-day-num { width: 32px; height: 32px; font-size: 15px; }
+  .plc5-month-title { font-size: 26px; }
 }
 
 
@@ -2439,15 +2439,15 @@
     border-radius: 10px !important; font-size: 16px;
   }
 
-  /* Day cells: generous targets */
-  .plc5-dow-label { font-size: 10px !important; padding: 3px 0 !important; }
+  /* Day cells: compact but tappable */
+  .plc5-dow-label { font-size: 10px !important; padding: 2px 0 !important; }
   .plc5-grid { gap: 0; padding: 0 !important; }
   .plc5-day {
-    min-height: 46px; padding: 5px 0 4px !important;
+    min-height: 38px; padding: 4px 0 3px !important;
     border-radius: 10px;
   }
   .plc5-day-num {
-    width: 32px !important; height: 32px !important;
+    width: 28px !important; height: 28px !important;
     font-size: 14px !important;
   }
   .plc5-today .plc5-day-num { font-weight: 800; }

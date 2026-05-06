@@ -97,6 +97,8 @@
   --panel-2:   #202226;       /* L3: card / module — clearly lifted */
   --panel-3:   #282B30;       /* L3.5: hover state on cards */
   --panel-4:   #2F3338;       /* L4: active state on cards */
+  --card:      #202226;       /* alias for --panel-2: card surfaces */
+  --fg:        #F3F4F6;       /* alias for --text: foreground text */
 
   /* ── Input surfaces: recessed into cards ── */
   --input-bg:  #16181B;       /* sits INTO cards, darker than panel-2 */
@@ -4372,7 +4374,7 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
 [data-theme="dark"] .panel,[data-theme="dark"] .ds-section,[data-theme="dark"] .qb-intake,[data-theme="dark"] .qb-items,[data-theme="dark"] .qb-diag,[data-theme="dark"] .qb-ae,[data-theme="dark"] .qb-side-card,[data-theme="dark"] .qb-pool,[data-theme="dark"] .search-panel,[data-theme="dark"] .ob-card,[data-theme="dark"] .settings-grid .panel,[data-theme="dark"] .inv-doc,[data-theme="dark"] .inv-side,[data-theme="dark"] .qd-card,[data-theme="dark"] .ct-detail,[data-theme="dark"] .qcard,[data-theme="dark"] .dash-metric-card{box-shadow:0 18px 48px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.03);}
 .panel,.ds-section,.qcard,.dash-metric-card,.qb-intake,.qb-items,.qb-diag,.qb-ae,.qb-side-card,.qb-pool{position:relative;overflow:hidden;}
 .panel::after,.ds-section::after,.qcard::after,.dash-metric-card::after,.qb-intake::after,.qb-items::after,.qb-diag::after,.qb-ae::after,.qb-side-card::after,.qb-pool::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg, rgba(255,255,255,.05), transparent 26%);opacity:.75;}
-[data-theme="dark"] .panel::after,[data-theme="dark"] .ds-section::after,[data-theme="dark"] .qcard::after,[data-theme="dark"] .dash-metric-card::after,[data-theme="dark"] .qb-intake::after,[data-theme="dark"] .qb-items::after,[data-theme="dark"] .qb-diag::after,[data-theme="dark"] .qb-ae::after,[data-theme="dark"] .qb-side-card::after,[data-theme="dark"] .qb-pool::after{background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,0) 28%);}
+[data-theme="dark"] .panel::after,[data-theme="dark"] .ds-section::after,[data-theme="dark"] .qcard::after,[data-theme="dark"] .dash-metric-card::after,[data-theme="dark"] .qb-intake::after,[data-theme="dark"] .qb-items::after,[data-theme="dark"] .qb-diag::after,[data-theme="dark"] .qb-ae::after,[data-theme="dark"] .qb-side-card::after,[data-theme="dark"] .qb-pool::after{background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 28%);}
 .btn{border-radius:12px;font-weight:700;letter-spacing:-.015em;box-shadow:0 1px 0 rgba(255,255,255,.08) inset;transition:transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);}
 .btn:hover{box-shadow:0 10px 20px rgba(15,23,42,.08), 0 1px 0 rgba(255,255,255,.12) inset;}
 [data-theme="dark"] .btn:hover{box-shadow:0 14px 30px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.08) inset;}
