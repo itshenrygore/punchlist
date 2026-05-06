@@ -2,17 +2,19 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { currency } from '../../lib/format';
 
 /* ─────────────────────────────────────────────────────────
-   LineItemCard — single line item in the quote editor.
-   
-   Mobile-first: designed for 375px (iPhone X) as baseline.
-   - Row 1: item name (full width)
-   - Row 2: qty stepper | × $ price | line total | note icon
-   - Note (optional, expands below)
-   - Swipe left to reveal actions (delete, duplicate)
+   LineItemCard v2 — collapsed / expanded paradigm.
+
+   COLLAPSED (default):
+     Single row: name … qty × $price   $total
+     ~38px. Tap to expand. Swipe left → delete.
+
+   EXPANDED (one at a time):
+     Name input, qty stepper, price input, note, delete btn.
+     Tap outside or tap another item → collapse.
    ───────────────────────────────────────────────────────── */
 
 const SWIPE_THRESHOLD = 50;
-const SWIPE_MAX = 100;
+const SWIPE_MAX = 88;
 
 export default function LineItemCard({
   item,
@@ -33,42 +35,48 @@ export default function LineItemCard({
   const touchRef = useRef({ startX: 0, startY: 0, swiping: false, decided: false });
   const cardRef = useRef(null);
   const contentRef = useRef(null);
+  const nameRef = useRef(null);
 
   const lineTotal = Number(item.quantity || 0) * Number(item.unit_price || 0);
-  const qtyDisplay = Number(item.quantity).toFixed(item.quantity % 1 === 0 ? 0 : 2);
+  const qty = Number(item.quantity || 1);
+  const qtyDisplay = qty.toFixed(qty % 1 === 0 ? 0 : 2);
+  const expanded = isEditing;
 
-  // ── Swipe handling via non-passive listeners ──
+  // Auto-focus name when expanding
+  useEffect(() => {
+    if (expanded && nameRef.current) {
+      const t = setTimeout(() => nameRef.current?.focus(), 80);
+      return () => clearTimeout(t);
+    }
+  }, [expanded]);
+
+  // ── Swipe handling ──
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
 
     const onStart = (e) => {
-      if (swiped) return;
+      if (swiped || expanded) return;
       const t = e.touches[0];
       touchRef.current = { startX: t.clientX, startY: t.clientY, swiping: false, decided: false };
     };
 
     const onMove = (e) => {
       const ref = touchRef.current;
+      if (!ref.startX) return;
       const t = e.touches[0];
       const dx = t.clientX - ref.startX;
       const dy = t.clientY - ref.startY;
 
-      // First 10px of movement: decide if horizontal or vertical
       if (!ref.decided) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; // too small to decide
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
         ref.decided = true;
-        if (Math.abs(dy) > Math.abs(dx)) {
-          // Vertical scroll — bail out completely
-          ref.swiping = false;
-          return;
-        }
+        if (Math.abs(dy) > Math.abs(dx)) { ref.swiping = false; return; }
         ref.swiping = true;
       }
-
       if (!ref.swiping) return;
 
-      e.preventDefault(); // This works because listener is { passive: false }
+      e.preventDefault();
       const offset = Math.max(-SWIPE_MAX, Math.min(0, dx));
       if (contentRef.current) {
         contentRef.current.style.transform = `translateX(${offset}px)`;
@@ -81,11 +89,9 @@ export default function LineItemCard({
       if (!ref.swiping) return;
       const el = contentRef.current;
       if (!el) return;
-
       const matrix = new DOMMatrix(getComputedStyle(el).transform);
       const currentX = matrix.m41;
-
-      el.style.transition = 'transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)';
+      el.style.transition = 'transform 0.2s ease-out';
       if (currentX < -SWIPE_THRESHOLD) {
         el.style.transform = `translateX(-${SWIPE_MAX}px)`;
         setSwiped(true);
@@ -99,117 +105,128 @@ export default function LineItemCard({
     el.addEventListener('touchstart', onStart, { passive: true });
     el.addEventListener('touchmove', onMove, { passive: false });
     el.addEventListener('touchend', onEnd, { passive: true });
-
     return () => {
       el.removeEventListener('touchstart', onStart);
       el.removeEventListener('touchmove', onMove);
       el.removeEventListener('touchend', onEnd);
     };
-  }, [swiped]);
+  }, [swiped, expanded]);
 
   const closeSwipe = useCallback(() => {
     if (contentRef.current) {
-      contentRef.current.style.transition = 'transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)';
+      contentRef.current.style.transition = 'transform 0.2s ease-out';
       contentRef.current.style.transform = 'translateX(0)';
     }
     setSwiped(false);
   }, []);
 
-  // ── Price hint ──
   const renderPriceHint = () => {
-    if (!isEditing || !priceRange) return null;
+    if (!expanded || !priceRange) return null;
     const price = Number(item.unit_price || 0);
     const { lo, hi } = priceRange;
-    if (price === 0) return <div className="qe-price-hint">Typical: ${lo}–${hi}</div>;
-    if (price < lo * 0.6) return <div className="qe-price-hint qe-price-low">Below typical (${lo}–${hi})</div>;
-    if (price > hi * 1.8) return <div className="qe-price-hint qe-price-high">Above typical (${lo}–${hi})</div>;
+    if (price === 0) return <div className="li-hint">Typical: ${lo}–${hi}</div>;
+    if (price < lo * 0.6) return <div className="li-hint li-hint--low">Below typical (${lo}–${hi})</div>;
+    if (price > hi * 1.8) return <div className="li-hint li-hint--high">Above typical (${lo}–${hi})</div>;
     return null;
+  };
+
+  const handleRowTap = () => {
+    if (swiped) { closeSwipe(); return; }
+    if (!expanded) onFocus(item.id);
   };
 
   return (
     <div
       ref={cardRef}
-      className={`qe-item ${isEditing ? 'qe-item--editing' : ''} ${swiped ? 'qe-item--swiped' : ''}`}
+      className={`li-row ${expanded ? 'li-row--open' : ''} ${swiped ? 'li-row--swiped' : ''}`}
     >
-      {/* Swipe-revealed actions */}
-      <div className="qe-item-actions-revealed" aria-hidden={!swiped}>
-        <button
-          type="button"
-          className="qe-action-dup"
-          onClick={() => { onDuplicate(item.id); closeSwipe(); }}
-          aria-label="Duplicate"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-        <button
-          type="button"
-          className="qe-action-del"
-          onClick={() => onRemove(item.id)}
-          aria-label={`Remove ${item.name || 'item'}`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      {/* Swipe actions */}
+      <div className="li-swipe-actions" aria-hidden={!swiped}>
+        <button type="button" className="li-swipe-btn li-swipe-del" onClick={() => onRemove(item.id)} aria-label="Delete">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span className="li-swipe-label">Delete</span>
         </button>
       </div>
 
-      {/* Main card content (slides on swipe) */}
-      <div ref={contentRef} className="qe-item-content" onClick={() => swiped && closeSwipe()}>
-        {/* Row 1: Item name */}
-        <input
-          className="qe-item-name"
-          value={item.name}
-          onChange={e => onUpdate(item.id, { name: e.target.value })}
-          placeholder="Item name"
-          aria-label="Item name"
-          onFocus={() => onFocus(item.id)}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey && isLast) {
-              e.preventDefault();
-              onAddAfter();
-            }
-          }}
-        />
+      {/* Main content */}
+      <div ref={contentRef} className="li-content" onClick={!expanded ? handleRowTap : undefined}>
 
-        {/* Row 2: Qty + Price + Total */}
-        <div className="qe-item-row2">
-          <div className="qe-qty">
-            <button type="button" className="qe-qty-btn" onClick={() => onAdjustQty(item.id, -1)} aria-label="Decrease">−</button>
-            <span className="qe-qty-val">{qtyDisplay}</span>
-            <button type="button" className="qe-qty-btn" onClick={() => onAdjustQty(item.id, 1)} aria-label="Increase">+</button>
+        {/* COLLAPSED */}
+        {!expanded && (
+          <div className="li-summary">
+            <span className="li-summary-name">{item.name || 'Untitled item'}</span>
+            <span className="li-summary-meta">
+              {qty !== 1 && <span className="li-summary-qty">{qtyDisplay}×</span>}
+            </span>
+            <span className="li-summary-total">{currency(lineTotal, country)}</span>
           </div>
-          <span className="qe-times">×</span>
-          <div className="qe-price">
-            <span className="qe-price-dollar">$</span>
+        )}
+
+        {/* EXPANDED */}
+        {expanded && (
+          <div className="li-edit">
             <input
-              className="qe-price-input"
-              type="number"
-              min="0"
-              step="1"
-              inputMode="decimal"
-              value={item.unit_price}
-              onChange={e => onUpdate(item.id, { unit_price: Math.max(0, Number(e.target.value) || 0) })}
-              onFocus={() => onFocus(item.id)}
-              aria-label="Unit price"
+              ref={nameRef}
+              className="li-edit-name"
+              value={item.name}
+              onChange={e => onUpdate(item.id, { name: e.target.value })}
+              placeholder="Item name"
+              aria-label="Item name"
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey && isLast) { e.preventDefault(); onAddAfter(); }
+              }}
             />
+
+            <div className="li-edit-row">
+              <div className="li-qty">
+                <button type="button" className="li-qty-btn" onClick={() => onAdjustQty(item.id, -1)} aria-label="Decrease">−</button>
+                <span className="li-qty-val">{qtyDisplay}</span>
+                <button type="button" className="li-qty-btn" onClick={() => onAdjustQty(item.id, 1)} aria-label="Increase">+</button>
+              </div>
+              <span className="li-times">×</span>
+              <div className="li-price">
+                <span className="li-price-sign">$</span>
+                <input
+                  className="li-price-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputMode="decimal"
+                  value={item.unit_price}
+                  onChange={e => onUpdate(item.id, { unit_price: Math.max(0, Number(e.target.value) || 0) })}
+                  aria-label="Unit price"
+                />
+              </div>
+              <span className="li-total">{currency(lineTotal, country)}</span>
+            </div>
+
+            {renderPriceHint()}
+
+            {noteOpen ? (
+              <input
+                className="li-note"
+                value={item.notes || ''}
+                onChange={e => onUpdate(item.id, { notes: e.target.value })}
+                placeholder="Note (visible to customer)"
+                aria-label="Item note"
+              />
+            ) : (
+              <button type="button" className="li-note-toggle" onClick={() => { setNoteOpen(true); onUpdate(item.id, { notes: item.notes || '' }); }}>
+                + Add note
+              </button>
+            )}
+
+            <div className="li-actions">
+              <button type="button" className="li-action-btn" onClick={() => onDuplicate(item.id)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Duplicate
+              </button>
+              <button type="button" className="li-action-btn li-action-btn--danger" onClick={() => onRemove(item.id)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Remove
+              </button>
+            </div>
           </div>
-          <span className="qe-line-total">{currency(lineTotal, country)}</span>
-          {!noteOpen && (
-            <button type="button" className="qe-note-toggle" onClick={() => { setNoteOpen(true); onUpdate(item.id, { notes: item.notes || '' }); }} aria-label="Add note">
-              ✎
-            </button>
-          )}
-        </div>
-
-        {renderPriceHint()}
-
-        {/* Note input — only visible when open */}
-        {noteOpen && (
-          <input
-            className="qe-item-note"
-            value={item.notes || ''}
-            onChange={e => onUpdate(item.id, { notes: e.target.value })}
-            placeholder="Note (shown to customer)"
-            aria-label="Item note"
-          />
         )}
       </div>
     </div>

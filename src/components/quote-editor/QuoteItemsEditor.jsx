@@ -1,32 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import LineItemCard from './LineItemCard';
 import CatalogSheet from './CatalogSheet';
 import { currency } from '../../lib/format';
 import { genLineItemId } from '../../lib/utils';
 
 /* ─────────────────────────────────────────────────────────
-   QuoteItemsEditor — the complete line-items editing UI.
-   
-   Replaces the inline JSX in quote-builder-page.jsx's
-   review phase (the rq-builder-left area). Drop-in
-   replacement that accepts the same data model.
-   
-   Props:
-     lineItems, setLineItems, markDirty
-     trade, province, country
-     editingItemId, setEditingItemId
-     priceRanges
-     confidence
-     catalogQuery, setCatalogQuery, catalogResults
-     suggestions (visibleSuggestions)
-     onAddSuggestion, onDismissSuggestion
-     onOpenForeman(ctx)
-     onRetryScopeAI
-     scopeError
-     quoteId
-     grandTotal
-     toast
+   QuoteItemsEditor v2
+
+   - Category grouping (Services / Labour / Materials)
+   - Compact collapsed rows, tap-to-expand (one at a time)
+   - Inline "+ Add item" row inside the list container
+   - Tap outside expanded item to collapse
    ───────────────────────────────────────────────────────── */
+
+const CATEGORY_ORDER = ['services', 'labour', 'materials', ''];
+const CATEGORY_LABELS = { services: 'SERVICES', labour: 'LABOUR', materials: 'MATERIALS', '': '' };
 
 export default function QuoteItemsEditor({
   lineItems,
@@ -53,8 +41,22 @@ export default function QuoteItemsEditor({
   toast,
 }) {
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const listRef = useRef(null);
 
   const itemCount = lineItems.filter(i => i.name?.trim()).length;
+
+  // Close expanded item when tapping outside the list
+  useEffect(() => {
+    if (!editingItemId) return;
+    const handler = (e) => {
+      if (listRef.current && !listRef.current.contains(e.target)) {
+        setEditingItemId(null);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [editingItemId, setEditingItemId]);
 
   // ── Item CRUD ──
   function updateItem(id, changes) {
@@ -66,19 +68,22 @@ export default function QuoteItemsEditor({
     const r = lineItems.find(i => i.id === id);
     markDirty();
     setLineItems(p => p.filter(i => i.id !== id));
+    if (editingItemId === id) setEditingItemId(null);
     if (r?.name) toast?.(`Removed: ${r.name}`, 'info');
   }
 
   function duplicateItem(id) {
     const o = lineItems.find(i => i.id === id);
     if (!o) return;
+    const newId = genLineItemId();
     setLineItems(p => {
       const idx = p.findIndex(i => i.id === id);
       const n = [...p];
-      n.splice(idx + 1, 0, { ...o, id: genLineItemId() });
+      n.splice(idx + 1, 0, { ...o, id: newId });
       return n;
     });
     markDirty();
+    setEditingItemId(newId);
   }
 
   function adjustQty(id, delta) {
@@ -91,8 +96,9 @@ export default function QuoteItemsEditor({
   }
 
   function addBlankItem() {
+    const newId = genLineItemId();
     setLineItems(p => [...p, {
-      id: genLineItemId(),
+      id: newId,
       name: '',
       quantity: 1,
       unit_price: 0,
@@ -101,6 +107,8 @@ export default function QuoteItemsEditor({
       category: '',
     }]);
     markDirty();
+    setEditingItemId(newId);
+    setAddMenuOpen(false);
   }
 
   function addCatalogItem(item) {
@@ -120,17 +128,13 @@ export default function QuoteItemsEditor({
     toast?.(`Added: ${item.name}`, 'success');
   }
 
-  // ── Foreman context builder ──
   function handleOpenForeman() {
+    setAddMenuOpen(false);
     if (!onOpenForeman) return;
-    const jobDesc = '';  // parent passes this via onOpenForeman
     onOpenForeman();
   }
 
   // ── Group items by category ──
-  const CATEGORY_ORDER = ['services', 'labour', 'materials', ''];
-  const CATEGORY_LABELS = { services: 'SERVICES', labour: 'LABOUR', materials: 'MATERIALS', '': '' };
-
   const groupedItems = useMemo(() => {
     const groups = {};
     lineItems.forEach((item, idx) => {
@@ -138,12 +142,10 @@ export default function QuoteItemsEditor({
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push({ item, idx });
     });
-    // Sort by predefined order, unknowns at end
     const ordered = [];
     CATEGORY_ORDER.forEach(cat => {
       if (groups[cat]) ordered.push({ category: cat, label: CATEGORY_LABELS[cat], items: groups[cat] });
     });
-    // Any categories not in the predefined list
     Object.keys(groups).forEach(cat => {
       if (!CATEGORY_ORDER.includes(cat)) {
         ordered.push({ category: cat, label: cat.toUpperCase(), items: groups[cat] });
@@ -154,63 +156,79 @@ export default function QuoteItemsEditor({
 
   const hasCategories = groupedItems.some(g => g.label);
 
+  // ── Render helper for items ──
+  const renderItem = ({ item, idx }) => (
+    <LineItemCard
+      key={item.id}
+      item={item}
+      index={idx}
+      country={country}
+      isEditing={editingItemId === item.id}
+      priceRange={priceRanges[item.id]}
+      onUpdate={updateItem}
+      onRemove={removeItem}
+      onDuplicate={duplicateItem}
+      onAdjustQty={adjustQty}
+      onFocus={setEditingItemId}
+      onAddAfter={addBlankItem}
+      isLast={idx === lineItems.length - 1}
+    />
+  );
+
   return (
     <div className="qe-root">
-      {/* ── Items list ── */}
-      <div className="qe-items-section">
+      <div className="qe-items-section" ref={listRef}>
+        {/* Header */}
         <div className="qe-items-header">
           <span className="qe-items-count">
             {itemCount > 0 ? `${itemCount} item${itemCount !== 1 ? 's' : ''}` : 'Line items'}
           </span>
         </div>
 
+        {/* Items list */}
         {lineItems.length > 0 && (
           <div className="qe-items-list">
             {hasCategories ? (
               groupedItems.map(group => (
-                <div key={group.category} className="qe-category-group">
+                <div key={group.category} className="qe-cat-group">
                   {group.label && (
-                    <div className="qe-category-header">
-                      <span className="qe-category-label">{group.label}</span>
-                    </div>
+                    <div className="qe-cat-label">{group.label}</div>
                   )}
-                  {group.items.map(({ item, idx }) => (
-                    <LineItemCard
-                      key={item.id}
-                      item={item}
-                      index={idx}
-                      country={country}
-                      isEditing={editingItemId === item.id}
-                      priceRange={priceRanges[item.id]}
-                      onUpdate={updateItem}
-                      onRemove={removeItem}
-                      onDuplicate={duplicateItem}
-                      onAdjustQty={adjustQty}
-                      onFocus={setEditingItemId}
-                      onAddAfter={addBlankItem}
-                      isLast={idx === lineItems.length - 1}
-                    />
-                  ))}
+                  {group.items.map(renderItem)}
                 </div>
               ))
             ) : (
-              lineItems.map((item, idx) => (
-                <LineItemCard
-                  key={item.id}
-                  item={item}
-                  index={idx}
-                  country={country}
-                  isEditing={editingItemId === item.id}
-                  priceRange={priceRanges[item.id]}
-                  onUpdate={updateItem}
-                  onRemove={removeItem}
-                  onDuplicate={duplicateItem}
-                  onAdjustQty={adjustQty}
-                  onFocus={setEditingItemId}
-                  onAddAfter={addBlankItem}
-                  isLast={idx === lineItems.length - 1}
-                />
-              ))
+              lineItems.map((item, idx) => renderItem({ item, idx }))
+            )}
+
+            {/* Inline add row — lives inside the list container */}
+            <div className="qe-add-row">
+              <button
+                type="button"
+                className="qe-add-row-btn"
+                onClick={() => setAddMenuOpen(!addMenuOpen)}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add item
+              </button>
+            </div>
+
+            {/* Add menu popover */}
+            {addMenuOpen && (
+              <div className="qe-add-menu">
+                <button type="button" className="qe-add-menu-item" onClick={() => { setCatalogOpen(true); setAddMenuOpen(false); }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  From catalog
+                </button>
+                <button type="button" className="qe-add-menu-item" onClick={addBlankItem}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Custom item
+                </button>
+                <button type="button" className="qe-add-menu-item" onClick={handleOpenForeman}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Ask Foreman
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -218,17 +236,15 @@ export default function QuoteItemsEditor({
         {/* Empty state */}
         {lineItems.length === 0 && !scopeError && (
           <div className="qe-empty">
-            <div className="qe-empty-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-            </div>
             <div className="qe-empty-title">No items yet</div>
-            <div className="qe-empty-desc">
-              Search the catalog or add items manually to build your quote.
+            <div className="qe-empty-desc">Add items from the catalog or create custom line items.</div>
+            <div className="qe-empty-actions">
+              <button type="button" className="qe-btn qe-btn--primary" onClick={() => setCatalogOpen(true)}>
+                Browse catalog
+              </button>
+              <button type="button" className="qe-btn qe-btn--secondary" onClick={addBlankItem}>
+                + Custom item
+              </button>
             </div>
           </div>
         )}
@@ -237,61 +253,22 @@ export default function QuoteItemsEditor({
         {lineItems.length === 0 && scopeError && (
           <div className="qe-empty qe-empty--error">
             <div className="qe-empty-title">AI couldn't generate items</div>
-            <div className="qe-empty-desc">
-              Try adding more detail to the description, or add items manually.
-            </div>
+            <div className="qe-empty-desc">Try adding more detail, or add items manually.</div>
             <div className="qe-empty-actions">
               {onRetryScopeAI && (
-                <button type="button" className="qe-btn qe-btn--primary" onClick={onRetryScopeAI}>
-                  Edit & retry
-                </button>
+                <button type="button" className="qe-btn qe-btn--primary" onClick={onRetryScopeAI}>Edit & retry</button>
               )}
-              <button type="button" className="qe-btn qe-btn--secondary" onClick={addBlankItem}>
-                + Add manually
-              </button>
+              <button type="button" className="qe-btn qe-btn--secondary" onClick={addBlankItem}>+ Add manually</button>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Add item bar ── */}
-      <div className="qe-add-bar">
-        <button
-          type="button"
-          className="qe-add-btn qe-add-btn--primary"
-          onClick={() => setCatalogOpen(true)}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Catalog
-        </button>
-        <button
-          type="button"
-          className="qe-add-btn"
-          onClick={addBlankItem}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Custom
-        </button>
-        <button
-          type="button"
-          className="qe-add-btn qe-add-btn--foreman"
-          onClick={handleOpenForeman}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Foreman
-        </button>
-        {quoteId && scopeError && (
-          <button type="button" className="qe-add-btn" onClick={onRetryScopeAI}>
-            ✦ Retry AI
-          </button>
-        )}
-      </div>
-
-      {/* ── Confidence / commonly missed ── */}
+      {/* Confidence / commonly missed */}
       {lineItems.length > 0 && confidence && (
         confidence.readiness === 'ready' ? (
           <div className="qe-confidence qe-confidence--ready">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             Ready to send
           </div>
         ) : (
@@ -299,7 +276,7 @@ export default function QuoteItemsEditor({
         )
       )}
 
-      {/* ── Foreman suggestions ── */}
+      {/* Foreman suggestions */}
       {suggestions.length > 0 && (
         <div className="qe-suggestions">
           <div className="qe-sug-header">
@@ -318,16 +295,8 @@ export default function QuoteItemsEditor({
                   {sug.why && <span className="qe-sug-why">{sug.why}</span>}
                 </div>
                 <div className="qe-sug-actions">
-                  <button
-                    type="button"
-                    className="qe-sug-btn qe-sug-btn--add"
-                    onClick={() => onAddSuggestion(sug)}
-                  >Add</button>
-                  <button
-                    type="button"
-                    className="qe-sug-btn"
-                    onClick={() => onDismissSuggestion(sug.id)}
-                  >Skip</button>
+                  <button type="button" className="qe-sug-btn qe-sug-btn--add" onClick={() => onAddSuggestion(sug)}>Add</button>
+                  <button type="button" className="qe-sug-btn" onClick={() => onDismissSuggestion(sug.id)}>Skip</button>
                 </div>
               </div>
             ))}
@@ -335,7 +304,7 @@ export default function QuoteItemsEditor({
         </div>
       )}
 
-      {/* ── Catalog search sheet ── */}
+      {/* Catalog sheet */}
       <CatalogSheet
         open={catalogOpen}
         onClose={() => { setCatalogOpen(false); setCatalogQuery(''); }}
