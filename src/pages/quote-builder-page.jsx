@@ -28,6 +28,7 @@ import { ChevronRight, X, Mic, Camera } from 'lucide-react';
 import { estimateMonthly, showFinancing } from '../lib/financing';
 import { identify, trackFirstDescribe, trackFirstBuild, trackFirstSend, trackQuoteSent, trackPushEnabled, getVariant, trackQuoteFlowStarted, setQuoteFlowQuoteId, trackQuoteFlowCustomerSelected, trackQuoteFlowDescriptionCommitted, trackQuoteFlowScopeReady, trackQuoteFlowSent, trackQuoteFlowAbandoned, endQuoteFlowSession, hasActiveFlowSession, restoreFlowSession } from '../lib/analytics';
 import { Card, Section, Stat, SmsComposerField } from '../components/ui';
+import { QuoteItemsEditor } from '../components/quote-editor';
 import MobileQuoteReview from '../components/mobile-quote-review';
 import { DUR, isReducedMotion } from '../lib/motion';
 import { listTemplates, renderTemplate, getSystemDefaults } from '../lib/api/templates';
@@ -1287,90 +1288,46 @@ export default function QuoteBuilderPage() {
             {/* Line Items */}
             <div className="rq-builder-layout">
               <div className="rq-builder-left">
-                <div id="qb-line-items" className="rq-items-section pl-items-motion pl-items-stable">
-                  <div className="rq-items-head"><span className="rq-items-title">{itemCount > 0 ? `${itemCount} item${itemCount !== 1 ? 's' : ''}` : 'Line items'}</span></div>
-                  {lineItems.map((item, idx) => {
-                    const itemTotal = Number(item.quantity || 0) * Number(item.unit_price || 0);
-                    const isLeaving = leavingItemIds.has(item.id);
-                    return (
-                      <div key={item.id} className={`rq-card ${editingItemId === item.id ? 'rq-card-editing' : ''} ${isLeaving ? 'pl-item-leave' : 'pl-item-enter'}`}
-                        draggable={!isLeaving} onDragStart={e => { e.dataTransfer.setData('text/plain', idx.toString()); e.currentTarget.style.opacity = '0.5'; }} onDragEnd={e => { e.currentTarget.style.opacity = '1'; }} onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('rq-card-dragover'); }} onDragLeave={e => { e.currentTarget.classList.remove('rq-card-dragover'); }} onDrop={e => { e.preventDefault(); e.currentTarget.classList.remove('rq-card-dragover'); const from = parseInt(e.dataTransfer.getData('text/plain')); if (isNaN(from) || from === idx) return; setLineItems(p => { const n = [...p]; const [m] = n.splice(from, 1); n.splice(idx, 0, m); return n; }); markDirty(); }}>
-                        <div className="rq-card-drag-handle" title="Drag to reorder" aria-hidden="true">⠿</div>
-                        <div className="rq-card-main">
-                          <div className="rq-card-top"><input className="rq-card-name" value={item.name} onChange={e => updateItem(item.id, { name: e.target.value })} placeholder="Item name" aria-label="Item name" data-item-idx={idx} onFocus={() => setEditingItemId(item.id)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && idx === lineItems.length - 1) { e.preventDefault(); setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); } }} /><span className="rq-card-line-total tabular">{currency(itemTotal, country)}</span></div>
-                          <div className="rq-card-controls"><div className="rq-qty-stepper"><button type="button" className="rq-qty-btn" aria-label="Decrease quantity" onClick={() => adjustQty(item.id, -1)}>−</button><span className="rq-qty-val tabular">{Number(item.quantity).toFixed(item.quantity % 1 === 0 ? 0 : 2)}</span><button type="button" className="rq-qty-btn" aria-label="Increase quantity" onClick={() => adjustQty(item.id, 1)}>+</button></div><span className="rq-card-times">×</span><div className="rq-price-wrap"><span className="rq-price-prefix">$</span><input className="rq-card-price-input tabular" type="number" min="0" step="1" inputMode="decimal" value={item.unit_price} aria-label="Unit price" onChange={e => updateItem(item.id, { unit_price: Math.max(0, Number(e.target.value) || 0) })} onFocus={() => setEditingItemId(item.id)} /></div><div className="rq-card-item-actions"><button className="rq-card-action-btn" type="button" onClick={() => duplicateItem(item.id)} title="Duplicate" aria-label="Duplicate item">⧉</button><button className="rq-card-action-btn rq-card-action-del" type="button" onClick={() => removeItem(item.id)} title="Remove" aria-label={`Remove ${item.name || 'item'}`}>×</button></div></div>
-                          {/* Price confidence hint — only when editing this item */}
-                          {editingItemId === item.id && priceRanges[item.id] && (() => {
-                            const r = priceRanges[item.id];
-                            const price = Number(item.unit_price || 0);
-                            if (price === 0) return <div className="rq-price-hint">Typical: ${r.lo}–${r.hi}</div>;
-                            if (price < r.lo * 0.6) return <div className="rq-price-hint rq-price-low">Below typical range (${r.lo}–${r.hi})</div>;
-                            if (price > r.hi * 1.8) return <div className="rq-price-hint rq-price-high">Above typical range (${r.lo}–${r.hi})</div>;
-                            return null;
-                          })()}
-                          {item.notes ? (<input className="rq-card-notes" value={item.notes} onChange={e => updateItem(item.id, { notes: e.target.value })} placeholder="Note (shown to customer)" aria-label="Item note" />) : (<button type="button" className="rq-card-add-note" onClick={() => updateItem(item.id, { notes: ' ' })}>+ note</button>)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {lineItems.length === 0 && !scopeError && <div className="rq-empty"><div className="rq-empty-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div className="rq-empty-text">No items yet</div><div className="rq-empty-sub">Search the catalog, add custom items, or ask Foreman to help scope this job.</div></div>}
-                  {lineItems.length === 0 && scopeError && <div className="rq-empty" style={{ borderLeft: '3px solid var(--red, #dc2626)', background: 'var(--red-bg, rgba(220,38,38,.06))' }}><div className="rq-empty-text" style={{ color: 'var(--red, #dc2626)' }}>AI couldn't generate items</div><div className="rq-empty-sub">This can happen with very short descriptions or network issues. Try adding more detail, or add items manually below.</div><div style={{ display: 'flex', gap: 8, marginTop: 12 }}><button type="button" className="btn btn-primary btn-sm" onClick={() => { setScopeError(false); setPhase('describe'); }}>✦ Edit &amp; retry</button><button type="button" className="btn btn-secondary btn-sm" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); setScopeError(false); }}>+ Add item manually</button></div></div>}
-                </div>
-
-                {/* Add Item Bar */}
-                <div className="rq-add-bar">
-                  {!addMode && (<div className="rq-add-triggers"><button type="button" className="rq-add-trigger rq-add-trigger-primary" onClick={() => setAddMode('catalog')}>Search catalog</button><button type="button" className="rq-add-trigger" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: '', quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); }}>+ Custom item</button><button type="button" className="rq-add-trigger rq-add-trigger-foreman" onClick={() => { if (window.__punchlistOpenForeman) { const jobDesc = description || title || ''; const itemsSummary = lineItems.filter(i => i.name?.trim()).map(i => `${i.name} (${i.quantity}× $${i.unit_price})`).join(', '); const ctx = { starters: [ `What else should I include for this ${trade.toLowerCase()} job?`, jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote', `What do ${trade.toLowerCase()}s commonly forget to quote?`, ], quoteContext: { description: jobDesc, trade, title: title || '', items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })), total: grandTotal, province, country } }; window.__punchlistOpenForeman(ctx); } }}><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="qb-icon-inline"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ask Foreman</button>{quoteId && scopeError && <button type="button" className="rq-add-trigger" onClick={() => setPhase('describe')}>✦ Retry AI scope</button>}</div>)}
-                  {addMode === 'catalog' && (<div className="rq-catalog-overlay"><div className="rq-catalog-panel"><div className="rq-catalog-top"><input className="rq-catalog-input" value={catalogQuery} onChange={e => setCatalogQuery(e.target.value)} placeholder="Search items…" autoFocus autoComplete="off" /><button type="button" className="rq-catalog-close" onClick={() => { setAddMode(null); setCatalogQuery(''); }} aria-label="Close catalog"><X size={14} strokeWidth={2} /></button></div>{catalogResults.length > 0 && (<div className="rq-catalog-results">{catalogResults.map((item, i) => { const added = lineItems.some(li => li.name.toLowerCase() === item.name.toLowerCase()); return (<div key={`${item.name}-${i}`} className={`rq-catalog-item ${added ? 'added' : ''} ${item.isContextRelevant ? 'rq-catalog-relevant' : ''}`} onClick={() => !added && addCatalogItem(item)}><div className="rq-catalog-info"><span className="rq-catalog-name">{item.name}</span>{item.isContextRelevant && <span className="rq-catalog-match-tag">matches this job</span>}{item.desc && <span className="rq-catalog-desc">{item.desc}</span>}</div><div className="rq-catalog-right"><span className="rq-catalog-price">{currency(item.lo)}–{currency(item.hi)}</span><span className="rq-catalog-add">{added ? '✓' : '+'}</span></div></div>); })}</div>)}{catalogQuery.length >= 2 && catalogResults.length === 0 && <div className="rq-catalog-empty">No matches — try different keywords</div>}{!catalogQuery && <div className="rq-catalog-empty qb-catalog-hint">Type to search {trade.toLowerCase()} items</div>}</div></div>)}
-                </div>
-
-                {/* Scope Hints (collapsed) */}
-                {scopeHints.length > 0 && lineItems.length > 0 && (<details className="rq-hints"><summary className="qb-hints-toggle pl-toggle-row"><span>Commonly added for {trade}</span><span className="pl-chevron pl-chevron--sm" /></summary><div className="rq-hints-chips">{scopeHints.slice(0, 5).map(hint => (<button key={hint} type="button" className="rq-hint-chip" onClick={() => { setLineItems(p => [...p, { id: genLineItemId(), name: hint, quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]); markDirty(); toast(`Added: ${hint} — set a price`, 'success'); }}>+ {hint}</button>))}</div></details>)}
-
-                {/* ── Foreman AI Suggestions (Phase 1) ──
-                    Surfaces items the AI flagged as optional / upgrade / skipped
-                    during scope generation. Each row has Add/Dismiss actions.
-                    Helpful tone — not nagging. Only renders when there's
-                    something to suggest. */}
-                {visibleSuggestions.length > 0 && (
-                  <Card padding="default" elevation={1} className="pl-sug-panel" as="section" aria-label="Foreman suggestions">
-                    <div className="pl-sug-head">
-                      <span className="pl-sug-title">Foreman suggests</span>
-                      <span className="pl-sug-count">{visibleSuggestions.length} idea{visibleSuggestions.length === 1 ? '' : 's'}</span>
-                    </div>
-                    <div className="pl-sug-list motion-isolate">
-                      {visibleSuggestions.map(sug => {
-                        const price = Number(sug.unit_price || 0);
-                        return (
-                          <div key={sug.id} className="pl-sug-item">
-                            <div className="pl-sug-item-main">
-                              <div className="pl-sug-item-name">{sug.name}</div>
-                              <div className="pl-sug-item-meta tabular">
-                                {price > 0 ? currency(price, country) : 'Set price'}
-                                {sug.category ? ` · ${sug.category}` : ''}
-                                {sug.isUpgrade ? ' · Upgrade' : ''}
-                              </div>
-                              {sug.why && <div className="pl-sug-item-why">{sug.why}</div>}
-                            </div>
-                            <div className="pl-sug-actions">
-                              <button
-                                type="button"
-                                className="pl-sug-btn pl-sug-btn-add"
-                                onClick={() => addSuggestionToItems(sug)}
-                                aria-label={`Add ${sug.name}`}
-                              >Add</button>
-                              <button
-                                type="button"
-                                className="pl-sug-btn"
-                                onClick={() => dismissSuggestion(sug.id)}
-                                aria-label={`Dismiss ${sug.name}`}
-                              >Dismiss</button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </Card>
-                )}
+                <QuoteItemsEditor
+                  lineItems={lineItems}
+                  setLineItems={setLineItems}
+                  markDirty={markDirty}
+                  trade={trade}
+                  province={province}
+                  country={country}
+                  editingItemId={editingItemId}
+                  setEditingItemId={setEditingItemId}
+                  priceRanges={priceRanges}
+                  confidence={confidence}
+                  catalogQuery={catalogQuery}
+                  setCatalogQuery={setCatalogQuery}
+                  catalogResults={catalogResults}
+                  suggestions={visibleSuggestions}
+                  onAddSuggestion={addSuggestionToItems}
+                  onDismissSuggestion={dismissSuggestion}
+                  onOpenForeman={() => {
+                    if (window.__punchlistOpenForeman) {
+                      const jobDesc = description || title || '';
+                      window.__punchlistOpenForeman({
+                        starters: [
+                          `What else should I include for this ${trade.toLowerCase()} job?`,
+                          jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote',
+                          `What do ${trade.toLowerCase()}s commonly forget to quote?`,
+                        ],
+                        quoteContext: {
+                          description: jobDesc, trade, title: title || '',
+                          items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })),
+                          total: grandTotal, province, country
+                        }
+                      });
+                    }
+                  }}
+                  onRetryScopeAI={scopeError ? () => { setScopeError(false); setPhase('describe'); } : null}
+                  scopeError={scopeError}
+                  quoteId={quoteId}
+                  grandTotal={grandTotal}
+                  toast={toast}
+                />
               </div>
 
               {/* Right Sidebar: Customer preview + close helpers */}
@@ -1426,7 +1383,7 @@ export default function QuoteBuilderPage() {
               </div>
             </div>
             {/* Confidence panel — outside the sidebar so it shows on mobile */}
-            {lineItems.length > 0 && confidence && (confidence.readiness === 'ready' ? (<div className="rq-conf-inline-ok"><span>✓</span> Ready to send</div>) : (<details className={`rq-confidence rq-conf-${confidence.readiness}`}><summary className="qb-conf-toggle rq-conf-top"><span className="rq-conf-badge">{confidence.score}%</span><span className="rq-conf-label">{confidence.readiness === 'review' ? 'Almost ready ▸' : 'Commonly missed items ▸'}</span></summary><div className="rq-conf-checks">{(confidence.checks || []).filter(c => c.state !== 'good').map((c, i) => <span key={i} className={`rq-conf-check ${c.state}`}>○ {c.label}</span>)}</div></details>))}
+            {/* Confidence panel now rendered by QuoteItemsEditor */}
 
             {error && error !== '__needs_phone__' && <div className="jd-error">{error}</div>}
             {error === '__needs_phone__' && (<div className="jd-error qb-needs-phone"><div className="qb-needs-phone-title">Add a phone number to send via text</div><div className="qb-needs-phone-row"><input className="jd-input qb-needs-phone-input" type="tel" value={inlinePhone} onChange={e => setInlinePhone(e.target.value)} placeholder="e.g. (403) 555-0100" autoFocus /><button className="btn btn-primary btn-sm" type="button" disabled={!inlinePhone.trim()} onClick={async () => { try { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust) return; await updateCustomer(cust.id, { phone: inlinePhone.trim() }); setLocalCustomers(prev => prev.map(c => c.id === cust.id ? { ...c, phone: inlinePhone.trim() } : c)); invalidateCustomers(); setError(''); toast('Phone saved', 'success'); setTimeout(() => handleSend(), 100); } catch (e) { toast(friendly(e), 'error'); } }}>Save & send</button></div><button type="button" onClick={() => { setDeliveryMethod('copy'); setError(''); handleSend(); }} className="qb-needs-phone-alt">Or copy link instead →</button></div>)}
