@@ -42,7 +42,7 @@
   flex-direction: column;
   gap: 0;
   background: var(--card, #fff);
-  border-radius: var(--r-card, 16px);
+  border-radius: 12px;
   border: 1px solid var(--line, #e8e2d9);
   overflow: hidden;
 }
@@ -1052,4 +1052,20 @@
   background: var(--panel-3);
   border-color: var(--line);
   color: var(--text-2);
+}
+
+[data-theme="dark"] .qe-note-toggle {
+  color: var(--subtle);
+}
+
+[data-theme="dark"] .qe-price-dollar {
+  color: var(--muted);
+}
+
+[data-theme="dark"] .qe-times {
+  color: var(--subtle);
+}
+
+[data-theme="dark"] .qe-qty-btn:active {
+  background: var(--panel-3);
 }

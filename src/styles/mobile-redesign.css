@@ -1382,20 +1382,23 @@
 
 
 /* ──────────────────────────────────────────────────────────────
-   11. APPLE-STYLE CALENDAR (plc5)
-   Unified month grid + day events. No day/week/month toggle.
-   Works on all screen sizes.
+   11. CALENDAR (plc5) — Redesign v2
+   Clean, grounded, premium. Month grid sits inside a
+   subtle card so it doesn't float in the void.
    ────────────────────────────────────────────────────────────── */
 
 .plc5 {
   max-width: 480px;
   margin: 0 auto;
-  padding: 0 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 16px 12px 8px;
 }
 
-/* Header */
+/* ── Header: month left, nav right ── */
 .plc5-header {
-  padding: 4px 4px 8px;
+  padding: 0 4px 12px;
 }
 .plc5-title-row {
   display: flex;
@@ -1405,128 +1408,134 @@
 }
 .plc5-title-center {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
+  align-items: baseline;
+  gap: 8px;
 }
 .plc5-month-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text);
   margin: 0;
-  line-height: 1.1;
+  line-height: 1;
   font-family: var(--font-display);
 }
 .plc5-year {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--subtle);
-  letter-spacing: 0.02em;
+  color: var(--muted);
+  letter-spacing: 0.01em;
 }
 .plc5-nav-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: var(--panel);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
   cursor: pointer;
   display: grid;
   place-items: center;
-  font-size: 16px;
-  color: var(--text-2);
-  transition: all 0.15s;
+  font-size: 18px;
+  color: var(--muted);
+  transition: color 0.12s, background 0.12s;
   font-family: inherit;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 .plc5-nav-btn:active {
   background: var(--panel-2);
-  transform: scale(0.95);
+  color: var(--text);
 }
 
-/* Day-of-week headers */
+/* ── DOW headers ── */
 .plc5-dow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  padding: 0 2px;
+  padding: 0;
   margin-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
 }
 .plc5-dow-label {
   text-align: center;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--subtle);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 2px 0;
+  letter-spacing: 0.05em;
+  padding: 0;
 }
 
-/* Month grid */
+/* ── Month grid ── */
 .plc5-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0;
-  padding: 0 2px;
+  padding: 4px 0 0;
 }
 .plc5-day {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
-  padding: 4px 0 3px;
+  padding: 4px 0;
   border: none;
   background: none;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.1s;
-  border-radius: 10px;
+  border-radius: 8px;
   -webkit-tap-highlight-color: transparent;
-  min-height: 38px;
+  min-height: 40px;
 }
 .plc5-day:active {
-  background: var(--panel-2);
+  background: var(--panel-3, rgba(255,255,255,.04));
 }
 .plc5-day-num {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--text);
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.15s;
+  transition: all 0.12s;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Other month days */
+/* Other month */
 .plc5-other .plc5-day-num {
   color: var(--subtle);
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 /* Today */
 .plc5-today .plc5-day-num {
-  background: var(--text);
-  color: var(--panel);
+  background: var(--brand);
+  color: #fff;
   font-weight: 700;
 }
 
 /* Selected (not today) */
 .plc5-selected:not(.plc5-today) .plc5-day-num {
-  background: var(--brand);
-  color: white;
+  background: var(--panel-3, rgba(255,255,255,.08));
+  color: var(--text);
   font-weight: 700;
+  box-shadow: inset 0 0 0 1.5px var(--brand);
 }
 
 /* Selected + today */
 .plc5-selected.plc5-today .plc5-day-num {
   background: var(--brand);
-  color: white;
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--brand);
 }
 
-/* Dots */
+/* ── Dots ── */
 .plc5-dots {
   display: flex;
   gap: 2px;
@@ -1541,30 +1550,30 @@
 .plc5-dot--confirmed { background: var(--green, #22C55E); }
 .plc5-dot--completed { background: var(--subtle, #9CA3AF); }
 
-/* Divider */
+/* ── Divider ── */
 .plc5-divider {
   height: 1px;
   background: var(--line);
-  margin: 4px 8px 0;
+  margin: 4px 0 0;
 }
 
-/* Events section */
+/* ── Events section ── */
 .plc5-events {
-  padding: 8px 8px 24px;
-  min-height: 180px;
+  padding: 10px 4px 8px;
+  min-height: 100px;
 }
 .plc5-events-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .plc5-events-title {
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 .plc5-events-actions {
   display: flex;
@@ -1572,81 +1581,86 @@
   align-items: center;
 }
 .plc5-today-btn {
-  padding: 6px 14px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
   border: 1px solid var(--line);
-  background: var(--panel);
-  font-size: 13px;
+  background: transparent;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-2);
+  color: var(--muted);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
+  transition: all 0.12s;
+  -webkit-tap-highlight-color: transparent;
 }
 .plc5-today-btn:active {
   background: var(--panel-2);
+  color: var(--text);
 }
 .plc5-add-btn {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background: var(--brand);
   color: white;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: transform 0.15s;
+  transition: transform 0.12s;
   font-family: inherit;
 }
 .plc5-add-btn:active {
   transform: scale(0.9);
 }
 
-/* Empty state */
+/* ── Empty state ── */
 .plc5-empty {
   text-align: center;
-  padding: 32px 16px;
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 .plc5-empty-text {
-  font-size: 15px;
-  color: var(--subtle);
-  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
 }
 .plc5-empty-add {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 10px 18px;
-  border-radius: 12px;
-  border: 1px dashed var(--line-2);
-  background: var(--panel-2);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-2);
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--brand);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
+  transition: opacity 0.12s;
+  -webkit-tap-highlight-color: transparent;
 }
 .plc5-empty-add:active {
-  border-color: var(--brand);
-  color: var(--brand);
-  background: var(--brand-bg);
+  opacity: 0.85;
 }
 
-/* Event card */
+/* ── Event cards ── */
 .plc5-event-list {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 .plc5-event {
   display: flex;
   align-items: stretch;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 14px;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
   background: var(--ev-bg);
   border: none;
   cursor: pointer;
@@ -1671,10 +1685,10 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 .plc5-event-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   overflow: hidden;
@@ -1682,21 +1696,21 @@
   white-space: nowrap;
 }
 .plc5-event-job {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .plc5-event-time {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   font-weight: 500;
 }
 .plc5-event-badge {
   align-self: center;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1711,35 +1725,35 @@
 }
 .plc5-event-map {
   align-self: center;
-  font-size: 16px;
+  font-size: 14px;
   text-decoration: none;
   flex-shrink: 0;
   padding: 4px;
 }
 
-/* Hide old calendar elements that might still be in DOM */
+/* Hide old calendar elements */
 .sched-view-pills,
 .sched-toolbar,
 .sched-grid-wrap,
 .sched-day-headers,
 .sched-grid-scroll,
 .sched-container > .sched-toolbar {
-  /* These are replaced by plc5 — hidden if parent still renders them */
 }
 
-/* Responsive: slightly more compact on small phones */
+/* ── Responsive: small phones ── */
 @media (max-width: 375px) {
-  .plc5-month-title { font-size: 20px; }
-  .plc5-day-num { width: 26px; height: 26px; font-size: 13px; }
-  .plc5-day { padding: 3px 0 2px; min-height: 34px; }
+  .plc5 { padding: 12px 8px 6px; border-radius: 16px; }
+  .plc5-month-title { font-size: 18px; }
+  .plc5-day-num { width: 28px; height: 28px; font-size: 14px; }
+  .plc5-day { min-height: 36px; }
   .plc5-event { padding: 8px; }
 }
 
-/* Desktop: slightly wider */
+/* ── Desktop: wider ── */
 @media (min-width: 769px) {
-  .plc5 { max-width: 560px; }
-  .plc5-day-num { width: 32px; height: 32px; font-size: 15px; }
-  .plc5-month-title { font-size: 26px; }
+  .plc5 { max-width: 520px; padding: 20px 16px 12px; }
+  .plc5-day-num { width: 34px; height: 34px; font-size: 15px; }
+  .plc5-month-title { font-size: 22px; }
 }
 
 
@@ -2423,77 +2437,15 @@
 
 
 /* ─────────────────────────────────────────────────────────────────
-   18. CALENDAR / SCHEDULE
+   18. CALENDAR / SCHEDULE — trust plc5 v2 base styles
    ───────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Calendar: FULL WIDTH, no more 480px cap */
+  /* Only override what the base styles can't know: full-width context */
   .plc5 {
     max-width: 100% !important;
-    padding: 0 10px !important;
+    width: calc(100% - 16px) !important;
+    margin: 0 8px !important;
   }
-  .plc5-header { padding: 4px 2px 8px !important; }
-  .plc5-month-title { font-size: 24px !important; }
-  .plc5-year { font-size: 11px !important; }
-  .plc5-nav-btn {
-    width: 38px !important; height: 38px !important;
-    border-radius: 10px !important; font-size: 16px;
-  }
-
-  /* Day cells: compact but tappable */
-  .plc5-dow-label { font-size: 10px !important; padding: 2px 0 !important; }
-  .plc5-grid { gap: 0; padding: 0 !important; }
-  .plc5-day {
-    min-height: 38px; padding: 4px 0 3px !important;
-    border-radius: 10px;
-  }
-  .plc5-day-num {
-    width: 28px !important; height: 28px !important;
-    font-size: 14px !important;
-  }
-  .plc5-today .plc5-day-num { font-weight: 800; }
-  .plc5-dots { gap: 2px; }
-  .plc5-dot { width: 4px; height: 4px; }
-
-  /* Divider */
-  .plc5-divider { margin: 2px 6px 0 !important; }
-
-  /* Events */
-  .plc5-events {
-    padding: 6px 4px 16px !important;
-    min-height: 140px !important;
-  }
-  .plc5-events-title { font-size: 16px !important; }
-  .plc5-today-btn {
-    padding: 5px 12px; font-size: 12px; border-radius: 8px;
-  }
-  .plc5-add-btn {
-    width: 34px; height: 34px; font-size: 18px;
-  }
-
-  /* Empty state: inline row */
-  .plc5-empty {
-    padding: 14px 8px !important;
-    text-align: left !important;
-    display: flex !important;
-    align-items: center;
-    gap: 10px;
-  }
-  .plc5-empty-text {
-    font-size: 14px !important; margin-bottom: 0 !important;
-    color: var(--text-2);
-  }
-  .plc5-empty-add {
-    padding: 7px 14px !important; border-radius: 10px !important;
-    font-size: 12px !important; white-space: nowrap; flex-shrink: 0;
-  }
-
-  /* Event cards */
-  .plc5-event {
-    padding: 10px !important; border-radius: 12px;
-  }
-  .plc5-event-name { font-size: 14px !important; }
-  .plc5-event-job { font-size: 12px !important; }
-  .plc5-event-time { font-size: 11px !important; }
 
   /* Schedule rail */
   .sched-rail {

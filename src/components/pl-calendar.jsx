@@ -119,12 +119,14 @@ export default function PlCalendar({ bookings = [], view, viewDate, onViewChange
       {/* Month header */}
       <div className="plc5-header">
         <div className="plc5-title-row">
-          <button className="plc5-nav-btn" type="button" onClick={() => navMonth(-1)} aria-label="Previous month">‹</button>
           <div className="plc5-title-center">
             <h2 className="plc5-month-title">{MONTHS[viewMonth]}</h2>
             <span className="plc5-year">{viewYear}</span>
           </div>
-          <button className="plc5-nav-btn" type="button" onClick={() => navMonth(1)} aria-label="Next month">›</button>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button className="plc5-nav-btn" type="button" onClick={() => navMonth(-1)} aria-label="Previous month">‹</button>
+            <button className="plc5-nav-btn" type="button" onClick={() => navMonth(1)} aria-label="Next month">›</button>
+          </div>
         </div>
       </div>
 

@@ -1,89 +1,18 @@
 /* ═══════════════════════════════════════════════════════
-   Calendar & Booking Fixes — append to index.css or
-   create as src/styles/calendar-fixes.css and @import
+   Calendar & Booking Fixes
+   Companion to plc5 redesign v2 in mobile-redesign.css
    ═══════════════════════════════════════════════════════ */
 
-/* Widen calendar container on mobile */
+/* Mobile: full-width card */
 @media (max-width: 640px) {
   .plc5 {
     max-width: 100%;
-    padding: 0 4px;
-  }
-
-  /* Compact day cells */
-  .plc5-day {
-    min-height: 38px;
-    padding: 4px 0 3px;
-  }
-
-  /* Day numbers */
-  .plc5-day-num {
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
-    font-weight: 500;
-  }
-
-  /* Today / selected circles need to match */
-  .plc5-today .plc5-day-num,
-  .plc5-selected .plc5-day-num {
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
-  }
-
-  /* Nav buttons */
-  .plc5-nav-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-    border-radius: 10px;
-  }
-
-  /* Month title */
-  .plc5-month-title {
-    font-size: 22px;
-  }
-
-  /* Day-of-week labels */
-  .plc5-dow-label {
-    font-size: 11px;
-    padding: 2px 0;
-  }
-
-  /* Events: touch-friendly but compact */
-  .plc5-event {
-    padding: 10px;
-    border-radius: 10px;
-    min-height: 48px;
-  }
-
-  .plc5-event-name {
-    font-size: 14px;
-  }
-
-  .plc5-event-time {
-    font-size: 12px;
-  }
-
-  /* Empty state */
-  .plc5-empty {
-    padding: 16px 12px;
-    gap: 8px;
-  }
-
-  .plc5-empty-text {
-    font-size: 14px;
-  }
-
-  .plc5-empty-add {
-    font-size: 14px;
-    padding: 8px 16px;
-    min-height: 40px;
+    border-radius: 16px;
+    padding: 14px 10px 6px;
   }
 }
 
-/* Booking drawer — account for bottom nav on mobile */
+/* Booking drawer — account for bottom nav */
 @media (max-width: 768px) {
   .booking-drawer-footer {
     padding-bottom: calc(16px + 52px + env(safe-area-inset-bottom, 0px));
