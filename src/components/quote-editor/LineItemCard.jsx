@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { currency } from '../../lib/format';
 
 /* ─────────────────────────────────────────────────────────
@@ -6,12 +6,13 @@ import { currency } from '../../lib/format';
    
    Mobile-first: designed for 375px (iPhone X) as baseline.
    - Row 1: item name (full width)
-   - Row 2: qty stepper | × $ price | line total
-   - Row 3 (optional): note
+   - Row 2: qty stepper | × $ price | line total | note icon
+   - Note (optional, expands below)
    - Swipe left to reveal actions (delete, duplicate)
    ───────────────────────────────────────────────────────── */
 
-const SWIPE_THRESHOLD = 60;
+const SWIPE_THRESHOLD = 50;
+const SWIPE_MAX = 100;
 
 export default function LineItemCard({
   item,
@@ -29,61 +30,86 @@ export default function LineItemCard({
 }) {
   const [swiped, setSwiped] = useState(false);
   const [noteOpen, setNoteOpen] = useState(!!item.notes?.trim());
-  const touchRef = useRef({ startX: 0, startY: 0, swiping: false });
+  const touchRef = useRef({ startX: 0, startY: 0, swiping: false, decided: false });
   const cardRef = useRef(null);
   const contentRef = useRef(null);
 
   const lineTotal = Number(item.quantity || 0) * Number(item.unit_price || 0);
   const qtyDisplay = Number(item.quantity).toFixed(item.quantity % 1 === 0 ? 0 : 2);
 
-  // ── Swipe handling ──
-  const handleTouchStart = useCallback((e) => {
-    if (swiped) return;
-    const touch = e.touches[0];
-    touchRef.current = { startX: touch.clientX, startY: touch.clientY, swiping: false };
-  }, [swiped]);
+  // ── Swipe handling via non-passive listeners ──
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
 
-  const handleTouchMove = useCallback((e) => {
-    const { startX, startY } = touchRef.current;
-    const touch = e.touches[0];
-    const dx = touch.clientX - startX;
-    const dy = touch.clientY - startY;
+    const onStart = (e) => {
+      if (swiped) return;
+      const t = e.touches[0];
+      touchRef.current = { startX: t.clientX, startY: t.clientY, swiping: false, decided: false };
+    };
 
-    // If scrolling vertically, bail
-    if (!touchRef.current.swiping && Math.abs(dy) > Math.abs(dx)) return;
+    const onMove = (e) => {
+      const ref = touchRef.current;
+      const t = e.touches[0];
+      const dx = t.clientX - ref.startX;
+      const dy = t.clientY - ref.startY;
 
-    if (dx < -10) {
-      touchRef.current.swiping = true;
-      e.preventDefault();
-      const offset = Math.max(-120, dx);
+      // First 10px of movement: decide if horizontal or vertical
+      if (!ref.decided) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; // too small to decide
+        ref.decided = true;
+        if (Math.abs(dy) > Math.abs(dx)) {
+          // Vertical scroll — bail out completely
+          ref.swiping = false;
+          return;
+        }
+        ref.swiping = true;
+      }
+
+      if (!ref.swiping) return;
+
+      e.preventDefault(); // This works because listener is { passive: false }
+      const offset = Math.max(-SWIPE_MAX, Math.min(0, dx));
       if (contentRef.current) {
         contentRef.current.style.transform = `translateX(${offset}px)`;
         contentRef.current.style.transition = 'none';
       }
-    }
-  }, []);
+    };
 
-  const handleTouchEnd = useCallback(() => {
-    if (!touchRef.current.swiping) return;
-    const el = contentRef.current;
-    if (!el) return;
-    const matrix = new DOMMatrix(getComputedStyle(el).transform);
-    const currentX = matrix.m41;
+    const onEnd = () => {
+      const ref = touchRef.current;
+      if (!ref.swiping) return;
+      const el = contentRef.current;
+      if (!el) return;
 
-    if (currentX < -SWIPE_THRESHOLD) {
-      el.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
-      el.style.transform = 'translateX(-120px)';
-      setSwiped(true);
-    } else {
-      el.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
-      el.style.transform = 'translateX(0)';
-    }
-    touchRef.current.swiping = false;
-  }, []);
+      const matrix = new DOMMatrix(getComputedStyle(el).transform);
+      const currentX = matrix.m41;
+
+      el.style.transition = 'transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)';
+      if (currentX < -SWIPE_THRESHOLD) {
+        el.style.transform = `translateX(-${SWIPE_MAX}px)`;
+        setSwiped(true);
+      } else {
+        el.style.transform = 'translateX(0)';
+      }
+      ref.swiping = false;
+      ref.decided = false;
+    };
+
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+    };
+  }, [swiped]);
 
   const closeSwipe = useCallback(() => {
     if (contentRef.current) {
-      contentRef.current.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
+      contentRef.current.style.transition = 'transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)';
       contentRef.current.style.transform = 'translateX(0)';
     }
     setSwiped(false);
@@ -104,9 +130,6 @@ export default function LineItemCard({
     <div
       ref={cardRef}
       className={`qe-item ${isEditing ? 'qe-item--editing' : ''} ${swiped ? 'qe-item--swiped' : ''}`}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Swipe-revealed actions */}
       <div className="qe-item-actions-revealed" aria-hidden={!swiped}>
@@ -169,12 +192,17 @@ export default function LineItemCard({
             />
           </div>
           <span className="qe-line-total">{currency(lineTotal, country)}</span>
+          {!noteOpen && (
+            <button type="button" className="qe-note-toggle" onClick={() => { setNoteOpen(true); onUpdate(item.id, { notes: item.notes || '' }); }} aria-label="Add note">
+              ✎
+            </button>
+          )}
         </div>
 
         {renderPriceHint()}
 
-        {/* Row 3: Note toggle */}
-        {noteOpen ? (
+        {/* Note input — only visible when open */}
+        {noteOpen && (
           <input
             className="qe-item-note"
             value={item.notes || ''}
@@ -182,10 +210,6 @@ export default function LineItemCard({
             placeholder="Note (shown to customer)"
             aria-label="Item note"
           />
-        ) : (
-          <button type="button" className="qe-note-toggle" onClick={() => { setNoteOpen(true); onUpdate(item.id, { notes: item.notes || '' }); }}>
-            + note
-          </button>
         )}
       </div>
     </div>

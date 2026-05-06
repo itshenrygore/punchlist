@@ -528,9 +528,9 @@
     font-weight: 700;
   }
   .rq-add-trigger-foreman {
-    border-color: var(--brand-line);
-    color: var(--brand);
-    background: var(--brand-bg);
+    border-color: var(--line);
+    color: var(--text-2);
+    background: var(--panel);
   }
 
   /* Catalog overlay: bottom-sheet style */
@@ -2218,8 +2218,8 @@
   }
   .rq-add-trigger-primary {
     grid-column: 1 / -1 !important;
-    background: var(--brand-bg) !important; border-color: var(--brand-line) !important;
-    color: var(--brand) !important; font-weight: 700;
+    background: var(--panel-2) !important; border-color: var(--line) !important;
+    color: var(--text) !important; font-weight: 700;
   }
   .qb-hints-toggle {
     padding: 6px 12px !important; font-size: 11px !important; border-radius: 10px !important;

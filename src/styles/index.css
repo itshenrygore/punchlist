@@ -360,9 +360,10 @@ body {
 [data-theme="dark"] .app-sidebar { background: #fff; ... }
 */
 
-/* Mobile nav — menu/overlay keep their inverted rules (not handled by Phase 2) */
+/* Mobile nav — menu uses dark surface in dark mode */
 [data-theme="dark"] .mobile-menu {
-  background: #fff;
+  background: var(--panel-2);
+  border-color: var(--line);
 }
 [data-theme="dark"] .mobile-overlay {
   background: rgba(0,0,0,.6);
@@ -601,12 +602,16 @@ body {
   background: rgba(0,0,0,.6);
 }
 [data-theme="dark"] .mobile-menu {
-  background: #FFFFFF;
-  border-color: rgba(17,24,39,.08);
-  box-shadow: 0 8px 32px rgba(16,24,40,.12);
+  background: var(--panel-2);
+  border-color: var(--line);
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
 }
 [data-theme="dark"] .mobile-menu-item {
+  color: var(--text-2);
+}
+[data-theme="dark"] .mobile-menu-who {
   color: var(--text);
+  border-bottom-color: var(--line);
 }
 
 /* Print stays white regardless */

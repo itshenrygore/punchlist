@@ -47,6 +47,24 @@
   overflow: hidden;
 }
 
+/* ── Category grouping ── */
+.qe-category-group + .qe-category-group {
+  border-top: 1px solid var(--line, #e8e2d9);
+}
+
+.qe-category-header {
+  padding: 4px 10px 2px;
+  background: var(--bg, #faf8f5);
+}
+
+.qe-category-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted, #6b6459);
+  text-transform: uppercase;
+}
+
 
 /* ═══════════════════════════════════════════════
    LINE ITEM CARD
@@ -60,6 +78,7 @@
   box-shadow: none;
   border-bottom: 1px solid var(--line, #e8e2d9);
   contain: inline-size;
+  touch-action: pan-y;
 }
 
 .qe-item:last-child {
@@ -78,7 +97,7 @@
   right: 0;
   top: 0;
   bottom: 0;
-  width: 120px;
+  width: 100px;
   display: flex;
   z-index: 0;
 }
@@ -107,7 +126,7 @@
   position: relative;
   z-index: 1;
   background: var(--card, #fff);
-  padding: 8px 12px;
+  padding: 6px 10px;
   transform: translateX(0);
   will-change: transform;
   border-radius: 0;
@@ -120,15 +139,15 @@
   border: none;
   background: none;
   font-family: inherit;
-  font-size: var(--text-base, 14px);
+  font-size: 14px;
   font-weight: 600;
   color: var(--fg, #1c140c);
   padding: 0;
-  margin: 0 0 var(--space-1, 4px);
+  margin: 0 0 2px;
   outline: none;
-  line-height: var(--lh-snug, 1.25);
+  line-height: 1.3;
   /* Prevent zoom on iOS */
-  font-size: max(16px, var(--text-base, 14px));
+  font-size: max(16px, 14px);
 }
 
 .qe-item-name::placeholder {
@@ -140,8 +159,7 @@
 .qe-item-row2 {
   display: flex;
   align-items: center;
-  gap: 6px;
-  /* This is the critical row — must never overflow 375px */
+  gap: 4px;
   min-width: 0;
 }
 
@@ -151,28 +169,28 @@
   align-items: center;
   gap: 0;
   background: var(--bg, #faf8f5);
-  border-radius: var(--r-btn, 12px);
+  border-radius: 8px;
   border: 1px solid var(--line, #e8e2d9);
   flex-shrink: 0;
-  height: 32px;
+  height: 28px;
 }
 
 .qe-qty-btn {
-  width: 28px;
-  height: 32px;
+  width: 24px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: none;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--fg, #1c140c);
   cursor: pointer;
   padding: 0;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--dur-fast, 140ms) ease;
+  transition: background-color 140ms ease;
 }
 
 .qe-qty-btn:active {
@@ -180,9 +198,9 @@
 }
 
 .qe-qty-val {
-  min-width: 24px;
+  min-width: 20px;
   text-align: center;
-  font-size: var(--text-sm, 13px);
+  font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--fg, #1c140c);
@@ -191,7 +209,7 @@
 
 /* Multiply sign */
 .qe-times {
-  font-size: var(--text-xs, 12px);
+  font-size: 11px;
   color: var(--subtle, #a39888);
   flex-shrink: 0;
 }
@@ -200,20 +218,19 @@
 .qe-price {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   background: var(--bg, #faf8f5);
-  border-radius: var(--r-input, 10px);
+  border-radius: 8px;
   border: 1px solid var(--line, #e8e2d9);
-  padding: 0 var(--space-2, 8px);
-  height: 32px;
-  /* Allow this to shrink if needed */
+  padding: 0 6px;
+  height: 28px;
   min-width: 0;
   flex: 1;
-  max-width: 120px;
+  max-width: 100px;
 }
 
 .qe-price-dollar {
-  font-size: var(--text-sm, 13px);
+  font-size: 12px;
   color: var(--muted, #6b6459);
   font-weight: 500;
   flex-shrink: 0;
@@ -223,7 +240,7 @@
   border: none;
   background: none;
   font-family: inherit;
-  font-size: max(16px, var(--text-base, 14px));
+  font-size: max(16px, 14px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--fg, #1c140c);
@@ -231,7 +248,6 @@
   min-width: 0;
   padding: 0;
   outline: none;
-  /* Remove number input spinners */
   -moz-appearance: textfield;
 }
 
@@ -243,7 +259,7 @@
 
 /* Line total */
 .qe-line-total {
-  font-size: var(--text-sm, 13px);
+  font-size: 13px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--fg, #1c140c);
@@ -255,9 +271,9 @@
 
 /* ── Price hint ── */
 .qe-price-hint {
-  font-size: var(--text-xs, 12px);
+  font-size: 11px;
   color: var(--muted, #6b6459);
-  margin-top: var(--space-1, 4px);
+  margin-top: 2px;
   padding-left: 2px;
 }
 
@@ -269,19 +285,19 @@
   color: var(--red, #dc2626);
 }
 
-/* ── Row 3: Note ── */
+/* ── Note ── */
 .qe-item-note {
   display: block;
   width: 100%;
   border: none;
-  border-top: 1px solid var(--line, #e8e2d9);
   background: none;
   font-family: inherit;
-  font-size: max(16px, var(--text-xs, 12px));
+  font-size: max(16px, 12px);
   color: var(--muted, #6b6459);
-  padding: var(--space-1, 4px) 0 0;
-  margin-top: var(--space-1, 4px);
+  padding: 2px 0 0;
+  margin-top: 2px;
   outline: none;
+  line-height: 1.3;
 }
 
 .qe-item-note::placeholder {
@@ -289,21 +305,29 @@
 }
 
 .qe-note-toggle {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: none;
   font-family: inherit;
-  font-size: var(--text-2xs, 11px);
+  font-size: 12px;
   color: var(--subtle, #a39888);
   cursor: pointer;
-  padding: var(--space-1, 4px) 0 0;
-  margin-top: var(--space-1, 4px);
-  transition: color var(--dur-fast, 140ms) ease;
+  padding: 0;
+  margin: 0;
+  width: 24px;
+  height: 28px;
+  flex-shrink: 0;
+  transition: color 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.5;
 }
 
 .qe-note-toggle:hover,
 .qe-note-toggle:focus-visible {
   color: var(--brand, #c45a2d);
+  opacity: 1;
 }
 
 
@@ -653,10 +677,10 @@
 
 .qe-sheet {
   width: 100%;
-  max-height: 90vh;
-  max-height: 90dvh;
+  height: 95vh;
+  height: 95dvh;
   background: var(--card, #fff);
-  border-radius: var(--r-sheet, 20px) var(--r-sheet, 20px) 0 0;
+  border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
   animation: qe-slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1);
@@ -858,6 +882,21 @@
   background: #16a34a;
 }
 
+/* Catalog section headers */
+.qe-cat-section-header {
+  padding: 10px 16px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--muted, #6b6459);
+  text-transform: uppercase;
+  background: var(--bg, #faf8f5);
+  border-top: 1px solid var(--line, #e8e2d9);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 
 /* ═══════════════════════════════════════════════
    BUTTONS
@@ -932,29 +971,25 @@
 
 @media (max-width: 375px) {
   .qe-item-content {
-    padding: 6px 10px;
+    padding: 5px 8px;
   }
 
   .qe-qty-btn {
-    width: 26px;
+    width: 22px;
   }
 
   .qe-price {
-    max-width: 100px;
-    padding: 0 6px;
+    max-width: 90px;
+    padding: 0 5px;
   }
 
   .qe-item-row2 {
-    gap: 4px;
-  }
-
-  .qe-add-bar {
-    gap: 6px;
+    gap: 3px;
   }
 
   .qe-add-btn {
-    padding: var(--space-2, 8px) var(--space-2, 8px);
-    font-size: var(--text-xs, 12px);
+    padding: 6px;
+    font-size: 12px;
   }
 }
 
@@ -1046,6 +1081,16 @@
 
 [data-theme="dark"] .qe-cat-name {
   color: var(--text);
+}
+
+[data-theme="dark"] .qe-category-header {
+  background: var(--bg-2);
+}
+
+[data-theme="dark"] .qe-cat-section-header {
+  background: var(--bg-2);
+  border-top-color: var(--line);
+  color: var(--muted);
 }
 
 [data-theme="dark"] .qe-sug-btn {

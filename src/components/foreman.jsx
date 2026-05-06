@@ -27,12 +27,25 @@ const STARTERS = [
 ];
 
 const STORAGE_KEY = 'pl_foreman_msgs';
+const STORAGE_TS_KEY = 'pl_foreman_ts';
+const CONVERSATION_TTL = 60 * 60 * 1000; // 1 hour
 
 function loadMessages() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  try {
+    const ts = Number(localStorage.getItem(STORAGE_TS_KEY) || '0');
+    if (Date.now() - ts > CONVERSATION_TTL) {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_TS_KEY);
+      return [];
+    }
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch { return []; }
 }
 function saveMessages(msgs) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs.slice(-40))); } catch (e) { console.warn("[PL]", e); }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs.slice(-40)));
+    localStorage.setItem(STORAGE_TS_KEY, String(Date.now()));
+  } catch (e) { console.warn("[PL]", e); }
 }
 
 export default function Foreman() {
@@ -196,7 +209,7 @@ export default function Foreman() {
 
   function clearChat() {
     setMessages([]);
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { console.warn("[PL]", e); }
+    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(STORAGE_TS_KEY); } catch (e) { console.warn("[PL]", e); }
   }
 
   if (!user) return null;

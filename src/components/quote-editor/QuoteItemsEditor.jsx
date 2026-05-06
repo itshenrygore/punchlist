@@ -127,6 +127,33 @@ export default function QuoteItemsEditor({
     onOpenForeman();
   }
 
+  // ── Group items by category ──
+  const CATEGORY_ORDER = ['services', 'labour', 'materials', ''];
+  const CATEGORY_LABELS = { services: 'SERVICES', labour: 'LABOUR', materials: 'MATERIALS', '': '' };
+
+  const groupedItems = useMemo(() => {
+    const groups = {};
+    lineItems.forEach((item, idx) => {
+      const cat = (item.category || '').toLowerCase();
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push({ item, idx });
+    });
+    // Sort by predefined order, unknowns at end
+    const ordered = [];
+    CATEGORY_ORDER.forEach(cat => {
+      if (groups[cat]) ordered.push({ category: cat, label: CATEGORY_LABELS[cat], items: groups[cat] });
+    });
+    // Any categories not in the predefined list
+    Object.keys(groups).forEach(cat => {
+      if (!CATEGORY_ORDER.includes(cat)) {
+        ordered.push({ category: cat, label: cat.toUpperCase(), items: groups[cat] });
+      }
+    });
+    return ordered;
+  }, [lineItems]);
+
+  const hasCategories = groupedItems.some(g => g.label);
+
   return (
     <div className="qe-root">
       {/* ── Items list ── */}
@@ -139,23 +166,52 @@ export default function QuoteItemsEditor({
 
         {lineItems.length > 0 && (
           <div className="qe-items-list">
-            {lineItems.map((item, idx) => (
-              <LineItemCard
-                key={item.id}
-                item={item}
-                index={idx}
-                country={country}
-                isEditing={editingItemId === item.id}
-                priceRange={priceRanges[item.id]}
-                onUpdate={updateItem}
-                onRemove={removeItem}
-                onDuplicate={duplicateItem}
-                onAdjustQty={adjustQty}
-                onFocus={setEditingItemId}
-                onAddAfter={addBlankItem}
-                isLast={idx === lineItems.length - 1}
-              />
-            ))}
+            {hasCategories ? (
+              groupedItems.map(group => (
+                <div key={group.category} className="qe-category-group">
+                  {group.label && (
+                    <div className="qe-category-header">
+                      <span className="qe-category-label">{group.label}</span>
+                    </div>
+                  )}
+                  {group.items.map(({ item, idx }) => (
+                    <LineItemCard
+                      key={item.id}
+                      item={item}
+                      index={idx}
+                      country={country}
+                      isEditing={editingItemId === item.id}
+                      priceRange={priceRanges[item.id]}
+                      onUpdate={updateItem}
+                      onRemove={removeItem}
+                      onDuplicate={duplicateItem}
+                      onAdjustQty={adjustQty}
+                      onFocus={setEditingItemId}
+                      onAddAfter={addBlankItem}
+                      isLast={idx === lineItems.length - 1}
+                    />
+                  ))}
+                </div>
+              ))
+            ) : (
+              lineItems.map((item, idx) => (
+                <LineItemCard
+                  key={item.id}
+                  item={item}
+                  index={idx}
+                  country={country}
+                  isEditing={editingItemId === item.id}
+                  priceRange={priceRanges[item.id]}
+                  onUpdate={updateItem}
+                  onRemove={removeItem}
+                  onDuplicate={duplicateItem}
+                  onAdjustQty={adjustQty}
+                  onFocus={setEditingItemId}
+                  onAddAfter={addBlankItem}
+                  isLast={idx === lineItems.length - 1}
+                />
+              ))
+            )}
           </div>
         )}
 
