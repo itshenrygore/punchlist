@@ -191,7 +191,7 @@ export default function QuoteBuilderPage() {
   const [smsConfirmPending, setSmsConfirmPending] = useState(null); // null | { url, phone, body }
   useScrollLock(showSend);
   useScrollLock(!!smsConfirmPending);
-  useScrollLock(addMode === 'catalog');
+  // CatalogSheet in QuoteItemsEditor handles its own scroll lock
   const [sentSuccess, setSentSuccess] = useState(false);
   // Ref to the undo-cancel fn returned by showUndo (used to imperatively cancel on unmount)
   const undoCancelRef = useRef(null);
@@ -607,10 +607,9 @@ export default function QuoteBuilderPage() {
     });
   }, [suggestions, lineItems, dismissedSugIds]);
 
-  // ── Catalog search ──
+  // ── Catalog search (feeds QuoteItemsEditor's CatalogSheet via props) ──
   const jobCtx = useMemo(() => extractJobContext([draft.title, description].filter(Boolean).join('. '), trade), [draft.title, description, trade]);
   useEffect(() => {
-    if (addMode !== 'catalog') { setCatalogResults([]); return; }
     if (!catalogQuery || catalogQuery.length < 2) { clearTimeout(catalogDebounceRef.current); setCatalogResults(browseCatalog(trade, 30).map(hit => { const adj = regionalize(hit, province); const a = anchorPrice(adj.lo || hit.lo, adj.hi || hit.hi, normalizeTrade(trade), hit.c); return { id: `cat_${makeId()}`, name: hit.n, desc: hit.d || '', category: hit.c || '', lo: a.lo, hi: a.hi, mid: a.mid }; })); return; }
     clearTimeout(catalogDebounceRef.current);
     catalogDebounceRef.current = setTimeout(() => {
@@ -618,7 +617,7 @@ export default function QuoteBuilderPage() {
       const hits = smartSearch(catalogQuery, ctx, province, 20).map(hit => ({ id: `cs_${makeId()}`, name: hit.name, desc: hit.desc || '', category: hit.category || '', lo: hit.lo || 0, hi: hit.hi || 0, mid: hit.mid || 0, isContextRelevant: hit.isContextRelevant }));
       setCatalogResults(hits);
     }, 200);
-  }, [catalogQuery, addMode, trade, province]);
+  }, [catalogQuery, trade, province]);
 
   function addCatalogItem(item) {
     if (lineItems.some(li => li.name.toLowerCase() === item.name.toLowerCase())) return;

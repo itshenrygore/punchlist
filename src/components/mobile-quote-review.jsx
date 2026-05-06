@@ -13,6 +13,7 @@
  */
 import { useState, useRef, useCallback } from 'react';
 import { currency } from '../lib/format';
+import { QuoteItemsEditor } from './quote-editor';
 
 /* ═══════════════════════════════════════════════════════
    DESIGN TOKENS (inline — no external dependency)
@@ -649,40 +650,34 @@ export default function MobileQuoteReview({ ctx }) {
           </div>
         </div>
 
-        {/* ── Line Items ── */}
-        <div style={S.section}>
-          <div style={S.label}>{itemCount>0?`${itemCount} item${itemCount!==1?'s':''}`:'Line items'}</div>
-          {lineItems.map((li,idx) => (
-            <ItemCard key={li.id} li={li} idx={idx} isEditing={editingItemId===li.id} priceRange={priceRanges?.[li.id]} cur={cur} isLast={idx===lineItems.length-1}
-              updateItem={updateItem} adjustQty={adjustQty} removeItem={removeItem} setEditingItemId={setEditingItemId} setLineItems={setLineItems} markDirty={markDirty} genLineItemId={genLineItemId} />
-          ))}
-          {lineItems.length===0 && (
-            <div style={S.empty}>
-              <div style={{fontSize:32,marginBottom:12,opacity:0.35}}>📋</div>
-              <div style={S.emptyTitle}>No items yet</div>
-              <div style={S.emptyDesc}>Search the catalog or add items to build your quote.</div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Add ── */}
-        <div style={S.addWrap}>
-          <button style={S.addPrimary} type="button" onClick={()=>setAddMode('catalog')}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Search catalog
-          </button>
-          <div style={S.addRow}>
-            <button style={S.addSecondary} type="button" onClick={()=>{setLineItems(p=>[...p,{id:genLineItemId(),name:'',quantity:1,unit_price:0,notes:'',included:true,category:''}]);markDirty();}}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Custom
-            </button>
-            <button style={S.addForeman} type="button" onClick={()=>{
+        {/* ── Line Items (QuoteItemsEditor v2) ── */}
+        <div style={{padding:'0 16px'}}>
+          <QuoteItemsEditor
+            lineItems={lineItems}
+            setLineItems={setLineItems}
+            markDirty={markDirty}
+            trade={trade}
+            province={province}
+            country={country}
+            editingItemId={editingItemId}
+            setEditingItemId={setEditingItemId}
+            priceRanges={priceRanges}
+            confidence={confidence}
+            catalogQuery={catalogQuery}
+            setCatalogQuery={setCatalogQuery}
+            catalogResults={catalogResults}
+            suggestions={[]}
+            onAddSuggestion={() => {}}
+            onDismissSuggestion={() => {}}
+            onOpenForeman={() => {
               if(window.__punchlistOpenForeman){const j=description||title||'';window.__punchlistOpenForeman({starters:[`What else should I include for this ${trade.toLowerCase()} job?`,j?`Review my scope: "${j.slice(0,80)}${j.length>80?'…':''}"` :'Help me scope this quote',`What do ${trade.toLowerCase()}s commonly forget to quote?`],quoteContext:{description:j,trade,title:title||'',items:lineItems.filter(i=>i.name?.trim()).map(i=>({name:i.name,qty:i.quantity,price:i.unit_price})),total:grandTotal,province,country}});}
-            }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              Foreman
-            </button>
-          </div>
+            }}
+            onRetryScopeAI={scopeError ? () => { setScopeError(false); ctx.setPhase?.('describe'); } : null}
+            scopeError={scopeError}
+            quoteId={quoteId}
+            grandTotal={grandTotal}
+            toast={toast}
+          />
         </div>
 
         {/* ── Scope ── */}
@@ -740,7 +735,7 @@ export default function MobileQuoteReview({ ctx }) {
       </div>
 
       {/* ── Catalog ── */}
-      <CatalogSheet open={addMode==='catalog'} onClose={()=>{setAddMode(null);setCatalogQuery('');}} query={catalogQuery} onQuery={setCatalogQuery} results={catalogResults} lineItems={lineItems} trade={trade} onAdd={addCatalogItem} cur={cur} />
+      {/* CatalogSheet now rendered inside QuoteItemsEditor */}
 
       {/* ── Send Sheet ── */}
       {showSend && (
