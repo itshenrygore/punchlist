@@ -521,10 +521,10 @@ export default function InvoiceDetailPage() {
                   </button>
                   {!showPartialForm && !showPayForm ? (
                     <div className="id-pay-grid">
-                      <button className="btn btn-secondary full-width" type="button" onClick={() => setShowPartialForm(true)} className="id-record-btn">
+                      <button className="btn btn-secondary full-width id-record-btn" type="button" onClick={() => setShowPartialForm(true)}>
                         Record payment
                       </button>
-                      <button className="btn btn-secondary full-width" type="button" onClick={() => setShowPayForm(true)} className="id-mark-paid-btn">
+                      <button className="btn btn-secondary full-width id-mark-paid-btn" type="button" onClick={() => setShowPayForm(true)}>
                         Mark fully paid
                       </button>
                     </div>
@@ -619,7 +619,16 @@ export default function InvoiceDetailPage() {
       </div>
       {invoice && invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
         <div className="qd-mobile-send-bar">
-          <button className="btn btn-primary id-mobile-btn" type="button"  onClick={() => setShowPayForm(true)}>
+          <button className="btn btn-primary id-mobile-btn" type="button" onClick={() => {
+            setShowPayForm(true);
+            // Scroll the payment form into view on mobile after React re-renders
+            requestAnimationFrame(() => {
+              setTimeout(() => {
+                const form = document.querySelector('.inv-pay-form');
+                if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 100);
+            });
+          }}>
             Mark as paid
           </button>
         </div>

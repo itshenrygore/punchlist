@@ -107,7 +107,7 @@ export default function PaymentsSetupPage() {
           <p className="ps-cta-sub">
             Connect your Stripe account and start accepting payments today. No commitments — you can disconnect at any time.
           </p>
-          <Link className="btn btn-primary" to="/app/payments/setup">
+          <Link className="btn btn-primary" to="/app/payments/onboarding">
             Connect Stripe →
           </Link>
         </div>

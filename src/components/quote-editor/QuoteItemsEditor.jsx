@@ -272,7 +272,24 @@ export default function QuoteItemsEditor({
             Ready to send
           </div>
         ) : (
-          <ConfidencePanel confidence={confidence} />
+          <ConfidencePanel confidence={confidence} onFixIssue={(issue) => {
+            if (/no customer/i.test(issue.label || '')) {
+              const el = document.querySelector('.rq-customer-section input, .jd-input[placeholder*="Search or add customer"], [placeholder*="Search or add customer"]');
+              if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            } else if (/cleanup|haul|disposal/i.test(issue.label || '')) {
+              const newId = genLineItemId();
+              setLineItems(p => [...p, { id: newId, name: 'Site cleanup & debris removal', quantity: 1, unit_price: 0, notes: '', included: true, category: 'services' }]);
+              markDirty();
+              setEditingItemId(newId);
+              toast?.('Added cleanup item — set your price', 'success');
+            } else if (/permit/i.test(issue.label || '')) {
+              const newId = genLineItemId();
+              setLineItems(p => [...p, { id: newId, name: 'Permit & inspection fees', quantity: 1, unit_price: 0, notes: '', included: true, category: 'services' }]);
+              markDirty();
+              setEditingItemId(newId);
+              toast?.('Added permit item — set your price', 'success');
+            }
+          }} />
         )
       )}
 
@@ -321,7 +338,7 @@ export default function QuoteItemsEditor({
 
 
 /* ── Confidence panel sub-component ── */
-function ConfidencePanel({ confidence }) {
+function ConfidencePanel({ confidence, onFixIssue }) {
   const [open, setOpen] = useState(false);
   const issues = (confidence.checks || []).filter(c => c.state !== 'good');
 
@@ -339,9 +356,16 @@ function ConfidencePanel({ confidence }) {
       {open && issues.length > 0 && (
         <div className="qe-conf-checks">
           {issues.map((c, i) => (
-            <div key={i} className={`qe-conf-check qe-conf-check--${c.state}`}>
-              <span className="qe-conf-dot" />
-              {c.label}
+            <div key={i} className={`qe-conf-check qe-conf-check--${c.state}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="qe-conf-dot" />
+                {c.label}
+              </div>
+              {onFixIssue && c.label && /cleanup|haul|disposal|permit|no customer/i.test(c.label) && (
+                <button type="button" className="qe-conf-fix-btn" onClick={(e) => { e.stopPropagation(); onFixIssue(c); }}>
+                  {/no customer/i.test(c.label) ? 'Add' : '+ Add'}
+                </button>
+              )}
             </div>
           ))}
         </div>

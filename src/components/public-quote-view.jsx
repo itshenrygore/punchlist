@@ -795,9 +795,9 @@ export default function PublicQuoteView({
             );
           })()}
 
-          {/* Line items — collapsed by default */}
+          {/* Line items — expanded for ≤5 items, collapsed for larger quotes */}
           <RevealOnView className="pl-reveal-once">
-          <details className="doc-items-collapse">
+          <details className="doc-items-collapse" open={(quote.line_items || []).filter(i => i.included !== false).length <= 5}>
             <summary className="doc-items-toggle">
               <span>View full breakdown</span>
               <span className="doc-items-toggle-count">{(quote.line_items || []).filter(i => i.included !== false).length} items</span>

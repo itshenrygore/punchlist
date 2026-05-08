@@ -329,24 +329,31 @@ const S = {
     alignItems: 'center', gap: 12, minHeight: 56,
   },
   footerTotal: {
-    fontSize: 22, fontWeight: 800, color: T.text,
+    fontSize: 18, fontWeight: 800, color: T.text,
     fontVariantNumeric: 'tabular-nums', flexShrink: 0,
-    letterSpacing: '-0.03em',
+    letterSpacing: '-0.02em',
   },
   footerCta: {
-    flex: 1, padding: '14px 16px', borderRadius: 12,
+    flex: 1, padding: '12px 14px', borderRadius: 12,
     background: T.brand, color: '#fff',
-    fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer',
-    fontFamily: T.font, textAlign: 'center', minHeight: 48,
+    fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
+    fontFamily: T.font, textAlign: 'center', minHeight: 44,
     WebkitTapHighlightColor: T.tap,
     boxShadow: '0 2px 8px rgba(184,81,40,0.25)',
   },
   footerCtaOff: {
-    flex: 1, padding: '14px 16px', borderRadius: 12,
+    flex: 1, padding: '12px 14px', borderRadius: 12,
     background: T.panel3, color: T.muted,
-    fontSize: 16, fontWeight: 700, border: 'none',
-    fontFamily: T.font, textAlign: 'center', minHeight: 48,
+    fontSize: 15, fontWeight: 700, border: 'none',
+    fontFamily: T.font, textAlign: 'center', minHeight: 44,
     cursor: 'default',
+  },
+  footerCtaSecondary: {
+    flex: 1, padding: '12px 14px', borderRadius: 12,
+    background: T.panel, color: T.text2,
+    fontSize: 14, fontWeight: 600, border: `1.5px solid ${T.line2}`, cursor: 'pointer',
+    fontFamily: T.font, textAlign: 'center', minHeight: 44,
+    WebkitTapHighlightColor: T.tap,
   },
   error: {
     margin: '6px 20px', padding: '12px 16px', borderRadius: T.radiusSm,
@@ -635,7 +642,7 @@ export default function MobileQuoteReview({ ctx }) {
             </>) : (
               <div style={{width:'100%'}}>
                 <input style={S.custInput} value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Search or add customer…" autoComplete="off" />
-                {customerSearch.trim() && (()=>{
+                {customerSearch.trim() && !showNewCust && (()=>{
                   const m = searchCustomers(allCustomers,customerSearch,6);
                   return m.length>0 ? (
                     <div style={S.custList}>{m.map(c=>(
@@ -643,8 +650,51 @@ export default function MobileQuoteReview({ ctx }) {
                         <span>{c.name}</span>
                         {c.phone&&<span style={{fontSize:12,color:T.muted}}>{c.phone}</span>}
                       </button>))}</div>
-                  ) : (<button style={{...S.custItem,marginTop:4,color:T.brand}} type="button" onClick={()=>{setNewCust(p=>({...p,name:customerSearch}));setShowNewCust(true);}}>+ New: "{customerSearch}"</button>);
+                  ) : (<button style={{...S.custItem,marginTop:6,color:T.brand,fontWeight:600}} type="button" onClick={()=>{setNewCust(p=>({...p,name:customerSearch}));setShowNewCust(true);}}>
+                    <span>+ New: &ldquo;{customerSearch}&rdquo;</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                  </button>);
                 })()}
+                {/* ── New customer creation form ── */}
+                {showNewCust && (
+                  <div style={{marginTop:8,background:T.panel,borderRadius:T.radius,boxShadow:T.shadow,padding:16,display:'flex',flexDirection:'column',gap:10}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
+                      <span style={{fontSize:14,fontWeight:700,color:T.text}}>New customer</span>
+                      <button type="button" style={{background:'none',border:'none',cursor:'pointer',padding:'4px',color:T.muted,fontSize:18,lineHeight:1}} onClick={()=>setShowNewCust(false)} aria-label="Cancel">&times;</button>
+                    </div>
+                    <input
+                      style={S.custInput}
+                      type="text"
+                      placeholder="Full name *"
+                      value={newCust.name}
+                      onChange={e=>setNewCust(p=>({...p,name:e.target.value}))}
+                      autoFocus
+                    />
+                    <input
+                      style={S.custInput}
+                      type="tel"
+                      inputMode="tel"
+                      placeholder="Phone * (quote gets texted here)"
+                      value={newCust.phone}
+                      onChange={e=>setNewCust(p=>({...p,phone:e.target.value}))}
+                    />
+                    <input
+                      style={S.custInput}
+                      type="email"
+                      placeholder="Email (optional)"
+                      value={newCust.email}
+                      onChange={e=>setNewCust(p=>({...p,email:e.target.value}))}
+                    />
+                    <div style={{display:'flex',gap:8,marginTop:2}}>
+                      <button type="button" style={{...S.footerCta,flex:1,minHeight:44,fontSize:15,padding:'12px 14px',borderRadius:T.radiusSm}} onClick={()=>handleQuickCreateCustomer()}>
+                        Save &amp; continue
+                      </button>
+                      <button type="button" style={{flex:'0 0 auto',padding:'12px 16px',borderRadius:T.radiusSm,background:T.panel2,border:'none',color:T.text2,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:T.font,minHeight:44}} onClick={()=>setShowNewCust(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -705,11 +755,36 @@ export default function MobileQuoteReview({ ctx }) {
             {confOpen && issues.length>0 && (
               <div style={S.confChecks}>
                 {issues.map((c,i)=>(
-                  <div key={i} style={S.confCheck}>
-                    <span style={{width:7,height:7,borderRadius:'50%',flexShrink:0,background:c.state==='warn'?T.amber:c.state==='fail'?T.red:T.muted}} />
-                    <span>{c.label}</span>
+                  <div key={i} style={{...S.confCheck,justifyContent:'space-between'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10,minWidth:0}}>
+                      <span style={{width:7,height:7,borderRadius:'50%',flexShrink:0,background:c.state==='warn'?T.amber:c.state==='fail'?T.red:T.muted}} />
+                      <span>{c.label}</span>
+                    </div>
+                    {/* One-click fix actions */}
+                    {c.label && /no customer/i.test(c.label) && (
+                      <button type="button" onClick={(e)=>{e.stopPropagation();const inp=document.querySelector('[placeholder*="Search or add customer"]');if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});}}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 8px',fontFamily:T.font}}>Add</button>
+                    )}
+                    {c.label && /cleanup|haul|disposal/i.test(c.label) && (
+                      <button type="button" onClick={(e)=>{e.stopPropagation();setLineItems(p=>[...p,{id:genLineItemId(),name:'Site cleanup & debris removal',quantity:1,unit_price:0,notes:'',included:true,category:'services'}]);markDirty();toast?.('Added cleanup item — set your price','success');setConfOpen(false);}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 8px',fontFamily:T.font}}>+ Add</button>
+                    )}
+                    {c.label && /permit/i.test(c.label) && (
+                      <button type="button" onClick={(e)=>{e.stopPropagation();setLineItems(p=>[...p,{id:genLineItemId(),name:'Permit & inspection fees',quantity:1,unit_price:0,notes:'',included:true,category:'services'}]);markDirty();toast?.('Added permit item — set your price','success');setConfOpen(false);}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 8px',fontFamily:T.font}}>+ Add</button>
+                    )}
                   </div>
                 ))}
+                {/* Quick-fix all: add all missing items at once */}
+                {issues.filter(c=>/cleanup|haul|disposal|permit/i.test(c.label||'')).length > 1 && (
+                  <button type="button" onClick={()=>{
+                    const toAdd=[];
+                    issues.forEach(c=>{
+                      if(/cleanup|haul|disposal/i.test(c.label||''))toAdd.push({id:genLineItemId(),name:'Site cleanup & debris removal',quantity:1,unit_price:0,notes:'',included:true,category:'services'});
+                      if(/permit/i.test(c.label||''))toAdd.push({id:genLineItemId(),name:'Permit & inspection fees',quantity:1,unit_price:0,notes:'',included:true,category:'services'});
+                    });
+                    if(toAdd.length){setLineItems(p=>[...p,...toAdd]);markDirty();toast?.(`Added ${toAdd.length} items — set your prices`,'success');setConfOpen(false);}
+                  }} style={{marginTop:6,width:'100%',padding:'10px 14px',borderRadius:8,background:'rgba(217,119,6,0.10)',border:'none',color:T.amberText,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:T.font,textAlign:'center'}}>
+                    Add all missing items
+                  </button>
+                )}
               </div>
             )}
           </>);
@@ -724,12 +799,17 @@ export default function MobileQuoteReview({ ctx }) {
         {itemCount===0 ? (
           <button style={S.footerCtaOff} type="button" disabled>Add items to send</button>
         ) : !draft.customer_id ? (
-          <button style={S.footerCta} type="button" disabled={sending||isLocked} onClick={()=>{ctx.setDeliveryMethod?.('copy');handleSend();}}>
-            {sending?'Sending…':'Copy Quote Link'}
-          </button>
+          <div style={{flex:1,display:'flex',gap:8}}>
+            <button style={{...S.footerCta,flex:2}} type="button" onClick={()=>{const inp=document.querySelector('[placeholder*="Search or add customer"]');if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});}}}>
+              Add customer
+            </button>
+            <button style={S.footerCtaSecondary} type="button" disabled={sending||isLocked} onClick={()=>{ctx.setDeliveryMethod?.('copy');handleSend();}}>
+              {sending?'…':'Copy link'}
+            </button>
+          </div>
         ) : (
           <button style={S.footerCta} type="button" disabled={sending||isLocked} onClick={handleSend}>
-            {sending?'Sending…':`Text to ${selCustomer?.name?.split(' ')[0]||'customer'} →`}
+            {sending?'Sending…':`Send to ${selCustomer?.name?.split(' ')[0]||'customer'} →`}
           </button>
         )}
       </div>

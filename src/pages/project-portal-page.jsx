@@ -439,7 +439,7 @@ function MessagesTab({ quote, shareToken, onQuoteUpdate }) {
             placeholder={`Message ${contractorName}…`}
             className="pp-msg-input"
           />
-          <button type="button" className="doc-cta-primary pp-msg-send" onClick={sendMessage} disabled={sending || !text.trim()} >
+          <button type="button" className="pp-msg-send-btn" onClick={sendMessage} disabled={sending || !text.trim()} >
             {sending ? '…' : 'Send'}
           </button>
         </div>

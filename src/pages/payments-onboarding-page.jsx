@@ -363,8 +363,8 @@ function IntroScreen({ onNext }) {
       {/* Value props */}
       <div className="po-actions-grid" style={{ marginBottom: 32 }}>
         {[
-          { icon: 'bolt', title: 'Customers pay right from the quote', sub: 'No chasing e-transfers or waiting for cheques' },
-          { icon: 'mobile', title: 'Monthly payments close bigger jobs', sub: 'A $6K job becomes $250/mo — easier to say yes' },
+          { icon: '⚡', title: 'Customers pay right from the quote', sub: 'No chasing e-transfers or waiting for cheques' },
+          { icon: '📱', title: 'Monthly payments close bigger jobs', sub: 'A $6K job becomes $250/mo — easier to say yes' },
           { icon: '✅', title: 'You get the full amount', sub: 'Deposited to your bank within 2 business days' },
         ].map(({ icon, title, sub }) => (
           <div key={title} className="po-feature-row">
@@ -388,7 +388,7 @@ function IntroScreen({ onNext }) {
       </div>
 
       <div className="po-trust-grid">
-        <TrustBadge icon="lock" text="Powered by Stripe — trusted by millions of businesses" />
+        <TrustBadge icon="🔒" text="Powered by Stripe — trusted by millions of businesses" />
         <TrustBadge icon="🆓" text="No monthly fees. You only pay a small processing fee when you get paid." />
       </div>
     </FlowFrame>
@@ -443,7 +443,7 @@ function ExpectScreen({ onNext, onBack }) {
       </PrimaryBtn>
 
       <div className="po-trust-grid" style={{ marginTop: 24 }}>
-        <TrustBadge icon="lock" text="All information is encrypted and sent directly to Stripe" />
+        <TrustBadge icon="🔒" text="All information is encrypted and sent directly to Stripe" />
       </div>
     </FlowFrame>
   );
@@ -619,7 +619,7 @@ function ResumeScreen({ onResume, loading }) {
       </Link>
 
       <div className="po-trust-grid" style={{ marginTop: 24, gap: 0 }}>
-        <TrustBadge icon="lock" text="Your progress is saved. You won't need to re-enter anything." />
+        <TrustBadge icon="🔒" text="Your progress is saved. You won't need to re-enter anything." />
       </div>
     </FlowFrame>
   );

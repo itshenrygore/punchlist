@@ -975,8 +975,27 @@ export default function QuoteBuilderPage() {
         toast(`Quote emailed to ${firstName || cust?.email}`, 'success');
         _markSent(firstName);
       } else {
-        // copy
-        try { await navigator.clipboard.writeText(url); toast('Link copied', 'success'); } catch { toast('Link: ' + url, 'info'); }
+        // copy — with fallback for mobile Safari
+        let copied = false;
+        try {
+          await navigator.clipboard.writeText(url);
+          copied = true;
+        } catch {
+          // Fallback: create a temporary textarea and use execCommand
+          try {
+            const ta = document.createElement('textarea');
+            ta.value = url;
+            ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            ta.setSelectionRange(0, ta.value.length); // iOS needs this
+            copied = document.execCommand('copy');
+            document.body.removeChild(ta);
+          } catch { /* ignore */ }
+        }
+        if (copied) toast('Link copied', 'success');
+        else toast('Link: ' + url, 'info');
         _markSent(firstName);
       }
     } catch (e) { setError(e?.message || 'Send failed'); } finally { setSending(false); }
