@@ -886,15 +886,17 @@ export default function QuoteBuilderPage() {
     toast(`Using existing: ${existing.name}`, 'info');
   }
 
-  function handleSend() {
+  function handleSend(overrideMethod) {
+    const method = overrideMethod || deliveryMethod;
     setError('');
     if (!canSendQuote(userProfile, sentThisMonth)) { setShowUpgradeModal(true); return; }
-    if (!draft.customer_id && deliveryMethod !== 'copy') { setError('Add a customer to send via text. Or use "Copy link".'); return; }
-    if (deliveryMethod === 'text' && draft.customer_id) { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust?.phone) { setInlinePhone(''); setError('__needs_phone__'); return; } }
-    if (deliveryMethod === 'email' && draft.customer_id) { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust?.email) { setError('This customer has no email address. Add one or use "Copy link".'); return; } }
+    if (!draft.customer_id && method !== 'copy') { setError('Add a customer to send via text. Or use "Copy link".'); return; }
+    if (method === 'text' && draft.customer_id) { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust?.phone) { setInlinePhone(''); setError('__needs_phone__'); return; } }
+    if (method === 'email' && draft.customer_id) { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust?.email) { setError('This customer has no email address. Add one or use "Copy link".'); return; } }
     if (!lineItems.some(i => i.name?.trim())) return setError('Add at least one item');
     const zeroItems = lineItems.filter(i => i.name?.trim() && Number(i.unit_price) === 0);
     if (zeroItems.length > 0) { setZeroItemConfirm(zeroItems.length); return; }
+    if (overrideMethod) setDeliveryMethod(overrideMethod);
     proceedToSend();
   }
   function proceedToSend() {
@@ -1227,6 +1229,7 @@ export default function QuoteBuilderPage() {
             smsBody, setSmsBody, deliveryMethod,
             SmsComposerField,
             toast, currency,
+            inlinePhone, setInlinePhone,
           }} />
         )}
         {phase === 'review' && !isMobile && (

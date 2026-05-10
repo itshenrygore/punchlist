@@ -39,6 +39,7 @@ export default function QuoteItemsEditor({
   quoteId,
   grandTotal,
   toast,
+  hideConfidence = false,
 }) {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -264,8 +265,8 @@ export default function QuoteItemsEditor({
         )}
       </div>
 
-      {/* Confidence / commonly missed */}
-      {lineItems.length > 0 && confidence && (
+      {/* Confidence / commonly missed — hidden when parent renders its own */}
+      {!hideConfidence && lineItems.length > 0 && confidence && (
         confidence.readiness === 'ready' ? (
           <div className="qe-confidence qe-confidence--ready">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>

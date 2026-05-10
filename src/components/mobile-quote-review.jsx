@@ -719,6 +719,7 @@ export default function MobileQuoteReview({ ctx }) {
             suggestions={[]}
             onAddSuggestion={() => {}}
             onDismissSuggestion={() => {}}
+            hideConfidence={true}
             onOpenForeman={() => {
               if(window.__punchlistOpenForeman){const j=description||title||'';window.__punchlistOpenForeman({starters:[`What else should I include for this ${trade.toLowerCase()} job?`,j?`Review my scope: "${j.slice(0,80)}${j.length>80?'…':''}"` :'Help me scope this quote',`What do ${trade.toLowerCase()}s commonly forget to quote?`],quoteContext:{description:j,trade,title:title||'',items:lineItems.filter(i=>i.name?.trim()).map(i=>({name:i.name,qty:i.quantity,price:i.unit_price})),total:grandTotal,province,country}});}
             }}
@@ -791,6 +792,40 @@ export default function MobileQuoteReview({ ctx }) {
         })()}
 
         {error && error!=='__needs_phone__' && <div style={S.error}>{error}</div>}
+        {error === '__needs_phone__' && (
+          <div style={{margin:'6px 20px',padding:'14px 16px',borderRadius:T.radiusSm,background:'var(--amber-bg, rgba(217,119,6,.06))',border:'1px solid rgba(217,119,6,.15)'}}>
+            <div style={{fontSize:14,fontWeight:700,color:T.amberText,marginBottom:8}}>Add a phone number to send via text</div>
+            <div style={{display:'flex',gap:8}}>
+              <input
+                style={{...S.custInput,flex:1,marginTop:0,fontSize:16}}
+                type="tel"
+                inputMode="tel"
+                value={ctx.inlinePhone || ''}
+                onChange={e => ctx.setInlinePhone?.(e.target.value)}
+                placeholder="e.g. (403) 555-0100"
+                autoFocus
+              />
+              <button type="button" style={{...S.footerCta,flex:'0 0 auto',padding:'10px 16px',fontSize:14,minHeight:44,borderRadius:T.radiusSm}} disabled={!(ctx.inlinePhone||'').trim()} onClick={async () => {
+                try {
+                  const cust = allCustomers.find(c => c.id === draft.customer_id);
+                  if (!cust) return;
+                  const { updateCustomer } = await import('../lib/api');
+                  await updateCustomer(cust.id, { phone: (ctx.inlinePhone||'').trim() });
+                  ctx.setLocalCustomers?.(prev => prev.map(c => c.id === cust.id ? { ...c, phone: (ctx.inlinePhone||'').trim() } : c));
+                  invalidateCustomers?.();
+                  ctx.setError?.('');
+                  toast?.('Phone saved', 'success');
+                  setTimeout(() => handleSend(), 100);
+                } catch (e) { toast?.(e?.message || 'Could not save', 'error'); }
+              }}>
+                Save
+              </button>
+            </div>
+            <button type="button" onClick={() => { ctx.setError?.(''); handleSend('copy'); }} style={{marginTop:8,fontSize:13,fontWeight:600,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 0',fontFamily:T.font}}>
+              Or copy link instead →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Footer ── */}
@@ -803,7 +838,7 @@ export default function MobileQuoteReview({ ctx }) {
             <button style={{...S.footerCta,flex:2}} type="button" onClick={()=>{const inp=document.querySelector('[placeholder*="Search or add customer"]');if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});}}}>
               Add customer
             </button>
-            <button style={S.footerCtaSecondary} type="button" disabled={sending||isLocked} onClick={()=>{ctx.setDeliveryMethod?.('copy');handleSend();}}>
+            <button style={S.footerCtaSecondary} type="button" disabled={sending||isLocked} onClick={()=>{handleSend('copy');}}>
               {sending?'…':'Copy link'}
             </button>
           </div>
