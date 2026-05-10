@@ -274,11 +274,31 @@ body {
 [data-theme="dark"] .mobile-bottom-nav { ... }
 */
 
-/* Light mode panels */
+/* Light mode panels — background stays white even in dark mode */
 [data-theme="dark"] .panel {
   background: #FFFFFF;
   border-color: rgba(17,24,39,.08);
   box-shadow: 0 1px 3px rgba(16,24,40,.04);
+  color: #161616;
+}
+[data-theme="dark"] .panel .eyebrow,
+[data-theme="dark"] .panel .field-label { color: #667085; }
+[data-theme="dark"] .panel .muted { color: #667085; }
+[data-theme="dark"] .panel .input {
+  background: #fff;
+  border-color: rgba(17,24,39,.12);
+  color: #161616;
+}
+[data-theme="dark"] .panel .input::placeholder { color: #8A8F98; }
+[data-theme="dark"] .panel .btn-secondary {
+  background: #F6F5F2;
+  border-color: rgba(17,24,39,.08);
+  color: #344054;
+}
+[data-theme="dark"] .panel select {
+  background: #fff;
+  border-color: rgba(17,24,39,.12);
+  color: #161616;
 }
 
 /* Light mode scrollbar */
