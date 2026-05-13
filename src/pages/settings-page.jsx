@@ -946,7 +946,6 @@ export default function SettingsPage() {
                     type="number"
                     min={1}
                     max={30}
-                    className="input"
                     value={cadence[slot]}
                     readOnly={!proAccess}
                     onChange={proAccess ? (e) => handleCadenceChange(slot, e.target.value) : undefined}

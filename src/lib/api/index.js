@@ -31,3 +31,5 @@ export async function uploadQuotePhoto() { return null; }
 export async function replyToCustomer() { return null; }
 export async function sendInvoiceEmail() { return null; }
 export async function markFollowedUp() { return null; }
+export async function exportAllData() { return null; }
+export async function deleteAccount() { return null; }

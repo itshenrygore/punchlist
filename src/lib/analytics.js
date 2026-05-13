@@ -61,6 +61,7 @@ export function trackFirstBuild() {}
 export function trackFirstSend() {}
 export function trackQuoteSent() {}
 export function trackPushEnabled() {}
+export function trackSignup(props) { track('signup', props); }
 export function setQuoteFlowQuoteId() {}
 export function endQuoteFlowSession() {}
 export function hasActiveFlowSession() { return false; }
