@@ -6,6 +6,7 @@ import { QuoteDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
 import UpgradePrompt from '../components/upgrade-prompt';
 // REMOVED in 2.0: FollowupModal
+const FollowupModal = () => null;
 import { calculateTotals } from '../lib/pricing';
 import { currency, formatDate, formatQuoteNumber, friendly } from '../lib/format';
 import { deleteQuote, duplicateQuote, getQuote, getProfile, updateQuoteStatus, markFollowedUp, createInvoiceFromQuoteWithAdditionalWork, listInvoices, listAdditionalWork, createAdditionalWork, uploadQuotePhoto, listQuotePhotos, deleteQuotePhoto, replyToCustomer, listAmendments, createAmendment, listBookings, sendInvoiceEmail } from '../lib/api';
@@ -24,6 +25,7 @@ const draftFollowUp = () => '';
 // REMOVED in 2.0: smsNotify
 const smsNotify = () => {};
 // REMOVED in 2.0: BookingDrawer
+const BookingDrawer = () => null;
 import { estimateMonthly, showFinancing } from '../lib/financing';
 import { haptic } from '../hooks/use-mobile-ux';
 

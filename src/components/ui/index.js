@@ -9,3 +9,6 @@ export { default as TermsBody }    from './TermsBody';
 export { default as Alert }        from './Alert';
 export { default as ConvAvatar }        from '../conv-avatar';
 export { default as CopyChip }          from './CopyChip';
+
+// 2.0 stub — SmsComposerField removed, but send-sheet.jsx still imports it
+export const SmsComposerField = () => null;
