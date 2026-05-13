@@ -1,0 +1,47 @@
+/* ═══════════════════════════════════════════════════════════════
+   Quotes List — CSS Patches
+   Fixes from visual teardown:
+   
+   1. Quote cards respect dark mode (no white cards on dark bg)
+   2. "No contact" replaced with "Draft" (handled in JSX)
+   3. $0 total shows "—" instead of "$0" (handled in JSX)
+   4. Filter pills don't clip — scroll indicator added
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Fix: Quote card panel respects theme ── */
+.ql-panel-themed {
+  background: var(--panel, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--r-card, 16px);
+}
+
+/* ── Fix: Mobile quote cards in dark mode ── */
+[data-theme="dark"] .ql-card-v2 {
+  background: var(--panel-2, #1e1e1e);
+  color: var(--text);
+}
+
+[data-theme="dark"] .ql-card-v2 .ql-card-title {
+  color: var(--text);
+}
+
+[data-theme="dark"] .ql-card-v2 .ql-card-total {
+  color: var(--text);
+}
+
+/* ── Fix: Filter pill strip scroll indicator ── */
+.pl-tabstrip {
+  position: relative;
+  /* Ensure right-side content isn't clipped without indication */
+  -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, black 90%, transparent 100%);
+}
+
+/* Remove mask when scrolled to end (JS would add this class) */
+.pl-tabstrip[data-at-end="true"] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* ── Fix: Card total shows em-dash for $0 quotes ── */
+/* Handled in JSX: {(quote.total || 0) > 0 ? currency(quote.total) : '—'} */

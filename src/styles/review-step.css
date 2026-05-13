@@ -1,0 +1,232 @@
+/* ═══════════════════════════════════════════════════════════════
+   ReviewStep — Styles
+   The main review/edit screen with customer-first ordering.
+   ═══════════════════════════════════════════════════════════════ */
+
+.rs-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-bottom: 100px; /* clearance for sticky footer */
+}
+
+/* ── Sections ── */
+.rs-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.rs-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rs-section-label {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+}
+
+/* ── Title input ── */
+.rs-title-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-2) 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+
+.rs-title-input:focus {
+  border-color: var(--brand);
+}
+
+.rs-title-input::placeholder {
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+/* ── Items container ── */
+.rs-items {
+  border: 1px solid var(--border);
+  border-radius: var(--r-card, 12px);
+  overflow: hidden;
+}
+
+/* ── Add item actions ── */
+.rs-add-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .rs-add-actions {
+    flex-direction: column;
+  }
+
+  .rs-add-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ── Scope collapse ── */
+.rs-scope-collapse {
+  border: 1px solid var(--border);
+  border-radius: var(--r-card, 12px);
+  overflow: hidden;
+}
+
+.rs-scope-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--dur-instant) var(--ease-standard);
+}
+
+.rs-scope-summary::-webkit-details-marker {
+  display: none;
+}
+
+.rs-scope-summary:active {
+  background: var(--surface-2, rgba(255,255,255,0.04));
+}
+
+.rs-scope-count {
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--text-3);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.rs-scope-body {
+  padding: 0 var(--space-4) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rs-scope-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.rs-scope-label {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.rs-scope-textarea {
+  width: 100%;
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--r-input, 8px);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.rs-scope-textarea:focus {
+  border-color: var(--brand);
+}
+
+/* ── Sticky footer ── */
+.rs-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--panel, var(--bg));
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow-lg, 0 -4px 16px rgba(0,0,0,0.1));
+  /* Ensure it sits above the bottom nav */
+}
+
+/* On mobile with bottom nav, add extra bottom padding */
+@media (max-width: 767px) {
+  .rs-footer {
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+    bottom: 56px; /* height of mobile nav */
+  }
+}
+
+.rs-footer-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.rs-save-ts {
+  font-size: var(--text-2xs);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.rs-footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.rs-footer-total {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--brand, #F97316);
+  white-space: nowrap;
+}
+
+.rs-footer-monthly {
+  display: block;
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.rs-send-btn {
+  flex-shrink: 0;
+  min-width: 140px;
+  font-weight: 700;
+}
+
+/* ── Hide save button + timestamp on very narrow screens ── */
+@media (max-width: 380px) {
+  .rs-footer-left {
+    display: none;
+  }
+}
