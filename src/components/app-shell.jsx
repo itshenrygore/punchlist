@@ -1,12 +1,20 @@
+/* ═══════════════════════════════════════════════════════════════
+   Punchlist 2.0 App Shell
+   
+   Sidebar: Home, Quotes, Settings (+ divider)
+   Topbar: Logo, notifications, theme toggle, + New Quote button
+   
+   Removed: Foreman chat widget, global search (⌘K), classic view
+   toggle, booking drawer, offline indicator, 4 nav items
+   (Schedule, Customers, Invoices, Analytics).
+   ═══════════════════════════════════════════════════════════════ */
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { useTheme } from '../contexts/theme-context';
-import GlobalSearch from './global-search';
 import NotificationCenter from './notification-center';
 import MobileNav from './mobile-nav';
 import Logo, { LogoMark } from './logo';
-import Foreman from './foreman';
 import { isOnline, onConnectivityChange, syncOfflineDrafts, getOfflineDrafts } from '../lib/offline';
 import { createQuote } from '../lib/api';
 import useScrollLock from '../hooks/use-scroll-lock';
@@ -29,22 +37,10 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
   const [offlineCount, setOfflineCount] = useState(0);
   const [companyName, setCompanyName] = useState('');
 
-  // v103 Phase 3: Keyboard detection — sets data-keyboard="open" on <html>
   useKeyboardVisible();
-
-  // v103 Phase 3: Auto-hide topbar on scroll down (mobile only)
   useHideOnScroll();
 
-  // v100 M4: Classic view escape hatch (§9.4). Shown for 30 days post-v100 release.
-  // Release date: 2026-04-14. Remove this block after 2026-05-14.
-  const V100_RELEASE = new Date('2026-04-14T00:00:00Z');
-  const ESCAPE_HATCH_DAYS = 30;
-  const showClassicLink = (Date.now() - V100_RELEASE.getTime()) / 86400000 < ESCAPE_HATCH_DAYS;
-  const [dashVersion, setDashVersion] = useState(() => {
-    try { return localStorage.getItem('pl_dash_version') || 'v2'; } catch { return 'v2'; }
-  });
-
-  // Fetch company name for sidebar personalization
+  // Fetch company name for sidebar
   useEffect(() => {
     if (!user) return;
     import('../lib/api').then(({ getProfile }) => {
@@ -63,21 +59,7 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileOpen]);
 
-  // v100 Phase 9 (UX-006): one-shot tip introducing the command palette.
-  useEffect(() => {
-    if (!user) return;
-    try {
-      if (localStorage.getItem('pl_cmdk_tip_seen')) return;
-    } catch { /* storage blocked — show anyway, once */ }
-    if (typeof window !== 'undefined' && window.innerWidth < 900) return;
-    const t = setTimeout(() => {
-      showToast('Tip: press \u2318 K anywhere to search or run a command.', 'info');
-      try { localStorage.setItem('pl_cmdk_tip_seen', '1'); } catch { /* noop */ }
-    }, 6000);
-    return () => clearTimeout(t);
-  }, [user, showToast]);
-
-  // 7C: Monitor online/offline status and auto-sync drafts when reconnected
+  // Auto-sync offline drafts
   useEffect(() => {
     const cleanup = onConnectivityChange((nowOnline) => {
       setOnline(nowOnline);
@@ -96,30 +78,11 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
     navigate('/');
   }
 
-  // v100 M4: toggle dashboard version
-  async function handleClassicView() {
-    const next = dashVersion === 'v2' ? 'v1' : 'v2';
-    setDashVersion(next);
-    try { localStorage.setItem('pl_dash_version', next); } catch { /* no-op */ }
-    if (user) {
-      import('../lib/supabase').then(({ supabase }) => {
-        supabase.from('profiles').update({ dashboard_version: next }).eq('id', user.id).then(() => {});
-      });
-    }
-    if (next === 'v1') {
-      import('../lib/analytics').then(({ track }) => track('dashboard_downgrade', { from: 'v2', to: 'v1' }));
-    }
-    window.location.reload();
-  }
-
+  // 2.0: 3 nav items only
   const navLinks = [
-    { to: '/app',              label: 'Dashboard', end: true, icon: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z' },
-    { to: '/app/quotes',       label: 'Quotes', icon: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
-    { to: '/app/bookings',     label: 'Schedule', icon: 'M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2z M16 2v4 M8 2v4 M3 10h18' },
-    { to: '/app/contacts',     label: 'Customers', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8 M23 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75' },
-    { to: '/app/invoices',     label: 'Invoices', icon: 'M12 1v22 M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6' },
-    { to: '/app/analytics',    label: 'Analytics', icon: 'M18 20V10 M12 20V4 M6 20v-6' },
-    { to: '/app/settings',     label: 'Settings', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z' },
+    { to: '/app',         label: 'Home',     end: true, icon: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z' },
+    { to: '/app/quotes',  label: 'Quotes',   icon: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
+    { to: '/app/settings', label: 'Settings', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z' },
   ];
 
   const NavIcon = ({ d }) => (
@@ -142,11 +105,8 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
           </div>
           <div className="app-topbar-actions">
             {!online && (
-              <span className="offline-pill">
-                ● Offline
-              </span>
+              <span className="offline-pill">● Offline</span>
             )}
-            <GlobalSearch />
             <NotificationCenter />
             <span className="topbar-page-actions">{actions}</span>
             <button className="btn btn-ghost btn-sm topbar-theme-btn" type="button" onClick={toggleTheme} aria-label="Toggle theme" title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}><span className="topbar-theme-icon">{theme === 'dark' ? '☀️' : '🌙'}</span></button>
@@ -185,30 +145,25 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
             <LogoMark size={28} />
             {companyName && <div className="app-sidebar-company">{companyName}</div>}
           </div>
-          {navLinks.map(({ to, label, end, icon }) => (
+          {navLinks.filter(l => l.label !== 'Settings').map(({ to, label, end, icon }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => isActive ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <NavIcon d={icon} />
               {label}
             </NavLink>
           ))}
           <div style={{ flex:1 }} />
-          {showClassicLink && (
-            <button
-              type="button"
-              className="dv2-classic-link"
-              onClick={handleClassicView}
-              title={dashVersion === 'v2' ? 'Switch back to the previous dashboard layout' : 'Switch to new dashboard'}
-            >
-              {dashVersion === 'v2' ? '← Classic view' : '→ New dashboard'}
-            </button>
-          )}
+          {/* Settings at bottom, separated */}
+          <NavLink to="/app/settings" className={({ isActive }) => isActive ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <NavIcon d={navLinks.find(l => l.label === 'Settings').icon} />
+            Settings
+          </NavLink>
           <button className="btn btn-secondary btn-sm app-sidebar-signout" type="button" onClick={handleSignOut}>Sign out</button>
         </aside>
         <main id="main-content" className="app-main app-main-padded app-content app-content-enter" key={location.pathname}>{children}</main>
       </div>
 
       <MobileNav />
-      <Foreman />
+      {/* Foreman chat widget REMOVED in 2.0 — scope checker stays in the builder */}
     </div>
   );
 }

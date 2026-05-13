@@ -7,7 +7,5 @@ export { default as StepDots }     from './StepDots';
 export { default as Toggle }       from './Toggle';
 export { default as TermsBody }    from './TermsBody';
 export { default as Alert }        from './Alert';
-export { default as FunnelChart }  from './FunnelChart';
 export { default as ConvAvatar }        from '../conv-avatar';
-export { default as SmsComposerField }  from './SmsComposerField';
 export { default as CopyChip }          from './CopyChip';
