@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppShell from '../components/app-shell';
 import ConfirmModal from '../components/confirm-modal';
 import UpgradePrompt from '../components/upgrade-prompt';
-import QbCoachmarks from '../components/qb-coachmarks';
+// REMOVED in 2.0: QbCoachmarks
 import { useCustomers, searchCustomers, invalidateCustomers } from '../hooks/use-customers';
 import { requestAiScope, getWonQuoteContext, getProfile, getQuote, updateQuote, createQuote, createCustomer, updateCustomer, listQuotes, uploadQuotePhoto, getQuotingDefaults, findCustomerByContact, sendQuoteEmail } from '../lib/api';
 import { useAuth } from '../hooks/use-auth';
@@ -21,15 +21,17 @@ import { detectJob, runScopeCheck } from '../../shared/checkScope';
 import { isPro, countSentThisMonth, canSendQuote } from '../lib/billing';
 import { isQuoteLocked } from '../lib/workflow';
 import { saveOfflineDraft, getOfflineDraft, deleteOfflineDraft, isNetworkError } from '../lib/offline';
-import { smsNotify } from '../lib/sms';
+// REMOVED in 2.0: smsNotify
+const smsNotify = () => {};
 import useScrollLock from '../hooks/use-scroll-lock';
 import { CA_PROVINCES, US_STATES } from '../lib/pricing';
-import { ChevronRight, X, Mic, Camera } from 'lucide-react';
+import { ChevronRight, X, Mic } from 'lucide-react';
 import { estimateMonthly, showFinancing } from '../lib/financing';
 import { identify, trackFirstDescribe, trackFirstBuild, trackFirstSend, trackQuoteSent, trackPushEnabled, getVariant, trackQuoteFlowStarted, setQuoteFlowQuoteId, trackQuoteFlowCustomerSelected, trackQuoteFlowDescriptionCommitted, trackQuoteFlowScopeReady, trackQuoteFlowSent, trackQuoteFlowAbandoned, endQuoteFlowSession, hasActiveFlowSession, restoreFlowSession } from '../lib/analytics';
-import { Card, Section, Stat, SmsComposerField } from '../components/ui';
+import { Card, Section, Stat } from '../components/ui';
 import { QuoteItemsEditor } from '../components/quote-editor';
 import MobileQuoteReview from '../components/mobile-quote-review';
+import FinancingStep from '../components/quote-builder/financing-step';
 import { DUR, isReducedMotion } from '../lib/motion';
 import { listTemplates, renderTemplate, getSystemDefaults } from '../lib/api/templates';
 
@@ -131,7 +133,7 @@ export default function QuoteBuilderPage() {
   const [trade, setTrade] = useState('Other');
   const [province, setProvince] = useState('AB');
   const [country, setCountry] = useState('CA');
-  const [photo, setPhoto] = useState(null);
+  const [photo, setPhoto] = useState(null); // 2.0: photo upload disabled
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
   const recTimeoutRef = useRef(null);
@@ -1055,7 +1057,7 @@ export default function QuoteBuilderPage() {
   // RENDER
   // ══════════════════════════════════════════════════════════
 
-  const subtitle = phase === 'building' ? 'Building scope…' : phase === 'sent' ? 'Sent' : (companyName || null);
+  const subtitle = phase === 'building' ? 'Building scope…' : phase === 'sent' ? 'Sent' : phase === 'financing' ? 'Review terms' : (companyName || null);
 
   return (
     <AppShell title={phase === 'describe' ? 'New Quote' : title || draft.title || 'Quote'} subtitle={subtitle}>
@@ -1064,15 +1066,16 @@ export default function QuoteBuilderPage() {
       <Section spacing="tight" bleed={true}>
         <div className="rq-page">
 
-        {/* ════════ PROGRESS STEPPER ════════ */}
+        {/* ════════ PROGRESS STEPPER — 4 steps ════════ */}
         {phase !== 'sent' && (
           <div className="qb-stepper">
             {[
               { key: 'describe', label: 'Job' },
               { key: 'building', label: 'Build' },
-              { key: 'review', label: 'Review' },
+              { key: 'review', label: 'Scope' },
+              { key: 'financing', label: 'Terms' },
             ].map((s, i, arr) => {
-              const phases = ['describe', 'building', 'review'];
+              const phases = ['describe', 'building', 'review', 'financing'];
               const current = phases.indexOf(phase);
               const stepIdx = phases.indexOf(s.key);
               const done = stepIdx < current;
@@ -1138,7 +1141,7 @@ export default function QuoteBuilderPage() {
                 {photo ? (
                   <div className="jd-helper-btn jd-photo-active">{photo.name} <button type="button" onClick={() => setPhoto(null)} aria-label="Remove photo" className="jd-photo-dismiss"><X size={12} /></button></div>
                 ) : (
-                  <button className="jd-helper-btn jd-helper-secondary" type="button" onClick={() => fileRef.current?.click()}><Camera size={14} className="qb-icon-inline" />Add photo</button>
+                  <button className="jd-helper-btn jd-helper-secondary" type="button" onClick={() => fileRef.current?.click()}>📷 Add photo</button>
                 )}
                 <input hidden ref={fileRef} type="file" accept="image/*" onChange={e => setPhoto(e.target.files?.[0] || null)} />
                 {photoSaved && <span className="jd-photo-saved">✓ Photo saved</span>}
@@ -1227,7 +1230,7 @@ export default function QuoteBuilderPage() {
             setTitle, setDeliveryMethod: setDeliveryMethod,
             showSend, setShowSend, handleConfirmSend,
             smsBody, setSmsBody, deliveryMethod,
-            SmsComposerField,
+            SmsComposerField: null, // 2.0: SMS composer removed
             toast, currency,
             inlinePhone, setInlinePhone,
           }} />
@@ -1327,9 +1330,9 @@ export default function QuoteBuilderPage() {
                   onAddSuggestion={addSuggestionToItems}
                   onDismissSuggestion={dismissSuggestion}
                   onOpenForeman={() => {
-                    if (window.__punchlistOpenForeman) {
+                    if ((() => {})) {
                       const jobDesc = description || title || '';
-                      window.__punchlistOpenForeman({
+                      (() => {})({
                         starters: [
                           `What else should I include for this ${trade.toLowerCase()} job?`,
                           jobDesc ? `Review my scope: "${jobDesc.slice(0, 80)}${jobDesc.length > 80 ? '…' : ''}"` : 'Help me scope this quote',
@@ -1427,13 +1430,9 @@ export default function QuoteBuilderPage() {
                   {showFinancing(grandTotal) && <span className="rq-footer-monthly">or from {currency(estimateMonthly(grandTotal), country)}/mo</span>}
                 </div>
                 {itemCount === 0 ? (
-                  <button className="btn btn-primary btn-lg qb-disabled-btn" type="button" disabled>Add items to send</button>
-                ) : !draft.customer_id ? (
-                  <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={handleSend}>{sending ? 'Sending…' : 'Send Quote →'}</button>
-                ) : !selCustomer?.phone ? (
-                  <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={handleSend}>{sending ? 'Sending…' : 'Send Quote →'}</button>
+                  <button className="btn btn-primary btn-lg qb-disabled-btn" type="button" disabled>Add items to continue</button>
                 ) : (
-                  <button className="btn btn-primary btn-lg" type="button" disabled={sending || isLocked} onClick={handleSend}>{sending ? 'Sending…' : `Text to ${selCustomer?.name?.split(' ')[0] || 'customer'} →`}</button>
+                  <button className="btn btn-primary btn-lg" type="button" disabled={saving || isLocked} onClick={() => { save(null, true); setPhase('financing'); }}>Review Terms →</button>
                 )}
               </div>
             </div>
@@ -1513,7 +1512,7 @@ export default function QuoteBuilderPage() {
 
                     {deliveryMethod === 'text' && (
                       <div className="qb-send-section">
-                        <SmsComposerField
+                        <textarea className="jd-input" style={{minHeight:80}} placeholder="Message to customer..." />{false && <SmsComposerField
                           id="qb-sms-body"
                           label="Message"
                           value={smsBody}
@@ -1584,6 +1583,22 @@ export default function QuoteBuilderPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ════════ STEP 3: FINANCING PREVIEW — the centerpiece ════════ */}
+        {phase === 'financing' && (
+          <FinancingStep
+            grandTotal={grandTotal}
+            country={country}
+            customerName={selCustomer?.name || ''}
+            itemCount={itemCount}
+            onBack={() => setPhase('review')}
+            onContinue={() => handleSend()}
+            note={draft.internal_notes || ''}
+            onNoteChange={v => ud('internal_notes', v)}
+            expiryDays={draft.expiry_days || 14}
+            onExpiryChange={v => ud('expiry_days', v)}
+          />
         )}
 
         {/* ════════ SENT SUCCESS ════════ */}
@@ -1664,7 +1679,7 @@ export default function QuoteBuilderPage() {
       )}
 
       {/* Slice 9 B11: Coachmarks — only shown during review phase */}
-      {phase === 'review' && <QbCoachmarks />}
+      {phase === 'review' && {/* <QbCoachmarks />}
 
       {/* Slice 9 B12: Keyboard shortcut help overlay */}
       {showKbdHelp && (

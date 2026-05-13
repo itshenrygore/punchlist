@@ -1,8 +1,11 @@
-// Phase 2 (UX-007): per-route Suspense fallbacks replace the single generic LoadingFallback.
-// Each lazy route now declares its own skeleton so the user always sees a
-// structured destination-specific placeholder, never a centred spinner.
+/* ═══════════════════════════════════════════════════════════════
+   Punchlist 2.0 Router — "Shopify Checkout for contractor jobs"
+   
+   13 routes. No bookings, no invoices, no contacts, no analytics,
+   no additional work, no amendments, no project portal.
+   ═══════════════════════════════════════════════════════════════ */
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import ProtectedRoute from './protected-route';
 import ErrorBoundary from '../components/error-boundary';
 import {
@@ -10,16 +13,9 @@ import {
   QuotesListSkeleton,
   QuoteBuilderSkeleton,
   QuoteDetailSkeleton,
-  InvoicesListSkeleton,
-  InvoiceDetailSkeleton,
-  AdditionalWorkDetailSkeleton,
-  ContactsSkeleton,
-  BookingsSkeleton,
   SettingsSkeleton,
   BillingSkeleton,
-  AnalyticsSkeleton,
   PaymentsOnboardingSkeleton,
-  ProjectPortalSkeleton,
 } from '../components/skeletons';
 import PublicLoadingState from '../components/public-loading-state';
 
@@ -30,47 +26,16 @@ import SignupPage from '../pages/signup-page';
 import TermsPage from '../pages/terms-page';
 import PricingPage from '../pages/pricing-page';
 
-// Lazy loaded
-const ProjectPortalPage = lazy(() => import('../pages/project-portal-page'));
+// Lazy loaded — core screens only
+const DashboardPage = lazy(() => import('../pages/dashboard-page'));
 const PublicQuotePage = lazy(() => import('../pages/public-quote-page'));
-const PublicAdditionalWorkPage = lazy(() => import('../pages/public-additional-work-page'));
-const PublicAmendmentPage = lazy(() => import('../pages/public-amendment-page'));
-const PublicInvoicePage = lazy(() => import('../pages/public-invoice-page'));
 const QuotesListPage = lazy(() => import('../pages/quotes-list-page'));
-// v100 M4: feature-flag dashboard version. v2 is default (§9.4).
-// pl_dash_version localStorage key set by app-shell Classic view toggle.
-const DashboardPage = lazy(() => {
-  let ver = 'v2';
-  try { ver = localStorage.getItem('pl_dash_version') || 'v2'; } catch { /* no-op */ }
-  return ver === 'v1'
-    ? import('../pages/dashboard-page-v1')
-    : import('../pages/dashboard-page');
-});
 const QuoteBuilderPage = lazy(() => import('../pages/quote-builder-page'));
 const QuoteDetailPage = lazy(() => import('../pages/quote-detail-page'));
-const InvoiceDetailPage = lazy(() => import('../pages/invoice-detail-page'));
-const AdditionalWorkDetailPage = lazy(() => import('../pages/additional-work-detail-page'));
-const ContactsPage = lazy(() => import('../pages/contacts-page'));
-const BookingsPage = lazy(() => import('../pages/bookings-page'));
 const SettingsPage = lazy(() => import('../pages/settings-page'));
 const BillingPage = lazy(() => import('../pages/billing-page'));
-const AnalyticsPage = lazy(() => import('../pages/analytics-page'));
-const PaymentsSetupPage = lazy(() => import('../pages/payments-setup-page'));
 const PaymentsOnboardingPage = lazy(() => import('../pages/payments-onboarding-page'));
-const InvoicesListPage = lazy(() => import('../pages/invoices-list-page'));
 
-/**
- * SlimFallback — for static/non-data pages (payments-setup) where a full
- * skeleton would be misleading. Token-based class; no inline styles.
- */
-function SlimFallback() {
-  return <div className="route-loading-slim" aria-busy="true" aria-label="Loading…" />;
-}
-
-/**
- * S() — thin Suspense wrapper. Each route declares its own fallback so the
- * user sees a structured placeholder matching the destination, not a spinner.
- */
 function S({ fallback, children }) {
   return <Suspense fallback={fallback}>{children}</Suspense>;
 }
@@ -81,7 +46,7 @@ function NotFound() {
       <div className="not-found-icon" aria-hidden="true" role="presentation" />
       <h1 className="not-found-heading">Page not found</h1>
       <p className="not-found-body">This page doesn't exist or has moved.</p>
-      <Link className="btn btn-primary" to="/app">Back to dashboard</Link>
+      <Link className="btn btn-primary" to="/app">Back to home</Link>
     </div>
   );
 }
@@ -90,41 +55,44 @@ export default function AppRouter() {
   return (
     <ErrorBoundary>
       <Routes>
-        {/* ── Eagerly loaded — no Suspense needed ── */}
+        {/* ── Public (no auth) ── */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/pricing" element={<PricingPage />} />
 
-        {/* ── Public customer-facing pages ── */}
-        <Route path="/public/:shareToken" element={<S fallback={<ProjectPortalSkeleton />}><ProjectPortalPage /></S>} />
-        <Route path="/project/:shareToken" element={<S fallback={<ProjectPortalSkeleton />}><ProjectPortalPage /></S>} />
-        {/* Legacy public pages — still accessible for old bookmarked amendment/aw/invoice links */}
-        <Route path="/public/aw/:shareToken" element={<S fallback={<PublicLoadingState label="Loading additional work…" />}><PublicAdditionalWorkPage /></S>} />
-        <Route path="/public/amendment/:shareToken" element={<S fallback={<PublicLoadingState label="Loading amendment…" />}><PublicAmendmentPage /></S>} />
-        <Route path="/public/invoice/:shareToken" element={<S fallback={<PublicLoadingState label="Loading your invoice…" />}><PublicInvoicePage /></S>} />
+        {/* ── Public customer-facing — THE product surface ── */}
+        <Route path="/q/:shareToken" element={<S fallback={<PublicLoadingState label="Loading your quote…" />}><PublicQuotePage /></S>} />
+        {/* Legacy URLs still work */}
+        <Route path="/public/:shareToken" element={<S fallback={<PublicLoadingState label="Loading…" />}><PublicQuotePage /></S>} />
+        <Route path="/project/:shareToken" element={<S fallback={<PublicLoadingState label="Loading…" />}><PublicQuotePage /></S>} />
 
-        {/* ── Authenticated app routes ── */}
+        {/* ── Legacy cut-feature URLs → redirect to home ── */}
+        <Route path="/app/invoices/*" element={<Navigate to="/app" replace />} />
+        <Route path="/app/bookings/*" element={<Navigate to="/app" replace />} />
+        <Route path="/app/contacts" element={<Navigate to="/app" replace />} />
+        <Route path="/app/analytics" element={<Navigate to="/app" replace />} />
+        <Route path="/app/additional-work/*" element={<Navigate to="/app" replace />} />
+        <Route path="/public/aw/*" element={<Navigate to="/" replace />} />
+        <Route path="/public/amendment/*" element={<Navigate to="/" replace />} />
+        <Route path="/public/invoice/*" element={<Navigate to="/" replace />} />
+
+        {/* ── Authenticated app — 8 screens ── */}
         <Route path="/app" element={<ProtectedRoute><S fallback={<DashboardSkeleton />}><DashboardPage /></S></ProtectedRoute>} />
         <Route path="/app/quotes" element={<ProtectedRoute><S fallback={<QuotesListSkeleton />}><QuotesListPage /></S></ProtectedRoute>} />
         <Route path="/app/quotes/new" element={<ProtectedRoute><S fallback={<QuoteBuilderSkeleton />}><QuoteBuilderPage /></S></ProtectedRoute>} />
         <Route path="/app/quotes/:quoteId/edit" element={<ProtectedRoute><S fallback={<QuoteBuilderSkeleton />}><QuoteBuilderPage /></S></ProtectedRoute>} />
-        {/* Redirects: old multi-page routes → unified builder */}
+        <Route path="/app/quotes/:quoteId" element={<ProtectedRoute><S fallback={<QuoteDetailSkeleton />}><QuoteDetailPage /></S></ProtectedRoute>} />
+        <Route path="/app/settings" element={<ProtectedRoute><S fallback={<SettingsSkeleton />}><SettingsPage /></S></ProtectedRoute>} />
+        <Route path="/app/billing" element={<ProtectedRoute><S fallback={<BillingSkeleton />}><BillingPage /></S></ProtectedRoute>} />
+        <Route path="/app/payments/setup" element={<ProtectedRoute><S fallback={<PaymentsOnboardingSkeleton />}><PaymentsOnboardingPage /></S></ProtectedRoute>} />
+
+        {/* Legacy builder URLs → unified builder */}
         <Route path="/app/quotes/:quoteId/job-details" element={<ProtectedRoute><S fallback={<QuoteBuilderSkeleton />}><QuoteBuilderPage /></S></ProtectedRoute>} />
         <Route path="/app/quotes/build-scope/:quoteId" element={<ProtectedRoute><S fallback={<QuoteBuilderSkeleton />}><QuoteBuilderPage /></S></ProtectedRoute>} />
         <Route path="/app/quotes/review/:quoteId" element={<ProtectedRoute><S fallback={<QuoteBuilderSkeleton />}><QuoteBuilderPage /></S></ProtectedRoute>} />
-        <Route path="/app/quotes/:quoteId" element={<ProtectedRoute><S fallback={<QuoteDetailSkeleton />}><QuoteDetailPage /></S></ProtectedRoute>} />
-        <Route path="/app/invoices" element={<ProtectedRoute><S fallback={<InvoicesListSkeleton />}><InvoicesListPage /></S></ProtectedRoute>} />
-        <Route path="/app/invoices/:invoiceId" element={<ProtectedRoute><S fallback={<InvoiceDetailSkeleton />}><InvoiceDetailPage /></S></ProtectedRoute>} />
-        <Route path="/app/additional-work/:requestId" element={<ProtectedRoute><S fallback={<AdditionalWorkDetailSkeleton />}><AdditionalWorkDetailPage /></S></ProtectedRoute>} />
-        <Route path="/app/contacts" element={<ProtectedRoute><S fallback={<ContactsSkeleton />}><ContactsPage /></S></ProtectedRoute>} />
-        <Route path="/app/bookings" element={<ProtectedRoute><S fallback={<BookingsSkeleton />}><BookingsPage /></S></ProtectedRoute>} />
-        <Route path="/app/settings" element={<ProtectedRoute><S fallback={<SettingsSkeleton />}><SettingsPage /></S></ProtectedRoute>} />
-        <Route path="/app/billing" element={<ProtectedRoute><S fallback={<BillingSkeleton />}><BillingPage /></S></ProtectedRoute>} />
-        <Route path="/app/analytics" element={<ProtectedRoute><S fallback={<AnalyticsSkeleton />}><AnalyticsPage /></S></ProtectedRoute>} />
-        <Route path="/app/payments-setup" element={<ProtectedRoute><S fallback={<PaymentsOnboardingSkeleton />}><PaymentsOnboardingPage /></S></ProtectedRoute>} />
-        <Route path="/app/payments/setup" element={<ProtectedRoute><S fallback={<PaymentsOnboardingSkeleton />}><PaymentsOnboardingPage /></S></ProtectedRoute>} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </ErrorBoundary>

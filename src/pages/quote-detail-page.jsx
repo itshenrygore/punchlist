@@ -5,7 +5,7 @@ import AppShell from '../components/app-shell';
 import { QuoteDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
 import UpgradePrompt from '../components/upgrade-prompt';
-import FollowupModal from '../components/followup-modal';
+// REMOVED in 2.0: FollowupModal
 import { calculateTotals } from '../lib/pricing';
 import { currency, formatDate, formatQuoteNumber, friendly } from '../lib/format';
 import { deleteQuote, duplicateQuote, getQuote, getProfile, updateQuoteStatus, markFollowedUp, createInvoiceFromQuoteWithAdditionalWork, listInvoices, listAdditionalWork, createAdditionalWork, uploadQuotePhoto, listQuotePhotos, deleteQuotePhoto, replyToCustomer, listAmendments, createAmendment, listBookings, sendInvoiceEmail } from '../lib/api';
@@ -14,9 +14,16 @@ import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { safeWriteClipboard, nativeShare } from '../lib/utils';
 import { supabase } from '../lib/supabase';
-import { labelForDeposit, getFollowUpAdvice, buildTimeline, timeAgo, draftFollowUp } from '../lib/workflow';
-import { smsNotify } from '../lib/sms';
-import BookingDrawer from '../components/booking-drawer';
+import { normalizeStatus, chipForStatus, colorForStatus, getNextAction, getSignals, isQuoteLocked, getTimelineSteps } from '../lib/workflow';
+// 2.0 stubs for removed workflow functions
+const labelForDeposit = () => '';
+const getFollowUpAdvice = () => null;
+const buildTimeline = () => [];
+const timeAgo = (d) => { if (!d) return ''; const s = Math.round((Date.now() - new Date(d)) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
+const draftFollowUp = () => '';
+// REMOVED in 2.0: smsNotify
+const smsNotify = () => {};
+// REMOVED in 2.0: BookingDrawer
 import { estimateMonthly, showFinancing } from '../lib/financing';
 import { haptic } from '../hooks/use-mobile-ux';
 

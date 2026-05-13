@@ -20,8 +20,10 @@ import {
   TEMPLATE_KEYS,
   PRO_REQUIRED_CODE,
 } from '../lib/api/templates';
-import TemplateEditor from '../components/template-editor';
-import { GLOBAL_SHORTCUTS } from '../components/command-palette/actions';
+// REMOVED in 2.0: TemplateEditor
+const TemplateEditor = () => null;
+// REMOVED in 2.0: command-palette shortcuts
+const GLOBAL_SHORTCUTS = [];
 const EXPIRY_OPTIONS = [
   { value: 7,  label: '7 days' },
   { value: 14, label: '14 days (default)' },
@@ -530,9 +532,9 @@ export default function SettingsPage() {
         {[
           { id: 'profile', label: 'Profile' },
           { id: 'payments', label: 'Payments' },
-          { id: 'messages', label: 'Messages' },
+          
           { id: 'notifications', label: 'Notifications' },
-          { id: 'preferences', label: 'Preferences' },
+          
           { id: 'account', label: 'Account' },
         ].map(tab => (
           <button key={tab.id} type="button" className={`settings-tab ${settingsTab === tab.id ? 'active' : ''}`} onClick={() => switchTab(tab.id)}>
@@ -899,7 +901,7 @@ export default function SettingsPage() {
         </div>
         </>}
 
-        {/* ═══ MESSAGES TAB (v100 M2) ═══ */}
+        {/* ═══ MESSAGES TAB — REMOVED IN 2.0 ═══ */}{false && <>
         {settingsTab === 'messages' && <>
         {/* Intro / orientation */}
         <div className="panel">
@@ -1058,7 +1060,7 @@ export default function SettingsPage() {
         )}
         </>}
 
-        {/* ═══ NOTIFICATIONS TAB ═══ */}
+        </>}{/* ═══ NOTIFICATIONS TAB ═══ */}
         {settingsTab === 'notifications' && <>
         {/* 7E: Daily Digest */}
         <div className="panel">
@@ -1133,7 +1135,7 @@ export default function SettingsPage() {
         </div>
         </>}
 
-        {/* ═══ PREFERENCES TAB (v100 M5 §5.5) ═══ */}
+        {/* ═══ PREFERENCES TAB — REMOVED IN 2.0 ═══ */}{false && <>
         {settingsTab === 'preferences' && <>
         <div className="panel">
           <div className="eyebrow">Invoice &amp; Completion</div>
@@ -1198,9 +1200,9 @@ export default function SettingsPage() {
         </div>
         </>}
 
-        {/* ═══ ACCOUNT TAB ═══ */}
+        </>}{/* ═══ ACCOUNT TAB ═══ */}
         {settingsTab === 'account' && <>
-        {/* 7F: Accounting Export */}
+        {/* 7F: Accounting Export — REMOVED IN 2.0 */}{false && <>
         <div className="panel">
           <div className="eyebrow">Accounting Export</div>
           <p className="muted small settings-hint">
@@ -1212,7 +1214,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 7G: Data & Privacy */}
+        </>}{/* 7G: Data & Privacy */}
         <div className="panel">
           <div className="eyebrow">Data &amp; Privacy</div>
           <p className="muted small settings-hint">
