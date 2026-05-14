@@ -167,8 +167,8 @@ export default function LandingPage() {
             </h1>
             <p className="ln-hero-p rv rv--d2">
               Send professional quotes with built-in monthly payments.
-              Customers approve from their phone. You get the
-              full amount deposited — upfront.
+              Customers approve from their phone. The financing provider
+              pays you the full amount — before the first payment is due.
             </p>
             <div className="ln-hero-ctas rv rv--d2">
               <Link to="/signup" className="ln-btn">Start free <ArrowRight size={15} /></Link>
@@ -279,7 +279,7 @@ export default function LandingPage() {
               <div className="wt-info">
                 <div className="wt-num">03</div>
                 <h3 className="wt-title">Customer approves. You get paid.</h3>
-                <p className="wt-desc">Your customer gets a link, sees the monthly price, and approves from their phone in under 60 seconds. No login, no app download. You get the full amount deposited to your bank account.</p>
+                <p className="wt-desc">Your customer gets a link, sees the monthly price, and approves from their phone in under 60 seconds. No login, no app download. The financing provider pays you the full amount — before the first payment is due.</p>
               </div>
               <Phone label="One-tap approval from the customer's phone">
                 <div className="ph-mock">
