@@ -1,0 +1,201 @@
+/* ═══════════════════════════════════════════════════════════════
+   PUNCHLIST — Utility & Semantic Classes (Phase 8)
+   Extracted from inline `style=` attributes in JSX files.
+   Import AFTER tokens.css but BEFORE mobile-redesign.css so
+   that mobile overrides can target these classes.
+
+   Categories:
+     A) Utility classes — common layout patterns
+     B) Semantic classes — named patterns with responsive overrides
+     C) Kept inline — truly dynamic values (documented below)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── A) Utility Classes ─────────────────────────────────────── */
+.flex-1 { flex: 1; }
+.ml-auto { margin-left: auto; }
+.text-center { text-align: center; }
+.gap-2 { gap: 8px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mb-1 { margin-bottom: 4px; }
+.mb-3 { margin-bottom: 12px; }
+.nowrap { white-space: nowrap; }
+.shrink-0 { flex-shrink: 0; }
+.d-flex { display: flex; }
+.d-block { display: block; }
+.items-center { align-items: center; }
+.flex-wrap { flex-wrap: wrap; }
+.no-decoration { text-decoration: none; color: inherit; }
+
+/* Icon alignment — used on inline SVG icons inside text flows */
+.icon-inline { vertical-align: middle; margin-right: 5px; }
+.icon-inline-sm { vertical-align: middle; margin-right: 3px; }
+
+/* ── B) Semantic Classes ────────────────────────────────────── */
+
+/* Locked / disabled state overlay — quote builder line items */
+.is-locked {
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+/* Help text below inputs */
+.help-text {
+  margin-top: 12px;
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* Section label small */
+.section-label-sm {
+  font-size: var(--text-xs);
+  margin-bottom: 4px;
+}
+
+/* Heading medium weight */
+.heading-md {
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+/* Deposit input field */
+.deposit-input {
+  width: 50px;
+}
+
+/* Error inline card styling */
+.error-inline-card {
+  border-left: 3px solid var(--red, #dc2626);
+  background: var(--red-bg, rgba(220,38,38,.06));
+}
+
+/* Error text color */
+.text-error { color: var(--red, #dc2626); }
+.text-amber { color: var(--amber); }
+
+/* First-item highlight (green border) in quote builder */
+.is-first-item {
+  background: var(--green-bg);
+  border-color: var(--green-line);
+}
+
+/* Checkbox accent brand color */
+.accent-brand { accent-color: var(--brand); }
+
+/* Padded content block */
+.content-block {
+  padding: 12px 16px;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* Muted code/info block */
+.info-block {
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  white-space: pre-line;
+}
+
+/* Section intro block */
+.section-intro {
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  margin-bottom: 12px;
+}
+
+/* Label uppercase small */
+.label-upper-sm {
+  display: block;
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 4px;
+}
+
+/* Quote detail: empty/loading center state */
+.empty-center {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+/* Full-cover image */
+.img-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Photo delete button overlay */
+.photo-delete-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.6);
+  color: var(--always-white, #fff);
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+/* Photo container with aspect ratio */
+.photo-frame {
+  position: relative;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  aspect-ratio: 1;
+}
+
+/* Width utility for fixed-width inputs */
+.w-60 { width: 60px; }
+.w-90 { width: 90px; }
+
+/* Max width with truncation */
+.max-w-80 { max-width: 80%; min-width: 0; }
+
+/* Muted info padding block */
+.muted-info-block {
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  background: var(--bg);
+  border-radius: var(--r-sm);
+}
+
+/* Flex center row shorthand */
+.flex-center { display: flex; align-items: center; }
+
+/* Margin left + shrink 0 — used on action buttons */
+.ml-2-shrink { margin-left: 8px; flex-shrink: 0; }
+
+/* ── B) Responsive Overrides ────────────────────────────────── */
+@media (max-width: 640px) {
+  .deposit-input { width: 60px; }
+  .is-locked { opacity: 0.5; }
+  .help-text { font-size: var(--text-2xs); margin-top: 8px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Phase 8: Dynamic inline styles kept (Category C) — reference:
+   - style={{ animationDelay: `${i * 0.15}s` }}  → dynamic per-item
+   - style={{ width: `${Math.min(85, ...)}` }}    → computed from data
+   - style={{ '--min-ch': '8ch' }}                 → CSS custom property
+   - style={{ textAlign: isCust?'left':'right' }}  → conditional
+   - style={{ color: urgColor }}                   → variable color
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── CLS helpers (Phase 10) ── */
+.aspect-1 { aspect-ratio: 1; }
+.contain-layout { contain: layout; }
