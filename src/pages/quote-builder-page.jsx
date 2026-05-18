@@ -33,6 +33,8 @@ import MobileQuoteReview from '../components/mobile-quote-review';
 import FinancingStep from '../components/quote-builder/financing-step';
 import { DUR, isReducedMotion } from '../lib/motion';
 import { listTemplates, renderTemplate, getSystemDefaults } from '../lib/api/templates';
+import { saveJobTemplate } from '../lib/api/job-templates';
+import { useForeman } from '../contexts/foreman-context';
 
 /* ═══════════════════════════════════════════════════════════
    QuoteBuilderPage — Unified one-page quote creation.
@@ -120,6 +122,7 @@ export default function QuoteBuilderPage() {
   const location = useLocation();
   const nav = useNavigate();
   const { show: toast, showUndo } = useToast();
+  const { setQuoteContext, setAddItemHandler } = useForeman();
   const fileRef = useRef(null);
 
   // ── Phase state: describe | building | review | sending | sent ──
@@ -192,6 +195,9 @@ export default function QuoteBuilderPage() {
 
   // ── Shared state ──
   const [saving, setSaving] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [showTemplateName, setShowTemplateName] = useState(false);
+  const [templateNameDraft, setTemplateNameDraft] = useState('');
   // savingRef mirrors the `saving` state so the autosave effect can read it
   // without listing it as a dependency — prevents the saving→effect→saving
   // feedback loop that causes React error #62 (max update depth exceeded).
@@ -264,7 +270,8 @@ export default function QuoteBuilderPage() {
       }
     }
     return () => { if (titleDebounceRef.current) clearTimeout(titleDebounceRef.current); };
-  }, [description]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [description, trade]);
 
   // ── Load profile + customers + existing quote ──
   useEffect(() => {
@@ -342,9 +349,28 @@ export default function QuoteBuilderPage() {
         }
         setDraft(draftData);
         if (draftData.assumptions?.trim()) setShowDetails(true);
-        setLineItems((q.line_items || []).map(i => ({ id: i.id || makeId(), name: i.name, quantity: Number(i.quantity || 1), unit_price: Number(i.unit_price || 0), notes: i.notes || '', included: i.included !== false, category: i.category || '' })));
+        // Check if navigated here from a job template (templates page sets sessionStorage)
+        const fromTemplate = new URLSearchParams(location.search).get('from_template');
+        const tmplKey = `pl_template_items_${existingQuoteId}`;
+        if (fromTemplate && q.line_items?.length === 0) {
+          try {
+            const stored = sessionStorage.getItem(tmplKey);
+            if (stored) {
+              const tmplItems = JSON.parse(stored);
+              sessionStorage.removeItem(tmplKey);
+              setLineItems(tmplItems.map(i => ({ id: genLineItemId(), name: i.name || '', quantity: Number(i.quantity || 1), unit_price: Number(i.unit_price || 0), notes: i.notes || '', included: true, category: i.category || '' })));
+              toast('Quote pre-filled from template', 'info');
+            } else {
+              setLineItems([]);
+            }
+          } catch (e) {
+            setLineItems([]);
+          }
+        } else {
+          setLineItems((q.line_items || []).map(i => ({ id: i.id || makeId(), name: i.name, quantity: Number(i.quantity || 1), unit_price: Number(i.unit_price || 0), notes: i.notes || '', included: i.included !== false, category: i.category || '' })));
+        }
         initialLoadComplete.current = true;
-        setPhase('review');
+        setPhase(fromTemplate ? 'building' : 'review');
         // Offline draft restore
         getOfflineDraft(existingQuoteId).then(od => {
           if (!od) return;
@@ -634,6 +660,33 @@ export default function QuoteBuilderPage() {
   // ── Confidence ──
   const confidence = useMemo(() => buildConfidence(lineItems, [], { hasCustomer: !!draft.customer_id, hasScope: !!draft.scope_summary, hasDeposit: !draft.deposit_required || draft.deposit_status === 'paid', revisionSummary: draft.revision_summary }), [lineItems, draft]);
 
+  // ── Foreman context: tell the AI about the active quote ──
+  useEffect(() => {
+    if (phase === 'review' || phase === 'building') {
+      setQuoteContext({
+        title: title || '',
+        description: description || '',
+        trade,
+        province,
+        items: lineItems.filter(i => i.name?.trim()).map(i => ({ name: i.name, qty: i.quantity, price: i.unit_price })),
+        total: grandTotal,
+      });
+      setAddItemHandler(() => (item) => {
+        setLineItems(prev => [...prev, {
+          id: genLineItemId(),
+          name: item.name,
+          quantity: 1,
+          unit_price: item.unit_price || 0,
+          notes: '',
+          category: '',
+          included: true,
+        }]);
+        markDirty();
+      });
+    }
+    return () => { setQuoteContext(null); setAddItemHandler(null); };
+  }, [phase, title, description, trade, province, lineItems.length, grandTotal]);
+
   // ── Price range hints — invisible AI, contractor just sees "typical range" ──
   const priceRanges = useMemo(() => {
     const ranges = {};
@@ -877,7 +930,7 @@ export default function QuoteBuilderPage() {
     if (method === 'email' && draft.customer_id) { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust?.email) { setError('This customer has no email address. Add one or use "Copy link".'); return; } }
     if (!lineItems.some(i => i.name?.trim())) return setError('Add at least one item');
     const zeroItems = lineItems.filter(i => i.name?.trim() && Number(i.unit_price) === 0);
-    if (zeroItems.length > 0) { setZeroItemConfirm(zeroItems.length); return; }
+    if (zeroItems.length > 0) { setZeroItemConfirm(zeroItems); return; }
     if (overrideMethod) setDeliveryMethod(overrideMethod);
     proceedToSend();
   }
@@ -1031,6 +1084,31 @@ export default function QuoteBuilderPage() {
     setDraft(d => ({ ...d, status: 'draft', sent_at: null }));
     setPhase('building');
     toast('Send cancelled — quote is still a draft', 'info');
+  }
+
+  async function handleSaveAsTemplate(name) {
+    if (!user?.id || !name?.trim()) return;
+    setSavingTemplate(true);
+    try {
+      await saveJobTemplate(user.id, {
+        name: name.trim(),
+        trade,
+        description,
+        scope_summary: draft.scope_summary,
+        province,
+        line_items: lineItems.map(li => ({
+          name: li.name, quantity: li.quantity, unit_price: li.unit_price,
+          notes: li.notes || '', category: li.category || '',
+        })),
+      });
+      toast('Saved as job template', 'success');
+      setShowTemplateName(false);
+      setTemplateNameDraft('');
+    } catch (e) {
+      toast(e?.message || 'Could not save template', 'error');
+    } finally {
+      setSavingTemplate(false);
+    }
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1395,6 +1473,9 @@ export default function QuoteBuilderPage() {
                   return <span className={`qb-save-ts${saveState === 'saving' ? ' qb-save-ts--faded' : ''}`}>Saved {label}</span>;
                 })()}
                 <button className="btn btn-secondary btn-sm rq-preview-btn" type="button" disabled={saving || isLocked} onClick={async () => { const w = window.open('about:blank', '_blank'); try { const q = await save(null, true); const token = q?.share_token || (quoteId ? (await getQuote(quoteId))?.share_token : null); if (token && w) { w.location.href = '/public/' + token + '?preview=1'; } else { if (w) w.close(); } } catch (e) { if (w) w.close(); console.warn("[PL]", e); } }}>Preview</button>
+                {lineItems.length > 0 && (
+                  <button className="btn btn-ghost btn-sm" type="button" title="Save this quote as a reusable job template" onClick={() => { setTemplateNameDraft(title || description.slice(0, 50) || 'New template'); setShowTemplateName(true); }}>Save as template</button>
+                )}
               </div>
               <div id="qb-send-btn" className="rq-footer-right">
                 <div className="rq-footer-total num-stable tabular" style={{ '--min-ch': '8ch' }} aria-live="polite">
@@ -1622,7 +1703,7 @@ export default function QuoteBuilderPage() {
         </div>
       </Section>
 
-      <ConfirmModal open={zeroItemConfirm !== null} onConfirm={proceedToSend} onCancel={() => setZeroItemConfirm(null)} title="Items with $0 pricing" message={`${zeroItemConfirm || 0} item${(zeroItemConfirm || 0) > 1 ? 's have' : ' has'} $0 pricing. Send anyway?`} confirmLabel="Send Anyway" cancelLabel="Cancel" />
+      <ConfirmModal open={zeroItemConfirm !== null} onConfirm={proceedToSend} onCancel={() => setZeroItemConfirm(null)} title="Items with $0 pricing" message={Array.isArray(zeroItemConfirm) && zeroItemConfirm.length > 0 ? `${zeroItemConfirm.map(i => `"${i.name}"`).join(', ')} ${zeroItemConfirm.length > 1 ? 'have' : 'has'} $0 pricing. Send anyway?` : '1 item has $0 pricing. Send anyway?'} confirmLabel="Send Anyway" cancelLabel="Cancel" />
 
       {/* Phone number dup confirmation */}
       {phoneDupMatch && (
@@ -1665,5 +1746,33 @@ export default function QuoteBuilderPage() {
         </div>
       )}
     </AppShell>
+    {showTemplateName && (
+      <div className="jt-modal-bg" onClick={() => setShowTemplateName(false)}>
+        <div className="jt-modal" onClick={e => e.stopPropagation()}>
+          <div className="jt-modal-hd">
+            <h3 className="jt-modal-title">Save as job template</h3>
+            <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowTemplateName(false)} aria-label="Close">×</button>
+          </div>
+          <div className="jt-modal-body">
+            <label className="jt-modal-label">Template name</label>
+            <input
+              className="input"
+              value={templateNameDraft}
+              onChange={e => setTemplateNameDraft(e.target.value)}
+              placeholder="e.g. Furnace replacement — mid-range"
+              autoFocus
+              onKeyDown={e => { if (e.key === 'Enter' && templateNameDraft.trim()) handleSaveAsTemplate(templateNameDraft); }}
+            />
+            <p className="jt-modal-hint">Saves line items, trade, province and description. Find it under Templates → Job Templates.</p>
+          </div>
+          <div className="jt-modal-footer">
+            <button className="btn btn-secondary btn-sm" type="button" onClick={() => setShowTemplateName(false)}>Cancel</button>
+            <button className="btn btn-primary btn-sm" type="button" disabled={savingTemplate || !templateNameDraft.trim()} onClick={() => handleSaveAsTemplate(templateNameDraft)}>
+              {savingTemplate ? 'Saving…' : 'Save template'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }

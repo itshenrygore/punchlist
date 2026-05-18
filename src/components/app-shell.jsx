@@ -22,15 +22,19 @@ import { useScrollToTop } from '../hooks/use-mobile-ux';
 import { useToast } from './toast';
 import { useKeyboardVisible } from '../hooks/use-keyboard-visible';
 import { useHideOnScroll } from '../hooks/use-hide-on-scroll';
+import ForemanPanel from './foreman-panel';
+import { useForeman } from '../contexts/foreman-context';
 
 export default function AppShell({ title, subtitle, children, actions, hideTitle = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { quoteContext, addItemHandler } = useForeman();
   const { theme, toggle: toggleTheme } = useTheme();
   const { show: showToast } = useToast();
   const [mobileOpen, setMobileOpen] = useState(false);
-  useScrollLock(mobileOpen);
+  const [foremanOpen, setForemanOpen] = useState(false);
+  useScrollLock(mobileOpen || foremanOpen);
   const [online, setOnline] = useState(isOnline());
   const headerRef = useRef(null);
   useScrollToTop(headerRef);
@@ -51,13 +55,21 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
     });
   }, [user]);
 
-  // Escape closes mobile menu
+  // Escape closes mobile menu / Foreman; Cmd+K toggles Foreman
   useEffect(() => {
-    if (!mobileOpen) return;
-    const onKey = e => { if (e.key === 'Escape') setMobileOpen(false); };
+    const onKey = e => {
+      if (e.key === 'Escape') {
+        if (foremanOpen) setForemanOpen(false);
+        else if (mobileOpen) setMobileOpen(false);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setForemanOpen(prev => !prev);
+      }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [mobileOpen]);
+  }, [mobileOpen, foremanOpen]);
 
   // Auto-sync offline drafts
   useEffect(() => {
@@ -112,6 +124,11 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
             )}
             <NotificationCenter />
             <span className="topbar-page-actions">{actions}</span>
+            <button className="btn btn-ghost btn-sm topbar-foreman-btn" type="button" onClick={() => setForemanOpen(true)} aria-label="Open Foreman AI" title="Foreman AI (⌘K)">
+              <span className="topbar-foreman-icon">F</span>
+              <span className="topbar-foreman-label">Foreman</span>
+              <kbd className="topbar-foreman-kbd">⌘K</kbd>
+            </button>
             <button className="btn btn-ghost btn-sm topbar-theme-btn" type="button" onClick={toggleTheme} aria-label="Toggle theme" title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}><span className="topbar-theme-icon">{theme === 'dark' ? '☀️' : '🌙'}</span></button>
             <Link className="btn btn-primary btn-sm topbar-new-quote" to="/app/quotes/new">New quote</Link>
             <button className="btn btn-secondary btn-sm mobile-menu-btn" type="button" aria-label="Open menu" onClick={() => setMobileOpen(!mobileOpen)}>&#9776;</button>
@@ -134,6 +151,10 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
               </Link>
             ))}
             <hr className="mobile-menu-divider" />
+            <button className="mobile-menu-item" type="button" onClick={() => { setMobileOpen(false); setForemanOpen(true); }}>
+              <span style={{ width: 18, height: 18, borderRadius: 5, background: 'var(--brand)', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10 }}>F</span>
+              Foreman AI
+            </button>
             <button className="mobile-theme-toggle" type="button" onClick={() => { toggleTheme(); setMobileOpen(false); }}>
               {theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
             </button>
@@ -155,6 +176,11 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
             </NavLink>
           ))}
           <div style={{ flex: 1 }} />
+          <button type="button" className="sidebar-nav-link sidebar-foreman-btn" onClick={() => setForemanOpen(true)}>
+            <span className="topbar-foreman-icon" style={{ width: 18, height: 18, borderRadius: 5, fontSize: 10 }}>F</span>
+            <span>Foreman AI</span>
+            <kbd className="topbar-foreman-kbd" style={{ marginLeft: 'auto' }}>⌘K</kbd>
+          </button>
           <NavLink to="/app/settings" className={({ isActive }) => `sidebar-nav-link${isActive ? ' active' : ''}`}>
             <NavIcon d={navLinks.find(l => l.label === 'Settings').icon} />
             <span>Settings</span>
@@ -165,7 +191,12 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
       </div>
 
       <MobileNav />
-      {/* Foreman chat widget REMOVED in 2.0 — scope checker stays in the builder */}
+      <ForemanPanel
+        open={foremanOpen}
+        onClose={() => setForemanOpen(false)}
+        quoteContext={quoteContext}
+        onAddItemToQuote={addItemHandler}
+      />
     </div>
   );
 }

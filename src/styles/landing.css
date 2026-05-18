@@ -739,6 +739,12 @@
 /* Two-column supporting grid */
 .testi-grid--2 { grid-template-columns: repeat(2,1fr); }
 
+/* Centered two-card layout — max-width so cards don't stretch too wide */
+.testi-grid--2-centered {
+  grid-template-columns: repeat(2, minmax(0, 420px));
+  justify-content: center;
+}
+
 [data-theme="dark"] .testi-feature { background: var(--bg2); }
 
 /* ════════════════════════════════════════════
@@ -1045,10 +1051,11 @@
   .feat-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
   .feat-card:nth-child(n+5) { display: none; }
 
-  /* Testimonials: featured full-width, hide second supporting card */
+  /* Testimonials: featured full-width, stack supporting cards */
   .testi-feature { padding: 24px 20px 22px; }
   .testi-grid--2 { grid-template-columns: 1fr; }
   .testi-grid--2 .testi-card:nth-child(n+2) { display: none; }
+  .testi-grid--2-centered { grid-template-columns: 1fr; }
 
   /* Pricing */
   .pr-plan { padding: 22px 18px; }

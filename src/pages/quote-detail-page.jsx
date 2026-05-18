@@ -9,6 +9,7 @@ import { calculateTotals } from '../lib/pricing';
 import { currency, formatDate, formatQuoteNumber, friendly } from '../lib/format';
 import { deleteQuote, duplicateQuote, getQuote, getProfile, updateQuoteStatus, markFollowedUp, createInvoiceFromQuoteWithAdditionalWork, uploadQuotePhoto, listQuotePhotos, deleteQuotePhoto, replyToCustomer } from '../lib/api';
 import { listTemplates, renderTemplate, getSystemDefaults } from '../lib/api/templates';
+import { saveJobTemplate } from '../lib/api/job-templates';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { safeWriteClipboard, nativeShare } from '../lib/utils';
@@ -122,6 +123,9 @@ export default function QuoteDetailPage() {
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [followingUp, setFollowingUp] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [photos, setPhotos] = useState([]);
@@ -432,6 +436,31 @@ export default function QuoteDetailPage() {
   }
 
   async function handleDuplicate() { try{const n=await duplicateQuote(user.id,quote);showToast('Draft created','success');navigate(`/app/quotes/${n.id}/edit`);}catch(e){showToast(friendly(e),'error');} }
+
+  async function handleSaveAsTemplate(name) {
+    if (!user?.id || !name?.trim()) return;
+    setSavingTemplate(true);
+    try {
+      await saveJobTemplate(user.id, {
+        name: name.trim(),
+        trade: quote.trade,
+        description: quote.description,
+        scope_summary: quote.scope_summary,
+        province: quote.province,
+        line_items: (quote.line_items || []).map(li => ({
+          name: li.name, quantity: li.quantity, unit_price: li.unit_price,
+          notes: li.notes || '', category: li.category || '',
+        })),
+      });
+      showToast('Saved as job template', 'success');
+      setShowSaveTemplate(false);
+      setTemplateName('');
+    } catch (e) {
+      showToast(e?.message || 'Could not save template', 'error');
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
   async function handleDelete() { try{if(quote.signed_at){await updateQuoteStatus(quote.id,{archived_at:new Date().toISOString()});showToast('Archived','success');}else{await deleteQuote(quote.id);showToast('Deleted','success');}navigate('/app');}catch(e){showToast(friendly(e),'error');} }
 
   const timeline = useMemo(() => quote ? buildTimeline(quote) : [], [quote]);
@@ -707,7 +736,7 @@ export default function QuoteDetailPage() {
           <details className="qb-card qd-more-actions-card"><summary className="pl-toggle-row qd-more-actions-summary">
             <span className="qd-more-actions-title">More actions</span>
             <span className="pl-chevron" />
-          </summary><div className="qd-send-grid qd-more-actions-body"><button className="btn btn-secondary full-width fs-12" type="button" disabled={pdfLoading} onClick={handleDownloadPdf}>{pdfLoading?'Generating…':'Download PDF'}</button>{typeof navigator!=='undefined'&&navigator.share&&<button className="btn btn-secondary full-width fs-12" type="button" onClick={()=>nativeShare({title:quote.title||'Quote',url:shareUrl},showToast)}>Share</button>}<button className="btn btn-secondary full-width fs-12" type="button" onClick={handleDuplicate}>Duplicate as new quote</button>{!confirmDelete?<button className="btn btn-secondary full-width qd-btn-danger" type="button" onClick={()=>setConfirmDelete(true)}>{quote.signed_at?'Archive':'Delete'}</button>:<div className="qd-delete-confirm-row"><button className="btn btn-secondary btn-sm qd-btn-danger" type="button" onClick={handleDelete}>{quote.signed_at?'Archive':'Delete'}</button><button className="btn btn-secondary btn-sm" type="button" onClick={()=>setConfirmDelete(false)}>Cancel</button></div>}</div></details>
+          </summary><div className="qd-send-grid qd-more-actions-body"><button className="btn btn-secondary full-width fs-12" type="button" disabled={pdfLoading} onClick={handleDownloadPdf}>{pdfLoading?'Generating…':'Download PDF'}</button>{typeof navigator!=='undefined'&&navigator.share&&<button className="btn btn-secondary full-width fs-12" type="button" onClick={()=>nativeShare({title:quote.title||'Quote',url:shareUrl},showToast)}>Share</button>}<button className="btn btn-secondary full-width fs-12" type="button" onClick={handleDuplicate}>Duplicate as new quote</button><button className="btn btn-secondary full-width fs-12" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }}>Save as job template</button>{!confirmDelete?<button className="btn btn-secondary full-width qd-btn-danger" type="button" onClick={()=>setConfirmDelete(true)}>{quote.signed_at?'Archive':'Delete'}</button>:<div className="qd-delete-confirm-row"><button className="btn btn-secondary btn-sm qd-btn-danger" type="button" onClick={handleDelete}>{quote.signed_at?'Archive':'Delete'}</button><button className="btn btn-secondary btn-sm" type="button" onClick={()=>setConfirmDelete(false)}>Cancel</button></div>}</div></details>
         </aside>
       </div>
 
@@ -729,6 +758,34 @@ export default function QuoteDetailPage() {
       )}
 
     </AppShell>
+    {showSaveTemplate && (
+      <div className="jt-modal-bg" onClick={() => setShowSaveTemplate(false)}>
+        <div className="jt-modal" onClick={e => e.stopPropagation()}>
+          <div className="jt-modal-hd">
+            <h3 className="jt-modal-title">Save as job template</h3>
+            <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowSaveTemplate(false)} aria-label="Close">×</button>
+          </div>
+          <div className="jt-modal-body">
+            <label className="jt-modal-label">Template name</label>
+            <input
+              className="input"
+              value={templateName}
+              onChange={e => setTemplateName(e.target.value)}
+              placeholder="e.g. Furnace replacement — mid-range"
+              autoFocus
+              onKeyDown={e => { if (e.key === 'Enter' && templateName.trim()) handleSaveAsTemplate(templateName); }}
+            />
+            <p className="jt-modal-hint">Saves line items, trade, province and description. Find it under Templates → Job Templates.</p>
+          </div>
+          <div className="jt-modal-footer">
+            <button className="btn btn-secondary btn-sm" type="button" onClick={() => setShowSaveTemplate(false)}>Cancel</button>
+            <button className="btn btn-primary btn-sm" type="button" disabled={savingTemplate || !templateName.trim()} onClick={() => handleSaveAsTemplate(templateName)}>
+              {savingTemplate ? 'Saving…' : 'Save template'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
 

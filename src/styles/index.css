@@ -170,10 +170,10 @@
   --surface-alt:var(--panel-2);
   --border:var(--line);
   --primary:var(--brand);
-  /* Panel text: since panels stay white in dark mode, text on panels must stay dark */
-  --panel-text: #161616;
-  --panel-text-2: #344054;
-  --panel-muted: #667085;
+  /* Panel text: panels now use dark surfaces in dark mode */
+  --panel-text: var(--text);
+  --panel-text-2: var(--text-2);
+  --panel-muted: var(--muted);
 
   /* ── Z-index scale ── */
   --z-base: 1;
@@ -274,31 +274,31 @@ body {
 [data-theme="dark"] .mobile-bottom-nav { ... }
 */
 
-/* Light mode panels — background stays white even in dark mode */
+/* Panels adapt to dark mode */
 [data-theme="dark"] .panel {
-  background: #FFFFFF;
-  border-color: rgba(17,24,39,.08);
-  box-shadow: 0 1px 3px rgba(16,24,40,.04);
-  color: #161616;
+  background: var(--panel);
+  border-color: var(--line);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
 }
 [data-theme="dark"] .panel .eyebrow,
-[data-theme="dark"] .panel .field-label { color: #667085; }
-[data-theme="dark"] .panel .muted { color: #667085; }
+[data-theme="dark"] .panel .field-label { color: var(--muted); }
+[data-theme="dark"] .panel .muted { color: var(--muted); }
 [data-theme="dark"] .panel .input {
-  background: #fff;
-  border-color: rgba(17,24,39,.12);
-  color: #161616;
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text);
 }
-[data-theme="dark"] .panel .input::placeholder { color: #8A8F98; }
+[data-theme="dark"] .panel .input::placeholder { color: var(--subtle); }
 [data-theme="dark"] .panel .btn-secondary {
-  background: #F6F5F2;
-  border-color: rgba(17,24,39,.08);
-  color: #344054;
+  background: var(--panel-2);
+  border-color: var(--line);
+  color: var(--text-2);
 }
 [data-theme="dark"] .panel select {
-  background: #fff;
-  border-color: rgba(17,24,39,.12);
-  color: #161616;
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text);
 }
 
 /* Light mode scrollbar */
@@ -4330,8 +4330,10 @@ input[type="number"]{-moz-appearance:textfield}
 .mobile-theme-toggle:hover{background:var(--panel-2);color:var(--text)}
 
 /* ── #28: Ensure no horizontal overflow on small screens ── */
-@media(max-width:640px){
+@media(max-width:768px){
   .app-main{overflow-x:hidden;max-width:100vw}
+  .rq-page{max-width:100%;overflow-x:hidden}
+  .panel,.ds-section,.qcard{max-width:100%;overflow-x:hidden}
 }
 
 /* ═══════════════════════════════════════════════════════════

@@ -11,6 +11,7 @@ export * from './notifications.js';
 export * from './checkout.js';
 export * from './templates.js';
 export * from './invoices.js';
+export * from './job-templates.js';
 
 // ── Removed-feature stubs (booking/amendment system cut in 2.0) ──
 export async function listBookings() { return []; }

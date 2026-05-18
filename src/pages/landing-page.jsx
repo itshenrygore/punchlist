@@ -32,7 +32,7 @@ function Nav() {
   return (
     <nav className={`ln-nav${scrolled ? ' ln-nav--s' : ''}`}>
       <div className="ln-w ln-nav-in">
-        <Link to="/" className="ln-nav-logo"><Logo size="sm" /></Link>
+        <Link to="/" className="ln-nav-logo"><Logo size="sm" dark={!scrolled} /></Link>
         <div className={`ln-nav-links${open ? ' --open' : ''}`}>
           <a href="#how" className="ln-nav-a" onClick={() => setOpen(false)}>How it works</a>
           <a href="#pricing" className="ln-nav-a" onClick={() => setOpen(false)}>Pricing</a>
@@ -67,12 +67,26 @@ const ITEMS = [
   { name: 'Lineset, flue liner, electrical & Ecobee thermostat', price: 1520 },
 ];
 const TOTAL = ITEMS.reduce((s, i) => s + i.price, 0); // $10,800
-const TERMS = [6, 12, 18, 24];
+
+// Realistic BNPL terms with actual APR-based payments
+// Rates based on Affirm/Klarna typical home improvement offers
+function calcMonthly(principal, termMonths, apr) {
+  if (apr === 0) return Math.ceil(principal / termMonths);
+  const r = apr / 12;
+  return Math.ceil(principal * (r * Math.pow(1 + r, termMonths)) / (Math.pow(1 + r, termMonths) - 1));
+}
+const TERMS = [
+  { months: 6,  apr: 0,      label: '6 mo', monthly: calcMonthly(TOTAL, 6,  0) },
+  { months: 12, apr: 0.0999, label: '12 mo', monthly: calcMonthly(TOTAL, 12, 0.0999) },
+  { months: 24, apr: 0.1999, label: '24 mo', monthly: calcMonthly(TOTAL, 24, 0.1999) },
+  { months: 36, apr: 0.2499, label: '36 mo', monthly: calcMonthly(TOTAL, 36, 0.2499) },
+];
 
 function LiveQuoteCard() {
-  const [term, setTerm] = useState(24);
+  const [termIdx, setTermIdx] = useState(2); // default: 24 mo
   const [approved, setApproved] = useState(false);
-  const monthly = Math.ceil(TOTAL / term);
+  const termObj = TERMS[termIdx];
+  const monthly = termObj.monthly;
 
   return (
     <div className="qc">
@@ -98,15 +112,18 @@ function LiveQuoteCard() {
             <span className="qc-mo-n">${monthly.toLocaleString()}</span>
             <span className="qc-mo-u">/mo</span>
           </div>
-          <div className="qc-total-line">You get paid ${TOTAL.toLocaleString()} in full</div>
+          <div className="qc-total-line">
+            You get paid ${TOTAL.toLocaleString()} in full
+            {termObj.apr > 0 && <span className="qc-apr"> · est. {(termObj.apr * 100).toFixed(2)}% APR</span>}
+          </div>
         </div>
 
         <div className="qc-terms">
-          {TERMS.map(t => (
-            <button key={t} type="button"
-              className={`qc-t${term === t ? ' qc-t--on' : ''}`}
-              onClick={() => { setTerm(t); setApproved(false); }}>
-              {t}mo
+          {TERMS.map((t, i) => (
+            <button key={t.months} type="button"
+              className={`qc-t${termIdx === i ? ' qc-t--on' : ''}`}
+              onClick={() => { setTermIdx(i); setApproved(false); }}>
+              {t.label}
             </button>
           ))}
         </div>
@@ -134,7 +151,7 @@ function LiveQuoteCard() {
           </div>
         )}
         <div className="qc-hint">
-          {!approved ? 'Tap a term to change the monthly price' : 'Customer pays monthly. You got the full amount.'}
+          {!approved ? 'Try different terms to see monthly options' : 'Customer pays monthly. You got the full amount.'}
         </div>
       </div>
     </div>
@@ -314,7 +331,7 @@ export default function LandingPage() {
           <div className="testi-feature rv">
             <div className="testi-feature-badge">$14,000 closed · No negotiation · Deposit paid on site</div>
             <blockquote className="testi-feature-quote">
-              "Panel upgrades get shopped to death on price. I quoted $584/month on 24 months
+              "Panel upgrades get shopped to death on price. I quoted $643/month over 24 months
               instead of the $14k lump sum. Customer didn't ask for a second quote.
               Deposit paid before I even left the driveway."
             </blockquote>
@@ -328,16 +345,16 @@ export default function LandingPage() {
           </div>
 
           {/* Supporting */}
-          <div className="testi-grid testi-grid--2 rv rv--d1">
+          <div className="testi-grid testi-grid--2-centered rv rv--d1">
             {[
               {
                 amount: '$9,200 closed', result: 'Approved next morning',
-                quote: 'Customer called my $9,200 furnace and AC quote "too much." Sent it back showing $384/month and they approved it the next morning. I send every quote over $3k this way now.',
+                quote: 'Customer called my $9,200 furnace and AC quote "too much." Sent it back showing $423/month over 24 months and they approved it the next morning. I send every quote over $3k this way now.',
                 name: 'Dave Kowalski', trade: 'HVAC Technician · Edmonton, AB', initials: 'DK',
               },
               {
                 amount: '$7,400 closed', result: 'Approved same evening',
-                quote: 'Customer went dead silent when I said $7,400 for a main drain replacement. Sent it back at $309/month — approved that evening. I was skeptical about financing, but I\'m not financing anything. The lender does.',
+                quote: 'Customer went dead silent when I said $7,400 for a main drain replacement. Sent it back at $340/month over 24 months — approved that evening. I was skeptical about financing, but I\'m not financing anything. The lender does.',
                 name: 'Mike Sullivan', trade: 'Master Plumber · Calgary, AB', initials: 'MS',
               },
             ].map((t, i) => (

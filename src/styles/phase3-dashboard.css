@@ -347,11 +347,18 @@
   color: var(--text);
 }
 
-.pl-tabstrip {
-  -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
-  mask-image: linear-gradient(to right, black 90%, transparent 100%);
+/* Fade hint for scrollable tabstrips — classes set by useScrollFade hook */
+.pl-tabstrip:not(.scrolled-end) {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8px, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 8px, black 90%, transparent 100%);
 }
 
+.pl-tabstrip.scrolled-mid {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8px, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 8px, black 90%, transparent 100%);
+}
+
+.pl-tabstrip.scrolled-end,
 .pl-tabstrip[data-at-end="true"] {
   -webkit-mask-image: none;
   mask-image: none;

@@ -358,52 +358,54 @@ export default function QuotesListPage() {
         </div>
       )}
 
-      {/* ── Content ── */}
-      {loading ? (
-        <div className="pl-skel-list">
-          {[...Array(5)].map((_, i) => <div key={i} className="pl-skel-row" />)}
-        </div>
-      ) : quotes.length === 0 ? (
-        <Card padding="loose" minH="260px" className="pl-empty-card">
-          <div className="pl-empty-glyph" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      {/* ── Content — stable min-height prevents layout jump when filtering ── */}
+      <div className="pl-ql-container">
+        {loading ? (
+          <div className="pl-skel-list">
+            {[...Array(5)].map((_, i) => <div key={i} className="pl-skel-row" />)}
           </div>
-          <h2 className="pl-empty-title font-display">No quotes yet</h2>
-          <p className="pl-empty-body">Describe a job and Punchlist builds the quote in under 2 minutes.</p>
-          <div className="pl-empty-actions">
-            <Link to="/app/quotes/new" className="btn btn-primary">Create your first quote →</Link>
+        ) : quotes.length === 0 ? (
+          <Card padding="loose" minH="260px" className="pl-empty-card">
+            <div className="pl-empty-glyph" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <h2 className="pl-empty-title font-display">No quotes yet</h2>
+            <p className="pl-empty-body">Describe a job and Punchlist builds the quote in under 2 minutes.</p>
+            <div className="pl-empty-actions">
+              <Link to="/app/quotes/new" className="btn btn-primary">Create your first quote →</Link>
+            </div>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Card padding="loose" minH="220px" className="pl-empty-card">
+            <div className="pl-empty-glyph">🔍</div>
+            <h2 className="pl-empty-title font-display">No quotes match</h2>
+            <p className="pl-empty-body">Try adjusting your search or filters.</p>
+            <div className="pl-empty-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => { setSearch(''); setStatusFilter(null); setHideCompleted(false); }}>
+                Clear filters
+              </button>
+            </div>
+          </Card>
+        ) : (
+          <div className="panel ql-panel-themed" style={{ padding: 0 }}>
+            {/* Desktop table */}
+            <div className="ql-table">
+              <TableHeader />
+              {filtered.map(q => <QuoteRow key={q.id} quote={q} />)}
+            </div>
+            {/* Mobile card list */}
+            <div className="ql-cards pl-ql-list">
+              {filtered.map(q => (
+                <div key={q.id} className="pl-ql-row-wrap">
+                  <SwipeableRow onSwipe={() => q.status === 'draft' ? handleDeleteDraft(q.id) : handleArchive(q.id)} label={q.status === 'draft' ? 'Delete' : 'Archive'} color={q.status === 'draft' ? 'var(--red, #ef4444)' : undefined}>
+                    <QuoteCard quote={q} />
+                  </SwipeableRow>
+                </div>
+              ))}
+            </div>
           </div>
-        </Card>
-      ) : filtered.length === 0 ? (
-        <Card padding="loose" minH="220px" className="pl-empty-card">
-          <div className="pl-empty-glyph">🔍</div>
-          <h2 className="pl-empty-title font-display">No quotes match</h2>
-          <p className="pl-empty-body">Try adjusting your search or filters.</p>
-          <div className="pl-empty-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => { setSearch(''); setStatusFilter(null); setHideCompleted(false); }}>
-              Clear filters
-            </button>
-          </div>
-        </Card>
-      ) : (
-        <div className="panel ql-panel-themed" style={{ overflow: 'hidden', padding: 0 }}>
-          {/* Desktop table */}
-          <div className="ql-table">
-            <TableHeader />
-            {filtered.map(q => <QuoteRow key={q.id} quote={q} />)}
-          </div>
-          {/* Mobile card list */}
-          <div className="ql-cards">
-            {filtered.map(q => (
-              <div key={q.id} className="pl-ql-row-wrap">
-                <SwipeableRow onSwipe={() => q.status === 'draft' ? handleDeleteDraft(q.id) : handleArchive(q.id)} label={q.status === 'draft' ? 'Delete' : 'Archive'} color={q.status === 'draft' ? 'var(--red, #ef4444)' : undefined}>
-                  <QuoteCard quote={q} />
-                </SwipeableRow>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </AppShell>
   );
 }

@@ -17,7 +17,11 @@ export default async function handler(req, res) {
   const { to, body } = req.body || {};
   if (!to || !body) return res.status(400).json({ error: 'Missing to or body' });
 
-  const phone = String(to).trim();
+  let phone = String(to).trim().replace(/[\s\-().]/g, '');
+  // Auto-prefix 10-digit North American numbers with +1
+  if (/^\d{10}$/.test(phone)) phone = '+1' + phone;
+  // Strip leading 1 from 11-digit numbers starting with 1 and reformat
+  else if (/^1\d{10}$/.test(phone)) phone = '+' + phone;
   if (!E164_RE.test(phone)) {
     return res.status(200).json({ ok: false, reason: 'invalid_phone' });
   }
