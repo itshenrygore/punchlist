@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "@sparticuz/chromium": "^133.0.0",
+    "puppeteer-core": "^24.0.0",
+    "stripe": "^14.0.0",
+    "web-push": "^3.6.7"
+  }
+}
