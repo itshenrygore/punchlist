@@ -508,6 +508,40 @@
   letter-spacing: var(--tracking-normal);
 }
 
+/* ── Bulk select ── */
+.ql-bulk-cb {
+  width: 16px; height: 16px; flex-shrink: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+  margin-right: 4px;
+}
+.ql-row--selected { background: var(--primary-bg, rgba(59,130,246,.06)) !important; }
+.ql-bulk-bar {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-radius: 12px;
+  background: var(--surface, #fff); border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  z-index: 100; font-size: 13px;
+  animation: ql-bar-in .2s ease;
+}
+@keyframes ql-bar-in { from { opacity: 0; transform: translateX(-50%) translateY(12px); } }
+.ql-bulk-count { font-weight: 700; white-space: nowrap; }
+.ql-bulk-cancel { font-size: 13px; color: var(--muted); }
+
+.ql-dup-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+.ql-row-premium:hover .ql-dup-btn { opacity: 1; }
+.ql-dup-btn:hover { color: var(--primary); }
+.ql-cards .ql-dup-btn { opacity: .6; }
+
 @media (prefers-reduced-motion: reduce) {
   .ql-row-premium,
   .ql-row-premium:hover { transform: none; }

@@ -184,10 +184,10 @@
   --z-toast: 400;
 
   /* ── Premium glass logo mark (default = dark theme = light glass) ── */
-  --logo-glass-bg:        rgba(255,255,255,0.22);
-  --logo-glass-border:    rgba(255,255,255,0.36);
-  --logo-glass-highlight: rgba(255,255,255,0.32);
-  --logo-row-fill:        #e0ddd8;
+  --logo-glass-bg:        rgba(255,255,255,0.14);
+  --logo-glass-border:    rgba(255,255,255,0.22);
+  --logo-glass-highlight: rgba(255,255,255,0.18);
+  --logo-row-fill:        #f0ede8;
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -197,10 +197,10 @@
    theme (e.g. landing page hero, modal over a dark backdrop).
    ─────────────────────────────────────────────────────────── */
 [data-force-theme="dark"] {
-  --logo-glass-bg:        rgba(255,255,255,0.22);
-  --logo-glass-border:    rgba(255,255,255,0.36);
-  --logo-glass-highlight: rgba(255,255,255,0.32);
-  --logo-row-fill:        #e0ddd8;
+  --logo-glass-bg:        rgba(255,255,255,0.14);
+  --logo-glass-border:    rgba(255,255,255,0.22);
+  --logo-glass-highlight: rgba(255,255,255,0.18);
+  --logo-row-fill:        #f0ede8;
 }
 [data-force-theme="light"] {
   --logo-glass-bg:        rgba(20,20,20,0.05);
@@ -2055,8 +2055,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .status-chip.overdue{background:rgba(180,35,24,.12);color:#b42318}
 
 /* ── Invoice layout refinements ── */
-.inv-layout{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
-@media(max-width:768px){.inv-layout{grid-template-columns:1fr;gap:16px}}
+/* inv-layout grid defined above in INVOICE PAGE section; breakpoint at 1024px */
 
 .inv-doc{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:28px 24px;position:relative;overflow:hidden}
 .inv-doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:12px}
