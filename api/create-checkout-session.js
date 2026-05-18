@@ -88,17 +88,33 @@ export default async function handler(req, res) {
   const price = PRICES[priceKey];
   if (!price) return res.status(400).json({ error: `Unknown price key: ${priceKey}. Must be 'monthly' or 'yearly'.` });
 
+  // Get user identity for checkout binding
+  const supabase = getSupabase();
+  let userEmail = null;
+  let userId = null;
+  if (supabase) {
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (token) {
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) { userEmail = user.email; userId = user.id; }
+    }
+  }
+
   try {
+    const params = new URLSearchParams({
+      mode: 'subscription',
+      'line_items[0][price]': price,
+      'line_items[0][quantity]': '1',
+      success_url: `${appUrl}/app`,
+      cancel_url: `${appUrl}/pricing`,
+    });
+    if (userEmail) params.append('customer_email', userEmail);
+    if (userId) params.append('client_reference_id', userId);
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        mode: 'subscription',
-        'line_items[0][price]': price,
-        'line_items[0][quantity]': '1',
-        success_url: `${appUrl}/app`,
-        cancel_url: `${appUrl}/pricing`,
-      }),
+      body: params,
     });
     const data = await response.json();
     if (!response.ok) return res.status(500).json({ error: data.error?.message || 'Stripe checkout failed' });

@@ -77,7 +77,7 @@ async function sendSignedConfirmationToCustomer({ customerEmail, customerName, c
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
-      reply_to: contractorEmail || undefined,
+      reply_to: cEmail || undefined,
       to: [customerEmail],
       subject: `Your signed quote — ${quoteTitle}`,
       html: `
@@ -108,7 +108,7 @@ async function sendSignedConfirmationToCustomer({ customerEmail, customerName, c
         </div>
       `,
     }),
-  }).catch(() => {});
+  }).catch((error) => { console.error('[email-fail] sendSignedConfirmationToCustomer', error.message); });
 }
 
 async function notifyContractor({ contractorEmail, contractorName, contractorPhone, customerName, quoteTitle, action, feedback, appUrl, quoteId }) {
@@ -157,7 +157,7 @@ async function notifyContractor({ contractorEmail, contractorName, contractorPho
         </div>
       `,
     }),
-  }).catch(() => {});
+  }).catch((error) => { console.error('[email-fail] notifyContractor', error.message); });
 }
 
 // Phase 4B: Create in-app notification alongside email
@@ -252,7 +252,7 @@ export default async function handler(req, res) {
 
     // GUARD: reject mutating actions on terminal statuses
     const CLOSED_STATUSES = ['converted_to_invoice', 'paid', 'expired', 'deposit_paid', 'declined'];
-    const PASSTHROUGH_ACTIONS = ['view'];
+    const PASSTHROUGH_ACTIONS = ['view', 'question'];
     if (CLOSED_STATUSES.includes(quote.status) && !PASSTHROUGH_ACTIONS.includes(action)) {
       return res.status(400).json({ error: 'This quote is no longer accepting actions.', status: quote.status });
     }
@@ -645,7 +645,7 @@ export default async function handler(req, res) {
               </div>
             `,
           }),
-        }).catch(() => {});
+        }).catch((error) => { console.error('[email-fail] contractor_reply', error.message); });
       }
       // 9B: SMS — notify customer of contractor's reply
       if (quote.customer?.phone) {

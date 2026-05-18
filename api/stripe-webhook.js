@@ -174,15 +174,25 @@ async function markInvoicePaidViaStripe(session) {
 
   const amountPaid = (session.amount_total || 0) / 100;
 
-  // Record payment in payments table
-  await supabase.from('payments').insert({
-    invoice_id: invoiceId,
-    user_id: invoice.user_id,
-    amount: amountPaid,
-    method: methodLabel,
-    notes: `${methodLabel} session ${session.id}`,
-    paid_at: paidAt,
-  });
+  // ── Payment insert dedup: check if a payment with this session ID already exists ──
+  const { data: existingPayment } = await supabase
+    .from('payments')
+    .select('id')
+    .eq('invoice_id', invoiceId)
+    .ilike('notes', `%${session.id}%`)
+    .maybeSingle();
+
+  if (!existingPayment) {
+    // Record payment in payments table
+    await supabase.from('payments').insert({
+      invoice_id: invoiceId,
+      user_id: invoice.user_id,
+      amount: amountPaid,
+      method: methodLabel,
+      notes: `${methodLabel} session ${session.id}`,
+      paid_at: paidAt,
+    });
+  }
 
   // Recalculate total payments
   const { data: payments } = await supabase.from('payments').select('amount').eq('invoice_id', invoiceId);
@@ -342,6 +352,7 @@ async function activateSubscription(session) {
   if (!supabase) return;
 
   const customerId = session.customer;
+  const subscriptionId = session.subscription;
   const email = session.customer_details?.email || session.customer_email;
   if (!email) {
     console.error('[stripe-webhook] No email in subscription checkout session');
@@ -353,21 +364,46 @@ async function activateSubscription(session) {
   try {
     const stripeModule = await import('stripe');
     const stripe = new stripeModule.default(process.env.STRIPE_SECRET_KEY);
-    const sub = await stripe.subscriptions.retrieve(session.subscription);
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
     const interval = sub?.items?.data?.[0]?.price?.recurring?.interval;
     plan = interval === 'year' ? 'pro_annual' : 'pro_monthly';
   } catch { /* fallback to 'pro' */ }
 
-  // Find profile by email (auth.users email matches)
-  const { data: users } = await supabase.auth.admin.listUsers();
-  const matchedUser = users?.users?.find(u => u.email === email);
-  if (!matchedUser) {
-    console.error('[stripe-webhook] No user found for email:', email);
+  // ── Idempotency: skip if this subscription is already recorded ──
+  // Check by subscription_id first (handles Stripe retries / replays).
+  const { data: existingBySub } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle();
+  if (existingBySub) {
+    // Customer already linked — just ensure plan is up-to-date
+    await supabase.from('profiles').update({ subscription_plan: plan }).eq('id', existingBySub.id);
     return;
   }
 
+  // ── Find user: prefer client_reference_id (set at checkout), fall back to email scan ──
+  let matchedUserId = session.client_reference_id || null;
+
+  if (matchedUserId) {
+    // Verify the user actually exists in profiles
+    const { data: profileCheck } = await supabase.from('profiles').select('id').eq('id', matchedUserId).maybeSingle();
+    if (!profileCheck) matchedUserId = null; // invalid ref, fall back to email
+  }
+
+  if (!matchedUserId) {
+    // Fall back to email scan with bounded page size
+    const { data: users } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const matchedUser = users?.users?.find(u => u.email === email);
+    if (!matchedUser) {
+      console.error('[stripe-webhook] No user found for email:', email);
+      return;
+    }
+    matchedUserId = matchedUser.id;
+  }
+
   await supabase.from('profiles').upsert({
-    id: matchedUser.id,
+    id: matchedUserId,
     subscription_plan: plan,
     stripe_customer_id: customerId,
   }, { onConflict: 'id' });

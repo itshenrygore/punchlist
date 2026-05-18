@@ -30,11 +30,12 @@ export default async function handler(req, res) {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
   if (!supabaseUrl || !supabaseKey) {
-    console.error('[public-quote] Missing env vars:', { 
-      hasUrl: !!supabaseUrl, 
-      hasKey: !!supabaseKey 
+    console.error('[public-quote] Missing env vars:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes('SUPA')).join(','),
     });
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Server configuration error',
       detail: 'Database connection not configured'
     });
@@ -138,7 +139,7 @@ export default async function handler(req, res) {
       try {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id,full_name,company_name,phone,email,logo_url,payment_methods,payment_instructions,etransfer_email,venmo_zelle_handle,square_payment_link,paypal_link,stripe_payment_link,stripe_connect_account_id,stripe_connect_onboarded,terms_conditions')
           .eq('id', quote.user_id)
           .maybeSingle();
         
@@ -213,6 +214,7 @@ export default async function handler(req, res) {
     };
 
     // console.log('[public-quote] Success, returning quote');
+    res.setHeader('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=30');
     return res.status(200).json({ quote: payload });
 
   } catch (err) {

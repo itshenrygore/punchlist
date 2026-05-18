@@ -669,12 +669,9 @@ export default async function handler(req, res) {
       contractor = p;
     }
 
-    // 6C: Fetch approved amendments for this quote
-    const { data: amendments } = await supabase
-      .from('amendments')
-      .select('*')
-      .eq('quote_id', quote.id)
-      .eq('status', 'approved');
+    // Amendments are stored inline on the quote object (quote.amendment)
+    // The amendments table was removed — this is kept for PDF rendering compatibility
+    const amendments = [];
 
     const enriched = {
       ...quote,

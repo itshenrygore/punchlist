@@ -63,6 +63,13 @@ export default async function handler(req, res) {
   const { action, userId, termsVersion, returnPath } = req.body || {};
   if (!userId) return res.status(400).json({ error: 'Missing userId' });
 
+  // Auth: verify the caller owns this userId
+  const authHeader = req.headers['authorization'] || '';
+  const authToken = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!authToken) return res.status(401).json({ error: 'Unauthorized' });
+  const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(authToken);
+  if (authErr || !authUser || authUser.id !== userId) return res.status(401).json({ error: 'Unauthorized' });
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, full_name, company_name, email, phone, country, stripe_connect_account_id, stripe_connect_onboarded, payments_terms_accepted_at, payments_terms_version')

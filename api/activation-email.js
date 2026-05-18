@@ -156,6 +156,15 @@ export default async function handler(req, res) {
   if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
   if (!process.env.RESEND_API_KEY) return res.status(200).json({ ok: true, skipped: 'no_email_key' });
 
+  // Auth: verify the caller owns this user_id
+  const authHeader = req.headers['authorization'] || '';
+  const authToken = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!authToken) return res.status(401).json({ error: 'Unauthorized' });
+  let supabaseCheck;
+  try { supabaseCheck = getSupabase(); } catch { return res.status(500).json({ error: 'Config error' }); }
+  const { data: { user: authUser }, error: authErr } = await supabaseCheck.auth.getUser(authToken);
+  if (authErr || !authUser || authUser.id !== user_id) return res.status(401).json({ error: 'Unauthorized' });
+
   let supabase;
   try { supabase = getSupabase(); } catch { return res.status(500).json({ error: 'Config error' }); }
 

@@ -12,11 +12,6 @@ function getSupabase() {
 // ── Tool definitions for Claude ──
 const TOOL_DEFS = [
   {
-    name: 'read_schedule',
-    description: 'Get upcoming scheduled jobs for the contractor',
-    input_schema: { type: 'object', properties: { days_ahead: { type: 'number', description: 'Days to look ahead (default 7)' } } },
-  },
-  {
     name: 'read_quotes',
     description: 'Get recent quotes, optionally filtered by status or customer name',
     input_schema: { type: 'object', properties: { status: { type: 'string' }, customer_name: { type: 'string' } } },
@@ -51,27 +46,10 @@ const TOOL_DEFS = [
       required: ['title'],
     },
   },
-  {
-    name: 'schedule_job',
-    description: 'Schedule a job on the calendar',
-    input_schema: {
-      type: 'object',
-      properties: { customer_name: { type: 'string' }, date: { type: 'string' }, duration_minutes: { type: 'number' }, notes: { type: 'string' } },
-      required: ['date'],
-    },
-  },
 ];
 
 async function executeTool(name, args, userId, supabase) {
   try {
-    if (name === 'read_schedule') {
-      const days = args.days_ahead || 7;
-      const from = new Date().toISOString();
-      const to = new Date(Date.now() + days * 86400000).toISOString();
-      const { data } = await supabase.from('bookings').select('*, customer:customers(name)').eq('user_id', userId).gte('scheduled_for', from).lte('scheduled_for', to).order('scheduled_for');
-      if (!data?.length) return 'No jobs scheduled in the next ' + days + ' days.';
-      return data.map(b => `${b.customer?.name || 'Direct'} — ${new Date(b.scheduled_for).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(b.scheduled_for).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })} (${b.duration_minutes || 120}min) [${b.status}]${b.notes ? ' — ' + b.notes : ''}`).join('\n');
-    }
     if (name === 'read_quotes') {
       let q = supabase.from('quotes').select('id, title, status, total, trade, updated_at, customer:customers(name)').eq('user_id', userId).order('updated_at', { ascending: false }).limit(10);
       if (args.status) q = q.eq('status', args.status);
@@ -114,27 +92,18 @@ async function executeTool(name, args, userId, supabase) {
         const { data: custs } = await supabase.from('customers').select('id, name').eq('user_id', userId).ilike('name', '%' + args.customer_name + '%').limit(1);
         if (custs?.length) customer_id = custs[0].id;
       }
-      const items = (args.line_items || []).map((it, i) => ({ id: 'f_' + i, name: it.name, quantity: it.quantity || 1, unit_price: it.unit_price || 0, notes: '', included: true, category: '' }));
+      const items = (args.line_items || []).map((it) => ({ name: it.name, quantity: it.quantity || 1, unit_price: it.unit_price || 0, notes: '', included: true, category: '' }));
       const total = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
       const { data: quote, error } = await supabase.from('quotes').insert({
-        user_id: userId, customer_id, title: args.title, description: args.description || '', trade: args.trade || null, status: 'draft', total, share_token: Math.random().toString(36).slice(2, 10),
+        user_id: userId, customer_id, title: args.title, description: args.description || '', trade: args.trade || null, status: 'draft', total, share_token: token,
       }).select().single();
       if (error) return 'Error creating quote: ' + error.message;
       // Insert line items separately
       if (items.length) {
-        await supabase.from('line_items').insert(items.map(it => ({ ...it, quote_id: quote.id })));
+        await supabase.from('line_items').insert(items.map(it => ({ quote_id: quote.id, name: it.name, quantity: it.quantity, unit_price: it.unit_price, notes: it.notes, included: it.included, category: it.category })));
       }
       return `Draft created: "${quote.title}" — $${total}. [LINK:/app/quotes/${quote.id}/edit]`;
-    }
-    if (name === 'schedule_job') {
-      let customer_id = null;
-      if (args.customer_name) {
-        const { data: custs } = await supabase.from('customers').select('id').eq('user_id', userId).ilike('name', '%' + args.customer_name + '%').limit(1);
-        if (custs?.length) customer_id = custs[0].id;
-      }
-      const { error } = await supabase.from('bookings').insert({ user_id: userId, customer_id, scheduled_for: args.date, duration_minutes: args.duration_minutes || 120, status: 'scheduled', notes: args.notes || '' });
-      if (error) return 'Error scheduling: ' + error.message;
-      return `Scheduled for ${new Date(args.date).toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric' })}. [LINK:/app/bookings]`;
     }
     return 'Unknown tool.';
   } catch (e) { return 'Error: ' + (e.message || 'failed'); }
@@ -145,6 +114,16 @@ export default async function handler(req, res) {
   if (blocked(res, `ai-assist:${getClientIp(req)}`, 20, 60_000)) return;
   const { messages = [], userId, trade = 'Other', province = 'AB', country = 'CA', labourRate = 0, quoteContext = null } = req.body || {};
   if (!messages.length) return res.status(400).json({ error: 'No messages' });
+
+  // Auth: verify the caller owns this userId
+  const supabaseAuth = getSupabase();
+  if (supabaseAuth && userId) {
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(token);
+    if (authErr || !user || user.id !== userId) return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(200).json({ role: 'assistant', content: 'Foreman needs an API key. Add ANTHROPIC_API_KEY to your Vercel environment.' });
@@ -171,9 +150,11 @@ export default async function handler(req, res) {
   }
 
   // Fetch live business context for smarter responses
+  // Optimization: skip the full quotes fetch on follow-up messages (length > 1)
+  // — the context was already in the system prompt from the first message.
   let bizContext = '';
   const supabase = getSupabase();
-  if (supabase && userId) {
+  if (supabase && userId && messages.length <= 1) {
     try {
       const { data: quotes } = await supabase.from('quotes').select('status, total, title, view_count, customer:customers(name)').eq('user_id', userId).order('updated_at', { ascending: false }).limit(20);
       if (quotes?.length) {
