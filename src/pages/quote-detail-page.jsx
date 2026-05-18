@@ -210,7 +210,7 @@ export default function QuoteDetailPage() {
   // (`Hi{fn?' '+fn:''}`) that .replace('{firstName}') never matched.
   async function handleSendText() {
     if (sendingText) return;
-    if (!hasShareToken) return showToast(‘This quote doesn’t have a share link yet — save it first.’, ‘error’);
+    if (!hasShareToken) return showToast("This quote doesn’t have a share link yet — save it first.", ‘error’);
     const ph = quote.customer?.phone;
     if (!ph) return showToast(‘No phone on file for this customer.’, ‘error’);
     setSendingText(true);
@@ -335,7 +335,7 @@ export default function QuoteDetailPage() {
   }
 
   async function handleCopyLink() {
-    if (!hasShareToken) return showToast(‘This quote doesn’t have a share link yet — save it first.’, ‘error’);
+    if (!hasShareToken) return showToast("This quote doesn’t have a share link yet — save it first.", ‘error’);
     try {
       await safeWriteClipboard(shareUrl);
       setLinkCopied(true);
