@@ -12,7 +12,12 @@
    ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 
-  /* iOS auto-zoom prevention: all inputs ≥ 16px */
+  /* iOS auto-zoom prevention: ALL inputs need ≥ 16px font-size on
+     focus or Safari zooms the viewport. The global .input class was
+     missing — caused zoom on login, signup, customer-add modal, and
+     every other form using the default .input class. Belt + suspenders:
+     also catch every native input/select/textarea without a class. */
+  .input,
   .jd-input,
   .rq-card-name,
   .rq-card-price-input,
@@ -22,6 +27,13 @@
   .rq-discount-input,
   .rq-deposit-input,
   .fm-input,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
   textarea,
   select {
     font-size: 16px !important;

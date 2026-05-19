@@ -222,13 +222,13 @@ function CustomerModal({ customer, onSave, onClose, saving }) {
         <form onSubmit={e => { e.preventDefault(); onSave(form); }}>
           <div className="cust-modal-body">
             <label className="label">Name <span className="req">*</span></label>
-            <input className="input" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Full name" />
+            <input className="input" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Full name" autoComplete="name" autoCapitalize="words" enterKeyHint="next" />
             <label className="label">Phone</label>
-            <input className="input" type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" />
+            <input className="input" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" />
             <label className="label">Email</label>
-            <input className="input" type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@example.com" />
+            <input className="input" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck="false" enterKeyHint="next" value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@example.com" />
             <label className="label">Address</label>
-            <input className="input" value={form.address} onChange={e => set('address', e.target.value)} placeholder="Job site or home address" />
+            <input className="input" autoComplete="street-address" autoCapitalize="words" enterKeyHint="done" value={form.address} onChange={e => set('address', e.target.value)} placeholder="Job site or home address" />
             <label className="label">Tags</label>
             <div className="cust-tag-picker">
               {TAG_PRESETS.map(t => (

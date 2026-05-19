@@ -82,6 +82,11 @@ export default function LoginPage() {
             placeholder="you@example.com"
             required
             autoComplete="email"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
+            enterKeyHint="next"
             autoFocus
           />
         </div>
@@ -97,6 +102,10 @@ export default function LoginPage() {
               placeholder="Your password"
               required
               autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
+              enterKeyHint="go"
             />
             <button type="button" onClick={() => setShowPass(p => !p)} className="login-show-pass" aria-label={showPass ? 'Hide password' : 'Show password'}>
               {showPass ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}

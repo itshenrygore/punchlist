@@ -293,6 +293,8 @@ export default function SignupPage() {
             placeholder="e.g. Mike Sullivan"
             required
             autoComplete="name"
+            autoCapitalize="words"
+            enterKeyHint="next"
             autoFocus
           />
         </div>
@@ -305,6 +307,8 @@ export default function SignupPage() {
             onChange={e => setCompanyName(e.target.value)}
             placeholder="e.g. Sullivan Electric"
             autoComplete="organization"
+            autoCapitalize="words"
+            enterKeyHint="next"
           />
         </div>
         <div className="auth-field">
@@ -318,6 +322,11 @@ export default function SignupPage() {
             placeholder="you@example.com"
             required
             autoComplete="email"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
+            enterKeyHint="next"
           />
         </div>
         <div className="auth-field">
@@ -332,6 +341,10 @@ export default function SignupPage() {
             minLength="8"
             required
             autoComplete="new-password"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
+            enterKeyHint="go"
           />
         </div>
         {error && <div className="auth-error">{error}</div>}
