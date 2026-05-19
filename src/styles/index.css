@@ -845,7 +845,9 @@ select.input{cursor:pointer}
 @keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(12px) scale(.95)}}
 .toast-exit{animation:toast-out .3s var(--ease) forwards}
 @keyframes toast-out{to{opacity:0;transform:translateX(-50%) translateY(12px) scale(.95)}}
-.toast-icon{font-size:15px;line-height:1;flex-shrink:0;font-weight:800}
+.toast-icon{font-size:15px;line-height:1;flex-shrink:0;font-weight:800;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;animation:toast-icon-pop .35s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes toast-icon-pop{0%{opacity:0;transform:scale(.5) rotate(-15deg)}60%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.toast-icon{animation:none}}
 /* Undo toast variant */
 .toast-undo{background:rgba(15,15,16,.97);color:var(--text);border:1px solid rgba(255,255,255,.12);position:relative;overflow:hidden;padding-bottom:18px}
 .toast-undo-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--brand);border-radius:0 0 var(--r) var(--r);transition:width 50ms linear}
