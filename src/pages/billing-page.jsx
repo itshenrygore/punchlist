@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AppShell from '../components/app-shell';
-import PageSkeleton from '../components/page-skeleton';
+import { BillingSkeleton } from '../components/skeletons';
 import { UsageMeter } from '../components/upgrade-prompt';
 import { getProfile, listQuotes, createCheckout, openBillingPortal } from '../lib/api';
 import { isPro, countSentThisMonth, FREE_QUOTE_LIMIT, PRICING } from '../lib/billing';
@@ -50,7 +50,7 @@ export default function BillingPage() {
     }
   }
 
-  if (loading) return <AppShell title="Billing"><PageSkeleton variant="form" /></AppShell>;
+  if (loading) return <AppShell title="Billing"><BillingSkeleton /></AppShell>;
 
   return (
     <AppShell title="Billing">

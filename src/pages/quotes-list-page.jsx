@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import AppShell from '../components/app-shell';
 import EmptyState from '../components/empty-state';
-import PageSkeleton from '../components/page-skeleton';
 import SwipeableRow from '../components/swipeable-row';
 import { listQuotes, expireStaleDrafts, updateQuote, updateQuoteStatus, deleteQuote, getQuote, duplicateQuote, sendQuoteEmail } from '../lib/api';
 import { currency, formatDate, formatQuoteNumber } from '../lib/format';

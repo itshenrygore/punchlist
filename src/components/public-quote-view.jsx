@@ -233,6 +233,17 @@ export default function PublicQuoteView({
   // Lock body scroll when overlay is open (prevents iOS background scroll)
   useScrollLock(Boolean(activeSheet));
 
+  // Toggle a body class so the sticky CTA can hide via CSS while a
+  // sheet is open — otherwise the CTA fights the sheet / keyboard for
+  // the bottom-of-viewport area on iOS Safari.
+  useEffect(() => {
+    if (activeSheet) {
+      document.body.classList.add('has-pq-sheet');
+      return () => document.body.classList.remove('has-pq-sheet');
+    }
+    return undefined;
+  }, [activeSheet]);
+
   // Refs for scroll targets
   const topRef = useRef(null);
   const signRef = useRef(null);

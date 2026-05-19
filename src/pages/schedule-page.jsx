@@ -144,7 +144,15 @@ export default function SchedulePage() {
                       )}
                     </Link>
                   ))}
-                  {jobs.length === 0 && <div className="sch-empty-day">No jobs</div>}
+                  {jobs.length === 0 && (
+                    // Dashed empty slot reads as "available" instead
+                    // of "lifeless" — visual rhythm matches a calendar
+                    // drop zone rather than a flat null cell.
+                    <div className="sch-empty-day">
+                      <span className="sch-empty-day-icon" aria-hidden="true">+</span>
+                      <span>Open</span>
+                    </div>
+                  )}
                 </div>
               );
             })}

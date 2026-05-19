@@ -1146,6 +1146,32 @@ body::before {
   color: var(--subtle);
 }
 
+/* Confirmation page fallback — quieter than the surrounding panels
+   so it reads as supplementary help, not as a second equal-weight
+   information block. */
+.auth-confirm-fallback {
+  padding-top: 8px;
+  margin-top: 4px;
+  font-size: var(--text-xs);
+}
+.auth-confirm-fallback-rule {
+  height: 1px;
+  background: var(--line);
+  margin-bottom: 10px;
+}
+.auth-confirm-fallback p {
+  margin: 0;
+  line-height: 1.55;
+}
+.auth-confirm-fallback code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: .92em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--panel-3, var(--panel-2));
+  color: var(--text-2);
+}
+
 /* Trade picker — tile grid replacing the native <select> on signup
    and the builder so the single most important onboarding input
    feels intentional rather than borrowed from system chrome. */

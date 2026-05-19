@@ -211,11 +211,12 @@ export default function SignupPage() {
               <div className="auth-step-item"><span className="auth-step-num">3.</span><span>Send to your customer — they see total + monthly option</span></div>
             </div>
           </div>
-          <div className="panel soft-panel auth-steps-panel">
-            <div className="eyebrow">Did not get it?</div>
+          <div className="auth-confirm-fallback">
+            <div className="auth-confirm-fallback-rule" aria-hidden="true" />
             <p className="muted small auth-confirm-body">
-              Check your spam or promotions folder. The email comes from notifications@punchlist.ca.
-              If it doesn't arrive within a few minutes, contact <a href="mailto:hello@punchlist.ca" className="auth-switch auth-confirm-link-inline">hello@punchlist.ca</a>.
+              <strong style={{ color: 'var(--text-2)' }}>Didn't get it?</strong> Check spam or
+              promotions — the email comes from <code>notifications@punchlist.ca</code>. Still
+              missing? <a href="mailto:hello@punchlist.ca" className="auth-switch auth-confirm-link-inline">hello@punchlist.ca</a>.
             </p>
           </div>
           <Link className="btn btn-secondary" to="/login">Back to log in</Link>

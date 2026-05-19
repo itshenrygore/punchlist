@@ -4645,6 +4645,9 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
 
 /* Sticky CTA: tighter, more intentional */
 .doc-sticky-cta{padding:10px 20px calc(env(safe-area-inset-bottom,8px) + 10px);gap:12px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+/* Hide the sticky CTA while an action sheet is open so it doesn't
+   compete with the keyboard / sheet for the bottom of the viewport. */
+body.has-pq-sheet .doc-sticky-cta { display: none; }
 
 /* ── 6. SIGNIFICANT MOBILE TIGHTENING ── */
 @media(max-width:768px){
