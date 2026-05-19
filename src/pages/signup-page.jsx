@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
+
   const [password, setPassword] = useState('');
   const [trade, setTrade] = useState('');
   const [country, setCountry] = useState('CA');
@@ -58,6 +59,7 @@ export default function SignupPage() {
         // Save basic profile now
         await saveProfile(data.user, {
           full_name: fullName,
+          ...(companyName.trim() ? { company_name: companyName.trim() } : {}),
         }).catch(e => console.warn('[PL]', e));
       }
 
@@ -74,7 +76,7 @@ export default function SignupPage() {
           // Save profile with demo trade data and go straight to quote builder
           setTrade(demoTrade);
           try {
-            await saveProfile(data.user, { full_name: fullName, trade: demoTrade, province, country });
+            await saveProfile(data.user, { full_name: fullName, trade: demoTrade, province, country, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
           } catch (e) { console.warn("[PL]", e); }
           try { localStorage.setItem('pl_first_run', '1'); localStorage.setItem('pl_onboarded', '1'); } catch (e) { console.warn("[PL]", e); }
           navigate('/app/quotes/new', { replace: true });
@@ -99,7 +101,7 @@ export default function SignupPage() {
     try {
       // Use the userId we already captured in step 1 — no need to re-fetch
       if (userId) {
-        await saveProfile({ id: userId }, { full_name: fullName, trade, province, country });
+        await saveProfile({ id: userId }, { full_name: fullName, trade, province, country, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
       }
     } catch (e) {
       // Non-blocking: profile was already partially created by the handle_new_user trigger,
@@ -176,7 +178,7 @@ export default function SignupPage() {
           <div className="form-row">
             <div className="auth-field">
               <span className="field-label">Country</span>
-              <select className="input" value={country} onChange={e => { setCountry(e.target.value); setProvince(e.target.value === 'US' ? 'CA' : 'AB'); }}>
+              <select className="input" value={country} onChange={e => { setCountry(e.target.value); setProvince(e.target.value === 'US' ? 'TX' : 'AB'); }}>
                 <option value="CA">Canada</option>
                 <option value="US">United States</option>
               </select>
@@ -188,6 +190,11 @@ export default function SignupPage() {
               </select>
             </div>
           </div>
+          {trade && (
+            <div className="auth-trade-hint">
+              Your AI scope, catalog, and pricing will be calibrated for <strong>{trade}</strong> work.
+            </div>
+          )}
           <button className="btn btn-primary full-width" type="button" disabled={loading || !trade} onClick={handleStep2}>
             {loading ? 'Saving…' : 'Create my first quote →'}
           </button>
@@ -226,6 +233,17 @@ export default function SignupPage() {
           />
         </div>
         <div className="auth-field">
+          <label htmlFor="signup-company" className="field-label">Company name <span className="auth-optional">(optional)</span></label>
+          <input
+            id="signup-company"
+            className="input"
+            value={companyName}
+            onChange={e => setCompanyName(e.target.value)}
+            placeholder="e.g. Sullivan Electric"
+            autoComplete="organization"
+          />
+        </div>
+        <div className="auth-field">
           <label htmlFor="signup-email" className="field-label">Email address</label>
           <input
             id="signup-email"
@@ -261,6 +279,8 @@ export default function SignupPage() {
           />
           <span>I agree to the Punchlist{' '}
             <Link to="/terms" target="_blank" rel="noreferrer">Terms of Service</Link>
+            {' '}and{' '}
+            <Link to="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link>
           </span>
         </label>
         <button className="btn btn-primary full-width" type="submit" disabled={loading || !termsAccepted}>

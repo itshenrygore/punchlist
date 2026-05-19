@@ -387,19 +387,11 @@ export default function DashboardPage() {
               </div>
               <ChevronRight size={13} className="dv2-qnav-arrow" />
             </Link>
-            <Link to="/app/analytics" className="dv2-qnav-tile">
-              <span className="dv2-qnav-icon">📊</span>
-              <div className="dv2-qnav-content">
-                <span className="dv2-qnav-label">Analytics</span>
-                {closeRate !== null && <span className="dv2-qnav-count">{closeRate}% close rate</span>}
-              </div>
-              <ChevronRight size={13} className="dv2-qnav-arrow" />
-            </Link>
             <Link to="/app/templates" className="dv2-qnav-tile">
               <span className="dv2-qnav-icon">💬</span>
               <div className="dv2-qnav-content">
-                <span className="dv2-qnav-label">Message templates</span>
-                <span className="dv2-qnav-count">SMS sequences</span>
+                <span className="dv2-qnav-label">Follow-up messages</span>
+                <span className="dv2-qnav-count">Customize templates</span>
               </div>
               <ChevronRight size={13} className="dv2-qnav-arrow" />
             </Link>
@@ -431,7 +423,7 @@ export default function DashboardPage() {
               {sentThisMonth} of {FREE_QUOTE_LIMIT} quotes this month
             </span>
             {sentThisMonth >= 3 && (
-              <Link to="/pricing" className="dv2-usage-upgrade">Upgrade</Link>
+              <Link to="/app/billing" className="dv2-usage-upgrade">Upgrade →</Link>
             )}
           </div>
         )}

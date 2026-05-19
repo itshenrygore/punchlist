@@ -879,6 +879,11 @@ export default function PublicQuoteView({
                   <span className="doc-group-label" style={{ padding: 0 }}>Optional Add-ons</span>
                   {canAct && <span className="pq-optionals-hint">Toggle to include</span>}
                 </div>
+                {canAct && (
+                  <div className="pq-optionals-intro">
+                    These extras are not included in your quote total. Toggle any you'd like to add — the price updates automatically.
+                  </div>
+                )}
                 {optionalItems.map(item => canAct ? (
                   <OptionalItemRow key={item.id} item={item} selected={selectedOptionals.has(item.id)} onToggle={toggleOptional} currency={currency} />
                 ) : (

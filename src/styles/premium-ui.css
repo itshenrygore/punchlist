@@ -1195,6 +1195,19 @@ body::before {
   padding: 0;
 }
 .auth-skip:hover { color: var(--text-2); }
+.auth-optional {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+.auth-trade-hint {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  background: var(--panel-2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  line-height: 1.5;
+}
 
 /* Dark mode — card stays light for brand contrast */
 [data-theme="dark"] .auth-page::before {

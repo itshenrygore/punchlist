@@ -1262,6 +1262,13 @@
   font-weight: 400;
   color: var(--doc-muted);
 }
+.pq-optionals-intro {
+  font-size: var(--text-sm);
+  color: var(--doc-muted);
+  line-height: 1.55;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
 
 /* ── Print: hide new v3 elements ── */
 @media print {
