@@ -8,7 +8,7 @@ import AppShell from '../components/app-shell';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { usePullToRefresh } from '../hooks/use-mobile-ux';
-import { listCustomers, createCustomer, updateCustomer, listQuotes, exportCustomersCSV, uploadCustomersCsvDedup } from '../lib/api';
+import { listCustomers, createCustomer, updateCustomer, listQuotes, exportCustomersCSV, uploadCustomersCsvDedup, findCustomerByContact } from '../lib/api';
 import { currency, formatDate } from '../lib/format';
 import { normalizeStatus } from '../lib/workflow';
 
@@ -334,6 +334,20 @@ export default function CustomersPage() {
         if (selectedCustomer?.id === updated.id) setSelectedCustomer(updated);
         toast('Customer updated', 'success');
       } else {
+        // Before creating, look for an existing customer with the same
+        // phone or email. Previously a duplicate-key error here surfaced
+        // as a confusing toast — now we surface the existing row so the
+        // contractor can choose to use it instead.
+        if (form?.phone || form?.email) {
+          const existing = await findCustomerByContact(user.id, { phone: form.phone, email: form.email }).catch(() => null);
+          if (existing) {
+            setShowModal(false);
+            setEditingCustomer(null);
+            setSelectedCustomer(existing);
+            toast(`${existing.name || 'Customer'} already exists — opened that contact`, 'info');
+            return;
+          }
+        }
         const created = await createCustomer(user.id, form);
         setCustomers(prev => [created, ...prev]);
         toast('Customer added', 'success');

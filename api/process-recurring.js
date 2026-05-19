@@ -35,15 +35,21 @@ export default async function handler(req, res) {
 
       if (nextDue > new Date()) continue;
 
+      // Compute the billing period anchor (day-precision) so we can
+      // dedupe via the unique index uq_invoices_recurring_period.
+      const billingPeriodStart = new Date(lastPaidAt.getTime() + days * 86400000)
+        .toISOString()
+        .slice(0, 10);
+
+      // Best-effort cheap pre-check; the real safety net is the unique
+      // index below catching the race.
       const { data: existing } = await supabase
         .from('invoices')
         .select('id')
         .eq('user_id', inv.user_id)
-        .eq('customer_id', inv.customer_id)
-        .eq('title', inv.title)
-        .in('status', ['draft', 'sent', 'overdue'])
+        .eq('parent_invoice_id', inv.id)
+        .eq('billing_period_start', billingPeriodStart)
         .limit(1);
-
       if (existing?.length) continue;
 
       const dueAt = new Date(Date.now() + days * 86400000).toISOString();
@@ -65,11 +71,20 @@ export default async function handler(req, res) {
           notes: inv.notes,
           recurring_interval: inv.recurring_interval,
           parent_invoice_id: inv.id,
+          billing_period_start: billingPeriodStart,
         })
         .select()
         .single();
 
-      if (createErr) { console.warn('[recurring]', createErr.message); continue; }
+      if (createErr) {
+        // 23505 = unique_violation. With uq_invoices_recurring_period in
+        // place, two concurrent cron runs both passing the pre-check
+        // will race here and only one wins. The loser is a no-op, not
+        // a real error.
+        if (createErr.code === '23505') continue;
+        console.warn('[recurring]', createErr.message);
+        continue;
+      }
 
       if (newInv && inv.invoice_items?.length) {
         const items = inv.invoice_items.map((it, idx) => ({

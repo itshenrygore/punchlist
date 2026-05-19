@@ -566,6 +566,39 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS stripe_customer_id text;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS trial_active boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS trial_ends_at timestamptz;
 
+-- Profiles: Stripe Connect + activation-email tracking + late-fee config
+-- (also in migration_audit_pass.sql)
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS platform_fee_percent       numeric(5,2) DEFAULT 2.50;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS payments_terms_accepted_at timestamptz;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS payments_terms_version     text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS payments_terms_ip          text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_activation_email      integer DEFAULT -1;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_activation_email_at   timestamptz;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS late_fee_percent           numeric(5,2) DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS late_fee_days              integer      DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email_notifications        boolean      DEFAULT true;
+
+-- Quotes: approval optionals + Stripe Connect session
+ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS approved_total            numeric(10,2);
+ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS original_total            numeric(10,2);
+ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS stripe_connect_session_id text;
+
+-- Invoices: Stripe Connect + recurring lineage
+ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS stripe_connect_session_id text;
+ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS parent_invoice_id         uuid REFERENCES public.invoices(id) ON DELETE SET NULL;
+ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS billing_period_start      date;
+
+-- Payments: dedup column + unique index so the Stripe webhook can upsert
+ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS stripe_session_id text;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_stripe_session_id
+  ON public.payments(stripe_session_id)
+  WHERE stripe_session_id IS NOT NULL;
+
+-- Recurring-invoice dedup index (one per parent per billing period)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_recurring_period
+  ON public.invoices(user_id, parent_invoice_id, billing_period_start)
+  WHERE parent_invoice_id IS NOT NULL AND billing_period_start IS NOT NULL;
+
 -- Bookings: v42 — notify preference
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS notify_customer boolean DEFAULT false;
 

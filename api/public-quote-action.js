@@ -1,5 +1,19 @@
 import { createClient } from './_supabase.js';
 import { blocked, getClientIp } from './_rate-limit.js';
+import { h, safeHeader, safeSmsSegment } from './_escape.js';
+
+// Trust only Vercel's verified edge header. `X-Forwarded-For` is set by
+// any HTTP client, so a signer could spoof the IP recorded in their
+// signature audit trail. Vercel writes the verified client IP into
+// `x-vercel-forwarded-for` after stripping client-supplied entries.
+function clientIp(req) {
+  const v = req.headers?.['x-vercel-forwarded-for'];
+  if (v) return String(v).split(',')[0].trim();
+  // Fallback for non-Vercel deployments — still better than nothing.
+  const xff = req.headers?.['x-forwarded-for'];
+  if (xff) return String(xff).split(',')[0].trim();
+  return req.headers?.['x-real-ip'] || req.socket?.remoteAddress || 'unknown';
+}
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -79,30 +93,30 @@ async function sendSignedConfirmationToCustomer({ customerEmail, customerName, c
       from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
       reply_to: cEmail || undefined,
       to: [customerEmail],
-      subject: `Your signed quote — ${quoteTitle}`,
+      subject: safeHeader(`Your signed quote — ${quoteTitle}`),
       html: `
         <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:32px 24px;color:#14161a">
           <p style="color:#f97316;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Quote Confirmation</p>
           <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">Your quote is signed ✓</h1>
           <p style="color:#667085;margin-bottom:24px;line-height:1.6">
-            Thanks for signing your quote with <strong style="color:#14161a">${contractorName || 'your contractor'}</strong>.
+            Thanks for signing your quote with <strong style="color:#14161a">${h(contractorName) || 'your contractor'}</strong>.
             Your approval has been recorded and they'll be in touch to confirm scheduling.
           </p>
           <div style="background:#f8f7f4;border-radius:12px;padding:20px;margin-bottom:24px">
             <div style="font-size:13px;color:#667085;margin-bottom:4px">Project</div>
-            <div style="font-size:17px;font-weight:700;margin-bottom:12px">${quoteTitle}</div>
+            <div style="font-size:17px;font-weight:700;margin-bottom:12px">${h(quoteTitle)}</div>
             <div style="display:flex;justify-content:space-between;border-top:1px solid #e8e6e1;padding-top:12px">
               <span style="font-size:13px;color:#667085">Total approved</span>
               <strong style="font-size:17px">${fmt(quoteTotal)}</strong>
             </div>
-            <div style="font-size:12px;color:#aaa;margin-top:6px">Signed ${signedDate}</div>
+            <div style="font-size:12px;color:#aaa;margin-top:6px">Signed ${h(signedDate)}</div>
           </div>
-          <a href="${quoteUrl}" style="display:inline-block;background:#f97316;color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700;margin-bottom:24px">View signed quote →</a>
+          <a href="${h(quoteUrl)}" style="display:inline-block;background:#f97316;color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700;margin-bottom:24px">View signed quote →</a>
           <hr style="border:none;border-top:1px solid #e8e6e1;margin:0 0 20px">
           <div style="font-size:13px;color:#667085">
-            <strong style="color:#14161a">${contractorName || 'Your contractor'}</strong><br/>
-            ${contractorPhone ? `${contractorPhone}<br/>` : ''}
-            ${cEmail ? `${cEmail}<br/>` : ''}
+            <strong style="color:#14161a">${h(contractorName) || 'Your contractor'}</strong><br/>
+            ${contractorPhone ? `${h(contractorPhone)}<br/>` : ''}
+            ${cEmail ? `${h(cEmail)}<br/>` : ''}
           </div>
           <p style="color:#aaa;font-size:11px;margin:20px 0 0">Powered by Punchlist · Keep this email for your records.</p>
         </div>
@@ -115,11 +129,16 @@ async function notifyContractor({ contractorEmail, contractorName, contractorPho
   if (!process.env.RESEND_API_KEY || !contractorEmail) return;
 
   const shortTitle = (quoteTitle || 'your quote').slice(0, 40);
+  // Customer-controlled strings (customerName, feedback, quoteTitle) get
+  // HTML-escaped before they enter the body, and stripped of CR/LF before
+  // they enter the Subject header.
+  const safeCustomer = h(customerName || 'Your customer');
+  const safeFeedback = h(feedback || '');
   const actionMap = {
-    approved: { subject: `✅ ${customerName || 'Customer'} approved: ${shortTitle}`, headline: `${customerName || 'Your customer'} approved the quote`, body: 'The quote has been approved. Book the job while it\'s fresh.', cta: 'Book the job', ctaColor: '#15803d', urgent: true },
-    revision_requested: { subject: `✏️ Changes requested: ${shortTitle}`, headline: `${customerName || 'Your customer'} requested changes`, body: feedback ? `Their feedback: "${feedback}"` : 'They asked for scope or pricing changes.', cta: 'Revise quote', ctaColor: '#f97316', urgent: true },
-    declined: { subject: `${customerName || 'Customer'} declined: ${shortTitle}`, headline: `${customerName || 'Your customer'} declined the quote`, body: feedback ? `Their reason: "${feedback}"` : 'No reason given.', cta: 'View quote', ctaColor: '#667085', urgent: false },
-    question: { subject: `💬 ${customerName || 'Customer'} asked about: ${shortTitle}`, headline: `${customerName || 'Your customer'} has a question`, body: feedback ? `"${feedback}"` : 'They left a question on your quote.', cta: 'View & respond', ctaColor: '#2563eb', urgent: true },
+    approved: { subject: safeHeader(`✅ ${customerName || 'Customer'} approved: ${shortTitle}`), headline: `${safeCustomer} approved the quote`, body: 'The quote has been approved. Book the job while it\'s fresh.', cta: 'Book the job', ctaColor: '#15803d', urgent: true },
+    revision_requested: { subject: safeHeader(`✏️ Changes requested: ${shortTitle}`), headline: `${safeCustomer} requested changes`, body: feedback ? `Their feedback: "${safeFeedback}"` : 'They asked for scope or pricing changes.', cta: 'Revise quote', ctaColor: '#f97316', urgent: true },
+    declined: { subject: safeHeader(`${customerName || 'Customer'} declined: ${shortTitle}`), headline: `${safeCustomer} declined the quote`, body: feedback ? `Their reason: "${safeFeedback}"` : 'No reason given.', cta: 'View quote', ctaColor: '#667085', urgent: false },
+    question: { subject: safeHeader(`💬 ${customerName || 'Customer'} asked about: ${shortTitle}`), headline: `${safeCustomer} has a question`, body: feedback ? `"${safeFeedback}"` : 'They left a question on your quote.', cta: 'View & respond', ctaColor: '#2563eb', urgent: true },
   };
 
   const info = actionMap[action];
@@ -132,7 +151,7 @@ async function notifyContractor({ contractorEmail, contractorName, contractorPho
     <div style="background:#f8f7f4;border-radius:10px;padding:14px;margin:20px 0 0">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#667085;margin-bottom:8px">Quick response</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a href="${quoteUrl}" style="display:inline-block;background:${info.ctaColor};color:white;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px">${info.cta} →</a>
+        <a href="${h(quoteUrl)}" style="display:inline-block;background:${info.ctaColor};color:white;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px">${h(info.cta)} →</a>
       </div>
     </div>
   ` : '';
@@ -150,10 +169,10 @@ async function notifyContractor({ contractorEmail, contractorName, contractorPho
           <p style="color:#f97316;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Punchlist notification</p>
           <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">${info.headline}</h1>
           <p style="color:#667085;margin-bottom:24px;line-height:1.6">${info.body}</p>
-          <a href="${quoteUrl}" style="display:inline-block;background:${info.ctaColor};color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700">${info.cta} →</a>
+          <a href="${h(quoteUrl)}" style="display:inline-block;background:${info.ctaColor};color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700">${h(info.cta)} →</a>
           ${contactBackHtml}
           <hr style="border:none;border-top:1px solid #e8e6e1;margin:28px 0">
-          <p style="color:#aaa;font-size:11px;margin:0">Punchlist · ${contractorName || 'Your workspace'}</p>
+          <p style="color:#aaa;font-size:11px;margin:0">Punchlist · ${h(contractorName || 'Your workspace')}</p>
         </div>
       `,
     }),
@@ -311,7 +330,7 @@ export default async function handler(req, res) {
     // contractor-side analytics insert misfired.
     if (action === 'view') {
       try {
-        const ip = (req.headers?.['x-forwarded-for'] || '').split(',')[0]?.trim() || req.headers?.['x-real-ip'] || 'unknown';
+        const ip = clientIp(req);
         const ua = (req.headers?.['user-agent'] || '').slice(0, 200);
         const updates = { last_viewed_at: new Date().toISOString(), view_count: (quote.view_count || 0) + 1 };
         if (!['viewed', 'approved', 'approved_pending_deposit', 'deposit_paid', 'converted_to_invoice', 'paid'].includes(quote.status)) updates.status = 'viewed';
@@ -381,8 +400,7 @@ export default async function handler(req, res) {
         updatePayload.signature_data = signature_data;
         updatePayload.signed_at = new Date().toISOString();
         updatePayload.signer_name = signer_name || '';
-        const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '';
-        updatePayload.signer_ip = ip;
+        updatePayload.signer_ip = clientIp(req);
       }
       // 2B: Store which optional items the customer selected + recalculate total
       if (Array.isArray(selected_optional_ids) && selected_optional_ids.length > 0) {
@@ -528,7 +546,7 @@ export default async function handler(req, res) {
         // 9A: SMS — notify contractor of revision request
         const revSmsPhone = await contractorSmsEnabled(supabase, quote.user_id);
         if (revSmsPhone) {
-          sendSMS(revSmsPhone, `✏️ ${customerName || 'Customer'} requested changes to "${(quote.title || 'your quote').slice(0, 40)}".${reason ? ' "' + reason.slice(0, 80) + '"' : ''} Revise: ${appUrl}/app/quotes/${quote.id}`);
+          sendSMS(revSmsPhone, `✏️ ${safeSmsSegment(customerName || 'Customer')} requested changes to "${safeSmsSegment((quote.title || 'your quote').slice(0, 40))}".${reason ? ' "' + safeSmsSegment(reason.slice(0, 80)) + '"' : ''} Revise: ${appUrl}/app/quotes/${quote.id}`);
         }
       } catch (notifyErr) {
         console.warn('[public-quote-action] revision notifications failed:', notifyErr?.message);
@@ -577,7 +595,7 @@ export default async function handler(req, res) {
         // 9A: SMS — notify contractor of decline
         const decSmsPhone = await contractorSmsEnabled(supabase, quote.user_id);
         if (decSmsPhone) {
-          sendSMS(decSmsPhone, `${customerName || 'Customer'} declined "${(quote.title || 'your quote').slice(0, 40)}".${reason ? ' Reason: "' + reason.slice(0, 60) + '"' : ''} ${appUrl}/app/quotes/${quote.id}`);
+          sendSMS(decSmsPhone, `${safeSmsSegment(customerName || 'Customer')} declined "${safeSmsSegment((quote.title || 'your quote').slice(0, 40))}".${reason ? ' Reason: "' + safeSmsSegment(reason.slice(0, 60)) + '"' : ''} ${appUrl}/app/quotes/${quote.id}`);
         }
       } catch (notifyErr) {
         console.warn('[public-quote-action] decline notifications failed:', notifyErr?.message);
@@ -634,7 +652,7 @@ export default async function handler(req, res) {
       // 9A: SMS — notify contractor of customer question
       const qSmsPhone = await contractorSmsEnabled(supabase, quote.user_id);
       if (qSmsPhone) {
-        sendSMS(qSmsPhone, `💬 ${customerName || 'Customer'} asked about "${(quote.title || 'your quote').slice(0, 30)}": "${question.slice(0, 80)}${question.length > 80 ? '…' : ''}" Reply: ${appUrl}/app/quotes/${quote.id}`);
+        sendSMS(qSmsPhone, `💬 ${safeSmsSegment(customerName || 'Customer')} asked about "${safeSmsSegment((quote.title || 'your quote').slice(0, 30))}": "${safeSmsSegment(question.slice(0, 80))}${question.length > 80 ? '…' : ''}" Reply: ${appUrl}/app/quotes/${quote.id}`);
       }
       // If conversation column was saved, return the full thread for real-time display.
       // If not, return empty array — the client will show a success banner but not a thread
@@ -692,20 +710,20 @@ export default async function handler(req, res) {
             from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
             reply_to: contractor?.email || undefined,
             to: [customerEmail],
-            subject: `Reply to your question — ${quote.title}`,
+            subject: safeHeader(`Reply to your question — ${quote.title || 'your quote'}`),
             html: `
               <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:32px 24px;color:#14161a">
                 <p style="color:#f97316;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Response from your contractor</p>
-                <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">${contractorName || 'Your contractor'} replied</h1>
+                <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">${h(contractorName) || 'Your contractor'} replied</h1>
                 <div style="background:#f8f7f4;border-radius:12px;padding:20px;margin-bottom:24px;font-size:15px;line-height:1.6;color:#14161a">
-                  ${reply.trim().replace(/\n/g, '<br/>')}
+                  ${h(reply.trim()).replace(/\n/g, '<br/>')}
                 </div>
-                <a href="${quoteUrl}" style="display:inline-block;background:#f97316;color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700;margin-bottom:24px">View your quote →</a>
+                <a href="${h(quoteUrl)}" style="display:inline-block;background:#f97316;color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700;margin-bottom:24px">View your quote →</a>
                 <hr style="border:none;border-top:1px solid #e8e6e1;margin:0 0 20px"/>
                 <div style="font-size:13px;color:#667085">
-                  <strong style="color:#14161a">${contractorName || 'Your contractor'}</strong><br/>
-                  ${contractor?.phone ? `${contractor.phone}<br/>` : ''}
-                  ${contractor?.email ? `${contractor.email}<br/>` : ''}
+                  <strong style="color:#14161a">${h(contractorName) || 'Your contractor'}</strong><br/>
+                  ${contractor?.phone ? `${h(contractor.phone)}<br/>` : ''}
+                  ${contractor?.email ? `${h(contractor.email)}<br/>` : ''}
                 </div>
                 <p style="color:#aaa;font-size:11px;margin:20px 0 0">Powered by Punchlist</p>
               </div>

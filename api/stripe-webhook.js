@@ -174,24 +174,42 @@ async function markInvoicePaidViaStripe(session) {
 
   const amountPaid = (session.amount_total || 0) / 100;
 
-  // ── Payment insert dedup: check if a payment with this session ID already exists ──
-  const { data: existingPayment } = await supabase
+  // ── Payment insert dedup ──
+  // Stripe retries webhooks. Two concurrent retries previously raced on
+  // `select … ilike notes` and both passed the gate, producing duplicate
+  // payments rows. With migration_audit_pass.sql in place there's a
+  // unique index on payments.stripe_session_id, so we can use upsert and
+  // let the database arbitrate.
+  const { error: payErr } = await supabase
     .from('payments')
-    .select('id')
-    .eq('invoice_id', invoiceId)
-    .ilike('notes', `%${session.id}%`)
-    .maybeSingle();
-
-  if (!existingPayment) {
-    // Record payment in payments table
-    await supabase.from('payments').insert({
+    .upsert({
       invoice_id: invoiceId,
       user_id: invoice.user_id,
       amount: amountPaid,
       method: methodLabel,
       notes: `${methodLabel} session ${session.id}`,
       paid_at: paidAt,
-    });
+      stripe_session_id: session.id,
+    }, { onConflict: 'stripe_session_id', ignoreDuplicates: true });
+  if (payErr) {
+    // Older DBs that don't have the unique index / column yet — fall
+    // back to the select-then-insert path with the old fuzzy match.
+    const { data: existingPayment } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('invoice_id', invoiceId)
+      .ilike('notes', `%${session.id}%`)
+      .maybeSingle();
+    if (!existingPayment) {
+      await supabase.from('payments').insert({
+        invoice_id: invoiceId,
+        user_id: invoice.user_id,
+        amount: amountPaid,
+        method: methodLabel,
+        notes: `${methodLabel} session ${session.id}`,
+        paid_at: paidAt,
+      });
+    }
   }
 
   // Recalculate total payments

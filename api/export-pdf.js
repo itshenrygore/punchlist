@@ -264,8 +264,8 @@ function buildHTML(q, amendments = []) {
     ${items.map(i => `
       <div class="item">
         <div class="item-left">
-          <div class="item-name">${i.name}</div>
-          ${i.notes ? `<div class="item-note">${i.notes}</div>` : ''}
+          <div class="item-name">${h(i.name)}</div>
+          ${i.notes ? `<div class="item-note">${h(i.notes)}</div>` : ''}
           ${Number(i.quantity) > 1 ? `<div class="item-qty">${i.quantity} × ${currency(i.unit_price)}</div>` : ''}
         </div>
         <div class="item-price">${currency(Number(i.quantity || 1) * Number(i.unit_price || 0))}</div>
@@ -277,8 +277,8 @@ function buildHTML(q, amendments = []) {
     ${optional.map(i => `
       <div class="item optional">
         <div class="item-left">
-          <div class="item-name">${i.name}</div>
-          ${i.notes ? `<div class="item-note">${i.notes}</div>` : ''}
+          <div class="item-name">${h(i.name)}</div>
+          ${i.notes ? `<div class="item-note">${h(i.notes)}</div>` : ''}
         </div>
         <div class="item-price">${currency(i.unit_price)}</div>
       </div>`).join('')}
@@ -294,8 +294,8 @@ function buildHTML(q, amendments = []) {
     ${amendment.items.map(i => `
       <div class="item">
         <div class="item-left">
-          <div class="item-name">${i.name}</div>
-          ${i.notes ? `<div class="item-note">${i.notes}</div>` : ''}
+          <div class="item-name">${h(i.name)}</div>
+          ${i.notes ? `<div class="item-note">${h(i.notes)}</div>` : ''}
           ${Number(i.quantity) > 1 ? `<div class="item-qty">${i.quantity} × ${currency(i.unit_price)}</div>` : ''}
         </div>
         <div class="item-price">${currency(Number(i.quantity || 1) * Number(i.unit_price || 0))}</div>
@@ -313,12 +313,12 @@ function buildHTML(q, amendments = []) {
 
 <div class="header">
   <div class="brand">
-    ${q.contractor_logo ? `<img src="${q.contractor_logo}" alt="" class="logo">` : ''}
+    ${q.contractor_logo ? `<img src="${h(q.contractor_logo)}" alt="" class="logo">` : ''}
     <div class="company">${q.contractor_company || q.contractor_name || 'Your Contractor'}</div>
-    ${q.contractor_name && q.contractor_name !== q.contractor_company ? `<div class="contractor-name">${q.contractor_name}</div>` : ''}
+    ${q.contractor_name && q.contractor_name !== q.contractor_company ? `<div class="contractor-name">${h(q.contractor_name)}</div>` : ''}
     <div class="contact">
-      ${q.contractor_phone ? `<span>${q.contractor_phone}</span>` : ''}
-      ${q.contractor_email ? `${q.contractor_phone ? ' · ' : ''}<a href="mailto:${q.contractor_email}">${q.contractor_email}</a>` : ''}
+      ${q.contractor_phone ? `<span>${h(q.contractor_phone)}</span>` : ''}
+      ${q.contractor_email ? `${q.contractor_phone ? ' · ' : ''}<a href="mailto:${h(q.contractor_email)}">${h(q.contractor_email)}</a>` : ''}
     </div>
   </div>
   <div class="doc-meta">
@@ -329,9 +329,9 @@ function buildHTML(q, amendments = []) {
 </div>
 
 <div class="hero">
-  <div class="title">${q.title || 'Work Quote'}</div>
-  <div class="customer">Prepared for <strong>${q.customer_name || 'Customer'}</strong></div>
-  ${q.customer_address ? `<div class="address">${q.customer_address}</div>` : ''}
+  <div class="title">${h(q.title) || 'Work Quote'}</div>
+  <div class="customer">Prepared for <strong>${h(q.customer_name) || 'Customer'}</strong></div>
+  ${q.customer_address ? `<div class="address">${h(q.customer_address)}</div>` : ''}
 
   <div class="meta-grid">
     <div class="meta-item">
@@ -345,17 +345,17 @@ function buildHTML(q, amendments = []) {
     ${q.trade ? `
     <div class="meta-item">
       <div class="meta-label">Trade</div>
-      <div class="meta-value">${q.trade}</div>
+      <div class="meta-value">${h(q.trade)}</div>
     </div>` : ''}
   </div>
 </div>
 
-${q.revision_summary ? `<div class="revision"><strong>Updated:</strong> ${q.revision_summary}</div>` : ''}
+${q.revision_summary ? `<div class="revision"><strong>Updated:</strong> ${h(q.revision_summary)}</div>` : ''}
 
 ${q.scope_summary ? `
 <div class="section">
   <div class="section-title">Scope of Work</div>
-  <div class="section-body">${q.scope_summary}</div>
+  <div class="section-body">${h(q.scope_summary)}</div>
 </div>` : ''}
 
 <div class="items">
@@ -381,18 +381,18 @@ ${(q.assumptions || q.exclusions || q.contractor_payment_methods?.length || q.co
   ${q.assumptions ? `
   <div class="info-block">
     <div class="info-label">What this price assumes</div>
-    <div class="info-body">${q.assumptions}</div>
+    <div class="info-body">${h(q.assumptions)}</div>
   </div>` : ''}
   ${q.exclusions ? `
   <div class="info-block">
     <div class="info-label">Not included</div>
-    <div class="info-body">${q.exclusions}</div>
+    <div class="info-body">${h(q.exclusions)}</div>
   </div>` : ''}
   ${(q.contractor_payment_methods?.length || q.contractor_payment_instructions) ? `
   <div class="info-block">
     <div class="info-label">Payment</div>
     <div class="info-body">
-      ${q.contractor_payment_instructions || ''}
+      ${h(q.contractor_payment_instructions) || ''}
       ${q.contractor_payment_methods?.length ? `
       <div class="payment-tags">
         ${q.contractor_payment_methods.map(m => `<span class="payment-tag">${m}</span>`).join('')}
@@ -419,7 +419,7 @@ ${(q.assumptions || q.exclusions || q.contractor_payment_methods?.length || q.co
     <span class="brand-text">punchlist</span>
     <span style="margin-left:4px">· punchlist.ca</span>
   </div>
-  <span>${q.title || 'Quote'} · ${fmtDate(new Date().toISOString(), country)}</span>
+  <span>${h(q.title) || 'Quote'} · ${fmtDate(new Date().toISOString(), country)}</span>
 </div>
 
 </body></html>`;
@@ -455,8 +455,8 @@ function buildInvoiceHTML(inv, contractor, payments) {
       ${groupItems.map(i => `
         <div class="item">
           <div class="item-left">
-            <div class="item-name">${i.name}</div>
-            ${i.notes ? `<div class="item-note">${i.notes}</div>` : ''}
+            <div class="item-name">${h(i.name)}</div>
+            ${i.notes ? `<div class="item-note">${h(i.notes)}</div>` : ''}
             ${Number(i.quantity) > 1 ? `<div class="item-qty">${i.quantity} × ${currency(i.unit_price)}</div>` : ''}
           </div>
           <div class="item-price">${currency(Number(i.quantity || 1) * Number(i.unit_price || 0))}</div>

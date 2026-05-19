@@ -1,4 +1,5 @@
 import { createClient } from './_supabase.js';
+import { h, safeHeader } from './_escape.js';
 import { blocked, getClientIp } from './_rate-limit.js';
 
 function getSupabase() {
@@ -78,7 +79,7 @@ export default async function handler(req, res) {
         from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
         reply_to: profile?.email || undefined,
         to: [customer.email],
-        subject: `Invoice from ${contractorName}: ${invoice.title || invoice.invoice_number}`,
+        subject: safeHeader(`Invoice from ${contractorName}: ${invoice.title || invoice.invoice_number}`),
         text: [
           `INVOICE FROM ${contractorName.toUpperCase()}`,
           invoice.title || invoice.invoice_number || 'Invoice',
@@ -97,7 +98,7 @@ export default async function handler(req, res) {
             <div style="padding:32px 28px 20px;border-bottom:1px solid #f0efec">
               <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#ea580c;background:#fff7ed;padding:4px 10px;border-radius:6px;display:inline-block;border:1px solid rgba(234,88,12,.15);margin-bottom:12px">Invoice</div>
               <h1 style="font-size:22px;margin:0 0 6px;letter-spacing:-.03em;color:#18181b">${invoice.title || invoice.invoice_number || 'Your invoice is ready'}</h1>
-              <p style="font-size:14px;color:#3f3f46;margin:0">${firstName ? `Hi ${firstName} — ` : ''}here's your invoice from <strong style="color:#18181b">${contractorName}</strong>.</p>
+              <p style="font-size:14px;color:#3f3f46;margin:0">${firstName ? `Hi ${h(firstName)} — ` : ''}here's your invoice from <strong style="color:#18181b">${h(contractorName)}</strong>.</p>
             </div>
             <div style="padding:24px 28px">
               <div style="background:#fafaf9;border:1px solid #f0efec;border-radius:12px;padding:20px;display:grid;gap:12px">
@@ -115,7 +116,7 @@ export default async function handler(req, res) {
               </a>
             </div>
             <div style="border-top:1px solid #f0efec;padding:20px 28px;text-align:center">
-              <div style="font-size:13px;color:#3f3f46;font-weight:600">${contractorName}</div>
+              <div style="font-size:13px;color:#3f3f46;font-weight:600">${h(contractorName)}</div>
               ${profile?.phone ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${profile.phone}</div>` : ''}
               ${profile?.email ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${profile.email}</div>` : ''}
               <div style="font-size:11px;color:#a1a1aa;margin-top:12px">Powered by <a href="https://punchlist.ca" style="color:#a1a1aa;text-decoration:none">Punchlist</a></div>

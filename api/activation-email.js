@@ -1,4 +1,5 @@
 import { createClient } from './_supabase.js';
+import { h, safeHeader } from './_escape.js';
 import { blocked, getClientIp } from './_rate-limit.js';
 
 /**
@@ -29,7 +30,7 @@ const SEQUENCE = [
       return emailWrap(`
       <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#1a1a19">Your first quote takes under 4 minutes</h2>
       <p style="color:#6b6b67;font-size:14px;line-height:1.7;margin:0 0 20px">
-        Hi${profile.full_name ? ' ' + profile.full_name.split(' ')[0] : ''},
+        Hi${profile.full_name ? ' ' + h(profile.full_name.split(' ')[0]) : ''},
       </p>
       <p style="color:#6b6b67;font-size:14px;line-height:1.7;margin:0 0 20px">
         Describe the job. Punchlist builds the quote. Your customer approves and signs from their phone.
@@ -48,7 +49,7 @@ const SEQUENCE = [
       return emailWrap(`
       <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#1a1a19">What other contractors are seeing</h2>
       <p style="color:#6b6b67;font-size:14px;line-height:1.7;margin:0 0 16px">
-        Hi${profile.full_name ? ' ' + profile.full_name.split(' ')[0] : ''},
+        Hi${profile.full_name ? ' ' + h(profile.full_name.split(' ')[0]) : ''},
       </p>
       <div style="background:#f8f7f5;border-radius:10px;padding:16px 20px;margin:0 0 16px">
         <p style="color:#3d3d3a;font-size:13px;line-height:1.7;margin:0;font-style:italic">
@@ -73,7 +74,7 @@ const SEQUENCE = [
       return emailWrap(`
       <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#1a1a19">Bigger jobs close easier with monthly payments</h2>
       <p style="color:#6b6b67;font-size:14px;line-height:1.7;margin:0 0 20px">
-        Hi${profile.full_name ? ' ' + profile.full_name.split(' ')[0] : ''}, when you connect Stripe, your customers see a monthly payment option on every quote over $500. They pick what works for them — you get the full amount deposited. Takes 2 minutes to set up.
+        Hi${profile.full_name ? ' ' + h(profile.full_name.split(' ')[0]) : ''}, when you connect Stripe, your customers see a monthly payment option on every quote over $500. They pick what works for them — you get the full amount deposited. Takes 2 minutes to set up.
       </p>
       <a href="${baseUrl}/app/payments/setup" style="display:inline-block;background:#F97316;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Connect Stripe →</a>
     `);
@@ -91,7 +92,7 @@ const SEQUENCE = [
         return emailWrap(`
           <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#1a1a19">Your first week with Punchlist</h2>
           <p style="color:#6b6b67;font-size:14px;line-height:1.7;margin:0 0 16px">
-            Hi${profile.full_name ? ' ' + profile.full_name.split(' ')[0] : ''}, here's how your first week went:
+            Hi${profile.full_name ? ' ' + h(profile.full_name.split(' ')[0]) : ''}, here's how your first week went:
           </p>
           <div style="background:#f8f7f5;border-radius:10px;padding:16px 20px;margin:0 0 20px">
             <div style="font-size:28px;font-weight:800;color:#1a1a19">${rate}%</div>
@@ -103,7 +104,7 @@ const SEQUENCE = [
       return emailWrap(`
         <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#1a1a19">Still haven't sent a quote?</h2>
         <p style="color:#6b6b67;font-size:14px;line-height:1.7;margin:0 0 20px">
-          Hi${profile.full_name ? ' ' + profile.full_name.split(' ')[0] : ''}, your account is ready. Describe any job — a faucet replacement, a panel upgrade, a roof repair — and Punchlist builds the quote with pricing from real contractor data.
+          Hi${profile.full_name ? ' ' + h(profile.full_name.split(' ')[0]) : ''}, your account is ready. Describe any job — a faucet replacement, a panel upgrade, a roof repair — and Punchlist builds the quote with pricing from real contractor data.
         </p>
         <a href="${baseUrl}/app/quotes/new" style="display:inline-block;background:#F97316;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Build your first quote →</a>
       `);
@@ -120,7 +121,7 @@ const SEQUENCE = [
       return emailWrap(`
       <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#1a1a19">You've been using Punchlist — here's what Pro unlocks</h2>
       <p style="color:#6b6b67;font-size:14px;line-height:1.7;margin:0 0 16px">
-        Hi${profile.full_name ? ' ' + profile.full_name.split(' ')[0] : ''}, you've sent ${stats.sentQuotes} quotes so far. Pro gives you unlimited quotes, quote view tracking, customer pay-over-time, deposits, scheduling, invoicing, and analytics.
+        Hi${profile.full_name ? ' ' + h(profile.full_name.split(' ')[0]) : ''}, you've sent ${stats.sentQuotes} quotes so far. Pro gives you unlimited quotes, quote view tracking, customer pay-over-time, deposits, scheduling, invoicing, and analytics.
       </p>
       <a href="${baseUrl}/pricing" style="display:inline-block;background:#F97316;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">See Pro plans →</a>
     `);

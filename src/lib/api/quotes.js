@@ -487,6 +487,21 @@ export async function markFollowedUp(quoteId) {
 }
 
 export async function addInternalNote(quoteId, note) {
+  // Atomic concat via Postgres function so two concurrent calls don't
+  // both read the same existing value and lose one append. Falls back
+  // to the read-modify-write path if the RPC isn't installed yet (the
+  // function ships in migration_audit_pass.sql).
+  const { data: rpcData, error: rpcErr } = await supabase.rpc('rpc_prepend_internal_note', {
+    p_quote_id: quoteId,
+    p_note: note,
+  });
+  if (!rpcErr) return { internal_notes: rpcData };
+
+  // Function missing → fall back. Any other RPC error is real and should surface.
+  const missing = /function .*rpc_prepend_internal_note.* does not exist|Could not find the function/i.test(rpcErr.message || '');
+  if (!missing) throw new Error(friendly(rpcErr));
+
+  console.warn('[PL] rpc_prepend_internal_note not installed — using read-modify-write fallback. Run supabase/migration_audit_pass.sql.');
   const { data: q } = await supabase.from('quotes').select('internal_notes').eq('id', quoteId).maybeSingle();
   const existing = q?.internal_notes || '';
   const updated = note + (existing ? '\n' + existing : '');

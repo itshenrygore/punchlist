@@ -1,4 +1,5 @@
 import { createClient } from './_supabase.js';
+import { h, safeHeader } from './_escape.js';
 import { blocked, getClientIp } from './_rate-limit.js';
 
 // Defensive Supabase client factory — never created at module level
@@ -56,13 +57,13 @@ export default async function handler(req, res) {
         from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
         reply_to: cEmail || undefined,
         to: [customerEmail],
-        subject: `Payment reminder — ${invoiceNumber || 'Invoice'} (${daysPastDue} days overdue)`,
+        subject: safeHeader(`Payment reminder — ${invoiceNumber || 'Invoice'} (${daysPastDue} days overdue)`),
         html: `
           <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:32px 24px;color:#14161a">
             <p style="color:#EF4444;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Payment Reminder</p>
             <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">Your payment is ${daysPastDue} days overdue</h1>
             <p style="color:#667085;margin-bottom:24px;line-height:1.6">
-              This is a friendly reminder that payment for <strong style="color:#14161a">${invoiceTitle || invoiceNumber || 'your invoice'}</strong> from <strong style="color:#14161a">${contractorName || 'your contractor'}</strong> was due on <strong>${dueStr}</strong>.
+              This is a friendly reminder that payment for <strong style="color:#14161a">${invoiceTitle || invoiceNumber || 'your invoice'}</strong> from <strong style="color:#14161a">${h(contractorName) || 'your contractor'}</strong> was due on <strong>${dueStr}</strong>.
             </p>
             <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;margin-bottom:24px">
               <div style="display:grid;gap:12px">
@@ -74,9 +75,9 @@ export default async function handler(req, res) {
             <p style="color:#667085;font-size:13px;line-height:1.6;margin-bottom:20px">If you've already sent payment, please disregard this reminder.</p>
             <hr style="border:none;border-top:1px solid #e8e6e1;margin:0 0 20px"/>
             <div style="font-size:13px;color:#667085">
-              <strong style="color:#14161a">${contractorName || 'Your contractor'}</strong><br/>
-              ${contractorPhone ? `${contractorPhone}<br/>` : ''}
-              ${cEmail ? `${cEmail}<br/>` : ''}
+              <strong style="color:#14161a">${h(contractorName) || 'Your contractor'}</strong><br/>
+              ${contractorPhone ? `${h(contractorPhone)}<br/>` : ''}
+              ${cEmail ? `${h(cEmail)}<br/>` : ''}
             </div>
             <p style="color:#aaa;font-size:11px;margin:20px 0 0">Powered by Punchlist</p>
           </div>
@@ -107,27 +108,27 @@ export default async function handler(req, res) {
         from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
         reply_to: cEmail || undefined,
         to: [customerEmail],
-        subject: `Payment received — ${invoiceNumber || 'Invoice'}`,
+        subject: safeHeader(`Payment received — ${invoiceNumber || 'Invoice'}`),
         html: `
           <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:32px 24px;color:#14161a">
             <p style="color:#22C55E;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Payment Receipt</p>
             <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">Thank you for your payment!</h1>
             <p style="color:#667085;margin-bottom:24px;line-height:1.6">
-              <strong style="color:#14161a">${contractorName || 'Your contractor'}</strong> has received your payment for <strong>${invoiceTitle || invoiceNumber || 'services rendered'}</strong>.
+              <strong style="color:#14161a">${h(contractorName) || 'Your contractor'}</strong> has received your payment for <strong>${invoiceTitle || invoiceNumber || 'services rendered'}</strong>.
             </p>
             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin-bottom:24px">
               <div style="display:grid;gap:12px">
                 <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Amount paid</div><div style="font-size:22px;font-weight:800;color:#14161a">${fmt(amount)}</div></div>
-                ${paymentMethod ? `<div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Payment method</div><div style="font-size:14px;font-weight:600">${paymentMethod}</div></div>` : ''}
+                ${paymentMethod ? `<div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Payment method</div><div style="font-size:14px;font-weight:600">${h(paymentMethod)}</div></div>` : ''}
                 <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Date</div><div style="font-size:14px;font-weight:600">${paidDate}</div></div>
-                <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Invoice</div><div style="font-size:14px;font-weight:600">${invoiceNumber || ''}</div></div>
+                <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Invoice</div><div style="font-size:14px;font-weight:600">${h(invoiceNumber) || ''}</div></div>
               </div>
             </div>
             <hr style="border:none;border-top:1px solid #e8e6e1;margin:0 0 20px"/>
             <div style="font-size:13px;color:#667085">
-              <strong style="color:#14161a">${contractorName || 'Your contractor'}</strong><br/>
-              ${contractorPhone ? `${contractorPhone}<br/>` : ''}
-              ${cEmail ? `${cEmail}<br/>` : ''}
+              <strong style="color:#14161a">${h(contractorName) || 'Your contractor'}</strong><br/>
+              ${contractorPhone ? `${h(contractorPhone)}<br/>` : ''}
+              ${cEmail ? `${h(cEmail)}<br/>` : ''}
             </div>
             <p style="color:#aaa;font-size:11px;margin:20px 0 0">Powered by Punchlist · Keep this email as your receipt.</p>
           </div>
@@ -166,7 +167,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
         to: [contractorEmail],
-        subject: `Your daily summary — ${new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric' })}`,
+        subject: safeHeader(`Your daily summary — ${new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric' })}`),
         html: `
           <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:32px 24px;color:#14161a">
             <p style="color:#f97316;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Daily Digest</p>
@@ -212,7 +213,7 @@ export default async function handler(req, res) {
         from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
         reply_to: cEmail || undefined,
         to: [customerEmail],
-        subject: `Invoice from ${contractorName || 'your contractor'}: ${invoiceTitle || invoiceNumber}`,
+        subject: safeHeader(`Invoice from ${contractorName || 'your contractor'}: ${invoiceTitle || invoiceNumber}`),
         text: [
           `INVOICE FROM ${(contractorName || 'YOUR CONTRACTOR').toUpperCase()}`,
           invoiceTitle || invoiceNumber || 'Invoice',
@@ -232,7 +233,7 @@ export default async function handler(req, res) {
             <div style="padding:32px 28px 20px;border-bottom:1px solid #f0efec">
               <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#ea580c;background:#fff7ed;padding:4px 10px;border-radius:6px;display:inline-block;border:1px solid rgba(234,88,12,.15);margin-bottom:12px">Invoice</div>
               <h1 style="font-size:22px;margin:0 0 6px;letter-spacing:-.03em;color:#18181b">${invoiceTitle || invoiceNumber || 'Your invoice is ready'}</h1>
-              ${customerName ? `<p style="font-size:14px;color:#3f3f46;margin:0">${firstName ? `Hi ${firstName} — ` : ''}here's your invoice from <strong style="color:#18181b">${contractorName || 'your contractor'}</strong>.</p>` : `<p style="font-size:14px;color:#3f3f46;margin:0"><strong style="color:#18181b">${contractorName || 'Your contractor'}</strong> has sent you an invoice.</p>`}
+              ${customerName ? `<p style="font-size:14px;color:#3f3f46;margin:0">${firstName ? `Hi ${h(firstName)} — ` : ''}here's your invoice from <strong style="color:#18181b">${h(contractorName) || 'your contractor'}</strong>.</p>` : `<p style="font-size:14px;color:#3f3f46;margin:0"><strong style="color:#18181b">${h(contractorName) || 'Your contractor'}</strong> has sent you an invoice.</p>`}
             </div>
 
             <!-- Amount card -->
@@ -258,9 +259,9 @@ export default async function handler(req, res) {
 
             <!-- Footer -->
             <div style="border-top:1px solid #f0efec;padding:20px 28px;text-align:center">
-              <div style="font-size:13px;color:#3f3f46;font-weight:600">${contractorName || 'Your contractor'}</div>
-              ${contractorPhone ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${contractorPhone}</div>` : ''}
-              ${cEmail ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${cEmail}</div>` : ''}
+              <div style="font-size:13px;color:#3f3f46;font-weight:600">${h(contractorName) || 'Your contractor'}</div>
+              ${contractorPhone ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${h(contractorPhone)}</div>` : ''}
+              ${cEmail ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${h(cEmail)}</div>` : ''}
               <div style="font-size:11px;color:#a1a1aa;margin-top:12px">Powered by <a href="https://punchlist.ca" style="color:#a1a1aa;text-decoration:none">Punchlist</a></div>
             </div>
           </div>
@@ -285,17 +286,17 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: `${contractorName || 'Your contractor'} via Punchlist <quotes@punchlist.ca>`,
+          from: `${h(contractorName) || 'Your contractor'} via Punchlist <quotes@punchlist.ca>`,
           to: customerEmail,
           reply_to: cEmail || undefined,
-          subject: `Following up: ${quoteTitle || 'your quote'}${total ? ' — ' + fmt(total) : ''}`,
+          subject: safeHeader(`Following up: ${quoteTitle || 'your quote'}${total ? ' — ' + fmt(total) : ''}`),
           html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px">
             <p style="color:#344054;font-size:15px;line-height:1.6;margin:0 0 16px">Hi${firstName ? ' ' + firstName : ''},</p>
             <p style="color:#344054;font-size:15px;line-height:1.6;margin:0 0 16px">Just checking in on the quote${quoteTitle ? ' for <strong>' + quoteTitle + '</strong>' : ''} I sent over. Happy to answer any questions or walk through the scope together.</p>
             ${quoteUrl ? `<div style="text-align:center;margin:24px 0"><a href="${quoteUrl}" style="display:inline-block;padding:14px 32px;background:#E76A3C;color:#fff;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none">Review Quote${total ? ' — ' + fmt(total) : ''}</a></div>` : ''}
             <p style="color:#667085;font-size:13px;line-height:1.6;margin:0 0 8px">From that link you can approve, request changes, or ask any questions.</p>
-            ${contractorPhone ? `<p style="color:#667085;font-size:13px;line-height:1.6;margin:0">Or call/text me at <a href="tel:${contractorPhone}" style="color:#E76A3C;font-weight:600">${contractorPhone}</a></p>` : ''}
-            <p style="color:#344054;font-size:15px;line-height:1.6;margin:24px 0 0">Thanks,<br/>${contractorName || ''}</p>
+            ${contractorPhone ? `<p style="color:#667085;font-size:13px;line-height:1.6;margin:0">Or call/text me at <a href="tel:${h(contractorPhone)}" style="color:#E76A3C;font-weight:600">${h(contractorPhone)}</a></p>` : ''}
+            <p style="color:#344054;font-size:15px;line-height:1.6;margin:24px 0 0">Thanks,<br/>${h(contractorName) || ''}</p>
             <hr style="border:none;border-top:1px solid #eee;margin:32px 0 16px"/>
             <p style="color:#98a2b3;font-size:11px;text-align:center">Sent via <a href="https://punchlist.ca" style="color:#98a2b3">Punchlist</a></p>
           </div>`,
@@ -455,7 +456,7 @@ export default async function handler(req, res) {
     const expiryHtml = quote.expires_at ? `<p style="color:#71717a;font-size:13px;margin-top:16px">This quote is valid until <strong style="color:#18181b">${new Date(quote.expires_at).toLocaleDateString(country === 'US' ? 'en-US' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>.</p>` : '';
 
     const logoHtml = contractor?.logo_url
-      ? `<img src="${contractor.logo_url}" alt="${contractorName}" style="max-height:48px;max-width:180px;object-fit:contain;margin-bottom:16px" />`
+      ? `<img src="${contractor.logo_url}" alt="${h(contractorName)}" style="max-height:48px;max-width:180px;object-fit:contain;margin-bottom:16px" />`
       : '';
 
     const customerName = quote.customer?.name || '';
@@ -468,12 +469,12 @@ export default async function handler(req, res) {
           ${logoHtml}
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#ea580c;margin-bottom:8px">Quote${quote.quote_number ? ` ${quote.quote_number.toString().padStart(4,'0')}` : ''}</div>
           <h1 style="font-size:clamp(22px,4vw,28px);line-height:1.15;margin:0 0 8px;letter-spacing:-.03em;color:#18181b">${quote.title}</h1>
-          ${customerName ? `<p style="font-size:15px;color:#3f3f46;margin:0">Prepared for <strong style="color:#18181b">${customerName}</strong></p>` : ''}
+          ${customerName ? `<p style="font-size:15px;color:#3f3f46;margin:0">Prepared for <strong style="color:#18181b">${h(customerName)}</strong></p>` : ''}
         </div>
 
         <!-- Meta -->
         <div style="padding:16px 28px;display:flex;gap:24px;flex-wrap:wrap;border-bottom:1px solid #f0efec;font-size:13px">
-          <div><span style="color:#71717a">From</span><br><strong>${contractorName}</strong></div>
+          <div><span style="color:#71717a">From</span><br><strong>${h(contractorName)}</strong></div>
           <div><span style="color:#71717a">Date</span><br><strong>${new Date(quote.created_at).toLocaleDateString(country === 'US' ? 'en-US' : 'en-CA', { year:'numeric', month:'long', day:'numeric' })}</strong></div>
           ${quote.expires_at ? `<div><span style="color:#71717a">Valid until</span><br><strong>${new Date(quote.expires_at).toLocaleDateString(country === 'US' ? 'en-US' : 'en-CA', { month:'long', day:'numeric' })}</strong></div>` : ''}
         </div>
@@ -530,14 +531,14 @@ export default async function handler(req, res) {
           </a>
           <p style="color:#71717a;font-size:13px;margin:16px 0 0;line-height:1.6">
             Review the full scope, ask questions, or approve — all from the link above.
-            ${contractorPhone ? `<br>Questions? Call <a href="tel:${contractorPhone}" style="color:#ea580c;font-weight:600;text-decoration:none">${contractorPhone}</a>.` : ''}
+            ${contractorPhone ? `<br>Questions? Call <a href="tel:${h(contractorPhone)}" style="color:#ea580c;font-weight:600;text-decoration:none">${h(contractorPhone)}</a>.` : ''}
           </p>
         </div>
 
         <!-- Footer -->
         <div style="border-top:1px solid #f0efec;padding:20px 28px;text-align:center">
-          <div style="font-size:13px;color:#3f3f46;font-weight:600">${contractorName}</div>
-          ${contractorPhone ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${contractorPhone}</div>` : ''}
+          <div style="font-size:13px;color:#3f3f46;font-weight:600">${h(contractorName)}</div>
+          ${contractorPhone ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${h(contractorPhone)}</div>` : ''}
           ${contractor?.email ? `<div style="font-size:12px;color:#71717a;margin-top:2px">${contractor.email}</div>` : ''}
           <div style="font-size:11px;color:#a1a1aa;margin-top:12px">Powered by <a href="https://punchlist.ca" style="color:#a1a1aa;text-decoration:none">Punchlist</a></div>
         </div>
@@ -554,7 +555,7 @@ export default async function handler(req, res) {
     const plainText = [
       `QUOTE${quote.quote_number ? ' #' + quote.quote_number.toString().padStart(4,'0') : ''} FROM ${contractorName.toUpperCase()}`,
       `${quote.title}`,
-      customerName ? `Prepared for ${customerName}` : '',
+      customerName ? `Prepared for ${h(customerName)}` : '',
       '',
       quote.scope_summary || '',
       '',
@@ -700,7 +701,7 @@ async function handleDemoQuoteEmail(req, res, body) {
       body: JSON.stringify({
         from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
         to: [email],
-        subject: `Your sample quote — ${fmt(total)} · Punchlist`,
+        subject: safeHeader(`Your sample quote — ${fmt(total)} · Punchlist`),
         html,
       }),
     });
