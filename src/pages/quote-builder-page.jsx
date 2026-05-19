@@ -1276,43 +1276,25 @@ export default function QuoteBuilderPage() {
           </Card>
         )}
 
-        {/* ════════ BUILDING: Loading state with trade-specific preview ════════ */}
-        {phase === 'building' && (() => {
-          // Show trade-relevant item names as preview during AI scope generation
-          const previewItems = browseCatalog(trade, 5).slice(0, 4).map(h => h.n);
-          return (
-          <Card padding="loose" className="pl-building-stable qb-phase-enter" elevation={1}>
-            {/* B7 (Slice 12): CSS-only top progress bar 0→85% over 15s */}
-            <div className="qb-build-progress" aria-hidden="true" />
-            <div className="bs-loading qb-loading-wrap">
-              {/* Single confident loader: top progress bar + pulse dot +
-                  rotating message + skeleton rows. The previous version
-                  also rendered a CSS spinner, making four loading
-                  affordances at once — read as "we don't know how to
-                  communicate progress". Spinner removed. */}
-              <div className="bs-ai-status">
-                <div className="bs-ai-dot" />
-                AI is building your quote
-              </div>
-              <div aria-live="polite" className="qb-loading-msg">{scopeLoadingMsg}</div>
-              <div className="qb-loading-sub">{trade} · {description.slice(0, 60)}{description.length > 60 ? '…' : ''}</div>
-              {photoSaved && <div className="jd-photo-saved qb-photo-tag">✓ Photo included</div>}
-              <div className="bs-skeleton-list qb-skel-wrap">
-                {previewItems.map((name, i) => (
-                  <div key={`sk-${name}-${i}`} className="bs-skeleton-item" style={{ animationDelay: `${i * 0.15}s` }}>
-                    <div className="bs-skeleton-check" />
-                    <div className="bs-skeleton-text">
-                      <div className="bs-skeleton-bar" style={{ width: `${Math.min(85, name.length * 3.5 + 20)}%` }} />
-                    </div>
-                    <div className="bs-skeleton-bar price" />
-                  </div>
-                ))}
-              </div>
-              <button type="button" onClick={() => { setScopeLoading(false); setPhase('describe'); }} className="qb-back-btn">← Back to edit</button>
-            </div>
-          </Card>
-          );
-        })()}
+        {/* ════════ BUILDING: Loading state with progressive scope preview ════════
+            The AI call is one-shot, not streaming — so the API can't
+            tell us "item 3 just landed." But we *can* visualize work
+            happening: extract noun phrases from the contractor's own
+            description (split on commas / + / "and"), pad with
+            trade-typical catalog items, then reveal them one-by-one
+            on a ~1.6s cadence. Result: the contractor watches scope
+            "form" out of their own words instead of staring at four
+            shimmer rows that appeared all at once. */}
+        {phase === 'building' && (
+          <BuildingPreview
+            trade={trade}
+            description={description}
+            scopeLoadingMsg={scopeLoadingMsg}
+            photoSaved={photoSaved}
+            onBack={() => { setScopeLoading(false); setPhase('describe'); }}
+            browseCatalog={browseCatalog}
+          />
+        )}
 
         {/* ════════ ZONE 2+3: REVIEW (scope + details + send) ════════ */}
         {phase === 'review' && isMobile && (
@@ -1849,5 +1831,88 @@ export default function QuoteBuilderPage() {
       </div>
     )}
     </>
+  );
+}
+
+/**
+ * BuildingPreview — replaces the all-at-once skeleton block during
+ * AI scope generation. Two improvements vs the previous loader:
+ *
+ *   1. Skeleton labels are extracted from the contractor's own
+ *      description ("Furnace + AC + cleanup" → 3 labels), padded
+ *      with trade-typical catalog items. Watching their own words
+ *      become scope items feels less like a generic spinner.
+ *
+ *   2. Items reveal progressively on a ~1.6s cadence instead of
+ *      appearing all at once. The AI isn't actually streaming — but
+ *      simulating progressive reveal makes the wait feel like work
+ *      is happening, not like the screen is frozen.
+ */
+function BuildingPreview({ trade, description, scopeLoadingMsg, photoSaved, onBack, browseCatalog }) {
+  // Pull noun-ish phrases out of the description. Splits on commas,
+  // "+", " and ", " with ". Trims leading verbs ("Replace", "Install")
+  // so the bars read like nouns. Falls back to catalog items if the
+  // description is too short to yield 4 phrases.
+  const labels = useMemo(() => {
+    const fromDesc = (description || '')
+      .split(/[,+]|\sand\s|\swith\s|\splus\s/i)
+      .map(s => s.trim())
+      .filter(s => s.length >= 3 && s.length <= 60)
+      .map(s => s.replace(/^(replace|install|repair|fix|swap|upgrade|add|remove|service)\s+/i, ''))
+      .map(s => s.charAt(0).toUpperCase() + s.slice(1));
+    const fromCatalog = (browseCatalog?.(trade, 6) || []).slice(0, 6).map(h => h.n);
+    const seen = new Set();
+    const merged = [];
+    for (const t of [...fromDesc, ...fromCatalog]) {
+      const k = t.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(t);
+      if (merged.length >= 6) break;
+    }
+    return merged;
+  }, [description, trade, browseCatalog]);
+
+  // Progressively reveal items. Starts at 1, adds one every 1.6s,
+  // caps at labels.length. The reveal cadence matches the typical
+  // 3-12s AI completion window so the contractor sees 2-6 items
+  // before review opens.
+  const [visible, setVisible] = useState(1);
+  useEffect(() => {
+    if (visible >= labels.length) return;
+    const t = setTimeout(() => setVisible(v => Math.min(v + 1, labels.length)), 1600);
+    return () => clearTimeout(t);
+  }, [visible, labels.length]);
+
+  return (
+    <Card padding="loose" className="pl-building-stable qb-phase-enter" elevation={1}>
+      <div className="qb-build-progress" aria-hidden="true" />
+      <div className="bs-loading qb-loading-wrap">
+        <div className="bs-ai-status">
+          <div className="bs-ai-dot" />
+          AI is building your quote
+        </div>
+        <div aria-live="polite" className="qb-loading-msg">{scopeLoadingMsg}</div>
+        <div className="qb-loading-sub">{trade} · {(description || '').slice(0, 60)}{(description || '').length > 60 ? '…' : ''}</div>
+        {photoSaved && <div className="jd-photo-saved qb-photo-tag">✓ Photo included</div>}
+        <div className="bs-skeleton-list qb-skel-wrap">
+          {labels.slice(0, visible).map((name, i) => (
+            <div
+              key={`sk-${name}-${i}`}
+              className="bs-skeleton-item qb-skel-item-in"
+              style={{ animationDelay: `${i * 0.05}s` }}
+            >
+              <div className="bs-skeleton-check" />
+              <div className="bs-skeleton-text">
+                <div className="bs-skeleton-bar" style={{ width: `${Math.min(85, name.length * 3.5 + 20)}%` }} />
+                <div className="qb-skel-label" aria-hidden="true">{name}</div>
+              </div>
+              <div className="bs-skeleton-bar price" />
+            </div>
+          ))}
+        </div>
+        <button type="button" onClick={onBack} className="qb-back-btn">← Back to edit</button>
+      </div>
+    </Card>
   );
 }

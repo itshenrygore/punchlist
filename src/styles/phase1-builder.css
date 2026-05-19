@@ -386,3 +386,31 @@
   50%  { transform: translateX(100%); width: 60%; }
   100% { transform: translateX(300%); width: 30%; }
 }
+
+/* Progressive skeleton reveal — each new row slides in from below
+   with a subtle fade. Stacked staggers (animationDelay = i * 50ms)
+   are still respected but each row also gets its own enter
+   animation so the most-recently-added item visibly "arrives". */
+.qb-skel-item-in {
+  animation: qb-skel-in .4s var(--ease-standard) both;
+}
+@keyframes qb-skel-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Label preview — the contractor's own phrase shown faintly
+   underneath the shimmer bar so they can see their description
+   becoming line items. Falls back to invisible-but-present if the
+   label is empty so the skeleton row keeps its height. */
+.qb-skel-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: .7;
+}
+@media (prefers-reduced-motion: reduce) {
+  .qb-skel-item-in { animation: none; }
+}

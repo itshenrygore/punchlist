@@ -667,22 +667,26 @@ export default function QuoteDetailPage() {
       <div className="qd-grid">
         <section className="qd-main">
 
-          {/* ══════════ §5.7 LIFECYCLE STRIP ══════════ */}
-          {!isDraft && (
-            <div className="ql-strip" role="progressbar" aria-label={`Quote lifecycle: ${quote.status}`}>
-              {lifecycleSteps.map((step, i) => (
-                <div key={step.key} className="ql-strip-item">
-                  <div className={`ql-step${step.done?' ql-step--done':step.current?' ql-step--active':''}`}>
-                    <div className="ql-dot" />
-                    <span>{step.label}</span>
-                  </div>
-                  {i < lifecycleSteps.length - 1 && (
-                    <div className={`ql-connector${step.done?' ql-connector--done':''}`} />
-                  )}
+          {/* ══════════ §5.7 LIFECYCLE STRIP ══════════
+              Renders for drafts too — previously hidden, which deprived
+              first-time contractors of the "Sent → Viewed → Approved →
+              Paid" path-forward map at the exact moment they needed it.
+              On a draft, all steps render in their default (un-done,
+              un-active) state so the journey is visible but visually
+              muted. */}
+          <div className="ql-strip" role="progressbar" aria-label={`Quote lifecycle: ${quote.status}`} data-draft={isDraft ? 'true' : undefined}>
+            {lifecycleSteps.map((step, i) => (
+              <div key={step.key} className="ql-strip-item">
+                <div className={`ql-step${step.done?' ql-step--done':step.current?' ql-step--active':''}`}>
+                  <div className="ql-dot" />
+                  <span>{step.label}</span>
                 </div>
-              ))}
-            </div>
-          )}
+                {i < lifecycleSteps.length - 1 && (
+                  <div className={`ql-connector${step.done?' ql-connector--done':''}`} />
+                )}
+              </div>
+            ))}
+          </div>
 
           {/* ══════════ MOBILE TAB BAR ══════════ */}
           <div className="qd-mobile-tabs" ref={mobileTabBarRef}>

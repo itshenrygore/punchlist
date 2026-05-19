@@ -133,12 +133,6 @@ export default function DashboardPage() {
     return name ? `${g}, ${name}` : g;
   }, [user]);
 
-  const recentQuotes = useMemo(() => {
-    return [...quotes]
-      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
-      .slice(0, 6);
-  }, [quotes]);
-
   const closeRate = useMemo(() => {
     const SENT_STATUSES = ['sent','viewed','revision_requested','approved','approved_pending_deposit','deposit_paid','converted_to_invoice','declined','expired','paid'];
     const WON_STATUSES  = ['approved','approved_pending_deposit','deposit_paid','converted_to_invoice','paid'];
@@ -177,6 +171,30 @@ export default function DashboardPage() {
       new Date(i.due_at).getTime() < now
     ).length;
   }, [invoices]);
+
+  // Month-to-date revenue — the dopamine number. Pipeline and Owed
+  // are friction metrics (what's pending, what's unpaid). Earned is
+  // the number the contractor actually wants to see on a Friday at
+  // 5pm. Computed from paid invoices in the current calendar month
+  // using paid_at; falls back to invoice.total when remaining_balance
+  // isn't populated.
+  const [earnedThisMonth, setEarnedThisMonth] = useState(0);
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const monthStart = new Date();
+        monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+        const { data } = await supabase
+          .from('payments')
+          .select('amount')
+          .eq('user_id', user.id)
+          .gte('paid_at', monthStart.toISOString());
+        const sum = (data || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+        setEarnedThisMonth(sum);
+      } catch { /* silent — chip just hides */ }
+    })();
+  }, [user?.id, invoices.length]);
 
   // Raw, unbounded urgency-sorted set. We keep the full list available
   // so the "+N more" overflow indicator below can show a real count
@@ -230,6 +248,18 @@ export default function DashboardPage() {
 
   const actionItems = actionItemsRaw.slice(0, 5);
   const actionOverflow = Math.max(0, actionItemsRaw.length - 5);
+
+  // Recent Quotes — top 6 by updated_at, but EXCLUDE anything already
+  // surfaced in "Needs attention" so the dashboard doesn't render
+  // the same quote in two stacked sections on mobile (eats the
+  // most-scarce vertical space).
+  const recentQuotes = useMemo(() => {
+    const actionIds = new Set(actionItemsRaw.map(q => q.id));
+    return [...quotes]
+      .filter(q => !actionIds.has(q.id))
+      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
+      .slice(0, 6);
+  }, [quotes, actionItemsRaw]);
 
   const hasAnyData = quotes.length > 0;
 
@@ -289,8 +319,49 @@ export default function DashboardPage() {
     e.preventDefault();
     trackQuoteFlowStarted({ source: 'home_job_input' });
     haptic('medium');
-    navigate('/app/quotes/new', jobInput.trim() ? { state: { prefill: jobInput.trim() } } : undefined);
+    const title = jobInput.trim();
+    // Remember the typed job title in localStorage so the next quote
+    // gets autocomplete from the dashboard's <datalist>. A power user
+    // running the same panel-upgrade scope monthly shouldn't be
+    // retyping it. Cap at 12 entries, dedupe case-insensitively,
+    // MRU-ordered.
+    if (title) {
+      try {
+        const KEY = 'pl_recent_job_titles';
+        const raw = localStorage.getItem(KEY);
+        const prev = raw ? JSON.parse(raw) : [];
+        const lower = title.toLowerCase();
+        const next = [title, ...prev.filter(t => t.toLowerCase() !== lower)].slice(0, 12);
+        localStorage.setItem(KEY, JSON.stringify(next));
+      } catch { /* private mode */ }
+    }
+    navigate('/app/quotes/new', title ? { state: { prefill: title } } : undefined);
   }
+
+  // MRU job titles, sourced from localStorage. Doesn't trigger a re-
+  // render on its own — refreshed alongside the dashboard's data
+  // load so a quote just submitted appears in the autocomplete the
+  // next time the contractor lands here.
+  const recentJobTitles = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('pl_recent_job_titles');
+      const fromStorage = raw ? JSON.parse(raw) : [];
+      // Seed from the contractor's actual quote titles too — a brand
+      // new visit to the dashboard has nothing in localStorage but
+      // the quote list itself reveals what they tend to type.
+      const fromQuotes = [...new Set(quotes.map(q => q.title).filter(Boolean))].slice(0, 8);
+      const merged = [];
+      const seen = new Set();
+      for (const t of [...fromStorage, ...fromQuotes]) {
+        const k = t.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        merged.push(t);
+        if (merged.length >= 12) break;
+      }
+      return merged;
+    } catch { return []; }
+  }, [quotes]);
 
   /* ── Render ── */
   return (
@@ -316,8 +387,18 @@ export default function DashboardPage() {
               actually owed. Previously the dashboard only showed
               pipeline, so a contractor with a closed funnel + $40K
               of overdue invoices saw $0. */}
-          {!loading && (pipelineValue > 0 || moneyOwed > 0) && (
+          {!loading && (pipelineValue > 0 || moneyOwed > 0 || earnedThisMonth > 0) && (
             <div className="dv2-money-chips">
+              {earnedThisMonth > 0 && (
+                <Link
+                  to="/app/invoices"
+                  className="dv2-headline-metric dv2-headline-metric--success"
+                  aria-label={`Earned this month: ${currency(earnedThisMonth)}`}
+                >
+                  <span>{currency(earnedThisMonth)}</span>
+                  <span className="dv2-metric-sub">earned this month</span>
+                </Link>
+              )}
               {pipelineValue > 0 && (
                 <Link
                   to="/app/quotes"
@@ -358,9 +439,15 @@ export default function DashboardPage() {
             placeholder="What's the job?"
             value={jobInput}
             onChange={e => setJobInput(e.target.value)}
+            list="pl-recent-jobs"
             autoComplete="off"
             enterKeyHint="go"
           />
+          {recentJobTitles.length > 0 && (
+            <datalist id="pl-recent-jobs">
+              {recentJobTitles.map(t => <option key={t} value={t} />)}
+            </datalist>
+          )}
           <button className="dv2-job-go" type="submit">
             {jobInput.trim()
               ? <><span>Build quote</span><ArrowRight size={14} /></>

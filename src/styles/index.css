@@ -7265,6 +7265,23 @@ details > summary::-webkit-details-marker{display:none}
 }
 .ql-connector--done { background: var(--green); }
 
+/* Draft-state strip — visible but visually muted so a first-time
+   contractor sees "Sent → Viewed → Approved → Deposit paid →
+   Invoiced → Paid" as the path forward without it competing with
+   real status. The active step (Sent) is dimmed too because the
+   quote isn't actually sent yet — only the path is real. */
+.ql-strip[data-draft="true"] { opacity: .55; }
+.ql-strip[data-draft="true"] .ql-step,
+.ql-strip[data-draft="true"] .ql-step--done,
+.ql-strip[data-draft="true"] .ql-step--active {
+  color: var(--muted);
+  font-weight: 500;
+}
+.ql-strip[data-draft="true"] .ql-step--active .ql-dot {
+  background: var(--line-2);
+  box-shadow: none;
+}
+
 /* §5.1 SMS preview card after send */
 .qd-sms-preview {
   margin: 12px 0 0;
