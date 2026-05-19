@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import EmptyState from '../components/empty-state';
 import { InvoiceDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
+import PaidCelebrationCard from '../components/paid-celebration-card';
+import '../styles/paid-celebration.css';
 import ConfirmModal from '../components/confirm-modal';
 import { getInvoice, getProfile, friendly, markInvoicePaid, updateInvoiceStatus, updateInvoice, listPayments, recordPayment, deletePayment, getInvoiceBalance, updateInvoiceReminders, checkAndSendReminder, sendInvoiceEmail, setRecurringInterval, createNextRecurring, calculateLateFee } from '../lib/api';
 import { currency, formatDate } from '../lib/format';
@@ -23,10 +25,21 @@ const REMINDER_OPTIONS = [
 
 export default function InvoiceDetailPage() {
   const { invoiceId } = useParams();
+  const location = useLocation();
   const { user } = useAuth();
   const { show: toast } = useToast();
-  const [invoice, setInvoice] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // location.state.preview lets the convert sheet hand the new invoice
+  // forward so we paint the header instantly instead of flashing the
+  // skeleton through a second fetch. location.state.justSent carries
+  // the channel the convert sheet successfully dispatched on so we can
+  // show a "Sent 4s ago via SMS" banner at the top.
+  const previewInvoice = location.state?.preview || null;
+  const justSent = location.state?.justSent || null;
+  const [invoice, setInvoice] = useState(previewInvoice);
+  const [loading, setLoading] = useState(!previewInvoice);
+  const [showPaidCelebration, setShowPaidCelebration] = useState(false);
+  const [isFirstPaidEver, setIsFirstPaidEver] = useState(false);
+  const [monthToDate, setMonthToDate] = useState(null);
   const [paying, setPaying] = useState(false);
   const [payMethod, setPayMethod] = useState('');
   const [showPayForm, setShowPayForm] = useState(false);
@@ -72,6 +85,27 @@ export default function InvoiceDetailPage() {
       .finally(() => setLoading(false));
   }, [invoiceId]);
 
+  // Compute month-to-date collected revenue for the celebration card's
+  // "this month" line. Best-effort and silent on failure — the card
+  // simply hides the MTD line when null.
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { supabase } = await import('../lib/supabase');
+        const monthStart = new Date();
+        monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+        const { data } = await supabase
+          .from('payments')
+          .select('amount')
+          .eq('user_id', user.id)
+          .gte('paid_at', monthStart.toISOString());
+        const sum = (data || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+        setMonthToDate(sum > 0 ? sum : null);
+      } catch { /* */ }
+    })();
+  }, [user?.id, showPaidCelebration]);
+
   useEffect(() => {
     if (!user) return;
     getProfile(user.id).then(p => {
@@ -101,7 +135,20 @@ export default function InvoiceDetailPage() {
       const updated = await markInvoicePaid(invoice.id, payMethod || null);
       setInvoice(p => ({ ...p, ...updated, status: 'paid', paid_at: updated.paid_at }));
       setShowPayForm(false);
-      toast('Invoice marked as paid', 'success');
+      // Replace the previously-generic toast with the celebration card.
+      // First-ever paid invoice flag persists in localStorage so future
+      // installs / new contractors get the milestone variant.
+      try {
+        const seen = localStorage.getItem('pl_first_paid_at');
+        if (!seen) {
+          setIsFirstPaidEver(true);
+          localStorage.setItem('pl_first_paid_at', new Date().toISOString());
+        }
+      } catch { /* private mode */ }
+      setShowPaidCelebration(true);
+      try {
+        if (navigator.vibrate) navigator.vibrate([10, 40, 10, 40, 80]);
+      } catch { /* */ }
       if (invoice.recurring_interval) {
         const next = await createNextRecurring({ ...invoice, invoice_items: invoice.invoice_items });
         if (next) toast(`Next recurring invoice created (draft)`, 'info');
@@ -370,6 +417,34 @@ export default function InvoiceDetailPage() {
     <AppShell title={`Invoice ${invoice.invoice_number || ''}`} actions={
       invoice.quote_id ? <Link className="btn btn-secondary btn-sm" to={`/app/quotes/${invoice.quote_id}`}>View quote</Link> : null
     }>
+      {/* Just-sent confirmation banner — only fires when the invoice
+          was created by the convert sheet's send-on-create path. Carries
+          forward the momentum: contractor sees green proof that the
+          invoice is already out the door before they even read it. */}
+      {justSent && (
+        <div className="inv-justsent-banner" role="status">
+          <span className="inv-justsent-dot" aria-hidden="true" />
+          Sent {justSent.channel === 'sms' ? 'via SMS' : justSent.channel === 'email' ? 'via email' : 'link copied'}
+          {invoice.customer?.name ? ` to ${invoice.customer.name.split(' ')[0]}` : ''} · just now
+        </div>
+      )}
+      {/* Paid-celebration card — replaces a previously generic toast.
+          The moment the contractor actually got paid (or marked it
+          paid manually) is the highest-leverage delight moment in
+          the entire app. Big stamp, amount, who paid, optional
+          thank-you SMS, MTD tally (best-effort: shown when present). */}
+      {showPaidCelebration && (
+        <PaidCelebrationCard
+          invoice={invoice}
+          totalPaid={totalPaid}
+          country={country}
+          monthToDate={monthToDate}
+          isFirstEver={isFirstPaidEver}
+          customer={invoice.customer}
+          onClose={() => setShowPaidCelebration(false)}
+        />
+      )}
+
       <div className="inv-layout">
         {/* ── Invoice document ── */}
         <div className="inv-doc">

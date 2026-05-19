@@ -1,0 +1,197 @@
+/* ═══════════════════════════════════════════════════════════════
+   Paid celebration card
+   ─────────────────────────────────────────────────────────────
+   The moment the contractor gets paid. Big stamp, big amount,
+   optional thank-you. Replaces a generic toast — this is the
+   highest-leverage delight moment in the entire app.
+   ═══════════════════════════════════════════════════════════════ */
+
+.pl-paid-card {
+  position: relative;
+  margin-bottom: 16px;
+  padding: 28px 24px;
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    var(--green-bg, rgba(34, 197, 94, .12)) 0%,
+    var(--brand-bg, rgba(249, 115, 22, .08)) 100%
+  );
+  border: 1.5px solid var(--green-line, rgba(34, 197, 94, .25));
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: center;
+  overflow: hidden;
+  animation: pl-paid-in .55s cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes pl-paid-in {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.pl-paid-close {
+  position: absolute; top: 10px; right: 10px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .25);
+  border: none;
+  color: var(--text);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
+}
+.pl-paid-close:hover { background: rgba(255, 255, 255, .5); transform: scale(1.05); }
+.pl-paid-close:active { transform: scale(.92); }
+
+/* ── Stamp ── */
+.pl-paid-stamp {
+  position: relative;
+  width: 120px; height: 120px;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  transform: rotate(-8deg);
+  animation: pl-paid-stamp-in .7s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+@keyframes pl-paid-stamp-in {
+  from { opacity: 0; transform: rotate(-30deg) scale(.4); }
+  to   { opacity: 1; transform: rotate(-8deg) scale(1); }
+}
+.pl-paid-stamp-text {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: var(--green, #15803d);
+  background: rgba(255, 255, 255, .15);
+  border: 3px solid var(--green, #15803d);
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, .2);
+}
+
+/* Confetti dots burst out from the stamp. */
+.pl-paid-confetti {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: pl-confetti-burst 1.2s cubic-bezier(.16, 1, .3, 1) .2s both;
+}
+.pl-paid-confetti--1 { background: var(--brand, #F97316); top: 10%; left: 10%; --tx: -40px; --ty: -40px; }
+.pl-paid-confetti--2 { background: var(--green, #22c55e); top: 12%; right: 8%; --tx: 50px; --ty: -38px; }
+.pl-paid-confetti--3 { background: var(--blue, #3b82f6); bottom: 12%; right: 6%; --tx: 48px; --ty: 40px; }
+.pl-paid-confetti--4 { background: var(--amber, #F59E0B); bottom: 8%; left: 6%; --tx: -42px; --ty: 36px; }
+.pl-paid-confetti--5 { background: var(--purple, #8B5CF6); top: 48%; left: -8%; --tx: -60px; --ty: 0; }
+
+@keyframes pl-confetti-burst {
+  from { opacity: 1; transform: translate(0, 0) scale(.5); }
+  60%  { opacity: 1; }
+  to   { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.2); }
+}
+
+/* ── Body ── */
+.pl-paid-body { min-width: 0; }
+.pl-paid-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--green, #15803d);
+  margin-bottom: 4px;
+}
+.pl-paid-amount {
+  font-family: var(--font-display);
+  font-size: clamp(38px, 7vw, 56px);
+  font-weight: 800;
+  letter-spacing: -.04em;
+  line-height: 1;
+  color: var(--text);
+  margin: 4px 0 6px;
+  animation: pl-paid-amount-in .8s cubic-bezier(.16, 1, .3, 1) .15s both;
+}
+@keyframes pl-paid-amount-in {
+  from { opacity: 0; transform: translateY(8px); letter-spacing: -.02em; }
+  to   { opacity: 1; transform: translateY(0); letter-spacing: -.04em; }
+}
+.pl-paid-mtd {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 12px;
+}
+.pl-paid-mtd strong { color: var(--text); font-weight: 700; }
+.pl-paid-milestone {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin: 4px 0 14px;
+  max-width: 360px;
+}
+.pl-paid-actions {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 10px;
+}
+.pl-paid-thanks-btn { gap: 6px; }
+
+/* ── Mobile ── */
+@media (max-width: 540px) {
+  .pl-paid-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 24px 18px;
+  }
+  .pl-paid-stamp {
+    width: 96px; height: 96px;
+    transform: rotate(-6deg);
+    margin: 0 auto;
+  }
+  .pl-paid-stamp-text {
+    font-size: 24px;
+    padding: 8px 12px;
+  }
+  .pl-paid-body { text-align: center; }
+  .pl-paid-actions { justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-paid-card,
+  .pl-paid-stamp,
+  .pl-paid-amount,
+  .pl-paid-confetti { animation: none; }
+}
+
+/* ── Just-sent confirmation banner (used by invoice-detail when the
+   convert sheet sent the invoice in one step). Sits at the top of
+   the page, fades away after a few seconds via the existing toast,
+   but persists as a soft strip so the contractor reads it. ─── */
+.inv-justsent-banner {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--green-bg, rgba(34, 197, 94, .1));
+  border: 1px solid var(--green-line, rgba(34, 197, 94, .25));
+  color: var(--green, #15803d);
+  font-size: 13px;
+  font-weight: 600;
+  animation: pl-justsent-in .35s ease-out both;
+}
+.inv-justsent-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green, #22c55e);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .2);
+  flex-shrink: 0;
+  animation: pl-justsent-pulse 1.8s ease-in-out infinite;
+}
+@keyframes pl-justsent-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pl-justsent-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, .2); }
+  50%      { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inv-justsent-banner, .inv-justsent-dot { animation: none; }
+}
