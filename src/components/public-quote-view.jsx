@@ -879,6 +879,11 @@ export default function PublicQuoteView({
                   <span className="doc-group-label" style={{ padding: 0 }}>Optional Add-ons</span>
                   {canAct && <span className="pq-optionals-hint">Toggle to include</span>}
                 </div>
+                {canAct && (
+                  <div className="pq-optionals-intro">
+                    These extras are not included in your quote total. Toggle any you'd like to add — the price updates automatically.
+                  </div>
+                )}
                 {optionalItems.map(item => canAct ? (
                   <OptionalItemRow key={item.id} item={item} selected={selectedOptionals.has(item.id)} onToggle={toggleOptional} currency={currency} />
                 ) : (
@@ -1051,8 +1056,7 @@ export default function PublicQuoteView({
             {!isExpired && canAct && !isApproved && <div className="doc-signal">No payment required to approve — signing is free</div>}
             {!isExpired && canAct && !isApproved && <div className="doc-signal">You can ask questions or request changes at any time</div>}
             {quote.contractor_phone && <div className="doc-signal">Questions? Call {contractorDisplayName} at <a href={`tel:${quote.contractor_phone}`} style={{ color: 'var(--doc-accent)', fontWeight: 600 }}>{quote.contractor_phone}</a></div>}
-            <div className="doc-signal">Licensed & insured · Professional estimate</div>
-            {quote.view_count > 1 && <div className="doc-signal">This quote has been reviewed {quote.view_count} times</div>}
+            <div className="doc-signal">Professional estimate</div>
           </div>
 
           {/* ═══════════════════════════════════════════
@@ -1173,7 +1177,7 @@ export default function PublicQuoteView({
           >
             <span className="doc-powered-by-label">Quote built with</span>
             <span className="doc-powered-by-brand">Punchlist</span>
-            <span className="doc-powered-by-tagline">— get monthly payment quotes for your own jobs</span>
+            <span className="doc-powered-by-tagline">— offer monthly payment options on your quotes</span>
           </a>
           )}
 

@@ -528,13 +528,21 @@
 .ba-punchline strong { color: rgba(255,255,255,0.9); }
 
 /* ════════════════════════════════════════════
-   LIVE JOBS MARQUEE
+   EXAMPLE JOBS MARQUEE
    ════════════════════════════════════════════ */
+.marquee-section { background: var(--dark); border-bottom: 1px solid rgba(255,255,255,0.07); }
+.marquee-label {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 0 0;
+}
 .marquee-outer {
   overflow: hidden;
-  background: var(--dark);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  padding: 14px 0;
+  padding: 10px 0 14px;
   user-select: none;
 }
 .marquee-track {

@@ -23,6 +23,7 @@ import LandingPage from '../pages/landing-page';
 import LoginPage from '../pages/login-page';
 import SignupPage from '../pages/signup-page';
 import TermsPage from '../pages/terms-page';
+import PrivacyPage from '../pages/privacy-page';
 import PricingPage from '../pages/pricing-page';
 
 // Lazy loaded — core screens only
@@ -67,6 +68,7 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/pricing" element={<PricingPage />} />
 
         {/* ── Public customer-facing ── */}

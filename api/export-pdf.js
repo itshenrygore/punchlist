@@ -19,7 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import { blocked, getClientIp } from './_rate-limit.js';
 
 function getSupabase() {
-  const url = process.env.SUPABASE_URL;
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key);
@@ -657,11 +657,23 @@ export default async function handler(req, res) {
   try {
     const { data: quote, error } = await supabase
       .from('quotes')
-      .select('*, customer:customers(*), line_items(*)')
+      .select('*')
       .eq('share_token', token)
       .maybeSingle();
 
     if (error || !quote) return res.status(404).json({ error: 'Quote not found' });
+
+    const { data: lineItems } = await supabase
+      .from('line_items')
+      .select('*')
+      .eq('quote_id', quote.id)
+      .order('sort_order', { ascending: true });
+
+    let customer = null;
+    if (quote.customer_id) {
+      const { data: c } = await supabase.from('customers').select('*').eq('id', quote.customer_id).maybeSingle();
+      customer = c;
+    }
 
     let contractor = null;
     if (quote.user_id) {
@@ -669,14 +681,13 @@ export default async function handler(req, res) {
       contractor = p;
     }
 
-    // Amendments are stored inline on the quote object (quote.amendment)
-    // The amendments table was removed — this is kept for PDF rendering compatibility
     const amendments = [];
 
     const enriched = {
       ...quote,
-      customer_name: quote.customer?.name,
-      customer_address: quote.customer?.address || '',
+      line_items: lineItems || [],
+      customer_name: customer?.name,
+      customer_address: customer?.address || '',
       contractor_name: contractor?.full_name,
       contractor_company: contractor?.company_name,
       contractor_phone: contractor?.phone,

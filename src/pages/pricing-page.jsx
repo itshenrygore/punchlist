@@ -210,7 +210,7 @@ export default function PricingPage() {
 
       {/* ── FINAL CTA ── */}
       <section className="pr-final-cta">
-        <p className="pr-cad-note muted">All prices in Canadian dollars (CAD).</p>
+        <p className="pr-cad-note muted">Prices in CAD for Canadian accounts · USD for US accounts.</p>
         <div className="pr-final-inner">
           <h2 className="pr-final-title">You have a job to quote this&nbsp;week.</h2>
           <p className="muted pr-final-sub">Try Punchlist on that one job. Free, no credit card, takes two minutes.</p>

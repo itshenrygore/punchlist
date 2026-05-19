@@ -184,10 +184,11 @@ export default function DashboardPage() {
         <div className="dv2-row1 dv2-enter" style={{ '--i': 0 }}>
           <div className="dv2-greeting-block">
             <h1 className="dv2-greeting font-display">{greeting}</h1>
-            {!loading && hasAnyData && (
+            {!loading && hasAnyData && (sentThisMonth > 0 || closeRate !== null) && (
               <p className="dv2-greeting-sub">
-                {sentThisMonth} quote{sentThisMonth !== 1 ? 's' : ''} sent this month
-                {closeRate !== null && ` · ${closeRate}% close rate`}
+                {sentThisMonth > 0 && `${sentThisMonth} quote${sentThisMonth !== 1 ? 's' : ''} sent this month`}
+                {sentThisMonth > 0 && closeRate !== null && ' · '}
+                {closeRate !== null && `${closeRate}% close rate`}
               </p>
             )}
           </div>
@@ -387,22 +388,23 @@ export default function DashboardPage() {
               </div>
               <ChevronRight size={13} className="dv2-qnav-arrow" />
             </Link>
-            <Link to="/app/analytics" className="dv2-qnav-tile">
-              <span className="dv2-qnav-icon">📊</span>
-              <div className="dv2-qnav-content">
-                <span className="dv2-qnav-label">Analytics</span>
-                {closeRate !== null && <span className="dv2-qnav-count">{closeRate}% close rate</span>}
-              </div>
-              <ChevronRight size={13} className="dv2-qnav-arrow" />
-            </Link>
             <Link to="/app/templates" className="dv2-qnav-tile">
               <span className="dv2-qnav-icon">💬</span>
               <div className="dv2-qnav-content">
-                <span className="dv2-qnav-label">Message templates</span>
-                <span className="dv2-qnav-count">SMS sequences</span>
+                <span className="dv2-qnav-label">Follow-up messages</span>
+                <span className="dv2-qnav-count">Customize templates</span>
               </div>
               <ChevronRight size={13} className="dv2-qnav-arrow" />
             </Link>
+            {userProfile && isPro(userProfile) && (
+              <Link to="/app/invoices" className="dv2-qnav-tile">
+                <span className="dv2-qnav-icon">🧾</span>
+                <div className="dv2-qnav-content">
+                  <span className="dv2-qnav-label">Invoices</span>
+                </div>
+                <ChevronRight size={13} className="dv2-qnav-arrow" />
+              </Link>
+            )}
           </div>
         )}
 
@@ -431,7 +433,7 @@ export default function DashboardPage() {
               {sentThisMonth} of {FREE_QUOTE_LIMIT} quotes this month
             </span>
             {sentThisMonth >= 3 && (
-              <Link to="/pricing" className="dv2-usage-upgrade">Upgrade</Link>
+              <Link to="/app/billing" className="dv2-usage-upgrade">Upgrade →</Link>
             )}
           </div>
         )}

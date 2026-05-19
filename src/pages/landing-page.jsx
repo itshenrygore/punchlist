@@ -204,19 +204,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ 2. LIVE JOBS MARQUEE ═══ */}
-      <div className="marquee-outer" aria-hidden="true">
-        <div className="marquee-track">
-          {[...MARQUEE, ...MARQUEE].map((item, i) => (
-            <div key={i} className="marquee-item">
-              <span className="marquee-check">✓</span>
-              <span className="marquee-amount">{item.amount}</span>
-              <span className="marquee-sep">·</span>
-              <span className="marquee-job">{item.job}</span>
-              <span className="marquee-sep">·</span>
-              <span className="marquee-city">{item.city}</span>
-            </div>
-          ))}
+      {/* ═══ 2. EXAMPLE JOBS MARQUEE ═══ */}
+      <div className="marquee-section">
+        <div className="marquee-label">Example quotes built with Punchlist</div>
+        <div className="marquee-outer" aria-hidden="true">
+          <div className="marquee-track">
+            {[...MARQUEE, ...MARQUEE].map((item, i) => (
+              <div key={i} className="marquee-item">
+                <span className="marquee-check">✓</span>
+                <span className="marquee-amount">{item.amount}</span>
+                <span className="marquee-sep">·</span>
+                <span className="marquee-job">{item.job}</span>
+                <span className="marquee-sep">·</span>
+                <span className="marquee-city">{item.city}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -394,7 +397,7 @@ export default function LandingPage() {
               },
               {
                 q: 'What does it cost me?',
-                a: 'Free for 5 quotes/month — no card required, no time limit. Pro is $29/month: unlimited quotes, activity tracking, Foreman, invoicing, and deposit collection. One extra closed job covers a full year.',
+                a: 'Free for 5 quotes/month — no card required, no time limit. Pro is $29/month: unlimited quotes, activity tracking, Foreman, invoicing, and deposit collection. One extra closed job covers a full year. A 2.5% platform fee applies to deposits and invoice payments collected through Punchlist — there are no other hidden charges.',
               },
             ].map((item, i) => (
               <div key={i} className={`catch-card rv rv--d${i}`}>
@@ -426,10 +429,10 @@ export default function LandingPage() {
               <ul className="pr-feats">
                 {[
                   '5 quotes per month',
-                  'Scope builder',
-                  'Monthly payment display',
+                  'Scope builder — 1,000+ trade items',
+                  'Monthly payment display on quotes',
                   'Customer e-signature',
-                  'Push notifications when viewed',
+                  'Works from your phone',
                 ].map((f, i) => <li key={i} className="pr-f"><Check size={14} strokeWidth={2.5} />{f}</li>)}
               </ul>
               <Link to="/signup" className="ln-btn ln-btn--outline ln-btn--full">Get started — no card</Link>
@@ -499,6 +502,7 @@ export default function LandingPage() {
             <Link to="/login">Log in</Link>
             <Link to="/signup">Sign up</Link>
             <Link to="/terms">Terms</Link>
+            <Link to="/privacy">Privacy</Link>
             <a href="mailto:hello@punchlist.ca">Contact</a>
           </div>
         </div>

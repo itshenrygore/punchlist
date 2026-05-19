@@ -112,10 +112,10 @@ function smartCatalogFallback(ctx, province) {
 }
 
 // ── Scope hints per trade ──
-const SCOPE_HINTS = { Plumber: ['Disposal fees', 'Shut-off valve replacement', 'Permit', 'Patch/repair after access', 'Cleanup'], Electrician: ['Permit & inspection', 'Panel labelling', 'Patching/repair', 'Disposal', 'GFCI/AFCI upgrades'], HVAC: ['Duct modification', 'Electrical hookup', 'Permit', 'Refrigerant handling', 'Thermostat wiring'], General: ['Disposal', 'Cleanup', 'Permit', 'Material delivery', 'Touch-up / patching'], Carpenter: ['Hardware/fasteners', 'Finishing/stain', 'Disposal', 'Touch-up paint', 'Delivery'], Painter: ['Surface prep', 'Primer coat', 'Caulking', 'Furniture moving', 'Drop cloths/protection'], Roofing: ['Permit', 'Disposal/dump fees', 'Flashing', 'Ice & water shield', 'Ventilation'] };
+const SCOPE_HINTS = { Plumber: ['Disposal fees', 'Shut-off valve replacement', 'Permit', 'Patch/repair after access', 'Cleanup'], Electrician: ['Permit & inspection', 'Panel labelling', 'Patching/repair', 'Disposal', 'GFCI/AFCI upgrades'], HVAC: ['Duct modification', 'Electrical hookup', 'Permit', 'Refrigerant handling', 'Thermostat wiring'], General: ['Disposal', 'Cleanup', 'Permit', 'Material delivery', 'Touch-up / patching'], Carpenter: ['Hardware/fasteners', 'Finishing/stain', 'Disposal', 'Touch-up paint', 'Delivery'], Painter: ['Surface prep', 'Primer coat', 'Caulking', 'Furniture moving', 'Drop cloths/protection'], Roofing: ['Permit', 'Disposal/dump fees', 'Flashing', 'Ice & water shield', 'Ventilation'], Other: ['Disposal / cleanup', 'Materials allowance', 'Permit if required', 'Site protection', 'Final inspection'] };
 
 // ── Placeholders ──
-const DESC_PLACEHOLDERS = { Plumber: 'Replace 50-gallon hot water tank in utility room. Drain, disconnect, and haul away old tank.', Electrician: 'Upgrade 100A panel to 200A service and reconnect existing circuits.', HVAC: 'Replace furnace with high-efficiency unit. Install new smart thermostat.', 'General Contractor': 'Frame basement mechanical room and patch surrounding drywall.', Roofing: 'Replace damaged shingles around vent stack and inspect flashing.', Painter: 'Prep and paint main floor walls. Patch minor nail holes, sand, prime.', Carpenter: 'Install baseboard and door casing trim throughout main floor.', Other: 'Replace 50-gallon hot water tank in tight utility room.' };
+const DESC_PLACEHOLDERS = { Plumber: 'Replace 50-gallon hot water tank in utility room. Drain, disconnect, and haul away old tank.', Electrician: 'Upgrade 100A panel to 200A service and reconnect existing circuits.', HVAC: 'Replace furnace with high-efficiency unit. Install new smart thermostat.', 'General Contractor': 'Frame basement mechanical room and patch surrounding drywall.', Roofing: 'Replace damaged shingles around vent stack and inspect flashing.', Painter: 'Prep and paint main floor walls. Patch minor nail holes, sand, prime.', Carpenter: 'Install baseboard and door casing trim throughout main floor.', Other: 'Describe the job — include the location, what needs to be done, and any relevant details.' };
 
 /* ══════════════════════════════════════════════════════════ */
 export default function QuoteBuilderPage() {
@@ -447,6 +447,7 @@ export default function QuoteBuilderPage() {
     setScopeLoadingMsg('Analyzing job scope…');
     const t1 = setTimeout(() => setScopeLoadingMsg('Still working — analyzing materials and pricing…'), 6000);
     const t2 = setTimeout(() => setScopeLoadingMsg('Almost there — finalizing suggestions…'), 12000);
+    const t3 = setTimeout(() => setScopeLoadingMsg('Taking a bit longer than usual — complex jobs need more time…'), 18000);
 
     try {
       // Create or update draft
@@ -457,7 +458,7 @@ export default function QuoteBuilderPage() {
           await saveOfflineDraft({ id: offId, title: title || description.slice(0, 64), description, trade, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
           setOfflineDraft(true);
           toast('Saved offline — will sync when connected', 'info');
-          setPhase('describe'); setScopeLoading(false); clearTimeout(t1); clearTimeout(t2);
+          setPhase('describe'); setScopeLoading(false); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
           return;
         }
         const d = await createQuote(user.id, { title: title || description.slice(0, 64), description, trade, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
@@ -536,13 +537,13 @@ export default function QuoteBuilderPage() {
 
       if (items.length < 2) toast('Fewer items than expected were suggested. Add more below.', 'info');
       else {
-        // §6.1 — Undo last item add: 5s window to revert the entire AI-added set
+        // §6.1 — Undo last item add: 12s window to revert the entire AI-added set
         const snapshotBefore = preAiLineItemsRef.current || [];
         const addedCount = newLineItems.length - snapshotBefore.length;
         if (addedCount > 0) {
           showUndo(
             `${addedCount} item${addedCount !== 1 ? 's' : ''} added by AI`,
-            5000,
+            12000,
             null, // onCommit — no-op, items are already set
             () => {
               // onUndo — restore the snapshot
@@ -565,7 +566,7 @@ export default function QuoteBuilderPage() {
       initialLoadComplete.current = true;
       setPhase('review');
     } finally {
-      setScopeLoading(false); clearTimeout(t1); clearTimeout(t2);
+      setScopeLoading(false); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     }
   }
 
@@ -900,7 +901,7 @@ export default function QuoteBuilderPage() {
   const [phoneDupMatch, setPhoneDupMatch] = useState(null); // { existing, newCust }
   async function handleQuickCreateCustomer(forceCreate = false) {
     if (!newCust.name.trim()) return;
-    if (!newCust.phone.trim()) return setError('Add a phone number — that\u2019s how the quote gets sent.');
+    if (!newCust.phone.trim() && !newCust.email.trim()) return setError('Add a phone number or email — we need at least one to send the quote.');
     try {
       // M7: dup-check by phone/email before creating — but allow override
       if (!forceCreate) {
