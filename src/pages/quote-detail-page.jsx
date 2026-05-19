@@ -578,8 +578,7 @@ export default function QuoteDetailPage() {
               {(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? <span className="qd-mobile-tab-badge">{mc}</span> : null; })()}
             </button>
             <button type="button" className={`qd-mobile-tab qd-mobile-tab--more${mobileTab === 'more' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('more')}>
-              <MoreHorizontal size={14} style={{ verticalAlign: 'middle', marginRight: 3 }} />More
-              {photos.length > 0 && <span className="qd-mobile-tab-dot" />}
+              {photos.length > 0 ? `Photos (${photos.length})` : (<><MoreHorizontal size={14} style={{ verticalAlign: 'middle', marginRight: 3 }} />More</>)}
             </button>
           </div>
 
@@ -663,8 +662,22 @@ export default function QuoteDetailPage() {
                       Add to calendar
                     </button>
                     <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => setShowChangeOrderModal(true)}>Change order</button>
+                    {userProfile && isPro(userProfile) && (
+                      <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }} title="Save this quote as a reusable template">
+                        Save as template
+                      </button>
+                    )}
                   </div>
                 </div>
+                {userProfile && isPro(userProfile) && quote.status === 'deposit_paid' && (
+                  <div className="qd-win-moment">
+                    <div className="qd-win-moment-emoji">🎉</div>
+                    <div className="qd-win-moment-body">
+                      <div className="qd-win-moment-title">Deposit received{quote.total > 0 ? ` — ${currency(quote.total)} job confirmed` : ''}</div>
+                      <div className="qd-win-moment-sub">{quote.customer?.name?.split(' ')[0] || 'Your customer'} is locked in. Create the invoice when the work is done.</div>
+                    </div>
+                  </div>
+                )}
                 {userProfile && !isPro(userProfile) && (
                   <div className="qd-pro-moment">
                     <div className="qd-pro-moment-left">
@@ -672,7 +685,16 @@ export default function QuoteDetailPage() {
                         🎉 {quote.customer?.name?.split(' ')[0] || 'Customer'} approved{quote.total > 0 ? ` — ${currency(quote.total)}` : ''}
                       </div>
                       <div className="qd-pro-moment-desc">
-                        Collect a deposit and invoice when the job's done. Both are Pro features — unlock them for $29/month. One closed job covers it for the year.
+                        {(() => {
+                          const total = quote.total || 0;
+                          const monthsCovered = total > 0 ? Math.round(total / 29) : 0;
+                          const roiNote = monthsCovered >= 2
+                            ? ` This job alone covers ${monthsCovered} months of Pro.`
+                            : monthsCovered === 1
+                              ? ' This job alone covers a month of Pro.'
+                              : ' One closed job typically covers it.';
+                          return `Collect a deposit and invoice when the job's done.${roiNote} Upgrade for $29/month.`;
+                        })()}
                       </div>
                     </div>
                     <Link to="/app/billing" className="btn btn-primary shrink-0 qd-pro-moment-btn">

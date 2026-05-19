@@ -3799,6 +3799,35 @@ a.dv2-headline-metric:hover {
   font-size: var(--text-xs) !important;
 }
 
+/* Job-won celebration (deposit paid, Pro users) */
+.qd-win-moment {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: var(--r-card);
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #bbf7d0;
+  margin-top: 6px;
+}
+.qd-win-moment-emoji {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.qd-win-moment-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #166534;
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+}
+.qd-win-moment-sub {
+  font-size: var(--text-xs);
+  color: #15803d;
+  line-height: 1.5;
+}
+
 /* Quote not found empty state */
 .qd-not-found {
   text-align: center;

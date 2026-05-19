@@ -405,7 +405,6 @@ export default function QuotesListPage() {
   return (
     <AppShell hideTitle>
       <PageHeader
-        kicker="Workspace"
         title="Quotes"
         subtitle={summary}
         actions={<Link to="/app/quotes/new" className="btn btn-primary pl-hide-mobile">New quote</Link>}

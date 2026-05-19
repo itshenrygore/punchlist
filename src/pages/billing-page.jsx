@@ -94,15 +94,15 @@ export default function BillingPage() {
                 <div className="bp-price-amount">${PRICING.monthly}</div>
                 <div className="bp-price-period">per month</div>
                 <button className="btn btn-secondary full-width" style={{ marginTop: 14 }} type="button" disabled={checkingOut} onClick={() => handleCheckout('monthly')}>
-                  {checkingOut ? 'Loading…' : 'Monthly'}
+                  {checkingOut ? 'Loading…' : 'Start monthly'}
                 </button>
               </div>
               <div className="bp-price-panel bp-price-panel--featured">
-                <div className="bp-price-badge">SAVE ${PRICING.annualSavings}</div>
-                <div className="bp-price-amount">${PRICING.annual}</div>
-                <div className="bp-price-period">per year · ${PRICING.annualMonthly}/mo</div>
+                <div className="bp-price-badge">Best value — save ${PRICING.annualSavings}</div>
+                <div className="bp-price-amount">${PRICING.annualMonthly}<span style={{ fontSize: '0.55em', fontWeight: 600, color: 'var(--text-2)', letterSpacing: 0 }}>/mo</span></div>
+                <div className="bp-price-period">billed ${PRICING.annual}/year</div>
                 <button className="btn btn-primary full-width" style={{ marginTop: 14 }} type="button" disabled={checkingOut} onClick={() => handleCheckout('yearly')}>
-                  {checkingOut ? 'Loading…' : 'Annual'}
+                  {checkingOut ? 'Loading…' : 'Start annual plan'}
                 </button>
               </div>
             </div>
