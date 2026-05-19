@@ -376,6 +376,49 @@ export default function InvoiceDetailPage() {
     } catch (e) { toast(friendly(e), 'error'); }
   }
 
+  // Mobile-aware PDF download — same Web Share API path as the quote
+  // page. Falls back to a regular download link when the share sheet
+  // isn't available or the file-share permission is missing.
+  const [pdfLoading, setPdfLoading] = useState(false);
+  async function handleDownloadPdf() {
+    if (!invoice?.share_token) return;
+    setPdfLoading(true);
+    try {
+      const url = `/api/export-pdf?invoice_token=${invoice.share_token}`;
+      const filename = `${(invoice.invoice_number || invoice.title || 'Invoice').replace(/[^a-zA-Z0-9 ]/g, '')}.pdf`;
+      const r = await fetch(url);
+      if (!r.ok || !r.headers.get('content-type')?.includes('pdf')) {
+        window.open(url, '_blank');
+        return;
+      }
+      const blob = await r.blob();
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare && navigator.share) {
+        try {
+          const file = new File([blob], filename, { type: 'application/pdf' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: invoice.title || invoice.invoice_number || 'Invoice' });
+            toast('Shared', 'success');
+            return;
+          }
+        } catch (e) {
+          if (e?.name === 'AbortError') return;
+        }
+      }
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = u;
+      a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(u), 5000);
+      toast(isMobile ? 'PDF saved' : 'PDF downloaded', 'success');
+    } catch (e) {
+      toast(friendly(e), 'error');
+    } finally {
+      setPdfLoading(false);
+    }
+  }
+
   // ── 5C: Reminder toggle ──
   async function toggleReminder(day) {
     const next = reminderSchedule.includes(day)
@@ -682,9 +725,9 @@ export default function InvoiceDetailPage() {
                       Sent {formatDate(invoice.issued_at || invoice.updated_at)}
                     </div>
                   )}
-                  <button className="btn btn-secondary full-width" type="button" onClick={() => {
-                    window.location.href = `/api/export-pdf?invoice_token=${invoice.share_token}`;
-                  }}>Download PDF</button>
+                  <button className="btn btn-secondary full-width" type="button" disabled={pdfLoading} onClick={handleDownloadPdf}>
+                    {pdfLoading ? 'Generating…' : 'Download PDF'}
+                  </button>
                   <a href={customerUrl} target="_blank" rel="noreferrer" className="qd-share-link id-preview-link">Preview customer view ↗</a>
                   <button className="btn btn-secondary full-width id-edit-btn" type="button" onClick={startEditing} >
                     Edit invoice

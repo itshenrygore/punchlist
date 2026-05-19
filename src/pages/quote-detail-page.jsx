@@ -510,28 +510,42 @@ export default function QuoteDetailPage() {
     setPdfLoading(true);
     try {
       const url = `/api/export-pdf?token=${quote.share_token}`;
-      const mob = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (mob) {
-        const t = await fetch(url, { method: 'HEAD' }).catch(() => null);
-        if (t?.ok) { window.location.href = url; showToast('Opening PDF…', 'success'); }
-        else { window.open(`/public/${quote.share_token}?print=1`, '_blank'); }
-      } else {
-        const r = await fetch(url);
-        if (r.ok && r.headers.get('content-type')?.includes('pdf')) {
-          const b = await r.blob();
-          const u = URL.createObjectURL(b);
-          const a = document.createElement('a');
-          a.href = u;
-          a.download = `${(quote.title || 'Quote').replace(/[^a-zA-Z0-9 ]/g, '')}.pdf`;
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(u), 5000);
-          showToast('PDF downloaded', 'success');
-        } else {
-          window.open(`/public/${quote.share_token}?print=1`, '_blank');
+      const filename = `${(quote.title || 'Quote').replace(/[^a-zA-Z0-9 ]/g, '')}.pdf`;
+      const r = await fetch(url);
+      if (!r.ok || !r.headers.get('content-type')?.includes('pdf')) {
+        window.open(`/public/${quote.share_token}?print=1`, '_blank');
+        return;
+      }
+      const blob = await r.blob();
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      // Prefer the native share sheet on mobile when available — lets
+      // the contractor send the PDF straight to AirDrop / Messages /
+      // Mail without going through the Safari download tray. Falls
+      // back to a normal download if the file-share path is blocked.
+      if (isMobile && navigator.canShare && navigator.share) {
+        try {
+          const file = new File([blob], filename, { type: 'application/pdf' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: quote.title || 'Quote' });
+            showToast('Shared', 'success');
+            return;
+          }
+        } catch (e) {
+          // AbortError just means the user cancelled the share sheet —
+          // not a failure, don't fall through to the download.
+          if (e?.name === 'AbortError') return;
         }
       }
-    } catch { window.open(`/public/${quote.share_token}?print=1`, '_blank'); }
-    finally { setPdfLoading(false); }
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = u;
+      a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(u), 5000);
+      showToast(isMobile ? 'PDF saved' : 'PDF downloaded', 'success');
+    } catch {
+      window.open(`/public/${quote.share_token}?print=1`, '_blank');
+    } finally { setPdfLoading(false); }
   }
 
   async function markDepositPaid() {
