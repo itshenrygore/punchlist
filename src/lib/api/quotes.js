@@ -365,11 +365,20 @@ export async function sendQuoteEmail(quoteId, to) {
   return d;
 }
 
-export async function replyToCustomer(shareToken, reply, userId) {
+export async function replyToCustomer(shareToken, reply) {
+  // Auth is via the contractor's session JWT (server verifies the
+  // resolved user owns the quote). Previously this sent contractor_user_id
+  // in the body which the server trusted — IDOR. The userId arg is no
+  // longer used; kept-out so existing callers don't need to change.
+  const headers = { 'Content-Type': 'application/json' };
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+  } catch (e) { console.warn('[PL]', e); }
   const r = await fetch('/api/public-quote-action', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: shareToken, action: 'contractor_reply', reply, contractor_user_id: userId }),
+    headers,
+    body: JSON.stringify({ token: shareToken, action: 'contractor_reply', reply }),
   });
   const d = await r.json();
   if (!r.ok) throw new Error(d.error || 'Unable to send reply');
@@ -593,12 +602,24 @@ export async function createInvoiceFromQuote(userId, quote) {
 
 // Expire stale quotes client-side (no-cron solution).
 // Call fire-and-forget on dashboard load to keep DB status accurate.
+//
+// Defensive scope: we explicitly filter on the caller's user_id even
+// though RLS already does. If RLS is ever briefly off during a
+// migration this prevents a single dashboard load from flipping every
+// contractor's sent/viewed quotes platform-wide.
 export async function expireStaleDrafts() {
-  const now = new Date().toISOString();
-  await supabase
-    .from('quotes')
-    .update({ status: 'expired' })
-    .in('status', ['sent', 'viewed'])
-    .lt('expires_at', now)
-    .not('expires_at', 'is', null);
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return;
+    const now = new Date().toISOString();
+    await supabase
+      .from('quotes')
+      .update({ status: 'expired' })
+      .eq('user_id', user.id)
+      .in('status', ['sent', 'viewed'])
+      .lt('expires_at', now)
+      .not('expires_at', 'is', null);
+  } catch (e) {
+    console.warn('[PL] expireStaleDrafts:', e?.message);
+  }
 }

@@ -15,8 +15,14 @@ export default function LoginPage() {
 
   async function handleForgotPassword() {
     if (!email.trim()) { setError('Enter your email first, then click Forgot password'); return; }
+    // Basic format check so users don't get a false "Check your email"
+    // confirmation when they typed something obviously wrong.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('That doesn’t look like a valid email — fix the typo and try again.');
+      return;
+    }
     try {
-      await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/app/settings` });
+      await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/app/settings` });
       setForgotSent(true);
       setError('');
     } catch { setError('Could not send reset email. Try again.'); }

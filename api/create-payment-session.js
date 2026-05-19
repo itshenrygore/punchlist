@@ -137,6 +137,11 @@ export default async function handler(req, res) {
     // ── INVOICE payment ──
     if (type === 'invoice') {
       if (!invoiceId) return res.status(400).json({ error: 'Missing invoiceId' });
+      // The caller must hold the share token. Previously the check was
+      // `if (shareToken && ...)` which was skipped entirely when the
+      // caller omitted shareToken — leaking the customer email + total
+      // for any invoiceId. Now: require it.
+      if (!shareToken) return res.status(400).json({ error: 'Missing shareToken' });
 
       // Get invoice
       const { data: invoice, error: iErr } = await supabase
@@ -148,8 +153,8 @@ export default async function handler(req, res) {
       if (iErr || !invoice) return res.status(404).json({ error: 'Invoice not found' });
       if (invoice.status === 'paid') return res.status(400).json({ error: 'Invoice already paid' });
 
-      // Verify share token if provided
-      if (shareToken && invoice.share_token && invoice.share_token !== shareToken) {
+      // Verify share token matches the invoice.
+      if (!invoice.share_token || invoice.share_token !== shareToken) {
         return res.status(403).json({ error: 'Invalid token' });
       }
 

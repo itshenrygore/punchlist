@@ -222,8 +222,34 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const { token, action, status, feedback, decline_reason } = req.body || {};
+  let { token, action, status, feedback, decline_reason } = req.body || {};
   if (!token) return res.status(400).json({ error: 'Missing token' });
+
+  // ── Public input size caps ──
+  // These fields come from a (presumed) customer browser hitting a
+  // share-token URL. Cap each before it ever reaches the DB so a
+  // malicious caller can't write megabytes into the row.
+  const cap = (v, n) => (typeof v === 'string' ? v.slice(0, n) : v);
+  feedback = cap(feedback, 1000);
+  decline_reason = cap(decline_reason, 1000);
+  if (typeof req.body?.signer_name === 'string') req.body.signer_name = req.body.signer_name.slice(0, 100);
+  if (typeof req.body?.question === 'string') req.body.question = req.body.question.slice(0, 1000);
+  if (typeof req.body?.reply === 'string') req.body.reply = req.body.reply.slice(0, 4000);
+  // signature_data is a base64 data URL. Cap to ~300KB which is plenty
+  // for a typed/drawn signature, and reject anything that isn't a
+  // data:image/... prefix so a caller can't just store arbitrary text.
+  if (typeof req.body?.signature_data === 'string') {
+    if (req.body.signature_data.length > 300_000 || !/^data:image\//.test(req.body.signature_data)) {
+      return res.status(400).json({ error: 'Invalid signature data' });
+    }
+  }
+  if (Array.isArray(req.body?.selected_optional_ids)) {
+    // Must be UUID strings; cap count.
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    req.body.selected_optional_ids = req.body.selected_optional_ids
+      .filter(s => typeof s === 'string' && UUID.test(s))
+      .slice(0, 50);
+  }
 
   // Rate limit: 40 requests/min per IP for views, 10/min for mutations
   const ip = getClientIp(req);
@@ -617,11 +643,23 @@ export default async function handler(req, res) {
     }
 
     // CONTRACTOR REPLY — appends to conversation and emails customer
+    //
+    // Auth: the previous implementation trusted a client-supplied
+    // `contractor_user_id` field, which is IDOR — anyone who knows the
+    // share token plus the owner's UUID can impersonate them. Now we
+    // require the contractor's session JWT in the Authorization header
+    // and resolve the user from Supabase, then verify ownership.
     if (action === 'contractor_reply') {
-      const { reply, contractor_user_id } = req.body || {};
+      const { reply } = req.body || {};
       if (!reply?.trim()) return res.status(400).json({ error: 'Reply is required' });
-      // Verify the request comes from the quote owner
-      if (!contractor_user_id || contractor_user_id !== quote.user_id) {
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      const token = authHeader.slice(7);
+      const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr || !authUser || authUser.id !== quote.user_id) {
         return res.status(403).json({ error: 'Not authorized to reply on this quote' });
       }
       const existingConversation = Array.isArray(quote.conversation) ? quote.conversation : [];

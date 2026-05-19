@@ -1389,7 +1389,7 @@ export default function QuoteBuilderPage() {
               {/* Settings row */}
               <div className="rq-settings-row qb-settings-grid">
                 <div><label className="qb-settings-label">{country === 'US' ? 'State' : 'Province'} (tax)</label><select className="input qb-settings-select" value={province} onChange={e => setProvince(e.target.value)}>{(country === 'CA' ? CA_PROVINCES : US_STATES).map(p => <option key={p}>{p}</option>)}</select></div>
-                <div><label className="qb-settings-label">Deposit</label><div className="qb-deposit-row"><label className="qb-deposit-check"><input type="checkbox" checked={draft.deposit_required} onChange={e => ud('deposit_required', e.target.checked)} style={{ accentColor: 'var(--brand)' }} /><span>Require deposit</span></label>{draft.deposit_required && <div className="qb-deposit-pct-row"><input className="rq-deposit-input" type="number" min="0" inputMode="decimal" value={draft.deposit_percent || ''} onChange={e => { const pct = Number(e.target.value) || 0; ud('deposit_percent', pct); ud('deposit_amount', Math.round(Math.max(0, totals.subtotal - (draft.discount || 0)) * pct / 100)); }} style={{ width: 50 }} /><span className="qb-deposit-pct-label">%</span></div>}</div></div>
+                <div><label className="qb-settings-label">Deposit</label><div className="qb-deposit-row"><label className="qb-deposit-check"><input type="checkbox" checked={draft.deposit_required} onChange={e => ud('deposit_required', e.target.checked)} style={{ accentColor: 'var(--brand)' }} /><span>Require deposit</span></label>{draft.deposit_required && <div className="qb-deposit-pct-row"><input className="rq-deposit-input" type="number" min="0" inputMode="decimal" value={draft.deposit_percent || ''} onChange={e => { const n = Number(e.target.value); const pct = Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0; ud('deposit_percent', pct); ud('deposit_amount', Math.round(Math.max(0, totals.subtotal - (draft.discount || 0)) * pct / 100)); }} style={{ width: 50 }} /><span className="qb-deposit-pct-label">%</span></div>}</div></div>
               </div>
 
               {/* Assumptions/Exclusions (collapsed) */}
@@ -1461,7 +1461,7 @@ export default function QuoteBuilderPage() {
                       <span className="pl-stat-label">Discount</span>
                       <div className="qb-discount-row">
                         <span className="qb-discount-prefix">−$</span>
-                        <input className="rq-discount-input tabular" type="number" min="0" inputMode="decimal" value={draft.discount || ''} onChange={e => ud('discount', Number(e.target.value) || 0)} placeholder="0" aria-label="Discount amount" />
+                        <input className="rq-discount-input tabular" type="number" min="0" inputMode="decimal" value={draft.discount || ''} onChange={e => { const n = Number(e.target.value); ud('discount', Number.isFinite(n) ? Math.max(0, Math.min(1e7, n)) : 0); }} placeholder="0" aria-label="Discount amount" />
                       </div>
                     </div>
                     <Stat label={`Tax (${province})`} value={Math.round(Math.max(0, totals.subtotal - (draft.discount || 0)) * totals.rate)} prefix="$" countUp={true} align="end" />

@@ -88,6 +88,13 @@ export default function InvoiceDetailPage() {
   }, [invoice?.id, profile?.id]);
 
   async function handleMarkPaid() {
+    // No-op if already paid. The previous implementation re-ran on
+    // double-click, which (a) clobbered the original paid_at timestamp
+    // and (b) spawned an extra recurring-invoice draft each time.
+    if (invoice.status === 'paid') {
+      toast('Invoice is already marked paid', 'info');
+      return;
+    }
     setPaying(true);
     try {
       const updated = await markInvoicePaid(invoice.id, payMethod || null);
@@ -108,6 +115,10 @@ export default function InvoiceDetailPage() {
     toast(interval ? `Set to repeat ${interval}` : 'Recurring disabled', 'success');
   }
 
+  // Returns true if the status flip succeeded, false otherwise. Callers
+  // must gate the actual delivery (email / SMS / copy) on this so we
+  // don't text "your invoice is ready" while the invoice is still draft
+  // in the DB.
   async function handleSend() {
     try {
       const now = new Date().toISOString();
@@ -117,11 +128,12 @@ export default function InvoiceDetailPage() {
         issued_at: invoice.issued_at || now,
       });
       setInvoice(p => ({ ...p, ...updated }));
-    } catch (e) { toast(friendly(e), 'error'); return; }
+      return true;
+    } catch (e) { toast(friendly(e), 'error'); return false; }
   }
 
   async function handleSendEmail() {
-    await handleSend();
+    if (!(await handleSend())) return;
     const customerEmail = invoice.customer?.email;
     if (!customerEmail) { toast('No email on file for this customer', 'error'); return; }
     const firstName = invoice.customer?.name?.split(' ')[0] || '';
@@ -169,7 +181,7 @@ export default function InvoiceDetailPage() {
   }
 
   async function handleSendText() {
-    await handleSend();
+    if (!(await handleSend())) return;
     const phone = invoice.customer?.phone;
     if (!phone) { toast('No phone on file for this customer', 'error'); return; }
     const firstName = invoice.customer?.name?.split(' ')[0] || '';
@@ -194,7 +206,7 @@ export default function InvoiceDetailPage() {
   }
 
   async function handleSendCopy() {
-    await handleSend();
+    if (!(await handleSend())) return;
     const url = `${window.location.origin}/public/invoice/${invoice.share_token}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -231,7 +243,15 @@ export default function InvoiceDetailPage() {
   }
 
   function updateEditItem(idx, field, value) {
-    setEditItems(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
+    // Clamp money/quantity fields so a fat-finger "1e500" can't write
+    // Infinity into the DB and break totals downstream. Free-text
+    // fields (name, notes) pass through unchanged.
+    let v = value;
+    if (field === 'unit_price' || field === 'quantity') {
+      const n = Number(value);
+      v = !Number.isFinite(n) || n < 0 ? 0 : Math.min(n, 1e7);
+    }
+    setEditItems(prev => prev.map((item, i) => i === idx ? { ...item, [field]: v } : item));
   }
 
   async function saveEdits() {
@@ -356,7 +376,7 @@ export default function InvoiceDetailPage() {
                 <div><span className="field-label">Description</span><textarea className="input textarea-sm" value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={2} /></div>
                 <div className="id-edit-row-2col">
                   <div><span className="field-label">Due date</span><input className="input" type="date" value={editDueAt} onChange={e => setEditDueAt(e.target.value)} /></div>
-                  <div><span className="field-label">Discount ($)</span><input className="input" type="number" min="0" step="1" value={editDiscount} onChange={e => setEditDiscount(Number(e.target.value))} /></div>
+                  <div><span className="field-label">Discount ($)</span><input className="input" type="number" min="0" step="1" value={editDiscount} onChange={e => { const n = Number(e.target.value); setEditDiscount(!Number.isFinite(n) || n < 0 ? 0 : Math.min(n, 1e7)); }} /></div>
                 </div>
               </div>
               <div className="id-edit-items">

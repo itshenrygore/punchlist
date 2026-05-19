@@ -210,10 +210,24 @@ export default function PublicQuoteView({
         }),
       });
       const data = await r.json();
-      if (data.url) window.location.href = data.url;
+      // Verify the redirect target before sending the customer there.
+      // The endpoint should only ever return a Stripe URL \u2014 if it
+      // returns something else (compromised endpoint, MITM, bug),
+      // refuse rather than redirect into a phishing checkout.
+      if (data.url && isTrustedPaymentUrl(data.url)) window.location.href = data.url;
+      else if (data.url) setError('Payment provider returned an unexpected URL \u2014 please contact your contractor.');
       else setError('Couldn\u2019t start payment. Try again, or contact your contractor.');
     } catch { setError('Couldn\u2019t reach the payment processor. Try again in a moment.'); }
     finally { setPayLoading(false); }
+  }
+
+  function isTrustedPaymentUrl(url) {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== 'https:') return false;
+      const h = u.hostname.toLowerCase();
+      return h === 'checkout.stripe.com' || h.endsWith('.stripe.com');
+    } catch { return false; }
   }
 
   // Lock body scroll when overlay is open (prevents iOS background scroll)

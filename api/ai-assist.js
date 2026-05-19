@@ -112,18 +112,25 @@ async function executeTool(name, args, userId, supabase) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (blocked(res, `ai-assist:${getClientIp(req)}`, 20, 60_000)) return;
-  const { messages = [], userId, trade = 'Other', province = 'AB', country = 'CA', labourRate = 0, quoteContext = null } = req.body || {};
+  let { messages = [], userId, trade = 'Other', province = 'AB', country = 'CA', labourRate = 0, quoteContext = null } = req.body || {};
   if (!messages.length) return res.status(400).json({ error: 'No messages' });
 
-  // Auth: verify the caller owns this userId
+  // Auth: ALWAYS require a verified JWT. The previous version only ran
+  // the auth check when both `userId` was in the body AND a Supabase
+  // client was constructable — so a caller omitting `userId` could
+  // drain Anthropic credits anonymously. Now we always derive the user
+  // from the bearer token and require it.
   const supabaseAuth = getSupabase();
-  if (supabaseAuth && userId) {
-    const authHeader = req.headers['authorization'] || '';
-    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(token);
-    if (authErr || !user || user.id !== userId) return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!supabaseAuth) return res.status(500).json({ error: 'Server configuration error' });
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const { data: { user: authedUser }, error: authErr } = await supabaseAuth.auth.getUser(token);
+  if (authErr || !authedUser) return res.status(401).json({ error: 'Unauthorized' });
+  // Trust the resolved user.id; only use a body-supplied userId if it matches.
+  if (userId && userId !== authedUser.id) return res.status(403).json({ error: 'Mismatched user' });
+  // From here on, downstream code references `userId` — use the verified value.
+  userId = authedUser.id;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(200).json({ role: 'assistant', content: 'Foreman needs an API key. Add ANTHROPIC_API_KEY to your Vercel environment.' });

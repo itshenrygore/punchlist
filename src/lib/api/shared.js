@@ -17,7 +17,11 @@ export function friendly(err) {
   if (msg.includes('timeout') || msg.includes('abort')) return 'Request timed out. Try again.';
   if (msg.includes('rate limit') || msg.includes('429')) return 'Too many requests in a row. Wait a moment and try again.';
   if (msg.includes('column') && msg.includes('does not exist')) return 'Something went wrong loading your data. Try refreshing the page.';
-  if (/[_]|SELECT|INSERT|UPDATE|DELETE|FROM|WHERE/i.test(msg)) return 'Something broke on our end. Try again in a moment.';
+  // Hide raw SQL error text from users. The previous version also
+  // matched any underscore, which swallowed perfectly useful messages
+  // like "invalid_request" or "user_metadata invalid". Narrowed to
+  // actual SQL keyword tokens.
+  if (/\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN|RETURNING)\b/i.test(msg)) return 'Something broke on our end. Try again in a moment.';
   if (msg.length < 120 && !/^\{/.test(msg)) return msg;
   return 'Something broke on our end. Try again in a moment.';
 }

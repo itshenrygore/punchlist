@@ -112,15 +112,25 @@ export async function updateInvoiceStatus(invoiceId, updates) {
 }
 
 export async function markInvoicePaid(invoiceId, paymentMethod = null) {
+  // Idempotent: if the invoice is already paid, leave paid_at alone so
+  // we don't clobber the original payment timestamp on a double-click.
+  // Only set paid_at when transitioning out of an unpaid state.
+  const { data: current } = await supabase
+    .from('invoices')
+    .select('status, paid_at')
+    .eq('id', invoiceId)
+    .maybeSingle();
+  const wasPaid = current?.status === 'paid' && current?.paid_at;
+  const payload = {
+    status: 'paid',
+    payment_method: paymentMethod || null,
+    remaining_balance: 0,
+    updated_at: new Date().toISOString(),
+  };
+  if (!wasPaid) payload.paid_at = new Date().toISOString();
   const { data, error } = await supabase
     .from('invoices')
-    .update({
-      status: 'paid',
-      paid_at: new Date().toISOString(),
-      payment_method: paymentMethod || null,
-      remaining_balance: 0,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq('id', invoiceId)
     .select()
     .single();
@@ -187,12 +197,17 @@ export async function listPayments(invoiceId) {
 }
 
 export async function recordPayment(userId, invoiceId, { amount, method, notes }) {
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n <= 0) {
+    throw new Error('Enter a payment amount greater than zero.');
+  }
+  const safeAmount = Math.min(n, 1e7);
   const { data, error } = await supabase
     .from('payments')
     .insert({
       user_id: userId,
       invoice_id: invoiceId,
-      amount: Number(amount),
+      amount: safeAmount,
       method: method || null,
       notes: notes || null,
       paid_at: new Date().toISOString(),
@@ -220,7 +235,13 @@ export async function deletePayment(paymentId, invoiceId) {
     const { data: allPays } = await supabase.from('payments').select('amount').eq('invoice_id', invoiceId);
     const totalPaid = (allPays || []).reduce((s, p) => s + Number(p.amount || 0), 0);
     const remaining = Math.max(0, Number(inv.total) - Number(inv.deposit_credited || 0) - totalPaid);
-    await supabase.from('invoices').update({ remaining_balance: remaining, status: remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'sent', updated_at: new Date().toISOString() }).eq('id', invoiceId);
+    const nextStatus = remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'sent';
+    // If we're transitioning OUT of 'paid' (e.g. a payment was deleted
+    // and there's now a balance), clear paid_at so the dashboard doesn't
+    // show the invoice as both unpaid AND with a paid_at timestamp.
+    const update = { remaining_balance: remaining, status: nextStatus, updated_at: new Date().toISOString() };
+    if (nextStatus !== 'paid') update.paid_at = null;
+    await supabase.from('invoices').update(update).eq('id', invoiceId);
   }
 }
 

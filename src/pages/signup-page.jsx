@@ -98,6 +98,7 @@ export default function SignupPage() {
   async function handleStep2() {
     setLoading(true);
     setError('');
+    let saveFailed = false;
     try {
       // Use the userId we already captured in step 1 — no need to re-fetch
       if (userId) {
@@ -105,15 +106,19 @@ export default function SignupPage() {
       }
     } catch (e) {
       // Non-blocking: profile was already partially created by the handle_new_user trigger,
-      // so the user can proceed. Settings page allows correction later.
+      // so the user can proceed. But surface the failure so they know
+      // to correct trade/region in Settings (otherwise tax rates are
+      // off and the AI prompt uses defaults).
+      saveFailed = true;
       console.warn('[Punchlist] Step 2 profile save error:', e.message);
     }
     setLoading(false);
-    // Mark that we came from onboarding so dashboard knows
     try { localStorage.setItem('pl_first_run', '1'); } catch (e) { console.warn("[PL]", e); }
-    // Mark onboarded so the wizard doesn't show again on dashboard
     try { localStorage.setItem('pl_onboarded', '1'); } catch (e) { console.warn("[PL]", e); }
     if (userId) trackSignup(userId, trade);
+    if (saveFailed) {
+      try { sessionStorage.setItem('pl_profile_save_failed', '1'); } catch { /* ignore */ }
+    }
     navigate('/app/quotes/new', { replace: true });
   }
 
