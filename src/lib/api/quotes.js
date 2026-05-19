@@ -537,12 +537,39 @@ export async function deleteQuotePhoto(path) {
   if (error) throw new Error(friendly(error));
 }
 
-export async function createInvoiceFromQuote(userId, quote) {
+/**
+ * Create an invoice from an approved quote.
+ *
+ * `opts` lets the caller override the conversion behavior:
+ *   - opts.invoiceAmount      'full' (default) | 'balance' | number
+ *     'full'    = total
+ *     'balance' = total - deposit_credited (the contractor's typical case)
+ *     <number>  = custom milestone billing (e.g. half-now half-later)
+ *   - opts.dueAt              ISO date — overrides profile.invoice_due_days
+ *   - opts.sendNow            { channel: 'email'|'sms'|'copy' }  — if set,
+ *                             we flip status to 'sent' immediately and the
+ *                             caller is responsible for the actual SMS/email
+ *                             dispatch (we expose this on the returned
+ *                             invoice so the UI knows what banner to show).
+ *
+ * Backward compatible with existing one-arg callers.
+ */
+export async function createInvoiceFromQuote(userId, quote, opts = {}) {
   if (!userId || !quote?.id) throw new Error('userId and quote are required');
 
   const depositCredited = quote.deposit_status === 'paid' ? Number(quote.deposit_amount || 0) : 0;
-  const total = Number(quote.total || 0);
-  const remainingBalance = Math.max(0, total - depositCredited);
+  const quoteTotal = Number(quote.total || 0);
+
+  // Resolve the headline `total` for this invoice. Contractors don't
+  // always invoice the entire approved value at once — a kitchen reno
+  // gets billed in milestones, deposits get credited, etc.
+  let invoiceTotal = quoteTotal;
+  if (opts.invoiceAmount === 'balance') {
+    invoiceTotal = Math.max(0, quoteTotal - depositCredited);
+  } else if (typeof opts.invoiceAmount === 'number' && Number.isFinite(opts.invoiceAmount)) {
+    invoiceTotal = Math.max(0, Math.min(1e7, opts.invoiceAmount));
+  }
+  const remainingBalance = Math.max(0, invoiceTotal - depositCredited);
 
   // Use the contractor's configured invoice_due_days (Settings →
   // Payments) rather than a hardcoded 30-day default. A roofer doing
@@ -551,6 +578,7 @@ export async function createInvoiceFromQuote(userId, quote) {
   let invoiceDueDays = 30;
   let profilePaymentMethods = null;
   let profilePaymentInstructions = null;
+  let profileInvoiceNote = '';
   try {
     const { data: profile } = await supabase
       .from('profiles')
@@ -562,9 +590,12 @@ export async function createInvoiceFromQuote(userId, quote) {
     }
     if (Array.isArray(profile?.payment_methods)) profilePaymentMethods = profile.payment_methods;
     if (typeof profile?.payment_instructions === 'string') profilePaymentInstructions = profile.payment_instructions;
-    var profileInvoiceNote = typeof profile?.invoice_note === 'string' ? profile.invoice_note : ''; // eslint-disable-line no-var
+    if (typeof profile?.invoice_note === 'string') profileInvoiceNote = profile.invoice_note;
   } catch { /* fall back to defaults */ }
-  const dueAt = new Date(Date.now() + invoiceDueDays * 86400000).toISOString();
+  const dueAt = opts.dueAt || new Date(Date.now() + invoiceDueDays * 86400000).toISOString();
+
+  const initialStatus = opts.sendNow ? 'sent' : 'draft';
+  const nowIso = new Date().toISOString();
 
   const insertPayload = {
     user_id: userId,
@@ -572,11 +603,11 @@ export async function createInvoiceFromQuote(userId, quote) {
     customer_id: quote.customer_id || null,
     title: quote.title || 'Invoice',
     description: quote.scope_summary || quote.description || '',
-    status: 'draft',
+    status: initialStatus,
     subtotal: Number(quote.subtotal || 0),
     tax: Number(quote.tax || 0),
     discount: Number(quote.discount || 0),
-    total,
+    total: invoiceTotal,
     deposit_credited: depositCredited,
     remaining_balance: remainingBalance,
     province: quote.province || 'ON',
@@ -586,8 +617,12 @@ export async function createInvoiceFromQuote(userId, quote) {
     // present — `quote.internal_notes` contains contractor-only musings
     // ("Change request: blah", scratch pricing thoughts) that should
     // NOT bleed onto the customer's invoice. Falls back to empty.
-    notes: typeof profileInvoiceNote !== 'undefined' && profileInvoiceNote.trim() ? profileInvoiceNote : null,
+    notes: profileInvoiceNote.trim() ? profileInvoiceNote : null,
   };
+  if (initialStatus === 'sent') {
+    insertPayload.sent_at = nowIso;
+    insertPayload.issued_at = nowIso;
+  }
   // Best-effort: copy payment_methods / payment_instructions from profile
   // so the invoice doesn't render with the empty payment block.
   if (profilePaymentMethods) insertPayload.payment_methods = profilePaymentMethods;

@@ -5,6 +5,9 @@ import AppShell from '../components/app-shell';
 import { QuoteDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
 import UpgradePrompt from '../components/upgrade-prompt';
+import ConvertInvoiceSheet from '../components/convert-invoice-sheet';
+import '../styles/convert-invoice-sheet.css';
+import { sendInvoiceEmail } from '../lib/api/invoices';
 import { calculateTotals } from '../lib/pricing';
 import { currency, formatDate, formatQuoteNumber, friendly } from '../lib/format';
 import { deleteQuote, duplicateQuote, getQuote, getProfile, updateQuoteStatus, markFollowedUp, createInvoiceFromQuoteWithAdditionalWork, uploadQuotePhoto, listQuotePhotos, deleteQuotePhoto, replyToCustomer } from '../lib/api';
@@ -162,6 +165,7 @@ export default function QuoteDetailPage() {
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [followingUp, setFollowingUp] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [showConvertSheet, setShowConvertSheet] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [annotatingPhoto, setAnnotatingPhoto] = useState(null);
@@ -248,15 +252,79 @@ export default function QuoteDetailPage() {
   const cName = userProfile?.company_name || userProfile?.full_name || '';
 
   // Actions
-  async function handleCreateInvoice() {
+  // Opening the convert sheet (not creating the invoice yet) — the
+  // sheet collects amount mode, due date, and send channel from the
+  // contractor in one screen.
+  function handleCreateInvoice() {
+    setShowConvertSheet(true);
+  }
+
+  // Sheet-confirmed conversion: actually create the invoice, optionally
+  // send it via the chosen channel, then land the contractor on the
+  // freshly-issued invoice (not a draft to remember to send).
+  async function handleConfirmConvert({ amountMode, customAmount, dueAt, sendChannel }) {
     setCreatingInvoice(true);
     try {
-      const inv = await createInvoiceFromQuoteWithAdditionalWork(user.id, quote);
+      const inv = await createInvoiceFromQuoteWithAdditionalWork(user.id, quote, {
+        invoiceAmount: amountMode === 'custom' ? customAmount : amountMode, // 'full' | 'balance' | <number>
+        dueAt,
+        sendNow: sendChannel ? { channel: sendChannel } : null,
+      });
+
+      // Fire the actual send. The server already flipped the invoice
+      // to status='sent' when sendNow was set — this dispatches the
+      // outbound message itself. We tolerate failure (the invoice
+      // exists; the contractor can resend from the invoice page).
+      let sendSucceeded = false;
+      if (sendChannel === 'email' && quote.customer?.email) {
+        try {
+          await sendInvoiceEmail({ invoice: { ...inv, customer: quote.customer }, profile: userProfile, payments: [] });
+          sendSucceeded = true;
+        } catch (e) { console.warn('[PL] invoice email failed', e?.message); }
+      } else if (sendChannel === 'sms' && quote.customer?.phone) {
+        try {
+          const { smsNotify } = await import('../lib/sms');
+          const r = await smsNotify.invoiceReady({
+            to: quote.customer.phone,
+            contractorName: cName || userProfile?.company_name || userProfile?.full_name || 'Your contractor',
+            invoiceTitle: (inv.title || 'your invoice').slice(0, 40),
+            total: currency(Number(inv.remaining_balance ?? inv.total) || 0, inv.country),
+            shareToken: inv.share_token,
+            country: inv.country,
+          });
+          sendSucceeded = Boolean(r?.ok);
+        } catch (e) { console.warn('[PL] invoice sms failed', e?.message); }
+      } else if (sendChannel === 'copy' && inv.share_token) {
+        try {
+          await navigator.clipboard.writeText(`${window.location.origin}/i/${inv.share_token}`);
+          sendSucceeded = true;
+        } catch { /* clipboard blocked — surface the URL */ }
+      }
+
       setQuote(p => ({ ...p, status: 'converted_to_invoice', invoice_id: inv.id }));
-      showToast('Invoice created', 'success');
       haptic('success');
-      navigate(`/app/invoices/${inv.id}`);
-    } catch (e) { showToast(friendly(e), 'error'); }
+      setShowConvertSheet(false);
+      const verbed =
+        sendChannel === 'email' ? 'emailed' :
+        sendChannel === 'sms'   ? 'texted'  :
+        sendChannel === 'copy'  ? 'link copied' : 'saved';
+      showToast(
+        sendChannel && sendSucceeded
+          ? `Invoice ${verbed} to ${quote.customer?.name?.split(' ')[0] || 'customer'}`
+          : 'Invoice created',
+        'success',
+      );
+      // Hand the freshly-created invoice to the next page via location
+      // state so the detail page can render its header immediately —
+      // skips the skeleton flash. Also tells the page whether to show
+      // the "sent X seconds ago" banner.
+      navigate(`/app/invoices/${inv.id}`, {
+        state: { preview: inv, justSent: sendChannel && sendSucceeded ? { channel: sendChannel } : null },
+      });
+    } catch (e) {
+      showToast(friendly(e), 'error');
+      throw e; // bubble so the sheet stays open and shows the inline error
+    }
     finally { setCreatingInvoice(false); }
   }
 
@@ -943,6 +1011,14 @@ export default function QuoteDetailPage() {
           onSent={handleNudgeSent}
         />
       )}
+
+      <ConvertInvoiceSheet
+        open={showConvertSheet}
+        quote={quote}
+        defaultDueDays={userProfile?.invoice_due_days || 30}
+        onCancel={() => setShowConvertSheet(false)}
+        onConfirm={handleConfirmConvert}
+      />
 
     </AppShell>
     {showSaveTemplate && (
