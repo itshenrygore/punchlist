@@ -87,9 +87,15 @@ export default function DashboardPage() {
         if (profile) setUserProfile(profile);
         setCustomerCount((customers || []).length);
 
-        // Show onboarding if first visit
+        // Show onboarding if first visit OR if the user landed here
+        // via the email-confirmation path that skipped signup step 2.
+        // Signal: profile.trade is missing/Other AND no quotes yet —
+        // we'd otherwise sabotage their first AI scope with wrong
+        // trade/region defaults.
         try {
-          if (!localStorage.getItem('pl_onboarded') && active.length === 0) {
+          const tradeMissing = !profile?.trade || profile.trade === 'Other';
+          const firstVisit = !localStorage.getItem('pl_onboarded');
+          if ((firstVisit && active.length === 0) || (tradeMissing && active.length === 0)) {
             setShowOnboarding(true);
           }
         } catch { /* no-op */ }
