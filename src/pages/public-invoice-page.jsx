@@ -60,26 +60,74 @@ export default function PublicInvoicePage() {
       .finally(() => setLoading(false));
   }, [shareToken]);
 
-  // Poll for payment confirmation after Stripe redirect
+  // ── Stripe payment-confirmation polling ──
+  // The previous implementation polled 10 × 3s and then silently
+  // stopped, leaving the customer staring at "Payment processing" with
+  // no way to know whether their money landed. The new flow:
+  //   1) Polls with light backoff (3s × 5, then 5s × 6, then 10s × 6)
+  //      for ~75s total before declaring "still pending" — long enough
+  //      to absorb Stripe webhook lag without abandoning the customer.
+  //   2) Exposes pollPhase so the banner can show:
+  //        polling   → pulsing spinner + "Confirming your payment…"
+  //        confirmed → "Invoice paid" (handled by isPaid)
+  //        slow      → "Taking longer than usual…" + manual retry CTA
+  const [pollPhase, setPollPhase] = useState('idle'); // 'idle' | 'polling' | 'slow' | 'confirmed'
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') !== 'success' || !invoice || invoice.status === 'paid') return;
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts++;
-      if (attempts > 10) { clearInterval(interval); return; }
+    setPollPhase('polling');
+
+    let cancelled = false;
+    const schedule = [
+      3000, 3000, 3000, 3000, 3000,
+      5000, 5000, 5000, 5000, 5000, 5000,
+      10000, 10000, 10000, 10000, 10000, 10000,
+    ];
+    let attempt = 0;
+    let timer;
+
+    async function tick() {
+      if (cancelled) return;
       try {
         const r = await fetch(`/api/public-invoice?token=${shareToken}`);
-        if (!r.ok) return;
-        const j = await r.json();
-        if (j.invoice?.status === 'paid' || j.invoice?.paid_at) {
-          setInvoice(prev => ({ ...prev, ...j.invoice }));
-          clearInterval(interval);
+        if (r.ok) {
+          const j = await r.json();
+          if (j.invoice?.status === 'paid' || j.invoice?.paid_at) {
+            if (!cancelled) {
+              setInvoice(prev => ({ ...prev, ...j.invoice }));
+              setPollPhase('confirmed');
+            }
+            return;
+          }
         }
-      } catch { /* retry */ }
-    }, 3000);
-    return () => clearInterval(interval);
+      } catch { /* network blip, fall through and retry */ }
+      attempt++;
+      if (attempt >= schedule.length) {
+        if (!cancelled) setPollPhase('slow');
+        return;
+      }
+      // Surface the "taking longer than usual" message at ~30s so the
+      // customer knows we're still trying — not stuck — without forcing
+      // them to refresh.
+      if (attempt === 8 && !cancelled) setPollPhase('slow');
+      timer = setTimeout(tick, schedule[attempt]);
+    }
+
+    timer = setTimeout(tick, schedule[0]);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [invoice?.id, shareToken]);
+
+  async function refreshInvoice() {
+    try {
+      const r = await fetch(`/api/public-invoice?token=${shareToken}`);
+      if (!r.ok) return;
+      const j = await r.json();
+      if (j.invoice) {
+        setInvoice(prev => ({ ...prev, ...j.invoice }));
+        if (j.invoice.status === 'paid') setPollPhase('confirmed');
+      }
+    } catch { /* */ }
+  }
 
   // Group items by category
   const groupedItems = useMemo(() => {
@@ -170,11 +218,31 @@ export default function PublicInvoicePage() {
 
           {/* ── Status banners ── */}
           {paymentSuccess && !isPaid && (
-            <div className="doc-status doc-status--approved">
-              <span className="doc-status-icon pi-status-icon" ><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-              <div>
-                <strong className="pi-status-strong">Payment processing</strong>
-                <span className="pi-status-sub">Your payment is being processed. This page will update once confirmed.</span>
+            <div className={`doc-status doc-status--approved pi-poll-banner pi-poll-banner--${pollPhase === 'slow' ? 'slow' : 'polling'}`} role="status" aria-live="polite">
+              <span className="pi-poll-spinner" aria-hidden="true">
+                <span className="pi-poll-spinner-dot" />
+                <span className="pi-poll-spinner-dot" />
+                <span className="pi-poll-spinner-dot" />
+              </span>
+              <div className="pi-poll-text">
+                {pollPhase === 'slow' ? (
+                  <>
+                    <strong className="pi-status-strong">Still confirming your payment</strong>
+                    <span className="pi-status-sub">Stripe is taking a little longer than usual. Your card has been charged — we&rsquo;ll mark this paid once the bank confirms.</span>
+                    <button
+                      type="button"
+                      className="pi-poll-retry"
+                      onClick={refreshInvoice}
+                    >
+                      Check again
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <strong className="pi-status-strong">Confirming your payment&hellip;</strong>
+                    <span className="pi-status-sub">Thanks! This usually takes a few seconds. The page will update automatically.</span>
+                  </>
+                )}
               </div>
             </div>
           )}

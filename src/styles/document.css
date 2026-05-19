@@ -97,6 +97,41 @@
 .doc-status-icon { font-size: 18px; flex-shrink: 0; }
 .doc-revision { padding: 12px 20px; background: var(--doc-accent-soft); border-bottom: 1px solid var(--doc-accent-line); font-size: 13px; color: var(--doc-text-2); }
 
+/* ── Stripe payment-confirmation banner ──
+   Replaces a static "Payment processing" line with a live status that
+   shows a pulsing 3-dot spinner during the polling window, then
+   transitions to a slow-state with a manual "Check again" CTA after
+   ~30s so the customer is never left in limbo. */
+.pi-poll-banner { align-items: flex-start; padding: 16px 20px; }
+.pi-poll-banner--slow { background: var(--amber-bg); color: var(--amber-text); }
+.pi-poll-text { display: flex; flex-direction: column; gap: 2px; }
+.pi-poll-spinner {
+  display: inline-flex; gap: 4px; align-items: center;
+  padding-top: 5px; flex-shrink: 0;
+}
+.pi-poll-spinner-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; opacity: .35;
+  animation: pi-poll-pulse 1.2s ease-in-out infinite;
+}
+.pi-poll-spinner-dot:nth-child(2) { animation-delay: .15s; }
+.pi-poll-spinner-dot:nth-child(3) { animation-delay: .3s; }
+@keyframes pi-poll-pulse {
+  0%, 100% { opacity: .25; transform: scale(.8); }
+  40% { opacity: 1; transform: scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pi-poll-spinner-dot { animation: none; opacity: .7; }
+}
+.pi-poll-retry {
+  appearance: none; margin-top: 8px; align-self: flex-start;
+  background: var(--doc-card, #fff); border: 1px solid currentColor;
+  color: inherit; font-family: inherit; font-size: 12px; font-weight: 700;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  transition: opacity .15s ease;
+}
+.pi-poll-retry:hover { opacity: .8; }
+
 /* ── Hero ── */
 .doc-hero {
   padding: 28px 28px 24px;

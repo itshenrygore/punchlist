@@ -8,7 +8,7 @@ import StatusBadge from '../components/status-badge';
 import PaidCelebrationCard from '../components/paid-celebration-card';
 import '../styles/paid-celebration.css';
 import ConfirmModal from '../components/confirm-modal';
-import { getInvoice, getProfile, friendly, markInvoicePaid, updateInvoiceStatus, updateInvoice, listPayments, recordPayment, deletePayment, getInvoiceBalance, updateInvoiceReminders, checkAndSendReminder, sendInvoiceEmail, setRecurringInterval, createNextRecurring, calculateLateFee } from '../lib/api';
+import { getInvoice, getProfile, friendly, updateInvoiceStatus, updateInvoice, listPayments, recordPayment, deletePayment, getInvoiceBalance, updateInvoiceReminders, checkAndSendReminder, sendInvoiceEmail, setRecurringInterval, createNextRecurring, calculateLateFee } from '../lib/api';
 import { currency, formatDate } from '../lib/format';
 import { calculateTotals } from '../lib/pricing';
 import { useAuth } from '../hooks/use-auth';
@@ -40,9 +40,6 @@ export default function InvoiceDetailPage() {
   const [showPaidCelebration, setShowPaidCelebration] = useState(false);
   const [isFirstPaidEver, setIsFirstPaidEver] = useState(false);
   const [monthToDate, setMonthToDate] = useState(null);
-  const [paying, setPaying] = useState(false);
-  const [payMethod, setPayMethod] = useState('');
-  const [showPayForm, setShowPayForm] = useState(false);
   const [country, setCountry] = useState('CA');
   const [profile, setProfile] = useState(null);
 
@@ -56,13 +53,16 @@ export default function InvoiceDetailPage() {
   const [editDescription, setEditDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // 5E: Partial payments
+  // Log-payment form — unified replacement for the old "Record
+  // payment" + "Mark fully paid" pair. One form, amount defaults to
+  // current balance, recordPayment auto-flips status to 'paid' when
+  // the balance reaches zero (which fires the celebration card).
   const [payments, setPayments] = useState([]);
-  const [showPartialForm, setShowPartialForm] = useState(false);
-  const [partialAmount, setPartialAmount] = useState('');
-  const [partialMethod, setPartialMethod] = useState('');
-  const [partialNotes, setPartialNotes] = useState('');
-  const [partialSaving, setPartialSaving] = useState(false);
+  const [showLogForm, setShowLogForm] = useState(false);
+  const [logAmount, setLogAmount] = useState('');
+  const [logMethod, setLogMethod] = useState('');
+  const [logNotes, setLogNotes] = useState('');
+  const [logSaving, setLogSaving] = useState(false);
 
   // 5C: Reminders
   const [reminderSchedule, setReminderSchedule] = useState([]);
@@ -122,39 +122,23 @@ export default function InvoiceDetailPage() {
       .catch(e => console.warn('[PL]', e));
   }, [invoice?.id, profile?.id]);
 
-  async function handleMarkPaid() {
-    // No-op if already paid. The previous implementation re-ran on
-    // double-click, which (a) clobbered the original paid_at timestamp
-    // and (b) spawned an extra recurring-invoice draft each time.
-    if (invoice.status === 'paid') {
-      toast('Invoice is already marked paid', 'info');
-      return;
-    }
-    setPaying(true);
-    try {
-      const updated = await markInvoicePaid(invoice.id, payMethod || null);
-      setInvoice(p => ({ ...p, ...updated, status: 'paid', paid_at: updated.paid_at }));
-      setShowPayForm(false);
-      // Replace the previously-generic toast with the celebration card.
-      // First-ever paid invoice flag persists in localStorage so future
-      // installs / new contractors get the milestone variant.
-      try {
-        const seen = localStorage.getItem('pl_first_paid_at');
-        if (!seen) {
-          setIsFirstPaidEver(true);
-          localStorage.setItem('pl_first_paid_at', new Date().toISOString());
-        }
-      } catch { /* private mode */ }
-      setShowPaidCelebration(true);
-      try {
-        if (navigator.vibrate) navigator.vibrate([10, 40, 10, 40, 80]);
-      } catch { /* */ }
-      if (invoice.recurring_interval) {
-        const next = await createNextRecurring({ ...invoice, invoice_items: invoice.invoice_items });
-        if (next) toast(`Next recurring invoice created (draft)`, 'info');
-      }
-    } catch (e) { toast(friendly(e), 'error'); }
-    finally { setPaying(false); }
+  // Open the log-payment form pre-filled with the current balance.
+  // Single entrypoint — replaces the old "Record payment" (partial)
+  // and "Mark fully paid" (full) split that confused contractors
+  // into picking between two paths for the same conceptual action.
+  function openLogForm() {
+    const bal = getInvoiceBalance(invoice, payments);
+    setLogAmount(bal > 0 ? bal.toFixed(2) : '');
+    setLogMethod(Array.isArray(profile?.payment_methods) && profile.payment_methods[0] || '');
+    setLogNotes('');
+    setShowLogForm(true);
+  }
+
+  function closeLogForm() {
+    setShowLogForm(false);
+    setLogAmount('');
+    setLogMethod('');
+    setLogNotes('');
   }
 
   async function handleRecurringChange(interval) {
@@ -331,27 +315,49 @@ export default function InvoiceDetailPage() {
     return { subtotal: t.subtotal, tax: dt, total: ds + dt, discount: disc };
   })() : null;
 
-  // ── 5E: Partial payment ──
-  async function handleRecordPartial() {
-    const amt = Number(partialAmount);
+  // Unified log-payment handler. recordPayment auto-flips status to
+  // 'paid' when the running total reaches the invoice total — when
+  // that transition happens we fire the celebration card, the
+  // first-paid-ever milestone, the haptic, and the recurring-next
+  // creation (all the side effects that used to belong to the
+  // separate handleMarkPaid path).
+  async function handleLogPayment() {
+    const amt = Number(logAmount);
     if (!amt || amt <= 0) { toast('Enter a valid amount', 'error'); return; }
-    setPartialSaving(true);
+    const wasUnpaid = invoice.status !== 'paid';
+    setLogSaving(true);
     try {
       const payment = await recordPayment(user.id, invoice.id, {
         amount: amt,
-        method: partialMethod || null,
-        notes: partialNotes || null,
+        method: logMethod || null,
+        notes: logNotes || null,
       });
-      setPayments(prev => [...prev, payment]);
       const fresh = await getInvoice(invoice.id);
       setInvoice(fresh);
-      setShowPartialForm(false);
-      setPartialAmount('');
-      setPartialMethod('');
-      setPartialNotes('');
-      toast('Payment recorded', 'success');
+      setPayments(prev => [...prev, payment]);
+      closeLogForm();
+
+      if (wasUnpaid && fresh?.status === 'paid') {
+        try {
+          const seen = localStorage.getItem('pl_first_paid_at');
+          if (!seen) {
+            setIsFirstPaidEver(true);
+            localStorage.setItem('pl_first_paid_at', new Date().toISOString());
+          }
+        } catch { /* private mode */ }
+        setShowPaidCelebration(true);
+        try { if (navigator.vibrate) navigator.vibrate([10, 40, 10, 40, 80]); } catch { /* */ }
+        if (invoice.recurring_interval) {
+          try {
+            const next = await createNextRecurring({ ...invoice, invoice_items: invoice.invoice_items });
+            if (next) toast('Next recurring invoice created (draft)', 'info');
+          } catch (e) { console.warn('[PL] recurring next:', e); }
+        }
+      } else {
+        toast('Payment logged', 'success');
+      }
     } catch (e) { toast(friendly(e), 'error'); }
-    finally { setPartialSaving(false); }
+    finally { setLogSaving(false); }
   }
 
   async function handleDeletePayment(paymentId) {
@@ -683,45 +689,52 @@ export default function InvoiceDetailPage() {
                   <button className="btn btn-secondary full-width id-edit-btn" type="button" onClick={startEditing} >
                     Edit invoice
                   </button>
-                  {!showPartialForm && !showPayForm ? (
-                    <div className="id-pay-grid">
-                      <button className="btn btn-secondary full-width id-record-btn" type="button" onClick={() => setShowPartialForm(true)}>
-                        Record payment
-                      </button>
-                      <button className="btn btn-secondary full-width id-mark-paid-btn" type="button" onClick={() => setShowPayForm(true)}>
-                        Mark fully paid
-                      </button>
-                    </div>
-                  ) : showPayForm ? (
-                    <div className="inv-pay-form">
-                      <select className="qb-inp" value={payMethod} onChange={e => setPayMethod(e.target.value)}>
+                  {!showLogForm ? (
+                    <button className="btn btn-primary full-width id-log-btn" type="button" onClick={openLogForm}>
+                      Log payment
+                    </button>
+                  ) : (
+                    <div className="inv-pay-form inv-log-form">
+                      <div className="inv-log-form-head">
+                        <div>
+                          <div className="inv-log-form-title">Log payment</div>
+                          <div className="inv-log-form-bal">Balance: {currency(balance)}</div>
+                        </div>
+                        <button type="button" className="inv-log-form-close" onClick={closeLogForm} aria-label="Cancel"><X size={14} /></button>
+                      </div>
+                      <div className="inv-log-form-amount">
+                        <span className="inv-log-form-amt-prefix">$</span>
+                        <input
+                          className="qb-inp inv-log-form-amt-inp"
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          step="0.01"
+                          placeholder={balance.toFixed(2)}
+                          value={logAmount}
+                          onChange={e => setLogAmount(e.target.value)}
+                          autoFocus
+                        />
+                        {balance > 0 && Number(logAmount) !== balance && (
+                          <button type="button" className="inv-log-form-chip" onClick={() => setLogAmount(balance.toFixed(2))}>
+                            Full balance
+                          </button>
+                        )}
+                      </div>
+                      <select className="qb-inp" value={logMethod} onChange={e => setLogMethod(e.target.value)}>
                         <option value="">Payment method (optional)</option>
                         {(country === 'US' ? US_PAYMENT_METHODS : CA_PAYMENT_METHODS).map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
-                      <div className="id-pay-grid-2">
-                        <button className="btn btn-primary btn-sm" type="button" disabled={paying} onClick={handleMarkPaid}>
-                          {paying ? 'Saving…' : 'Confirm paid'}
-                        </button>
-                        <button className="btn btn-secondary btn-sm" type="button" onClick={() => setShowPayForm(false)}>Cancel</button>
-                      </div>
+                      <input className="qb-inp" placeholder="Note (optional)" value={logNotes} onChange={e => setLogNotes(e.target.value)} />
+                      <button className="btn btn-primary full-width" type="button" disabled={logSaving || !logAmount} onClick={handleLogPayment}>
+                        {logSaving
+                          ? 'Saving…'
+                          : Number(logAmount) >= balance && balance > 0
+                            ? `Mark paid · ${currency(Number(logAmount) || balance)}`
+                            : `Log ${currency(Number(logAmount) || 0)}`}
+                      </button>
                     </div>
-                  ) : showPartialForm ? (
-                    <div className="inv-pay-form">
-                      <div className="id-partial-header">Record Payment</div>
-                      <input className="qb-inp" type="number" min="0" step="1" placeholder={`Amount (balance: ${currency(balance)})`} value={partialAmount} onChange={e => setPartialAmount(e.target.value)} autoFocus />
-                      <select className="qb-inp" value={partialMethod} onChange={e => setPartialMethod(e.target.value)}>
-                        <option value="">Payment method (optional)</option>
-                        {(country === 'US' ? US_PAYMENT_METHODS : CA_PAYMENT_METHODS).map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                      <input className="qb-inp" placeholder="Notes (optional)" value={partialNotes} onChange={e => setPartialNotes(e.target.value)} />
-                      <div className="id-pay-grid-2">
-                        <button className="btn btn-primary btn-sm" type="button" disabled={partialSaving} onClick={handleRecordPartial}>
-                          {partialSaving ? 'Saving…' : 'Record'}
-                        </button>
-                        <button className="btn btn-secondary btn-sm" type="button" onClick={() => setShowPartialForm(false)}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : null}
+                  )}
                 </>
               )}
               {isPaid && <div className="inv-paid-confirm id-paid-confirm">✓ This invoice has been paid</div>}
@@ -795,11 +808,32 @@ export default function InvoiceDetailPage() {
           )}
         </aside>
       </div>
-      {invoice && !isPaid && (
+      {invoice && !isPaid && !editing && (
         <div className="qd-mobile-send-bar">
-          <button className="btn btn-primary id-mobile-btn" type="button"  onClick={() => setShowPayForm(true)}>
-            Mark as paid
-          </button>
+          {/* State-machine bottom bar — same width, different label per
+              status. Draft means the contractor hasn't told the customer
+              yet, so the primary action is to send. Once it's out the
+              door, the primary action becomes logging payment. Paid
+              hides the bar entirely (handled by the outer guard). */}
+          {invoice.status === 'draft' ? (
+            invoice.customer?.phone ? (
+              <button className="btn btn-primary id-mobile-btn" type="button" onClick={handleSendText}>
+                Text invoice
+              </button>
+            ) : invoice.customer?.email ? (
+              <button className="btn btn-primary id-mobile-btn" type="button" onClick={handleSendEmail}>
+                Email invoice
+              </button>
+            ) : (
+              <button className="btn btn-primary id-mobile-btn" type="button" onClick={handleSendCopy}>
+                Copy invoice link
+              </button>
+            )
+          ) : (
+            <button className="btn btn-primary id-mobile-btn" type="button" onClick={openLogForm}>
+              {balance > 0 ? `Log payment · ${currency(balance)}` : 'Log payment'}
+            </button>
+          )}
         </div>
       )}
       <ConfirmModal
