@@ -23,7 +23,7 @@ import { Card } from '../components/ui';
 import { useToast } from '../components/toast';
 import { useAuth } from '../hooks/use-auth';
 import { haptic, usePullToRefresh } from '../hooks/use-mobile-ux';
-import { listQuotes, getProfile, expireStaleDrafts, friendly } from '../lib/api';
+import { listQuotes, getProfile, expireStaleDrafts, friendly, listInvoices } from '../lib/api';
 import { listCustomers } from '../lib/api/customers';
 import { isPro, countSentThisMonth, FREE_QUOTE_LIMIT } from '../lib/billing';
 import { currency } from '../lib/format';
@@ -55,6 +55,7 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [quotes, setQuotes] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [sentThisMonth, setSentThisMonth] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
@@ -81,10 +82,11 @@ export default function DashboardPage() {
       }).catch(() => {});
     }).catch(() => {});
 
-    Promise.all([listQuotes(user.id), getProfile(user.id), listCustomers(user.id)])
-      .then(([q, profile, customers]) => {
+    Promise.all([listQuotes(user.id), getProfile(user.id), listCustomers(user.id), listInvoices(user.id).catch(() => [])])
+      .then(([q, profile, customers, invoices]) => {
         const active = (q || []).filter(qt => !qt.archived_at);
         setQuotes(active);
+        setInvoices(invoices || []);
         setSentThisMonth(countSentThisMonth(active));
         if (profile) setUserProfile(profile);
         setCustomerCount((customers || []).length);
@@ -110,10 +112,11 @@ export default function DashboardPage() {
   usePullToRefresh(() => {
     if (!user) return;
     setLoading(true);
-    Promise.all([listQuotes(user.id), getProfile(user.id), listCustomers(user.id)])
-      .then(([q, profile, customers]) => {
+    Promise.all([listQuotes(user.id), getProfile(user.id), listCustomers(user.id), listInvoices(user.id).catch(() => [])])
+      .then(([q, profile, customers, invoices]) => {
         const active = (q || []).filter(qt => !qt.archived_at);
         setQuotes(active);
+        setInvoices(invoices || []);
         setSentThisMonth(countSentThisMonth(active));
         if (profile) setUserProfile(profile);
         setCustomerCount((customers || []).length);
@@ -157,6 +160,24 @@ export default function DashboardPage() {
     return quotes.filter(q => ['sent','viewed'].includes(normalizeStatus(q.status))).length;
   }, [quotes]);
 
+  // Money owed = sum of unpaid invoice remaining balances. Plus an
+  // overdue count so the chip can warn when the contractor has bills
+  // sitting past due dates. Closed-funnel contractors (no active
+  // quotes) still see meaningful state if they have receivables.
+  const moneyOwed = useMemo(() => {
+    return invoices
+      .filter(i => !['paid', 'cancelled'].includes(i.status))
+      .reduce((s, i) => s + Math.max(0, Number(i.remaining_balance ?? i.total ?? 0)), 0);
+  }, [invoices]);
+  const overdueCount = useMemo(() => {
+    const now = Date.now();
+    return invoices.filter(i =>
+      !['paid', 'cancelled', 'draft'].includes(i.status) &&
+      i.due_at &&
+      new Date(i.due_at).getTime() < now
+    ).length;
+  }, [invoices]);
+
   const actionItems = useMemo(() => {
     const items = [];
     for (const q of quotes) {
@@ -181,7 +202,27 @@ export default function DashboardPage() {
         }
       }
     }
-    return items.sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)).slice(0, 5);
+    // Sort by URGENCY, not recency. The audit flagged that a Monday
+    // morning glance returned a near-random subset of 5 — now the
+    // top of the list is always "act on this first."
+    const urgencyRank = (item) => {
+      const r = item._reason || '';
+      if (r === 'Expires today!')             return 0;
+      if (r.startsWith('Expires in '))        return 1;
+      if (r === 'Deposit pending')            return 2;
+      if (r === 'Viewed — follow up')         return 3;
+      if (r === 'Changes requested')          return 4;
+      if (r.includes('going cold'))           return 5;
+      return 6;
+    };
+    return items
+      .sort((a, b) => {
+        const ar = urgencyRank(a);
+        const br = urgencyRank(b);
+        if (ar !== br) return ar - br;
+        return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
+      })
+      .slice(0, 5);
   }, [quotes]);
 
   const hasAnyData = quotes.length > 0;
@@ -228,15 +269,40 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
-          {/* Pipeline value — revenue anchoring chip */}
-          {!loading && pipelineValue > 0 && (
-            <Link
-              to="/app/quotes"
-              className={`dv2-headline-metric ${awaitingApproval > 0 ? 'dv2-headline-metric--warning' : 'dv2-headline-metric--info'}`}
-            >
-              <span>{currency(pipelineValue)}</span>
-              <span className="dv2-metric-sub">{awaitingApproval > 0 ? `${awaitingApproval} awaiting approval` : 'in pipeline'}</span>
-            </Link>
+          {/* Money chips — pipeline + owed. The contractor's two
+              honest numbers: what's potentially closing, and what's
+              actually owed. Previously the dashboard only showed
+              pipeline, so a contractor with a closed funnel + $40K
+              of overdue invoices saw $0. */}
+          {!loading && (pipelineValue > 0 || moneyOwed > 0) && (
+            <div className="dv2-money-chips">
+              {pipelineValue > 0 && (
+                <Link
+                  to="/app/quotes"
+                  className={`dv2-headline-metric ${awaitingApproval > 0 ? 'dv2-headline-metric--warning' : 'dv2-headline-metric--info'}`}
+                >
+                  <span>{currency(pipelineValue)}</span>
+                  <span className="dv2-metric-sub">
+                    {awaitingApproval > 0
+                      ? `${awaitingApproval} in open quote${awaitingApproval !== 1 ? 's' : ''}`
+                      : 'in open quotes'}
+                  </span>
+                </Link>
+              )}
+              {moneyOwed > 0 && (
+                <Link
+                  to="/app/invoices"
+                  className={`dv2-headline-metric ${overdueCount > 0 ? 'dv2-headline-metric--danger' : 'dv2-headline-metric--info'}`}
+                >
+                  <span>{currency(moneyOwed)}</span>
+                  <span className="dv2-metric-sub">
+                    {overdueCount > 0
+                      ? `${overdueCount} overdue`
+                      : 'awaiting payment'}
+                  </span>
+                </Link>
+              )}
+            </div>
           )}
         </div>
 
@@ -373,6 +439,22 @@ export default function DashboardPage() {
               })}
             </div>
           </section>
+        )}
+
+        {/* ═══ ALL CLEAR ═══ — a contractor with quotes/invoices but
+            zero pending actions today gets a small win moment instead
+            of a blank space. Linear-inbox-zero energy. */}
+        {!loading && hasAnyData && actionItems.length === 0 && todayJobs.length === 0 && (
+          <div className="dv2-all-clear dv2-enter" style={{ '--i': 2 }}>
+            <div className="dv2-all-clear-icon" aria-hidden="true">✓</div>
+            <div className="dv2-all-clear-body">
+              <div className="dv2-all-clear-title">You're all caught up</div>
+              <div className="dv2-all-clear-sub">
+                No quotes need follow-up today. Nice.
+                {sentThisMonth > 0 && ` · ${sentThisMonth} sent this month`}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ═══ RECENT QUOTES ═══ */}

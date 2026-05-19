@@ -398,6 +398,24 @@ export default function InvoiceDetailPage() {
   const items = (invoice.invoice_items || []).filter(i => i.included !== false);
   const isPaid = invoice.status === 'paid';
   const isOverdue = invoice.due_at && new Date(invoice.due_at) < new Date() && !isPaid;
+
+  // Lifecycle strip for the invoice page — the deal continues from
+  // the quote. Showing the same "Sent → Viewed → Approved → Invoiced
+  // → Paid" anchor keeps the contractor oriented across the convert
+  // boundary instead of feeling like the screen shrank.
+  const invoiceLifecycle = (() => {
+    const steps = [
+      { key: 'q_sent',     label: 'Quote sent' },
+      { key: 'q_approved', label: 'Approved' },
+      { key: 'i_sent',     label: 'Invoiced' },
+      { key: 'i_paid',     label: 'Paid' },
+    ];
+    let cur = 2; // we're at least at "Invoiced" if this page renders
+    if (invoice.status === 'paid') cur = 3;
+    else if (invoice.status === 'partial') cur = 2;
+    else if (invoice.status === 'draft') cur = 2;
+    return steps.map((st, i) => ({ ...st, done: i < cur, current: i === cur }));
+  })();
   const daysOverdue = isOverdue ? Math.floor((Date.now() - new Date(invoice.due_at).getTime()) / 86400000) : 0;
   const lateFee = calculateLateFee(invoice, { lateFeePercent: profile?.late_fee_percent || 0, lateFeeDays: profile?.late_fee_days || 0 });
   const hasAdditionalWork = items.some(i => i.category === 'Additional Work');
@@ -444,6 +462,23 @@ export default function InvoiceDetailPage() {
           onClose={() => setShowPaidCelebration(false)}
         />
       )}
+
+      {/* Lifecycle strip — same component pattern as the quote
+          detail page so the deal feels continuous across the convert
+          boundary. Quote sent → Approved → Invoiced → Paid. */}
+      <div className="ql-strip" role="progressbar" aria-label={`Invoice status: ${invoice.status}`}>
+        {invoiceLifecycle.map((step, i) => (
+          <div key={step.key} className="ql-strip-item">
+            <div className={`ql-step${step.done ? ' ql-step--done' : step.current ? ' ql-step--active' : ''}`}>
+              <div className="ql-dot" />
+              <span>{step.label}</span>
+            </div>
+            {i < invoiceLifecycle.length - 1 && (
+              <div className={`ql-connector${step.done ? ' ql-connector--done' : ''}`} />
+            )}
+          </div>
+        ))}
+      </div>
 
       <div className="inv-layout">
         {/* ── Invoice document ── */}
