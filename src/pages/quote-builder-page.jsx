@@ -1166,7 +1166,7 @@ export default function QuoteBuilderPage() {
 
         {/* ════════ ZONE 1: DESCRIBE THE JOB ════════ */}
         {phase === 'describe' && (
-          <Card padding="loose" className="qb-zone pl-describe-stable" elevation={1}>
+          <Card padding="loose" className="qb-zone qb-phase-enter pl-describe-stable" elevation={1}>
             {/* B2 (Slice 12): gradient header strip — first-time only */}
             {(() => { try { return !localStorage.getItem('pl_has_built_quote'); } catch { return true; } })() && (
             <div className="qb-describe-hero" aria-hidden="true">
@@ -1275,7 +1275,7 @@ export default function QuoteBuilderPage() {
           // Show trade-relevant item names as preview during AI scope generation
           const previewItems = browseCatalog(trade, 5).slice(0, 4).map(h => h.n);
           return (
-          <Card padding="loose" className="pl-building-stable" elevation={1}>
+          <Card padding="loose" className="pl-building-stable qb-phase-enter" elevation={1}>
             {/* B7 (Slice 12): CSS-only top progress bar 0→85% over 15s */}
             <div className="qb-build-progress" aria-hidden="true" />
             <div className="bs-loading qb-loading-wrap">
@@ -1333,7 +1333,7 @@ export default function QuoteBuilderPage() {
           }} />
         )}
         {phase === 'review' && !isMobile && (
-          <div style={isLocked ? { pointerEvents: 'none', opacity: 0.65 } : undefined}>
+          <div className="qb-phase-enter" style={isLocked ? { pointerEvents: 'none', opacity: 0.65 } : undefined}>
             {/* Collapsed Zone 1 summary */}
             <div className="qb-context-bar">
               <span className="qb-context-label">{trade} · {province} · {(description || '').slice(0, 50)}{description?.length > 50 ? '…' : ''}</span>

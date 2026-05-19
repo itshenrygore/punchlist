@@ -7749,6 +7749,18 @@ details > summary::-webkit-details-marker{display:none}
   min-height: 18px; /* reserve space so layout doesn't jump */
 }
 
+/* Phase transition — applied to each phase block in the quote builder
+   (describe / building / review) so moving between zones feels like a
+   step forward instead of a hard cut. */
+.qb-phase-enter {
+  animation: qb-phase-in .35s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes qb-phase-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .qb-phase-enter { animation: none; } }
+
 .qb-desc-helper__nudge {
   font-size: var(--text-2xs);
   color: var(--green);
