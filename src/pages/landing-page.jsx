@@ -204,6 +204,17 @@ export default function LandingPage() {
     document.title = 'Punchlist — Built to close jobs, not just quote them.';
   }, []);
 
+  // Show a sticky bottom CTA on mobile once the user has scrolled
+  // past the hero. The hero CTA is in the upper third — once it's
+  // out of view there's no thumb-reachable Start-free until the
+  // pricing section >15 viewports later.
+  const [showStickyCTA, setShowStickyCTA] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowStickyCTA(window.scrollY > window.innerHeight * 0.85);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <div className="ln">
       <Nav />
@@ -550,6 +561,16 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile sticky bottom CTA — appears once the user scrolls past
+          the hero so the primary action is always thumb-reachable on
+          phones. Desktop ignores via media query. */}
+      <div className={`ln-sticky-cta${showStickyCTA ? ' is-visible' : ''}`} aria-hidden={!showStickyCTA}>
+        <Link to="/signup" className="ln-btn ln-btn--hero ln-sticky-cta-btn">
+          Start free <ArrowRight size={16} />
+        </Link>
+        <span className="ln-sticky-cta-note">No credit card · 5 free quotes/month</span>
+      </div>
     </div>
   );
 }

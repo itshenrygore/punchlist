@@ -432,13 +432,30 @@ export default function PublicInvoicePage() {
                 </div>
               )}
 
-              {/* No payment options configured */}
+              {/* No payment options configured — surface direct contact
+                  buttons (tel / mailto) so the customer has an actionable
+                  path. Previously this was a flat "Contact your contractor"
+                  message with no way to actually do that. */}
               {!invoice.etransfer_email && !invoice.square_payment_link && !invoice.paypal_link && !invoice.venmo_zelle_handle && effectivePaymentMethods.length === 0 && (
                 <div className="doc-info-block">
                   <div className="doc-info-body">
                     <p className="pi-contact-msg">
                       Contact {invoice.contractor_company || invoice.contractor_name || 'your contractor'} to arrange payment.
                     </p>
+                    {(invoice.contractor_phone || invoice.contractor_email) && (
+                      <div className="pi-contact-actions" style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                        {invoice.contractor_phone && (
+                          <a className="btn btn-secondary" href={`tel:${invoice.contractor_phone.replace(/\s/g, '')}`}>
+                            Call {invoice.contractor_phone}
+                          </a>
+                        )}
+                        {invoice.contractor_email && (
+                          <a className="btn btn-secondary" href={`mailto:${invoice.contractor_email}?subject=${encodeURIComponent('Payment for ' + (invoice.title || invoice.invoice_number || 'invoice'))}`}>
+                            Email
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
