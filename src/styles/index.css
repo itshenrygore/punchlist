@@ -949,6 +949,15 @@ select.input{cursor:pointer}
 @keyframes modal-bg-in{from{opacity:0}}
 @keyframes modal-in{from{opacity:0;transform:scale(.96) translateY(8px)}}
 .qb-modal-top{display:flex;align-items:start;justify-content:space-between;gap:10px;margin-bottom:16px}
+/* Drag handle for mobile bottom-sheet variant — visual affordance
+   only on small viewports where the modal is docked to the bottom. */
+.qb-modal-handle{display:none}
+@media (max-width: 768px) {
+  .qb-modal-handle{
+    display:block;width:36px;height:4px;border-radius:999px;
+    background:var(--line-2);margin:-8px auto 12px;
+  }
+}
 .qb-modal-body{display:grid;gap:12px}
 .qb-modal-body strong{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .qb-modal-body p{margin:3px 0 0;font-size:14px;line-height:1.55;color:var(--text-2)}

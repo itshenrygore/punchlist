@@ -996,7 +996,7 @@ export default function QuoteBuilderPage() {
           sent_at: q.sent_at ?? d.sent_at,
         }));
       }
-      const url = `${window.location.origin}/public/${q.share_token}`;
+      const url = `${window.location.origin}/q/${q.share_token}`;
       const firstName = selCustomer?.name?.split(' ')[0] || '';
 
       if (deliveryMethod === 'text') {
@@ -1506,7 +1506,7 @@ export default function QuoteBuilderPage() {
                     <span>After you send, you'll see when {selCustomer?.name?.split(' ')[0] || 'your customer'} opens this quote</span>
                   </div>
                 )}
-                <button className="btn btn-secondary full-width rq-preview-customer-btn" type="button" disabled={saving || isLocked || itemCount === 0} onClick={async () => { const w = window.open('about:blank', '_blank'); try { const q = await save(null, true); const token = q?.share_token || (quoteId ? (await getQuote(quoteId))?.share_token : null); if (token && w) { w.location.href = '/public/' + token + '?preview=1'; } else { if (w) w.close(); toast('Save the quote first to preview', 'info'); } } catch { if (w) w.close(); toast('Save the quote first to preview', 'info'); } }}>
+                <button className="btn btn-secondary full-width rq-preview-customer-btn" type="button" disabled={saving || isLocked || itemCount === 0} onClick={async () => { const w = window.open('about:blank', '_blank'); try { const q = await save(null, true); const token = q?.share_token || (quoteId ? (await getQuote(quoteId))?.share_token : null); if (token && w) { w.location.href = '/q/' + token + '?preview=1'; } else { if (w) w.close(); toast('Save the quote first to preview', 'info'); } } catch { if (w) w.close(); toast('Save the quote first to preview', 'info'); } }}>
                   See what {selCustomer?.name?.split(' ')[0] || 'your customer'} will see
                 </button>
               </div>
@@ -1530,7 +1530,7 @@ export default function QuoteBuilderPage() {
                   const label = diffS < 5 ? 'just now' : diffS < 60 ? `${diffS}s ago` : `${Math.round(diffS / 60)}m ago`;
                   return <span className={`qb-save-ts${saveState === 'saving' ? ' qb-save-ts--faded' : ''}`}>Saved {label}</span>;
                 })()}
-                <button className="btn btn-secondary btn-sm rq-preview-btn" type="button" disabled={saving || isLocked} onClick={async () => { const w = window.open('about:blank', '_blank'); try { const q = await save(null, true); const token = q?.share_token || (quoteId ? (await getQuote(quoteId))?.share_token : null); if (token && w) { w.location.href = '/public/' + token + '?preview=1'; } else { if (w) w.close(); } } catch (e) { if (w) w.close(); console.warn("[PL]", e); } }}>Preview</button>
+                <button className="btn btn-secondary btn-sm rq-preview-btn" type="button" disabled={saving || isLocked} onClick={async () => { const w = window.open('about:blank', '_blank'); try { const q = await save(null, true); const token = q?.share_token || (quoteId ? (await getQuote(quoteId))?.share_token : null); if (token && w) { w.location.href = '/q/' + token + '?preview=1'; } else { if (w) w.close(); } } catch (e) { if (w) w.close(); console.warn("[PL]", e); } }}>Preview</button>
                 {lineItems.length > 0 && (
                   <button className="btn btn-ghost btn-sm" type="button" title="Save this quote as a reusable job template" onClick={() => { setTemplateNameDraft(title || description.slice(0, 50) || 'New template'); setShowTemplateName(true); }}>Save as template</button>
                 )}
@@ -1552,10 +1552,13 @@ export default function QuoteBuilderPage() {
             {showSend && (
               <div className="qb-modal-bg" onClick={() => setShowSend(false)}>
                 <div className="qb-modal qb-send-modal" onClick={e => e.stopPropagation()}>
-
+                  {/* Drag handle — pure affordance for mobile; the
+                      sheet-on-mobile media query in index.css already
+                      docks this modal to the bottom of the viewport. */}
+                  <div className="qb-modal-handle" aria-hidden="true" />
                   <div className="qb-modal-top">
                     <h3 className="qb-send-title">Send Quote</h3>
-                    <button className="btn btn-secondary btn-sm" type="button" onClick={() => setShowSend(false)} aria-label="Close">×</button>
+                    <button className="qb-modal-close" type="button" onClick={() => setShowSend(false)} aria-label="Close"><X size={18} strokeWidth={2} /></button>
                   </div>
 
                   <div className="rq-send-body">
@@ -1595,7 +1598,7 @@ export default function QuoteBuilderPage() {
                       <a
                         href="#"
                         className="rq-send-preview-link"
-                        onClick={async (e) => { e.preventDefault(); const w = window.open('about:blank', '_blank'); try { const q = await save(null, true); const token = q?.share_token || (quoteId ? (await getQuote(quoteId))?.share_token : null); if (token && w) { w.location.href = '/public/' + token + '?preview=1'; } else { if (w) w.close(); toast('Save the quote first to preview', 'info'); } } catch { if (w) w.close(); toast('Save the quote first to preview', 'info'); } }}
+                        onClick={async (e) => { e.preventDefault(); const w = window.open('about:blank', '_blank'); try { const q = await save(null, true); const token = q?.share_token || (quoteId ? (await getQuote(quoteId))?.share_token : null); if (token && w) { w.location.href = '/q/' + token + '?preview=1'; } else { if (w) w.close(); toast('Save the quote first to preview', 'info'); } } catch { if (w) w.close(); toast('Save the quote first to preview', 'info'); } }}
                       >
                         Preview what your customer sees ↗
                       </a>
@@ -1779,9 +1782,10 @@ export default function QuoteBuilderPage() {
       {phoneDupMatch && (
         <div className="qb-modal-bg" onClick={() => setPhoneDupMatch(null)}>
           <div className="qb-modal" onClick={e => e.stopPropagation()}>
+            <div className="qb-modal-handle" aria-hidden="true" />
             <div className="qb-modal-top">
               <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 700 }}>Phone number already in use</h3>
-              <button className="btn btn-secondary btn-sm" type="button" onClick={() => setPhoneDupMatch(null)} aria-label="Close">×</button>
+              <button className="qb-modal-close" type="button" onClick={() => setPhoneDupMatch(null)} aria-label="Close"><X size={18} strokeWidth={2} /></button>
             </div>
             <div style={{ padding: '12px 16px', fontSize: 'var(--text-sm)', color: 'var(--text-2)', lineHeight: 1.5 }}>
               <strong>{phoneDupMatch.existing.name}</strong> already has this phone number. Would you like to use the existing contact or create a new one?

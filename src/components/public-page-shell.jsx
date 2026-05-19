@@ -1,4 +1,5 @@
 import { LogoMark } from './logo';
+import { useKeyboardVisible } from '../hooks/use-keyboard-visible';
 
 const BANNER_STYLES = {
   info:    { background: 'rgba(59,130,246,.12)', border: '1px solid rgba(59,130,246,.25)', color: 'var(--blue-light, #60a5fa)' },
@@ -8,6 +9,11 @@ const BANNER_STYLES = {
 };
 
 export default function PublicPageShell({ contractorName, logoUrl, statusBanner, stickyCtaContent, children }) {
+  // Wire the keyboard-visible hook so the public-quote sticky CTA
+  // honors data-keyboard="open" and hides itself when iOS Safari's
+  // keyboard floats over the bottom of the viewport. The contractor
+  // app shell already does this; the customer-facing shell did not.
+  useKeyboardVisible();
   return (
     <>
       <div className="public-shell-header">
