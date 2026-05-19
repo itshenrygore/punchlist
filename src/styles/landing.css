@@ -102,6 +102,23 @@
   border-radius: 8px; transition: color 0.15s, background 0.15s;
 }
 .ln-nav-a:hover { color: var(--tx); background: var(--ln); }
+/* Keyboard focus visibility — landing page is the most-trafficked page
+   in the app; an invisible focus ring is the loudest "not premium" tell. */
+.ln-nav-a:focus-visible,
+.ln-btn:focus-visible,
+.ln-nav-mob:focus-visible,
+.ln-nav-logo:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 3px;
+  border-radius: inherit;
+}
+.ln-btn--ghost:focus-visible,
+.ln-btn--outline:focus-visible { outline-color: rgba(255,255,255,0.6); }
+/* Marquee — pause on hover so a reader can finish reading a line. */
+.marquee-outer:hover .marquee-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
 .ln-nav-mob {
   display: flex; align-items: center; justify-content: center;
   width: 38px; height: 38px; border-radius: 10px;

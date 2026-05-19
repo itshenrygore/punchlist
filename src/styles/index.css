@@ -851,6 +851,12 @@ select.input{cursor:pointer}
 /* Undo toast variant */
 .toast-undo{background:rgba(15,15,16,.97);color:var(--text);border:1px solid rgba(255,255,255,.12);position:relative;overflow:hidden;padding-bottom:18px}
 .toast-undo-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--brand);border-radius:0 0 var(--r) var(--r);transition:width 50ms linear}
+/* Slim auto-countdown bar drawn under every non-undo toast. Tells
+   the user they have a moment, then it's gone. */
+.toast-progress{position:absolute;bottom:0;left:0;right:0;height:2px;background:currentColor;opacity:.5;border-radius:0 0 var(--r) var(--r);transform-origin:left center;animation:toast-progress linear forwards}
+@keyframes toast-progress{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.toast{overflow:hidden}
+@media(prefers-reduced-motion:reduce){.toast-progress{animation:none;opacity:0}}
 .toast-undo-btn{background:none;border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);padding:4px 12px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;margin-left:auto;white-space:nowrap;transition:background var(--fast),border-color var(--fast)}
 .toast-undo-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.4)}
 
@@ -4608,6 +4614,29 @@ body{background:var(--app-bg-glow), linear-gradient(180deg,var(--bg) 0%, color-m
 /* Approval success: clearer next steps */
 .pq-success-banner{padding:20px 24px;animation:successSlide .4s var(--ease)}
 @keyframes successSlide{from{opacity:0;transform:translateY(-6px)}}
+
+/* Signature replay on the approval banner — the "they just signed for
+   $$$ and we showed them their mark" moment. Left-to-right reveal via
+   clip-path so the ink visibly draws itself in. */
+.pq-signed-replay{
+  margin-top:10px;padding:8px 10px;border-radius:8px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  max-width:280px;
+}
+.pq-signed-replay img{
+  display:block;width:100%;height:auto;max-height:90px;object-fit:contain;
+  filter:invert(0);
+  -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 0%,transparent 0%);
+          mask-image:linear-gradient(90deg,#000 0%,#000 0%,transparent 0%);
+  animation:pq-sig-reveal 900ms cubic-bezier(.22,1,.36,1) 220ms both;
+}
+@keyframes pq-sig-reveal{
+  0%   { -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 0%,transparent 0%);           mask-image:linear-gradient(90deg,#000 0%,#000 0%,transparent 0%);}
+  100% { -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 100%,transparent 100%);       mask-image:linear-gradient(90deg,#000 0%,#000 100%,transparent 100%);}
+}
+@media (prefers-reduced-motion: reduce) {
+  .pq-signed-replay img { animation: none; mask-image: none; -webkit-mask-image: none; }
+}
 
 /* Sign button: more prominent */
 .doc-cta-primary{font-size:16px;padding:16px 28px;font-weight:800;letter-spacing:-.01em;border-radius:14px;transition:all .2s var(--ease)}

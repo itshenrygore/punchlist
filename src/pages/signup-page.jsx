@@ -288,6 +288,13 @@ export default function SignupPage() {
             <Link to="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link>
           </span>
         </label>
+        {/* Quiet helper so the disabled CTA isn't a mystery — the previous
+            version left users staring at a dead button with no reason. */}
+        {!termsAccepted && !loading && (
+          <div className="auth-terms-hint" role="status">
+            Tick the box above to continue.
+          </div>
+        )}
         <button className="btn btn-primary full-width" type="submit" disabled={loading || !termsAccepted}>
           {loading ? 'Creating account…' : 'Continue →'}
         </button>

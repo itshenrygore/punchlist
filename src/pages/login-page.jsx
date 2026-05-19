@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Logo from '../components/logo';
 
@@ -97,11 +98,13 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
             />
-            <button type="button" onClick={() => setShowPass(p => !p)} className="login-show-pass">{showPass ? 'Hide' : 'Show'}</button>
+            <button type="button" onClick={() => setShowPass(p => !p)} className="login-show-pass" aria-label={showPass ? 'Hide password' : 'Show password'}>
+              {showPass ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
+            </button>
           </div>
         </div>
         <div className="auth-forgot-row">
-          <button type="button" tabIndex={-1} onClick={handleForgotPassword} className="login-forgot">
+          <button type="button" onClick={handleForgotPassword} className="login-forgot">
             {forgotSent ? '\u2713 Check your email' : 'Forgot password?'}
           </button>
         </div>

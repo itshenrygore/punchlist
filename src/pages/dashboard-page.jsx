@@ -58,6 +58,7 @@ export default function DashboardPage() {
   const [customerCount, setCustomerCount] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [jobInput, setJobInput] = useState('');
+  const [installLeaving, setInstallLeaving] = useState(false);
   const jobInputRef = useRef(null);
   const { canInstall, install: installPwa, dismiss: dismissPwa } = usePwaInstall();
 
@@ -225,17 +226,36 @@ export default function DashboardPage() {
               : <span>+ New quote</span>}
           </button>
         </form>
+        {/* Always-on caption under the form so even returning users see
+            that typing here summons the AI scope builder. Previously
+            this magic was hidden behind the empty-state branch and
+            invisible to anyone with ≥ 1 quote. */}
+        {!loading && !jobInput.trim() && (
+          <div className="dv2-job-hint" aria-hidden="true">
+            <span>Punchlist builds the full scope automatically.</span>
+            <span className="dv2-job-hint-eg">e.g. <em>Furnace + AC replacement</em></span>
+          </div>
+        )}
 
         {/* ═══ PWA INSTALL PROMPT ═══ */}
         {canInstall && sentThisMonth > 0 && (
-          <div className="dv2-install-banner dv2-enter" style={{ '--i': 2 }}>
+          <div
+            className={`dv2-install-banner dv2-enter${installLeaving ? ' is-leaving' : ''}`}
+            style={{ '--i': 2 }}
+            onAnimationEnd={(e) => {
+              // Trigger the actual dismiss + state update once the
+              // leaving animation finishes so the banner collapses
+              // gracefully instead of disappearing mid-frame.
+              if (installLeaving && e.animationName === 'dv2-banner-out') dismissPwa();
+            }}
+          >
             <div className="dv2-install-body">
               <strong>Add Punchlist to your home screen</strong>
               <span className="dv2-install-sub">Open quotes faster — one tap from your phone</span>
             </div>
             <div className="dv2-install-actions">
               <button type="button" className="btn btn-primary btn-sm" onClick={installPwa}>Install</button>
-              <button type="button" className="btn-link dv2-install-dismiss" onClick={dismissPwa}>Not now</button>
+              <button type="button" className="btn-link dv2-install-dismiss" onClick={() => setInstallLeaving(true)}>Not now</button>
             </div>
           </div>
         )}

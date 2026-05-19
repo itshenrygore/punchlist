@@ -124,8 +124,13 @@ function QuoteRow({ quote, onDuplicate, isSelected, onToggleSelect }) {
       </div>
       <span className={`chip chip-${status}`}>
         {chipForStatus(status)}
-        {viewBadge && <span className="ql-view-count">{quote.view_count}×</span>}
       </span>
+      {viewBadge && (
+        <span className="ql-view-chip" aria-label={`${quote.view_count} views`} title={`${quote.view_count} views`}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>{quote.view_count}</span>
+        </span>
+      )}
       {expiry && <span className={`ql-expiry ${expiry.cls}`}>{expiry.text}</span>}
       <div className="ql-row-right">
         <span className="ql-row-amount">{total > 0 ? currency(total) : '—'}</span>

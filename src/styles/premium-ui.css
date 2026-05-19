@@ -1146,6 +1146,23 @@ body::before {
   color: var(--subtle);
 }
 
+/* Hint shown above the disabled Continue button so a user staring at
+   four filled fields and a dead CTA doesn't have to guess. */
+.auth-terms-hint {
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-top: -4px;
+  animation: auth-hint-fade .25s ease-out both;
+}
+@keyframes auth-hint-fade {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-terms-hint { animation: none; }
+}
+
 /* Existing-account link row */
 .auth-switch {
   text-align: center;

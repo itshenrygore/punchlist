@@ -44,6 +44,10 @@ export default function NotificationCenter() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  // A counter we bump every 30 s while the dropdown is open so the
+  // relative time labels ("Just now", "5m ago") visibly tick instead of
+  // looking frozen if the user keeps the panel open.
+  const [nowTick, setNowTick] = useState(0);
   const PAGE_SIZE = 30;
   const bellRef = useRef(null);
   const panelRef = useRef(null);
@@ -95,6 +99,13 @@ export default function NotificationCenter() {
     } catch (e) { console.warn("[PL]", e); }
     setLoadingMore(false);
   }
+
+  // Tick relative-time labels while the dropdown is open.
+  useEffect(() => {
+    if (!open) return;
+    const id = setInterval(() => setNowTick(t => t + 1), 30_000);
+    return () => clearInterval(id);
+  }, [open]);
 
   useEffect(() => {
     fetchNotifications();
@@ -249,7 +260,9 @@ export default function NotificationCenter() {
                       <div className="notif-body">
                         <div className="notif-item-title">{n.title}</div>
                         {n.body && <div className="notif-item-body">{n.body}</div>}
-                        <div className="notif-item-time">{timeAgo(n.created_at)}</div>
+                        {/* nowTick is in the dep chain via the surrounding render
+                            so this label refreshes every 30 s while the panel is open */}
+                        <div className="notif-item-time" data-tick={nowTick}>{timeAgo(n.created_at)}</div>
                       </div>
                       {!n.read && <div className="notif-dot" />}
                     </div>

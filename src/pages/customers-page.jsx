@@ -21,7 +21,10 @@ function initials(name) {
 }
 
 function avatarColor(name) {
-  const colors = ['#E76A3C','#3B82F6','#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#84CC16'];
+  // Reserve red and amber for status semantics (declined, overdue) —
+  // a red avatar next to a red "declined" chip created confusing
+  // double-coding. Palette is now cool/calm hues only.
+  const colors = ['#3B82F6','#10B981','#8B5CF6','#06B6D4','#84CC16','#14B8A6','#0EA5E9','#6366F1'];
   let h = 0;
   for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
   return colors[Math.abs(h) % colors.length];

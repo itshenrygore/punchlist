@@ -80,6 +80,9 @@ export default function SignaturePad({
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y);
     setDrawing(true);
+    // Hide the placeholder immediately on the first contact so it can't
+    // briefly read as part of the signature when the user lifts off.
+    if (!hasStrokes) setHasStrokes(true);
   }
 
   function draw(e) {

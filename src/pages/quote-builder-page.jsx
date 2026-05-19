@@ -1279,11 +1279,15 @@ export default function QuoteBuilderPage() {
             {/* B7 (Slice 12): CSS-only top progress bar 0→85% over 15s */}
             <div className="qb-build-progress" aria-hidden="true" />
             <div className="bs-loading qb-loading-wrap">
+              {/* Single confident loader: top progress bar + pulse dot +
+                  rotating message + skeleton rows. The previous version
+                  also rendered a CSS spinner, making four loading
+                  affordances at once — read as "we don't know how to
+                  communicate progress". Spinner removed. */}
               <div className="bs-ai-status">
                 <div className="bs-ai-dot" />
                 AI is building your quote
               </div>
-              <div className="loading-spinner qb-loading-spinner" aria-hidden="true" />
               <div aria-live="polite" className="qb-loading-msg">{scopeLoadingMsg}</div>
               <div className="qb-loading-sub">{trade} · {description.slice(0, 60)}{description.length > 60 ? '…' : ''}</div>
               {photoSaved && <div className="jd-photo-saved qb-photo-tag">✓ Photo included</div>}

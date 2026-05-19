@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import AppShell from '../components/app-shell';
+import EmptyState from '../components/empty-state';
 import { InvoiceDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
 import ConfirmModal from '../components/confirm-modal';
@@ -335,7 +336,17 @@ export default function InvoiceDetailPage() {
   }
 
   if (loading) return <InvoiceDetailSkeleton />;
-  if (!invoice) return <AppShell title="Invoice"><div className="empty-state">Invoice not found.</div></AppShell>;
+  if (!invoice) return (
+    <AppShell title="Invoice">
+      <EmptyState
+        icon={<span aria-hidden="true">🧾</span>}
+        title="Invoice not found"
+        description="This invoice may have been deleted, or the link could be wrong."
+        actionLabel="View all invoices"
+        actionTo="/app/invoices"
+      />
+    </AppShell>
+  );
 
   const items = (invoice.invoice_items || []).filter(i => i.included !== false);
   const isPaid = invoice.status === 'paid';

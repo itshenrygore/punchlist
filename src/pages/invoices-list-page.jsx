@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/app-shell';
+import EmptyState from '../components/empty-state';
 import { InvoicesListSkeleton } from '../components/skeletons';
 import { listInvoices } from '../lib/api';
 import { currency, formatDate, friendly } from '../lib/format';
@@ -40,17 +41,20 @@ export default function InvoicesListPage() {
   return (
     <AppShell title="Invoices">
       {invoices.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">🧾</div>
-          <h2 className="empty-state-title">No invoices yet</h2>
-          <p className="empty-state-body">
-            Create a standalone invoice or convert an approved quote.
-          </p>
+        // Use the shared EmptyState (rise + icon pop animation lives
+        // there). The secondary action ("View quotes") sits in
+        // .es-actions next to the primary so contractors get a way
+        // out when they don't have an invoice yet but do have quotes.
+        <EmptyState
+          icon={<span aria-hidden="true">🧾</span>}
+          title="No invoices yet"
+          description="Create a standalone invoice or convert an approved quote."
+        >
           <div className="es-actions">
             <Link className="btn btn-primary" to="/app/invoices/new">New invoice</Link>
             <Link className="btn btn-secondary" to="/app/quotes">View quotes</Link>
           </div>
-        </div>
+        </EmptyState>
       ) : (
         <div className="quotes-list-wrap" style={{ position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>

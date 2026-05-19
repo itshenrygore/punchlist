@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════════ */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Menu, X, Check } from 'lucide-react';
+import { ArrowRight, Menu, X, Check, Sparkles, Eye, ShieldCheck, CreditCard, Smartphone, PenLine } from 'lucide-react';
 import Logo from '../components/logo';
 import '../styles/landing.css';
 
@@ -88,6 +88,30 @@ function LiveQuoteCard() {
   const termObj = TERMS[termIdx];
   const monthly = termObj.monthly;
 
+  // Smooth count-up between term toggles instead of a hard cut. This
+  // is the marquee moment the landing page sells — the monthly number
+  // crossfading via easing makes the whole product feel responsive.
+  const [displayMonthly, setDisplayMonthly] = useState(monthly);
+  useEffect(() => {
+    let raf;
+    const start = displayMonthly;
+    const target = monthly;
+    if (start === target) return;
+    const duration = 320;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / duration);
+      // ease-out-cubic
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplayMonthly(Math.round(start + (target - start) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // displayMonthly intentionally excluded — only restart on target change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthly]);
+
   return (
     <div className="qc">
       <div className="qc-badge">Live demo — try it</div>
@@ -108,8 +132,8 @@ function LiveQuoteCard() {
           </div>
           <div className="qc-divider" />
           <div className="qc-price-label">Your customer sees</div>
-          <div className="qc-monthly" key={monthly}>
-            <span className="qc-mo-n">${monthly.toLocaleString()}</span>
+          <div className="qc-monthly">
+            <span className="qc-mo-n tabular">${displayMonthly.toLocaleString()}</span>
             <span className="qc-mo-u">/mo</span>
           </div>
           <div className="qc-total-line">
@@ -305,15 +329,19 @@ export default function LandingPage() {
           </div>
           <div className="feat-grid">
             {[
-              { icon: '🤖', title: 'AI Scope Builder',       desc: 'Describe the job. Get a full itemized scope with trade-accurate line items in seconds — not 45 minutes.' },
-              { icon: '👁',  title: 'See when they view it',  desc: 'Know the moment your customer opens the quote. No more guessing when to follow up.' },
-              { icon: '🛡',  title: 'Foreman',                desc: 'Catches missed line items and underpricing before you send. Your margin, protected on every job.' },
-              { icon: '💳', title: 'Deposits & invoicing',   desc: 'Collect a deposit on approval. Invoice when done. Track what\'s paid — all in one place.' },
-              { icon: '📱', title: 'Built for the job site',  desc: 'Build, send, and track quotes from your phone. First quote takes 3 minutes.' },
-              { icon: '✍️', title: 'E-signature',             desc: 'Customers sign on the quote link. No printing, no scanning, no back and forth.' },
+              // Lucide icons render consistently across OSes — emoji
+              // versions of the same glyphs vary by platform (Apple's
+              // robot vs Google's robot) and read as low-effort on a
+              // page where every other detail is custom.
+              { Icon: Sparkles,    title: 'AI Scope Builder',       desc: 'Describe the job. Get a full itemized scope with trade-accurate line items in seconds — not 45 minutes.' },
+              { Icon: Eye,         title: 'See when they view it',  desc: 'Know the moment your customer opens the quote. No more guessing when to follow up.' },
+              { Icon: ShieldCheck, title: 'Foreman',                desc: 'Catches missed line items and underpricing before you send. Your margin, protected on every job.' },
+              { Icon: CreditCard,  title: 'Deposits & invoicing',   desc: 'Collect a deposit on approval. Invoice when done. Track what\'s paid — all in one place.' },
+              { Icon: Smartphone,  title: 'Built for the job site', desc: 'Build, send, and track quotes from your phone. First quote takes 3 minutes.' },
+              { Icon: PenLine,     title: 'E-signature',            desc: 'Customers sign on the quote link. No printing, no scanning, no back and forth.' },
             ].map((f, i) => (
               <div key={i} className={`feat-card feat-card--dark rv rv--d${Math.min(i % 3, 2)}`}>
-                <div className="feat-icon">{f.icon}</div>
+                <div className="feat-icon" aria-hidden="true"><f.Icon size={26} strokeWidth={1.75} /></div>
                 <div className="feat-title">{f.title}</div>
                 <div className="feat-desc">{f.desc}</div>
               </div>

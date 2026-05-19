@@ -77,7 +77,10 @@ export default function ConfirmModal({
             type="button"
             onClick={onConfirm}
             style={{
-              padding: '8px 18px', borderRadius: 'var(--r)', fontSize: 'var(--text-base)', fontWeight: 600, cursor: 'pointer', border: 'none',
+              // transparent border matches the cancel button's 1 px so
+              // both buttons land at exactly the same height — the kind
+              // of 2-pixel detail that quietly says "considered".
+              padding: '8px 18px', borderRadius: 'var(--r)', fontSize: 'var(--text-base)', fontWeight: 600, cursor: 'pointer', border: '1px solid transparent',
               background: isDanger ? 'var(--red)' : 'var(--accent)', color: 'var(--always-white, #fff)',
             }}
           >

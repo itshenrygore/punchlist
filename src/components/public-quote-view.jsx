@@ -542,8 +542,17 @@ export default function PublicQuoteView({
           {actionDone === 'approved' && (
             <div className="pq-success-banner">
               <div className="pq-success-check">✓</div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <strong style={{ display: 'block', fontSize: 'var(--text-xl)' }}>You're all set — quote approved</strong>
+                {/* Replay the customer's signature on the success banner.
+                    This is the defining "oddly satisfying" moment — they
+                    just signed for $$$ and the screen rewards them by
+                    showing their mark, instead of snapping to a green block. */}
+                {quote.signature_data && (
+                  <div className="pq-signed-replay" aria-label="Your signature">
+                    <img src={quote.signature_data} alt="Your signature" />
+                  </div>
+                )}
                 <span style={{ fontSize: 'var(--text-sm)', opacity: .85, display: 'block', marginTop: 4, lineHeight: 1.6 }}>
                   {contractorDisplayName} has been notified and will reach out shortly to confirm scheduling.
                   {quote.deposit_required && quote.deposit_status !== 'paid' ? ' A deposit is required to get started — see below.' : ''}

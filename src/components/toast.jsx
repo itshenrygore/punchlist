@@ -25,8 +25,8 @@ export function ToastProvider({ children }) {
   // Show a standard toast. type: 'success' | 'error' | 'info'
   const show = useCallback((message, type = 'success', action = null) => {
     clearUndo();
-    setToast({ message, type, action, id: Date.now(), exiting: false, undo: false });
     const duration = action ? 6000 : type === 'success' ? 3000 : 3500;
+    setToast({ message, type, action, id: Date.now(), exiting: false, undo: false, duration });
     setTimeout(() => setToast(prev => prev ? { ...prev, exiting: true } : null), duration - 300);
     setTimeout(() => setToast(null), duration);
   }, [clearUndo]);
@@ -87,11 +87,19 @@ export function ToastProvider({ children }) {
           aria-live={toast.undo ? 'assertive' : 'polite'}
           data-testid="toast"
         >
-          {/* Countdown progress bar for undo toasts */}
+          {/* Countdown progress bar — explicit for undo toasts, also
+              shown for normal toasts so users see how long they have. */}
           {toast.undo && (
             <div
               className="toast-undo-bar"
               style={{ width: `${(undoMs / 3000) * 100}%` }}
+              aria-hidden="true"
+            />
+          )}
+          {!toast.undo && toast.duration && (
+            <div
+              className="toast-progress"
+              style={{ animationDuration: `${toast.duration}ms` }}
               aria-hidden="true"
             />
           )}
