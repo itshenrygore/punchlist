@@ -89,7 +89,16 @@ function InvoiceRow({ invoice }) {
     : chipForStatus(displayStatus) || displayStatus;
 
   return (
-    <Link className="ql-row-premium" to={`/app/invoices/${invoice.id}`} data-status={displayStatus}>
+    <Link
+      className="ql-row-premium"
+      to={`/app/invoices/${invoice.id}`}
+      // Hand the list row's invoice forward so the detail page paints
+      // the header instantly instead of flashing a skeleton through
+      // the second fetch — the row already has everything we need
+      // for first paint (title, customer, status, total).
+      state={{ preview: invoice }}
+      data-status={displayStatus}
+    >
       <div className="ql-row-info">
         <span className="ql-row-title">
           {invoice.title || invoice.invoice_number || 'Invoice'}

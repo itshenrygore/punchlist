@@ -201,6 +201,34 @@ export default async function handler(req, res) {
     // single source of truth for view_count, first_viewed_at, status transitions,
     // and in-app notifications. Running it here too caused double/triple counting.
 
+    // Step 5b: If this quote has been converted to an invoice, return
+    // the invoice's share_token + status so the public quote portal can
+    // surface a "This quote has been invoiced — view invoice" banner.
+    // Without this, a customer who returns to the quote link after the
+    // contractor sent an invoice has no way to discover the invoice.
+    let linkedInvoice = null;
+    try {
+      const { data: inv } = await supabase
+        .from('invoices')
+        .select('id, share_token, status, total, paid_at, due_at')
+        .eq('quote_id', quote.id)
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (inv?.share_token) {
+        linkedInvoice = {
+          share_token: inv.share_token,
+          status: inv.status,
+          total: Number(inv.total || 0),
+          paid_at: inv.paid_at || null,
+          due_at: inv.due_at || null,
+        };
+      }
+    } catch (e) {
+      console.warn('[public-quote] Linked-invoice lookup failed:', e.message);
+    }
+
     // Step 6: Build response payload
     const payload = {
       id: quote.id,
@@ -254,6 +282,11 @@ export default async function handler(req, res) {
       // 2B: Optional items toggling — returned as-is in line_items
       // 2C: Conversation thread
       conversation: Array.isArray(quote.conversation) ? quote.conversation : [],
+      // Linked invoice (if quote has been converted) — lets the public
+      // quote page render a "View invoice" banner so a returning
+      // customer isn't stuck looking at the old quote when the
+      // contractor has moved on to billing.
+      linked_invoice: linkedInvoice,
     };
 
     // console.log('[public-quote] Success, returning quote');

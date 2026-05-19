@@ -670,7 +670,38 @@ export default function PublicQuoteView({
               </button>
             </div>
           )}
-          {!actionDone && isConvertedOrPaid && !isSigned && <div className="doc-status doc-status--approved"><span className="doc-status-icon">✓</span><span>This job has been completed.</span></div>}
+          {!actionDone && isConvertedOrPaid && !isSigned && !quote.linked_invoice && <div className="doc-status doc-status--approved"><span className="doc-status-icon">✓</span><span>This job has been completed.</span></div>}
+          {/* Linked-invoice banner — when this quote has been converted
+              to a non-draft invoice, surface a way for a returning
+              customer to find the invoice instead of staring at the
+              old quote with no obvious next step. Paid → green
+              "Invoice paid" reassurance. Unpaid → call-to-action to
+              view + pay. */}
+          {quote.linked_invoice && quote.linked_invoice.status !== 'draft' && (
+            <a
+              href={`/public/invoice/${quote.linked_invoice.share_token}`}
+              className={`doc-status doc-linked-invoice ${quote.linked_invoice.status === 'paid' ? 'doc-status--approved' : 'doc-status--info'}`}
+              style={{ textDecoration: 'none', cursor: 'pointer' }}
+            >
+              <span className="doc-status-icon" style={{ display: 'inline-flex' }}>
+                {quote.linked_invoice.status === 'paid' ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                )}
+              </span>
+              <div style={{ flex: 1 }}>
+                <strong style={{ display: 'block' }}>
+                  {quote.linked_invoice.status === 'paid' ? 'Invoice paid · job complete' : 'Invoice ready'}
+                </strong>
+                <span style={{ fontSize: 'var(--text-xs)', opacity: .85 }}>
+                  {quote.linked_invoice.status === 'paid'
+                    ? `Thanks for paying${quote.linked_invoice.paid_at ? ` · ${formatDate(quote.linked_invoice.paid_at)}` : ''}`
+                    : 'View and pay your invoice →'}
+                </span>
+              </div>
+            </a>
+          )}
           {depositSuccess && (
             <div className="doc-status doc-status--approved" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4, padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

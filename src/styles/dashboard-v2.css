@@ -454,6 +454,26 @@
 .dv2-arow-dot--green  { background: var(--green); }
 .dv2-arow-dot--muted  { background: var(--muted); }
 
+/* "+N more" overflow row at the foot of Needs Attention. Dashed
+   border + muted styling so it doesn't compete with real action
+   rows for the eye, but is still tappable to View All Quotes. */
+.dv2-arow--more {
+  grid-template-columns: auto 1fr;
+  border-style: dashed;
+  background: transparent;
+}
+.dv2-arow--more:hover { border-color: var(--brand); }
+.dv2-arow-more-icon {
+  width: var(--dv2-dot-size); height: var(--dv2-dot-size);
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--panel-2); color: var(--muted);
+  font-size: 13px; font-weight: 700; line-height: 1;
+  flex-shrink: 0;
+}
+.dv2-arow--more:hover .dv2-arow-more-icon { background: var(--brand-bg, rgba(249,115,22,.1)); color: var(--brand); }
+.dv2-arow--more .dv2-arow-primary { font-weight: 600; color: var(--text-2); }
+
 /* Label stack. */
 .dv2-arow-labels {
   display: flex;

@@ -178,7 +178,12 @@ export default function DashboardPage() {
     ).length;
   }, [invoices]);
 
-  const actionItems = useMemo(() => {
+  // Raw, unbounded urgency-sorted set. We keep the full list available
+  // so the "+N more" overflow indicator below can show a real count
+  // instead of the post-slice 5 (which always reads "5"). Don't
+  // remove the slice — the dashboard's job is to prioritize, not
+  // dump the queue.
+  const actionItemsRaw = useMemo(() => {
     const items = [];
     for (const q of quotes) {
       const s = normalizeStatus(q.status);
@@ -215,15 +220,16 @@ export default function DashboardPage() {
       if (r.includes('going cold'))           return 5;
       return 6;
     };
-    return items
-      .sort((a, b) => {
-        const ar = urgencyRank(a);
-        const br = urgencyRank(b);
-        if (ar !== br) return ar - br;
-        return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
-      })
-      .slice(0, 5);
+    return items.sort((a, b) => {
+      const ar = urgencyRank(a);
+      const br = urgencyRank(b);
+      if (ar !== br) return ar - br;
+      return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
+    });
   }, [quotes]);
+
+  const actionItems = actionItemsRaw.slice(0, 5);
+  const actionOverflow = Math.max(0, actionItemsRaw.length - 5);
 
   const hasAnyData = quotes.length > 0;
 
@@ -437,6 +443,19 @@ export default function DashboardPage() {
                   </Link>
                 );
               })}
+              {actionOverflow > 0 && (
+                <Link
+                  to="/app/quotes"
+                  className="dv2-arow dv2-arow--more dv2-enter"
+                  style={{ '--i': actionItems.length + 3, textDecoration: 'none' }}
+                >
+                  <span className="dv2-arow-more-icon" aria-hidden="true">+</span>
+                  <div className="dv2-arow-labels">
+                    <span className="dv2-arow-primary">{actionOverflow} more {actionOverflow === 1 ? 'quote needs' : 'quotes need'} attention</span>
+                    <span className="dv2-arow-secondary">View all quotes →</span>
+                  </div>
+                </Link>
+              )}
             </div>
           </section>
         )}
