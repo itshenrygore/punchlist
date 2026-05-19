@@ -49,6 +49,12 @@ function TemplateCard({ template, label, hint, isProUser, onSave, onReset, savin
   const isCustom = template?.is_custom && !template?._isDefault;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(template?.body || '');
+  // Sync draft when the template prop reloads (e.g. after a save round-trip)
+  // so we don't show stale body. Only sync when not actively editing —
+  // otherwise we'd wipe the user's in-progress edits on every reload.
+  useEffect(() => {
+    if (!editing) setDraft(template?.body || '');
+  }, [template?.body, template?.template_key, editing]);
   const preview = renderTemplate(draft, PREVIEW_TOKENS);
   const defaults = getSystemDefaults();
   const defaultBody = defaults[template?.template_key] || '';
@@ -491,7 +497,11 @@ export default function TemplatesPage() {
 
         {/* ── Job template name modal ── */}
         {editingTmpl && (
+          // key by tmpl id so opening template B after template A
+          // re-mounts the modal with B's fields rather than holding
+          // A's snapshot from useState's lazy initializer.
           <JobTemplateModal
+            key={editingTmpl.id || 'edit'}
             tmpl={editingTmpl}
             onSave={handleSaveJobTemplate}
             onClose={() => setEditingTmpl(null)}

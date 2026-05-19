@@ -58,14 +58,19 @@ export default function NotificationCenter() {
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    // Capture the user.id we're fetching for. If the user logs out and
+    // a different account logs in mid-fetch, the late response would
+    // otherwise dump the previous user's notifications into the new
+    // user's session.
+    const fetchingFor = user.id;
     try {
       const { data, error, count } = await supabase
         .from('notifications')
         .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
+        .eq('user_id', fetchingFor)
         .order('created_at', { ascending: false })
         .limit(PAGE_SIZE);
-      if (!error && data) {
+      if (!error && data && user?.id === fetchingFor) {
         setNotifications(data);
         setHasMore((count || 0) > data.length);
       }

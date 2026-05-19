@@ -9,7 +9,16 @@ const ForemanContext = createContext({
 
 export function ForemanProvider({ children }) {
   const [quoteContext, setQuoteContext] = useState(null);
-  const [addItemHandler, setAddItemHandler] = useState(null);
+  const [addItemHandler, setAddItemHandlerRaw] = useState(null);
+
+  // Storing a function in useState requires the lazy form
+  // `setState(() => fn)` — otherwise React invokes `fn` with the
+  // previous state and stores its return value. Wrap so consumers
+  // can call `setAddItemHandler(fn)` directly with any function.
+  const setAddItemHandler = useCallback(
+    (fn) => setAddItemHandlerRaw(() => fn),
+    [],
+  );
 
   return (
     <ForemanContext.Provider value={{ quoteContext, setQuoteContext, addItemHandler, setAddItemHandler }}>

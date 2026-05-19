@@ -222,6 +222,7 @@ export default function QuotesListPage() {
   const [sortBy, setSortBy]               = useState('updated');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selected, setSelected] = useState(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const fetchQuotes = useCallback(() => {
     if (!user) return;
@@ -235,7 +236,7 @@ export default function QuotesListPage() {
       })
       .catch(e => {
         console.warn('[PL]', e);
-        getCachedQuotes().then(cached => {
+        getCachedQuotes(user.id).then(cached => {
           if (cached.length > 0) {
             setQuotes(prev => prev.length === 0 ? cached.filter(qt => !qt.archived_at) : prev);
           }
@@ -329,27 +330,33 @@ export default function QuotesListPage() {
   }
 
   async function handleBulkSend() {
+    if (bulkBusy) return; // Guard against double-click → duplicate emails.
     const sendable = [...selected]
       .map(id => quotes.find(q => q.id === id))
       .filter(q => q && ['draft', 'viewed', 'revision_requested'].includes(q.status) && q.customer?.email && q.share_token);
     if (sendable.length === 0) { toast('No sendable quotes selected (need customer email and share link)', 'error'); return; }
+    setBulkBusy(true);
     toast(`Sending ${sendable.length} quote${sendable.length > 1 ? 's' : ''}…`, 'info');
     let sent = 0;
-    for (const q of sendable) {
-      try {
-        await sendQuoteEmail(q.id, q.customer.email);
-        if (q.status === 'draft') {
-          await updateQuoteStatus(q.id, { status: 'sent', sent_at: new Date().toISOString() });
-        }
-        sent++;
-      } catch (e) { console.warn('[PL] bulk send failed for', q.id, e); }
+    try {
+      for (const q of sendable) {
+        try {
+          await sendQuoteEmail(q.id, q.customer.email);
+          if (q.status === 'draft') {
+            await updateQuoteStatus(q.id, { status: 'sent', sent_at: new Date().toISOString() });
+          }
+          sent++;
+        } catch (e) { console.warn('[PL] bulk send failed for', q.id, e); }
+      }
+      if (sent > 0) {
+        setQuotes(prev => prev.map(q => sendable.some(s => s.id === q.id) ? { ...q, status: q.status === 'draft' ? 'sent' : q.status, sent_at: new Date().toISOString() } : q));
+        haptic('success');
+      }
+      setSelected(new Set());
+      toast(`${sent} of ${sendable.length} quote${sendable.length > 1 ? 's' : ''} sent`, sent > 0 ? 'success' : 'error');
+    } finally {
+      setBulkBusy(false);
     }
-    if (sent > 0) {
-      setQuotes(prev => prev.map(q => sendable.some(s => s.id === q.id) ? { ...q, status: q.status === 'draft' ? 'sent' : q.status, sent_at: new Date().toISOString() } : q));
-      haptic('success');
-    }
-    setSelected(new Set());
-    toast(`${sent} of ${sendable.length} quote${sendable.length > 1 ? 's' : ''} sent`, sent > 0 ? 'success' : 'error');
   }
 
   const filtered = useMemo(() => {
@@ -532,9 +539,9 @@ export default function QuotesListPage() {
       {selected.size > 0 && (
         <div className="ql-bulk-bar">
           <span className="ql-bulk-count">{selected.size} selected</span>
-          <button type="button" className="btn btn-primary btn-sm" onClick={handleBulkSend}>Send</button>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={handleBulkArchive}>Archive</button>
-          <button type="button" className="btn btn-danger btn-sm" onClick={handleBulkDelete}>Delete drafts</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={bulkBusy} onClick={handleBulkSend}>{bulkBusy ? 'Sending…' : 'Send'}</button>
+          <button type="button" className="btn btn-secondary btn-sm" disabled={bulkBusy} onClick={handleBulkArchive}>Archive</button>
+          <button type="button" className="btn btn-danger btn-sm" disabled={bulkBusy} onClick={handleBulkDelete}>Delete drafts</button>
           <button type="button" className="btn-link ql-bulk-cancel" onClick={() => setSelected(new Set())}>Cancel</button>
         </div>
       )}

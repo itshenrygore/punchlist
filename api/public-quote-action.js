@@ -357,12 +357,14 @@ export default async function handler(req, res) {
             });
           } catch (e) { console.warn('[public-quote-action] notif failed:', e?.message); }
 
-          const pushTotal = Number(quote.total || 0);
-          const pushAmt = pushTotal > 0 ? ` $${Math.round(pushTotal).toLocaleString()}` : '';
+          // Push payloads land on the LOCK screen. Don't put the
+          // customer's name or the $ amount there — anyone glancing
+          // at the phone (in a customer's home, a coworker's hand)
+          // would see it. The contractor can tap in to see details.
           sendPushNotification(supabase, {
             userId: quote.user_id,
-            title: `${customerName || 'Your customer'} opened your${pushAmt} quote`,
-            body: quote.title || 'Tap to view details',
+            title: 'Quote viewed',
+            body: 'A customer opened one of your quotes.',
             url: `/app/quotes/${quote.id}`,
           }).catch(() => {});
 
@@ -470,11 +472,11 @@ export default async function handler(req, res) {
         body: `${customerName || 'Customer'} approved your quote.`,
         link: `/app/quotes/${quote.id}`,
       });
-      // 7B: Push notification
+      // 7B: Push notification — generic strings only on the lock screen.
       await sendPushNotification(supabase, {
         userId: quote.user_id,
-        title: `Quote approved: ${quote.title || 'Untitled'}`,
-        body: `${customerName || 'Customer'} approved your quote.`,
+        title: 'Quote approved',
+        body: 'A customer approved one of your quotes.',
         url: `/app/quotes/${quote.id}`,
       });
       // 1C: Auto-send confirmation email to customer after signing
@@ -585,11 +587,11 @@ export default async function handler(req, res) {
           body: reason ? `"${reason.slice(0, 120)}"` : `${customerName || 'Customer'} declined.`,
           link: `/app/quotes/${quote.id}`,
         });
-        // 7B: Push notification
+        // 7B: Push notification — generic on the lock screen.
         await sendPushNotification(supabase, {
           userId: quote.user_id,
-          title: `Quote declined: ${quote.title || 'Untitled'}`,
-          body: reason ? reason.slice(0, 120) : `${customerName || 'Customer'} declined.`,
+          title: 'Quote declined',
+          body: 'A customer declined one of your quotes.',
           url: `/app/quotes/${quote.id}`,
         });
         // 9A: SMS — notify contractor of decline
@@ -642,11 +644,12 @@ export default async function handler(req, res) {
         body: `${customerName || 'Customer'}: "${question.slice(0, 120)}"`,
         link: `/app/quotes/${quote.id}`,
       });
-      // 7B: Push notification
+      // 7B: Push notification — keep customer text / quote details
+      // off the lock screen.
       await sendPushNotification(supabase, {
         userId: quote.user_id,
-        title: `Question on ${quote.title || 'your quote'}`,
-        body: `${customerName || 'Customer'}: "${question.slice(0, 80)}"`,
+        title: 'New question on your quote',
+        body: 'A customer left a question.',
         url: `/app/quotes/${quote.id}`,
       });
       // 9A: SMS — notify contractor of customer question
@@ -768,8 +771,8 @@ export default async function handler(req, res) {
         });
         await sendPushNotification(supabase, {
           userId: quote.user_id,
-          title: `${customerName || 'Customer'} reconsidered`,
-          body: `They reversed their decline on "${(quote.title || 'your quote').slice(0, 40)}"`,
+          title: 'Decline reversed',
+          body: 'A customer changed their mind on one of your quotes.',
           url: `/app/quotes/${quote.id}`,
         });
         if (contractorEmail) {

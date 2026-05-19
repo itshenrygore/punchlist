@@ -87,19 +87,46 @@ async function executeTool(name, args, userId, supabase) {
       return `Opening the quote builder. ${args.description ? `I'll pre-fill the description: "${args.description}".` : ''} [LINK:${url}]`;
     }
     if (name === 'create_quote') {
+      // The model can call this tool with anything in its head, and
+      // indirect prompt injection (customer text the contractor pastes
+      // into a quote description) can steer those args. Clamp every
+      // string, every number, and every array length before we touch
+      // the DB. Reject obviously bad input.
+      const clampStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+      const clampNum = (v, lo, hi) => {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return lo;
+        return Math.max(lo, Math.min(hi, n));
+      };
+      const title = clampStr(args.title, 220).trim();
+      if (!title) return 'Error: title required.';
+      const description = clampStr(args.description, 1000);
+      const trade = clampStr(args.trade, 80) || null;
+      const rawItems = Array.isArray(args.line_items) ? args.line_items.slice(0, 50) : [];
+
       let customer_id = null;
       if (args.customer_name) {
-        const { data: custs } = await supabase.from('customers').select('id, name').eq('user_id', userId).ilike('name', '%' + args.customer_name + '%').limit(1);
+        const search = clampStr(args.customer_name, 120);
+        const { data: custs } = await supabase
+          .from('customers')
+          .select('id, name')
+          .eq('user_id', userId)
+          .ilike('name', '%' + search + '%')
+          .limit(1);
         if (custs?.length) customer_id = custs[0].id;
       }
-      const items = (args.line_items || []).map((it) => ({ name: it.name, quantity: it.quantity || 1, unit_price: it.unit_price || 0, notes: '', included: true, category: '' }));
+      const items = rawItems.map((it) => ({
+        name:       clampStr(it?.name, 220) || 'Item',
+        quantity:   clampNum(it?.quantity, 0.01, 10_000),
+        unit_price: clampNum(it?.unit_price, 0, 1_000_000),
+        notes: '', included: true, category: '',
+      }));
       const total = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
       const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
       const { data: quote, error } = await supabase.from('quotes').insert({
-        user_id: userId, customer_id, title: args.title, description: args.description || '', trade: args.trade || null, status: 'draft', total, share_token: token,
+        user_id: userId, customer_id, title, description, trade, status: 'draft', total, share_token: token,
       }).select().single();
       if (error) return 'Error creating quote: ' + error.message;
-      // Insert line items separately
       if (items.length) {
         await supabase.from('line_items').insert(items.map(it => ({ quote_id: quote.id, name: it.name, quantity: it.quantity, unit_price: it.unit_price, notes: it.notes, included: it.included, category: it.category })));
       }
@@ -248,20 +275,27 @@ Knowledge: ${country === 'CA' ? 'CEC, CPC, NBC' : 'NEC, IPC, IBC'} for ${provinc
     let data = await resp.json();
     if (!resp.ok) throw new Error(data.error?.message || `Claude ${resp.status}`);
 
-    // Check if Claude wants to use a tool
-    const toolUseBlock = data.content?.find(b => b.type === 'tool_use');
-
-    if (toolUseBlock && userId) {
-      // Create supabase client for tool execution
-      const supabase = getSupabase();
+    // Tool-use loop. Cap at 3 iterations so a misbehaving model can't
+    // spin Anthropic calls indefinitely and so multi-step conversational
+    // flows ("find the customer, then create a quote") work — the
+    // previous one-shot handling silently dropped the second tool call.
+    const MAX_TOOL_TURNS = 3;
+    let turn = 0;
+    const supabase = getSupabase();
+    let conversation = [...claudeMessages];
+    while (turn < MAX_TOOL_TURNS) {
+      const toolUseBlock = data.content?.find(b => b.type === 'tool_use');
+      if (!toolUseBlock || !userId) break;
       if (!supabase) {
         console.error('[ai-assist] Cannot execute tool - Supabase not configured');
         return res.status(200).json({ role: 'assistant', content: 'I can not access your data right now. The database connection is not configured.' });
       }
-      
       const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input || {}, userId, supabase);
-
-      // Send tool result back to Claude for final response
+      conversation = [
+        ...conversation,
+        { role: 'assistant', content: data.content },
+        { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUseBlock.id, content: toolResult }] },
+      ];
       const resp2 = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -273,17 +307,14 @@ Knowledge: ${country === 'CA' ? 'CEC, CPC, NBC' : 'NEC, IPC, IBC'} for ${provinc
           model,
           max_tokens: 800,
           system: systemPrompt,
-          messages: [
-            ...claudeMessages,
-            { role: 'assistant', content: data.content },
-            { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUseBlock.id, content: toolResult }] },
-          ],
+          messages: conversation,
           tools: TOOL_DEFS,
         }),
       });
-
       const data2 = await resp2.json();
-      if (resp2.ok) data = data2;
+      if (!resp2.ok) break;
+      data = data2;
+      turn++;
     }
 
     // Extract text from response

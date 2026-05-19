@@ -295,11 +295,20 @@ export default async function handler(req, res) {
   try {
     const result = await callClaude({ description, trade, apiKey, country, photo, wonQuotes, labourRate });
 
-    // Apply regional pricing adjustments
+    // Apply regional pricing adjustments. Re-clamp unit_price to ≥1
+    // because regionalize() can return 0 for outlier regions (Yukon,
+    // Nunavut) when its multiplier table doesn't have a rate — and a
+    // $0 line item makes it through to the quote builder unflagged.
     if (province && province !== 'AB' && result.items?.length) {
       result.items = result.items.map(item => {
         const adj = regionalize(item, province);
-        return { ...item, lo: adj.lo, mid: adj.mid, hi: adj.hi, unit_price: adj.mid };
+        return {
+          ...item,
+          lo: Math.max(1, adj.lo || 0),
+          mid: Math.max(1, adj.mid || 0),
+          hi: Math.max(1, adj.hi || 0),
+          unit_price: Math.max(1, adj.mid || 0),
+        };
       });
     }
 

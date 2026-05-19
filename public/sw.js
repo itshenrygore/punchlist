@@ -1,24 +1,35 @@
 // Punchlist Service Worker — PWA shell cache + push notifications
 // NOTE: Bump CACHE_NAME on every deploy so clients purge stale assets
 // (especially after fixing bad font URLs or hashed bundle filenames).
-const CACHE_NAME = 'punchlist-v98';
+const CACHE_NAME = 'punchlist-v99';
 const SHELL_ASSETS = [
   '/',
-  '/app',
   '/favicon.svg',
   '/apple-touch-icon.svg',
   '/manifest.json',
 ];
 
-// Install: pre-cache app shell
+// Hosts we MUST NOT cache responses from. Match by exact equality or
+// known suffixes — the previous `hostname.includes('supabase')` check
+// also matched attacker-controlled lookalike domains like
+// `evil-supabase.example.com`.
+const NEVER_CACHE_SUFFIXES = [
+  '.supabase.co',
+  '.supabase.in',
+  '.stripe.com',
+  '.resend.com',
+];
+function isThirdParty(hostname) {
+  const h = hostname.toLowerCase();
+  return NEVER_CACHE_SUFFIXES.some((sfx) => h === sfx.slice(1) || h.endsWith(sfx));
+}
+
+// Install: pre-cache app shell. Do NOT swallow install errors — if the
+// shell can't be cached we want activation to fail so the previous SW
+// stays in charge instead of activating an empty cache.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(SHELL_ASSETS).catch(() => {
-        // Some assets may fail (e.g. /app returns index.html via SPA routing)
-        // That's fine — we'll serve from network first anyway
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
   );
   self.skipWaiting();
 });
@@ -26,54 +37,69 @@ self.addEventListener('install', (event) => {
 // Activate: clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) => {
-      return Promise.all(
-        names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
-      );
-    })
+    caches.keys().then((names) =>
+      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+    )
   );
   self.clients.claim();
 });
 
-// Fetch: network-first for API calls, cache-first for static assets
+// Fetch: network-first for navigations, cache-first for hashed assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache API calls, Supabase, Stripe, or Resend requests
+  // Bypass: API calls, third-party hosts, non-GETs.
   if (
     url.pathname.startsWith('/api/') ||
-    url.hostname.includes('supabase') ||
-    url.hostname.includes('stripe') ||
-    url.hostname.includes('resend') ||
+    isThirdParty(url.hostname) ||
     event.request.method !== 'GET'
   ) {
-    return; // Let the browser handle these normally
+    return;
   }
 
-  // For navigation requests (HTML pages), try network first, fall back to cached /
+  // Navigation requests: network-first, refresh the cached shell on
+  // success, fall back to cached "/" ONLY when offline. The previous
+  // version fell back on ANY fetch failure (5xx, slow network), which
+  // could serve stale HTML pointing at hashed bundles that no longer
+  // exist post-deploy.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/'))
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/', clone)).catch(() => {});
+          }
+          return response;
+        })
+        .catch(async () => {
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            const cached = await caches.match('/');
+            if (cached) return cached;
+          }
+          return new Response('', { status: 503, statusText: 'Offline' });
+        })
     );
     return;
   }
 
-  // For static assets: cache-first, network fallback
+  // Static assets: only cache hashed/static-shaped paths so we never
+  // accidentally retain a customized HTML or JSON response.
+  const isCacheableAsset =
+    /\.(js|css|svg|png|webp|woff2?)$/.test(url.pathname) &&
+    ['style', 'script', 'image', 'font'].includes(event.request.destination);
+  if (!isCacheableAsset) return;
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
-        // Cache successful responses for static assets
-        if (response.ok && url.pathname.match(/\.(js|css|svg|png|woff2?)$/)) {
+        if (response.ok) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
         }
         return response;
-      }).catch(() => {
-        // Network failed and no cache — return offline fallback for navigations
-        if (event.request.mode === 'navigate') return caches.match('/');
-        return new Response('', { status: 408, statusText: 'Offline' });
-      });
+      }).catch(() => new Response('', { status: 408, statusText: 'Offline' }));
     })
   );
 });
@@ -93,11 +119,15 @@ self.addEventListener('push', (event) => {
   }
   actions.push({ action: 'open', title: 'Open' });
 
+  // Per-event tag so a "viewed" then "approved" don't collapse into
+  // one notification (default tag would dedupe).
+  const tag = data.tag || `punchlist-${data.type || 'event'}-${data.quoteId || Date.now()}`;
+
   const options = {
     body: data.body || '',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
-    tag: data.tag || 'punchlist-notification',
+    tag,
     data: { url: data.url || '/app', type: data.type, quoteId: data.quoteId },
     vibrate: [100, 50, 100],
     actions,
@@ -106,7 +136,9 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(data.title || 'Punchlist', options));
 });
 
-// Notification click — open the app to the right page
+// Notification click — open the app to the right page. ONLY navigate
+// to same-origin relative paths so a malformed push payload can't
+// redirect the contractor's tab off-domain.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
@@ -115,11 +147,13 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'followup' && data.quoteId) {
     url = `/app/quotes/${data.quoteId}?action=nudge`;
   }
+  // Reject anything that isn't a known in-app relative path.
+  if (!/^\/(app|q|i|public)(\/|$|\?)/.test(url)) url = '/app';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
           client.navigate(url);
           return client.focus();
         }

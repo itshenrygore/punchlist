@@ -1,4 +1,7 @@
 const DB_NAME = 'punchlist-offline';
+// Kept in lockstep with src/lib/offline.js. The upgrade handler must
+// create every store the app uses, regardless of which module opens
+// the DB first.
 const DB_VERSION = 2;
 const QUOTES_STORE = 'quotes';
 const SYNC_STORE = 'sync-queue';
@@ -8,6 +11,9 @@ function openDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
+      if (!db.objectStoreNames.contains('drafts')) {
+        db.createObjectStore('drafts', { keyPath: 'id' });
+      }
       if (!db.objectStoreNames.contains(QUOTES_STORE)) {
         db.createObjectStore(QUOTES_STORE, { keyPath: 'id' });
       }
@@ -30,16 +36,22 @@ export async function cacheQuotes(quotes) {
   } catch (e) { console.warn('[PL] cache write failed:', e); }
 }
 
-export async function getCachedQuotes() {
+export async function getCachedQuotes(userId) {
+  // userId is now required to prevent the cross-user leak: on a logout +
+  // login flow, the second user could see the first user's cached
+  // quotes because the store is shared across accounts in one browser.
+  // Existing callers that pass nothing get the empty list (safe).
   try {
     const db = await openDB();
     const tx = db.transaction(QUOTES_STORE, 'readonly');
     const store = tx.objectStore(QUOTES_STORE);
-    return new Promise((resolve, reject) => {
+    const all = await new Promise((resolve, reject) => {
       const req = store.getAll();
       req.onsuccess = () => resolve(req.result || []);
       req.onerror = () => reject(req.error);
     });
+    if (!userId) return [];
+    return all.filter(q => q.user_id === userId);
   } catch (e) { console.warn('[PL] cache read failed:', e); return []; }
 }
 

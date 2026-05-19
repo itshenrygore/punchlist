@@ -6,7 +6,6 @@ import { listQuotes, updateQuoteStatus } from '../lib/api';
 import { currency, formatDate } from '../lib/format';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
-import { addToCalendar } from '../lib/calendar';
 import { openMaps } from '../lib/utils';
 
 const SCHEDULED_STATUSES = ['approved', 'approved_pending_deposit', 'deposit_paid'];
@@ -45,10 +44,16 @@ export default function SchedulePage() {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
+    setLoading(true);
     listQuotes(user.id)
-      .then(q => setQuotes(q.filter(qt => SCHEDULED_STATUSES.includes(qt.status) && !qt.archived_at)))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .then(q => {
+        if (cancelled) return;
+        setQuotes(q.filter(qt => SCHEDULED_STATUSES.includes(qt.status) && !qt.archived_at));
+      })
+      .catch(() => { /* keep prior list */ })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [user]);
 
   const start = weekStart(addDays(new Date(), weekOffset * 7));
@@ -58,35 +63,31 @@ export default function SchedulePage() {
     const map = {};
     for (const d of days) map[d.toISOString().slice(0, 10)] = [];
     for (const q of quotes) {
-      const sw = q.schedule_start || q.schedule_window;
+      // schedule_start / schedule_end were never declared in the
+      // schema — the previous code silently failed on every save. The
+      // canonical column is `schedule_window`. Multi-day jobs use a
+      // single point-in-time for now until/unless real range columns
+      // are added.
+      const sw = q.schedule_window;
       if (!sw) continue;
       const startDate = new Date(sw).toISOString().slice(0, 10);
-      const endDate = q.schedule_end ? new Date(q.schedule_end).toISOString().slice(0, 10) : startDate;
-      for (const d of days) {
-        const key = d.toISOString().slice(0, 10);
-        if (key >= startDate && key <= endDate && map[key]) {
-          const isFirst = key === startDate;
-          const isLast = key === endDate;
-          const isMultiDay = startDate !== endDate;
-          map[key].push({ ...q, _isFirst: isFirst, _isLast: isLast, _isMultiDay: isMultiDay });
-        }
-      }
+      const key = startDate;
+      if (map[key]) map[key].push({ ...q, _isFirst: true, _isLast: true, _isMultiDay: false });
     }
     return map;
   }, [quotes, weekOffset]);
 
   const unscheduled = useMemo(
-    () => quotes.filter(q => !q.schedule_window && !q.schedule_start),
+    () => quotes.filter(q => !q.schedule_window),
     [quotes]
   );
 
-  async function assignDate(quoteId, date, endDate) {
+  async function assignDate(quoteId, date /* endDate parameter ignored: see comment in `scheduled` */) {
     try {
-      const updates = { schedule_window: date.toISOString(), schedule_start: date.toISOString() };
-      if (endDate) updates.schedule_end = endDate.toISOString();
+      const updates = { schedule_window: date.toISOString() };
       await updateQuoteStatus(quoteId, updates);
       setQuotes(prev => prev.map(q => q.id === quoteId ? { ...q, ...updates } : q));
-      toast(endDate ? `Scheduled ${formatDayLabel(date)} – ${formatDayLabel(endDate)}` : 'Scheduled', 'success');
+      toast(`Scheduled ${formatDayLabel(date)}`, 'success');
     } catch { toast('Could not schedule', 'error'); }
   }
 

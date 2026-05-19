@@ -245,7 +245,7 @@ export async function deletePayment(paymentId, invoiceId) {
   }
 }
 
-export async function createStandaloneInvoice(userId, { title, description, items, discount, due_at, notes, province, country, customer_id }) {
+export async function createStandaloneInvoice(userId, { title, description, items, discount, due_at, notes, province, country, customer_id, quote_id }) {
   const prov = province || 'ON';
   const ctry = country || 'CA';
   const totals = calculateTotals((items || []).map(i => ({ ...i, included: true })), prov, ctry);
@@ -260,6 +260,10 @@ export async function createStandaloneInvoice(userId, { title, description, item
     .insert({
       user_id: userId,
       customer_id: customer_id || null,
+      // quote_id was previously silently dropped — invoices created
+      // "from approved quote" weren't actually linked back, breaking
+      // status attribution and the View-Invoice link on the source quote.
+      quote_id: quote_id || null,
       title: title || 'Invoice',
       description: description || '',
       status: 'draft',

@@ -9,7 +9,12 @@
 // ═══════════════════════════════════════════
 
 const DB_NAME = 'punchlist-offline';
-const DB_VERSION = 1;
+// IMPORTANT: kept in lockstep with src/lib/offline-cache.js. Both
+// modules open the same IndexedDB by name; if their versions differ,
+// whichever loads second hits VersionError and every offline write
+// silently fails. The upgrade handler creates every store this
+// codebase uses, so either file can drive the upgrade safely.
+const DB_VERSION = 2;
 const STORE_NAME = 'drafts';
 
 function openDB() {
@@ -17,8 +22,14 @@ function openDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('drafts')) {
+        db.createObjectStore('drafts', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('quotes')) {
+        db.createObjectStore('quotes', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('sync-queue')) {
+        db.createObjectStore('sync-queue', { keyPath: 'id', autoIncrement: true });
       }
     };
     req.onsuccess = () => resolve(req.result);

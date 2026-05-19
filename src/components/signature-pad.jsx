@@ -66,9 +66,11 @@ export default function SignaturePad({
   }, [typedName, tab]);
 
   function getPos(e) {
+    // Pointer events expose clientX/clientY directly on the event, same
+    // as mouse events. We left getBoundingClientRect on every move for
+    // simplicity (cheap on canvas-sized elements).
     const rect = canvasRef.current.getBoundingClientRect();
-    const touch = e.touches ? e.touches[0] : e;
-    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
 
   function startDraw(e) {
@@ -99,16 +101,38 @@ export default function SignaturePad({
     setHasStrokes(false);
   }
 
+  // The server rejects signatures over ~300KB. On a 3x DPR phone the
+  // raw canvas PNG can easily blow past that, surfacing a confusing
+  // "Invalid signature data" error to the customer at the worst moment
+  // (just as they tap Approve). Downscale + recompress to a safe
+  // ceiling before we hand the data off.
+  function serializeCanvas(srcCanvas) {
+    const TARGET_W = 800;
+    const ratio = Math.min(1, TARGET_W / srcCanvas.width);
+    const out = document.createElement('canvas');
+    out.width = Math.round(srcCanvas.width * ratio);
+    out.height = Math.round(srcCanvas.height * ratio);
+    const c = out.getContext('2d');
+    c.drawImage(srcCanvas, 0, 0, out.width, out.height);
+    let quality = 0.92;
+    let url = out.toDataURL('image/jpeg', quality);
+    while (url.length > 260_000 && quality > 0.4) {
+      quality -= 0.1;
+      url = out.toDataURL('image/jpeg', quality);
+    }
+    return url;
+  }
+
   function handleSave() {
     const name = signerName.trim();
     if (!name) return;
     let dataUrl;
     if (tab === 'draw') {
       if (!hasStrokes) return;
-      dataUrl = canvasRef.current.toDataURL('image/png');
+      dataUrl = serializeCanvas(canvasRef.current);
     } else {
       if (!typedName.trim()) return;
-      dataUrl = typeCanvasRef.current.toDataURL('image/png');
+      dataUrl = serializeCanvas(typeCanvasRef.current);
     }
     onSave({ signature_data: dataUrl, signer_name: name });
   }
@@ -138,9 +162,12 @@ export default function SignaturePad({
         <>
           <label style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 4, color: 'var(--doc-text)' }}>Signature</label>
           <div style={{ border: '1px solid var(--doc-border)', borderRadius: 8, overflow: 'hidden', background: 'var(--panel-2)', position: 'relative', touchAction: 'none' }}>
-            <canvas ref={canvasRef} style={{ width: '100%', height: 140, display: 'block', cursor: 'crosshair' }}
-              onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
-              onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
+            <canvas ref={canvasRef} style={{ width: '100%', height: 140, display: 'block', cursor: 'crosshair', touchAction: 'none' }}
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); startDraw(e); }}
+              onPointerMove={draw}
+              onPointerUp={endDraw}
+              onPointerCancel={endDraw}
+              onPointerLeave={endDraw} />
             {!hasStrokes && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: 'var(--muted)', fontSize: 'var(--text-sm)', pointerEvents: 'none' }}>Sign here with your finger or mouse</div>}
           </div>
           {hasStrokes && <button type="button" onClick={clearPad} style={{ marginTop: 6, padding: '4px 12px', fontSize: 'var(--text-xs)', background: 'none', border: 'none', color: 'var(--doc-muted)', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}>Clear signature</button>}

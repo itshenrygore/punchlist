@@ -100,10 +100,17 @@ export default function AnalyticsPage() {
       (q.status === 'sent' && (q.view_count || 0) > 0)
     );
 
-    // Avg days from created_at to approval (for won quotes)
+    // Avg days from created_at to approval (for won quotes). Prefer
+    // approved_at when present (set by the public approval flow) since
+    // updated_at bumps on every edit (deposit toggle, viewing) and
+    // overstated the gap.
     const closeTimes = wonQ
-      .filter(q => q.created_at && q.updated_at)
-      .map(q => Math.max(0, (new Date(q.updated_at) - new Date(q.created_at)) / 86_400_000));
+      .map(q => {
+        const closedAt = q.approved_at || q.updated_at;
+        if (!q.created_at || !closedAt) return null;
+        return Math.max(0, (new Date(closedAt) - new Date(q.created_at)) / 86_400_000);
+      })
+      .filter(v => v !== null);
     const avgDaysToClose = closeTimes.length > 0
       ? Math.round(closeTimes.reduce((a, b) => a + b, 0) / closeTimes.length)
       : null;
@@ -148,11 +155,25 @@ export default function AnalyticsPage() {
 
   // Top quote types (by frequency), with per-type win rate
   const topJobs = useMemo(() => {
+    // Group by a normalized title key, not just first-three-words —
+    // "Replace water heater" and "Replace water tank" used to collide
+    // and "Furnace + AC replacement" merged with "Furnace + AC tune-up".
+    // We lowercase, strip punctuation, and keep up to the first six
+    // tokens so distinct jobs remain distinct.
+    const norm = (t) =>
+      t.toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(' ')
+        .slice(0, 6)
+        .join(' ');
     const map = {};
     for (const q of quotes) {
       if (!q.title) continue;
-      const key = q.title.split(' ').slice(0, 3).join(' ');
-      if (!map[key]) map[key] = { title: key, count: 0, wonCount: 0, sentCount: 0, totalValue: 0 };
+      const key = norm(q.title);
+      if (!key) continue;
+      if (!map[key]) map[key] = { title: q.title, count: 0, wonCount: 0, sentCount: 0, totalValue: 0 };
       map[key].count++;
       const st = normalizeStatus(q.status);
       if (SENT.includes(st)) map[key].sentCount++;

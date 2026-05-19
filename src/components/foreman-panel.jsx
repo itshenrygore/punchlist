@@ -210,17 +210,58 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
     || '';
 
   // ── Photo handling ──
-  function handlePhoto(e) {
+  // The image is forwarded to Claude as base64 inside a serverless
+  // function body. Both Vercel (~4.5MB body) and Anthropic (~5MB
+  // image) impose limits, and base64 inflates the raw bytes ~33%.
+  // Accept up to 4MB raw, then downscale on a canvas to a sensible
+  // dimension and recompress to JPEG so the resulting base64 is
+  // comfortably under the body cap.
+  async function handlePhoto(e) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { toast('Photo too large (max 10MB)', 'error'); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoPreview(reader.result);
-      setPhotoBase64(reader.result.split(',')[1]);
-    };
-    reader.readAsDataURL(file);
     e.target.value = '';
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast('Photo too large (max 4 MB) — try cropping or compressing it', 'error');
+      return;
+    }
+    try {
+      const dataUrl = await downscalePhoto(file, 1600, 0.85);
+      setPhotoPreview(dataUrl);
+      setPhotoBase64(dataUrl.split(',')[1]);
+    } catch (err) {
+      console.warn('[foreman] photo downscale failed', err?.message);
+      toast('Could not load that photo — try a different one', 'error');
+    }
+  }
+
+  // Returns a JPEG data URL no wider than `maxEdge`, recompressed until
+  // the data URL is under ~3MB (sized for Vercel's request body limit).
+  function downscalePhoto(file, maxEdge, initialQuality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('decode failed'));
+        img.onload = () => {
+          const ratio = Math.min(1, maxEdge / Math.max(img.width, img.height));
+          const w = Math.round(img.width * ratio);
+          const h = Math.round(img.height * ratio);
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          let q = initialQuality;
+          let url = canvas.toDataURL('image/jpeg', q);
+          while (url.length > 3_000_000 && q > 0.4) {
+            q -= 0.1;
+            url = canvas.toDataURL('image/jpeg', q);
+          }
+          resolve(url);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
   function clearPhoto() { setPhotoPreview(null); setPhotoBase64(null); }
 

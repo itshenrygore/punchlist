@@ -88,9 +88,13 @@ function CustomerDrawer({ customer, quotes, onClose, onEdit, onNewQuote }) {
   const totalWon = wonQuotes.reduce((s, q) => s + (q.total || q.subtotal || 0), 0);
   const closeRate = sent.length >= 2 ? Math.round((wonQuotes.length / sent.length) * 100) : null;
   const avgJob = wonQuotes.length > 0 ? Math.round(totalWon / wonQuotes.length) : 0;
-  const firstQuoteDate = cQuotes.length > 0
-    ? new Date(Math.min(...cQuotes.map(q => new Date(q.created_at || q.updated_at).getTime())))
-    : null;
+  // Replaced Math.min(...spread) — spread of >10k items can blow the
+  // JS stack on some browsers. Reduce is O(N) with no spread.
+  const firstQuoteMs = cQuotes.reduce(
+    (m, q) => Math.min(m, new Date(q.created_at || q.updated_at).getTime()),
+    Infinity,
+  );
+  const firstQuoteDate = Number.isFinite(firstQuoteMs) ? new Date(firstQuoteMs) : null;
   const tenureMonths = firstQuoteDate
     ? Math.max(1, Math.round((Date.now() - firstQuoteDate.getTime()) / (30 * 86400000)))
     : null;
@@ -309,11 +313,22 @@ export default function CustomersPage() {
   }, [customers, search, tagFilter]);
 
   const sorted = useMemo(() => {
+    // Pre-compute lastActivity per customer in a single linear pass
+    // instead of filtering `quotes` once per customer inside the sort
+    // comparator — the old version was O(N · M) where M scans the
+    // whole quotes list for each of the N customers, locking up the
+    // main thread for any moderately busy contractor. We also avoid
+    // Math.max(...arr) which spreads the array and breaks at large N.
+    const lastByCustomer = new Map();
+    for (const q of quotes) {
+      if (!q.customer_id) continue;
+      const t = new Date(q.updated_at || q.created_at).getTime();
+      const cur = lastByCustomer.get(q.customer_id);
+      if (cur === undefined || t > cur) lastByCustomer.set(q.customer_id, t);
+    }
     return [...filtered].sort((a, b) => {
-      const aQ = quotes.filter(q => q.customer_id === a.id);
-      const bQ = quotes.filter(q => q.customer_id === b.id);
-      const aLast = aQ.length ? Math.max(...aQ.map(q => new Date(q.updated_at || q.created_at))) : new Date(a.created_at);
-      const bLast = bQ.length ? Math.max(...bQ.map(q => new Date(q.updated_at || q.created_at))) : new Date(b.created_at);
+      const aLast = lastByCustomer.get(a.id) ?? new Date(a.created_at).getTime();
+      const bLast = lastByCustomer.get(b.id) ?? new Date(b.created_at).getTime();
       return bLast - aLast;
     });
   }, [filtered, quotes]);

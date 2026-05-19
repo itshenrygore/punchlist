@@ -69,11 +69,13 @@ export default function DashboardPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const hdrs = { 'Content-Type': 'application/json' };
       if (session?.access_token) hdrs['Authorization'] = `Bearer ${session.access_token}`;
+      // Fire-and-forget but swallow rejections so an outage doesn't
+      // emit unhandled-rejection warnings on every dashboard load.
       fetch('/api/activation-email', {
         method: 'POST',
         headers: hdrs,
         body: JSON.stringify({ user_id: user.id }),
-      });
+      }).catch(() => {});
     }).catch(() => {});
 
     Promise.all([listQuotes(user.id), getProfile(user.id), listCustomers(user.id)])

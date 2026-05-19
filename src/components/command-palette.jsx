@@ -28,21 +28,32 @@ export default function CommandPalette({ open, onClose }) {
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  // Track which user's data is currently in state. If the user changes
+  // (logout + login in the same tab), we'd otherwise show user A's
+  // quotes/customers to user B because `loaded` would still be true.
+  const [loadedForUserId, setLoadedForUserId] = useState(null);
 
   useEffect(() => {
-    if (!open || loaded || !user) return;
+    if (!user?.id) return;
+    if (loadedForUserId !== user.id) {
+      // Clear stale results from the previous user.
+      setQuotes([]); setCustomers([]); setInvoices([]);
+    }
+    if (!open || loadedForUserId === user.id) return;
+    const myUserId = user.id;
     Promise.all([
-      listQuotes(user.id).catch(() => []),
-      listCustomers(user.id).catch(() => []),
-      listInvoices(user.id).catch(() => []),
+      listQuotes(myUserId).catch(() => []),
+      listCustomers(myUserId).catch(() => []),
+      listInvoices(myUserId).catch(() => []),
     ]).then(([q, c, i]) => {
+      // Discard the response if the user switched while we were fetching.
+      if (user.id !== myUserId) return;
       setQuotes(q || []);
       setCustomers(c || []);
       setInvoices(i || []);
-      setLoaded(true);
+      setLoadedForUserId(myUserId);
     });
-  }, [open, user, loaded]);
+  }, [open, user, loadedForUserId]);
 
   useEffect(() => {
     if (open) {

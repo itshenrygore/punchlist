@@ -40,13 +40,54 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // Subscribe: store the push subscription JSON
+    // Subscribe: store the push subscription JSON.
+    //
+    // We validate the shape carefully before persisting because
+    // web-push.sendNotification will later POST to whatever URL is in
+    // subscription.endpoint — a malicious caller could point that at
+    // an internal service (SSRF). Allowlist real push providers.
     if (!subscription || !subscription.endpoint) {
       return res.status(400).json({ error: 'Missing subscription data' });
     }
+    let endpointUrl;
+    try { endpointUrl = new URL(subscription.endpoint); } catch {
+      return res.status(400).json({ error: 'Invalid subscription endpoint' });
+    }
+    if (endpointUrl.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Endpoint must be https' });
+    }
+    const ALLOWED_HOSTS = [
+      'fcm.googleapis.com',                         // Chrome / Android
+      'updates.push.services.mozilla.com',          // Firefox
+      'web.push.apple.com',                         // Safari
+    ];
+    const ALLOWED_SUFFIXES = [
+      '.notify.windows.com',                        // Edge / Windows
+      '.push.apple.com',                            // Safari mobile
+      '.push.services.mozilla.com',
+    ];
+    const host = endpointUrl.hostname.toLowerCase();
+    if (!ALLOWED_HOSTS.includes(host) && !ALLOWED_SUFFIXES.some(s => host.endsWith(s))) {
+      return res.status(400).json({ error: 'Unsupported push service' });
+    }
+    // Defensive caps on key shape + size. A real subscription is ~400-700 bytes.
+    const keys = subscription.keys || {};
+    if (typeof keys.p256dh !== 'string' || typeof keys.auth !== 'string') {
+      return res.status(400).json({ error: 'Subscription keys missing' });
+    }
+    if (keys.p256dh.length > 200 || keys.auth.length > 64) {
+      return res.status(400).json({ error: 'Subscription keys too large' });
+    }
+    if (JSON.stringify(subscription).length > 2048) {
+      return res.status(400).json({ error: 'Subscription payload too large' });
+    }
 
     await supabase.from('profiles').update({
-      push_subscription: subscription,
+      push_subscription: {
+        endpoint: subscription.endpoint,
+        keys: { p256dh: keys.p256dh, auth: keys.auth },
+        expirationTime: subscription.expirationTime ?? null,
+      },
     }).eq('id', user_id);
 
     return res.status(200).json({ ok: true });

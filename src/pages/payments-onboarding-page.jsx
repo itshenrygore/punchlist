@@ -775,7 +775,14 @@ export default function PaymentsOnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'status', userId: user.id }),
       });
-      const data = await r.json();
+      // Reject non-2xx so a transient 500 doesn't bounce an already-
+      // onboarded contractor back to the intro funnel.
+      if (!r.ok) {
+        console.warn('[payments-onboarding] status', r.status);
+        return null;
+      }
+      const data = await r.json().catch(() => null);
+      if (!data) return null;
       setStatusData(data);
 
       if (data.onboarded && data.chargesEnabled) {
@@ -796,8 +803,10 @@ export default function PaymentsOnboardingPage() {
         setScreen('intro');
       }
       return data;
-    } catch {
-      setScreen('intro');
+    } catch (e) {
+      console.warn('[payments-onboarding] status threw', e?.message);
+      // Don't reset to 'intro' on network errors — keep the user where
+      // they were so a flaky connection doesn't undo their progress.
       return null;
     }
   }, [user]);

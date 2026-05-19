@@ -41,7 +41,13 @@ export default function BillingPage() {
   async function handleCheckout(priceKey) {
     setCheckingOut(true);
     try { await createCheckout(priceKey); }
-    catch (e) { toast(e?.message || 'Checkout failed', 'error'); setCheckingOut(false); }
+    catch (e) { toast(e?.message || 'Checkout failed', 'error'); }
+    finally {
+      // Reset even on the success path: in practice Stripe redirects
+      // and this never matters, but if the helper returns without
+      // navigating we don't want the button stuck on "Loading…".
+      setCheckingOut(false);
+    }
   }
 
   if (loading) return <AppShell title="Billing"><PageSkeleton variant="form" /></AppShell>;
@@ -125,7 +131,8 @@ export default function BillingPage() {
                 onClick={async () => {
                   setPortalLoading(true);
                   try { await openBillingPortal(profile.stripe_customer_id); }
-                  catch (e) { toast(e?.message || 'Could not open portal', 'error'); setPortalLoading(false); }
+                  catch (e) { toast(e?.message || 'Could not open portal', 'error'); }
+                  finally { setPortalLoading(false); }
                 }}
               >
                 {portalLoading ? 'Loading…' : 'Manage subscription →'}
