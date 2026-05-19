@@ -544,28 +544,58 @@ export async function createInvoiceFromQuote(userId, quote) {
   const total = Number(quote.total || 0);
   const remainingBalance = Math.max(0, total - depositCredited);
 
-  const dueAt = new Date(Date.now() + 30 * 86400000).toISOString();
+  // Use the contractor's configured invoice_due_days (Settings →
+  // Payments) rather than a hardcoded 30-day default. A roofer doing
+  // 7-day NET vs a GC doing 30-day NET shouldn't have to manually fix
+  // the due date on every single convert.
+  let invoiceDueDays = 30;
+  let profilePaymentMethods = null;
+  let profilePaymentInstructions = null;
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('invoice_due_days, payment_methods, payment_instructions, invoice_note')
+      .eq('id', userId)
+      .maybeSingle();
+    if (profile?.invoice_due_days && Number.isFinite(Number(profile.invoice_due_days))) {
+      invoiceDueDays = Math.max(1, Math.min(180, Number(profile.invoice_due_days)));
+    }
+    if (Array.isArray(profile?.payment_methods)) profilePaymentMethods = profile.payment_methods;
+    if (typeof profile?.payment_instructions === 'string') profilePaymentInstructions = profile.payment_instructions;
+    var profileInvoiceNote = typeof profile?.invoice_note === 'string' ? profile.invoice_note : ''; // eslint-disable-line no-var
+  } catch { /* fall back to defaults */ }
+  const dueAt = new Date(Date.now() + invoiceDueDays * 86400000).toISOString();
+
+  const insertPayload = {
+    user_id: userId,
+    quote_id: quote.id,
+    customer_id: quote.customer_id || null,
+    title: quote.title || 'Invoice',
+    description: quote.scope_summary || quote.description || '',
+    status: 'draft',
+    subtotal: Number(quote.subtotal || 0),
+    tax: Number(quote.tax || 0),
+    discount: Number(quote.discount || 0),
+    total,
+    deposit_credited: depositCredited,
+    remaining_balance: remainingBalance,
+    province: quote.province || 'ON',
+    country: quote.country || 'CA',
+    due_at: dueAt,
+    // Use the profile's invoice_note as customer-facing notes when
+    // present — `quote.internal_notes` contains contractor-only musings
+    // ("Change request: blah", scratch pricing thoughts) that should
+    // NOT bleed onto the customer's invoice. Falls back to empty.
+    notes: typeof profileInvoiceNote !== 'undefined' && profileInvoiceNote.trim() ? profileInvoiceNote : null,
+  };
+  // Best-effort: copy payment_methods / payment_instructions from profile
+  // so the invoice doesn't render with the empty payment block.
+  if (profilePaymentMethods) insertPayload.payment_methods = profilePaymentMethods;
+  if (profilePaymentInstructions) insertPayload.payment_instructions = profilePaymentInstructions;
 
   const { data: invoice, error: invErr } = await supabase
     .from('invoices')
-    .insert({
-      user_id: userId,
-      quote_id: quote.id,
-      customer_id: quote.customer_id || null,
-      title: quote.title || 'Invoice',
-      description: quote.scope_summary || quote.description || '',
-      status: 'draft',
-      subtotal: Number(quote.subtotal || 0),
-      tax: Number(quote.tax || 0),
-      discount: Number(quote.discount || 0),
-      total,
-      deposit_credited: depositCredited,
-      remaining_balance: remainingBalance,
-      province: quote.province || 'ON',
-      country: quote.country || 'CA',
-      due_at: dueAt,
-      notes: quote.internal_notes || null,
-    })
+    .insert(insertPayload)
     .select()
     .single();
 
