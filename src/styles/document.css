@@ -1153,6 +1153,10 @@
   line-height: 1.6;
   color: var(--doc-text);
   max-width: 85%;
+  /* A 50-char single token (URL, no spaces) used to break the
+     bubble out of the conversation column on a 360 px viewport. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .pq-msg-bubble--contractor {
   border-radius: 16px 4px 16px 16px;

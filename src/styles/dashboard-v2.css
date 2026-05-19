@@ -1372,6 +1372,40 @@
   to   { transform: translateX(0); }
 }
 
+/* Mobile: convert the right-side drawer to a bottom sheet — feels
+   native, leaves the top of the screen for context, gives back the
+   tap-to-dismiss area at the top. */
+@media (max-width: 768px) {
+  .cust-overlay {
+    align-items: flex-end !important;
+    justify-content: stretch !important;
+  }
+  .cust-drawer {
+    width: 100vw;
+    max-width: 100vw;
+    height: auto;
+    max-height: 88vh;
+    border-radius: 18px 18px 0 0;
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -12px 32px rgba(0,0,0,.18);
+    animation: cust-sheet-up .25s cubic-bezier(.16,1,.3,1);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .cust-drawer::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    border-radius: 999px;
+    background: var(--line-2);
+    margin: 8px auto 4px;
+    flex-shrink: 0;
+  }
+}
+@keyframes cust-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 .cust-drawer-hd {
   display: flex;
   align-items: flex-start;

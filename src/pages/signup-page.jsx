@@ -235,10 +235,11 @@ export default function SignupPage() {
             <h1>What's your trade?</h1>
             <div className="muted small">We'll customize your catalog, pricing, and tax rates.</div>
           </div>
-          <div className="auth-field">
-            <span className="field-label">Trade</span>
-            <TradePicker value={trade} onChange={setTrade} />
-          </div>
+          {/* Country/province first so the trade picker (and downstream
+              tax + pricing logic) get a US contractor's region from the
+              start. Previously a US user picked Plumber → saw "Province
+              ON" defaulted → had to switch country → got dumped on FL,
+              and the tax calc was wrong until they corrected it. */}
           <div className="form-row">
             <div className="auth-field">
               <span className="field-label">Country</span>
@@ -253,6 +254,10 @@ export default function SignupPage() {
                 {(country === 'US' ? US_STATES : CA_PROVINCES).map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
+          </div>
+          <div className="auth-field">
+            <span className="field-label">Trade</span>
+            <TradePicker value={trade} onChange={setTrade} />
           </div>
           {trade && (
             <div className="auth-trade-hint">

@@ -157,7 +157,16 @@ export default function DashboardPage() {
       else if (s === 'revision_requested') items.push({ ...q, _reason: 'Changes requested' });
       else if (s === 'approved_pending_deposit') items.push({ ...q, _reason: 'Deposit pending' });
       else if (s === 'approved' && q.deposit_required && q.deposit_status !== 'paid') items.push({ ...q, _reason: 'Deposit pending' });
-      else if (['sent','viewed'].includes(s) && q.expires_at) {
+      // Cold-quote nudge: sent ≥ 4 days ago, never viewed, not yet
+      // expiring. Surfaces the "they ghosted me" cohort which is the
+      // single biggest pain a weekly contractor has on Monday morning.
+      else if (s === 'sent' && (q.view_count || 0) === 0 && q.sent_at) {
+        const daysSent = Math.floor((Date.now() - new Date(q.sent_at)) / 86400000);
+        if (daysSent >= 4 && !items.find(i => i.id === q.id)) {
+          items.push({ ...q, _reason: `Sent ${daysSent}d ago — going cold` });
+        }
+      }
+      if (['sent','viewed'].includes(s) && q.expires_at) {
         const daysLeft = Math.ceil((new Date(q.expires_at) - Date.now()) / 86400000);
         if (daysLeft >= 0 && daysLeft <= 3 && !items.find(i => i.id === q.id)) {
           items.push({ ...q, _reason: daysLeft === 0 ? 'Expires today!' : `Expires in ${daysLeft}d` });
