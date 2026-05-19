@@ -133,6 +133,18 @@ export default function NotificationCenter() {
           }
         } catch (e) { console.warn("[PL]", e); }
       })
+      // Also listen for UPDATEs so marking-as-read in one tab reflects
+      // in the other tab's badge count without waiting for the 60-s poll.
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        const updated = payload.new;
+        if (!updated?.id) return;
+        setNotifications(prev => prev.map(n => n.id === updated.id ? { ...n, ...updated } : n));
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel).catch(e => console.warn('[PL]', e)); };
   }, [user]);

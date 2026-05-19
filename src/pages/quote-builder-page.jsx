@@ -1729,6 +1729,12 @@ export default function QuoteBuilderPage() {
               {/* Push notification nudge — only on first send, only if not already subscribed */}
               {isFirst && 'PushManager' in window && Notification?.permission === 'default' && (
                 <button type="button" className="rq-push-nudge" onClick={async () => {
+                  // The browser prompt is a one-shot — if the user accidentally
+                  // dismisses or denies it (this CTA is right next to "View
+                  // quote →") the permission state is "denied" forever and the
+                  // only path back is the browser's per-site settings. A
+                  // tiny in-app confirmation gives them a chance to bail.
+                  if (!window.confirm(`Get notified the moment ${firstName} opens this quote?\n\nYour browser will ask for permission next.`)) return;
                   try {
                     const perm = await Notification.requestPermission();
                     if (perm !== 'granted') return;
@@ -1737,9 +1743,15 @@ export default function QuoteBuilderPage() {
                     if (!vapidKey) return;
                     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
                     const { data: { session: pushSession } } = await supabase.auth.getSession();
-                    await fetch('/api/push-subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(pushSession?.access_token ? { Authorization: `Bearer ${pushSession.access_token}` } : {}) }, body: JSON.stringify({ user_id: user?.id, subscription: sub.toJSON() }) });
+                    // Server derives user_id from the JWT — don't send it in
+                    // the body where any caller could spoof it.
+                    await fetch('/api/push-subscribe', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', ...(pushSession?.access_token ? { Authorization: `Bearer ${pushSession.access_token}` } : {}) },
+                      body: JSON.stringify({ subscription: sub.toJSON() }),
+                    });
                     toast('Notifications enabled', 'success');
-                  } catch { }
+                  } catch (e) { console.warn('[PL] push enable', e?.message); }
                 }}>
                   <span className="qb-notif-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
                   <span>Get notified when {firstName} opens this — enable push notifications</span>

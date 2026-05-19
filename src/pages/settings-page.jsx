@@ -68,7 +68,7 @@ function PushToggle({ userId }) {
       await fetch('/api/push-subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
-        body: JSON.stringify({ user_id: userId, subscription: sub.toJSON() }),
+        body: JSON.stringify({ subscription: sub.toJSON() }),
       });
       setStatus('subscribed');
     } catch (err) {
@@ -88,7 +88,7 @@ function PushToggle({ userId }) {
       await fetch('/api/push-subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
-        body: JSON.stringify({ user_id: userId, action: 'unsubscribe' }),
+        body: JSON.stringify({ action: 'unsubscribe' }),
       });
       setStatus('prompt');
     } catch { }

@@ -91,28 +91,58 @@ export async function deleteOfflineDraft(id) {
   });
 }
 
-/** Sync all offline drafts to Supabase, then remove from IndexedDB */
+/** Sync all offline drafts to Supabase, then remove from IndexedDB.
+ *
+ * Guards against the multi-tab race: if the user has two tabs open
+ * and Wi-Fi flickers, both tabs would otherwise fire this in parallel,
+ * read the same draft list, and both create the row before either
+ * deletes its local copy — every draft ends up duplicated. We wrap
+ * the body in a `navigator.locks` request so only one tab runs at a
+ * time. Browsers without Web Locks fall through to the unguarded
+ * path (we accept the residual risk on older Safari).
+ *
+ * Also: drafts that fail repeatedly (e.g. RLS rejection on a stale
+ * customer_id) get a per-draft `_failedAttempts` counter. After three
+ * failures we stop retrying on reconnect so we don't hammer the API
+ * with the same broken draft forever.
+ */
 export async function syncOfflineDrafts(userId, createQuoteFn) {
-  const drafts = await getOfflineDrafts();
-  if (!drafts.length) return { synced: 0, failed: 0 };
+  const run = async () => {
+    const drafts = await getOfflineDrafts();
+    if (!drafts.length) return { synced: 0, failed: 0, skipped: 0 };
 
-  let synced = 0;
-  let failed = 0;
+    let synced = 0;
+    let failed = 0;
+    let skipped = 0;
 
-  for (const draft of drafts) {
-    try {
-      // Remove offline metadata before sending to API
-      const { _offline, _savedAt, id: offlineId, ...quoteData } = draft;
-      await createQuoteFn(userId, quoteData);
-      await deleteOfflineDraft(offlineId);
-      synced++;
-    } catch (err) {
-      console.warn('[offline] Failed to sync draft:', err?.message);
-      failed++;
+    for (const draft of drafts) {
+      const attempts = Number(draft._failedAttempts || 0);
+      if (attempts >= 3) { skipped++; continue; }
+      try {
+        const { _offline, _savedAt, _failedAttempts, id: offlineId, ...quoteData } = draft;
+        await createQuoteFn(userId, quoteData);
+        await deleteOfflineDraft(offlineId);
+        synced++;
+      } catch (err) {
+        console.warn('[offline] Failed to sync draft:', err?.message);
+        failed++;
+        // Bump the attempt counter so a permanently-broken draft
+        // stops retrying. We update the same record in place.
+        try {
+          await saveOfflineDraft({ ...draft, _failedAttempts: attempts + 1 });
+        } catch (e) { console.warn('[offline] retry counter update failed', e?.message); }
+      }
     }
-  }
+    return { synced, failed, skipped };
+  };
 
-  return { synced, failed };
+  if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+    return navigator.locks.request('punchlist-offline-sync', { ifAvailable: true }, async (lock) => {
+      if (!lock) return { synced: 0, failed: 0, skipped: 0, lockedByOtherTab: true };
+      return run();
+    });
+  }
+  return run();
 }
 
 /** Check if we're currently online */

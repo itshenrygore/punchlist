@@ -61,14 +61,37 @@ async function executeTool(name, args, userId, supabase) {
       return results.map(r => `"${r.title}" — ${r.customer?.name || 'No contact'} — $${r.total} [${r.status}]`).join('\n');
     }
     if (name === 'read_contacts') {
-      const { data } = await supabase.from('customers').select('id, name, email, phone').eq('user_id', userId).order('name').limit(20);
+      // Anthropic processes and may log prompt + tool-result contents.
+      // Don't ship full customer emails/phones unless the contractor
+      // explicitly opted in for this turn (`args.include_contact_details`
+      // is settable from a UI confirmation, not the model alone).
+      const { data } = await supabase
+        .from('customers')
+        .select('id, name, email, phone')
+        .eq('user_id', userId)
+        .order('name')
+        .limit(20);
       if (!data?.length) return 'No contacts.';
+      const mask = (v) => {
+        const s = String(v || '');
+        if (!s) return '';
+        // Last 4 of phone, censored prefix of email — enough for the
+        // model to disambiguate without leaking the full identifier.
+        if (/^[^@]+@/.test(s)) return s.replace(/(^.{1,2}).*(@.*$)/, '$1…$2');
+        return s.replace(/.(?=.{4})/g, '•');
+      };
+      const fmt = (c) => {
+        if (args.include_contact_details === true) {
+          return `${c.name}${c.phone ? ' · ' + c.phone : ''}${c.email ? ' · ' + c.email : ''}`;
+        }
+        return `${c.name}${c.phone ? ' · ' + mask(c.phone) : ''}`;
+      };
       if (args.search) {
         const s = args.search.toLowerCase();
         const filtered = data.filter(c => [c.name, c.email, c.phone].some(v => String(v || '').toLowerCase().includes(s)));
-        return filtered.length ? filtered.map(c => `${c.name}${c.phone ? ' · ' + c.phone : ''}${c.email ? ' · ' + c.email : ''}`).join('\n') : 'No contacts matching "' + args.search + '".';
+        return filtered.length ? filtered.map(fmt).join('\n') : 'No contacts matching "' + args.search + '".';
       }
-      return data.map(c => `${c.name}${c.phone ? ' · ' + c.phone : ''}`).join('\n');
+      return data.map(fmt).join('\n');
     }
     if (name === 'lookup_pricing') {
       // Import catalog search
