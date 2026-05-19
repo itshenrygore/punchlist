@@ -49,12 +49,32 @@ function TemplateCard({ template, label, hint, isProUser, onSave, onReset, savin
   const isCustom = template?.is_custom && !template?._isDefault;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(template?.body || '');
+  const textareaRef = useRef(null);
   // Sync draft when the template prop reloads (e.g. after a save round-trip)
   // so we don't show stale body. Only sync when not actively editing —
   // otherwise we'd wipe the user's in-progress edits on every reload.
   useEffect(() => {
     if (!editing) setDraft(template?.body || '');
   }, [template?.body, template?.template_key, editing]);
+
+  // Insert a token at the textarea's current cursor position so users
+  // editing mid-message don't lose their place. Append at the end if
+  // the textarea hasn't been focused yet.
+  function insertToken(token) {
+    const ta = textareaRef.current;
+    if (!ta) { setDraft(d => d + token); return; }
+    const start = ta.selectionStart ?? draft.length;
+    const end = ta.selectionEnd ?? draft.length;
+    const next = draft.slice(0, start) + token + draft.slice(end);
+    setDraft(next);
+    requestAnimationFrame(() => {
+      try {
+        ta.focus();
+        const pos = start + token.length;
+        ta.setSelectionRange(pos, pos);
+      } catch { /* noop */ }
+    });
+  }
   const preview = renderTemplate(draft, PREVIEW_TOKENS);
   const defaults = getSystemDefaults();
   const defaultBody = defaults[template?.template_key] || '';
@@ -83,11 +103,18 @@ function TemplateCard({ template, label, hint, isProUser, onSave, onReset, savin
       </div>
       {editing ? (
         <div className="tmpl-editor">
-          <textarea className="input tmpl-textarea" value={draft} onChange={e => setDraft(e.target.value)} rows={4} placeholder="Message body…" />
+          <textarea
+            ref={textareaRef}
+            className="input tmpl-textarea"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            rows={4}
+            placeholder="Message body…"
+          />
           <div className="tmpl-tokens">
             <span className="tmpl-tokens-lbl">Tokens:</span>
             {['{firstName}','{senderName}','{quoteTitle}','{total}','{link}','{depositAmount}'].map(t => (
-              <button key={t} type="button" className="tmpl-token-chip" onClick={() => setDraft(d => d + t)}>{t}</button>
+              <button key={t} type="button" className="tmpl-token-chip" onClick={() => insertToken(t)}>{t}</button>
             ))}
           </div>
           <div className="tmpl-preview">

@@ -22,7 +22,23 @@ const PhotoAnnotator = lazy(() => import('../components/photo-annotator'));
 const labelForDeposit = (status) => status === 'paid' ? 'Paid' : status === 'pending' ? 'Pending' : 'Required';
 const draftFollowUp = () => '';
 
-const timeAgo = (d) => { if (!d) return ''; const s = Math.round((Date.now() - new Date(d)) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
+// Relative time → absolute date once we cross a week, matching the
+// cutoff used in notification-center so "37d ago" doesn't sit next to
+// "Mar 21" elsewhere on the same page.
+const timeAgo = (d) => {
+  if (!d) return '';
+  const date = new Date(d);
+  const s = Math.round((Date.now() - date) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  const days = Math.floor(s / 86400);
+  if (days < 7) return `${days}d ago`;
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString('en-CA', sameYear
+    ? { month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric', year: '2-digit' });
+};
 
 function getFollowUpAdvice(quote) {
   if (!quote) return null;

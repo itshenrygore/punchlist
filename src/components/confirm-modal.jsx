@@ -54,8 +54,8 @@ export default function ConfirmModal({
   const isDanger = variant === 'danger';
 
   return (
-    <div className="modal-overlay" onClick={onCancel} role="dialog" aria-modal="true" aria-label={title}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+    <div className="modal-overlay pl-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true" aria-label={title}>
+      <div className="modal-content pl-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
         <h3 style={{ margin: '0 0 8px', fontSize: 'var(--text-xl)', fontWeight: 700, color: 'var(--text)' }}>{title}</h3>
         {message && (
           <p style={{ margin: '0 0 20px', fontSize: 'var(--text-base)', lineHeight: 1.5, color: 'var(--muted)', whiteSpace: 'pre-line' }}>

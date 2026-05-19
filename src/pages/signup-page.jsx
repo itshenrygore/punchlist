@@ -2,12 +2,73 @@ import { StepDots } from '../components/ui';
 import Logo from '../components/logo';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Wrench, Zap, Wind, Hammer, HardHat, Trees, Home, PaintBucket, MoreHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { saveProfile } from '../lib/api';
 import { trackSignup } from '../lib/analytics';
 import { CA_PROVINCES, US_STATES } from '../lib/pricing';
 import { TRADES } from '../../shared/tradeBrain';
+
+// ── Trade picker ──
+// 8 most-common trades surface as icon tiles (huge tap targets, no
+// system-blue native dropdown breaking the premium funnel aesthetic).
+// "Other" reveals the full <select> for the long tail.
+const TRADE_TILES = [
+  { value: 'Plumber',            Icon: Wrench },
+  { value: 'Electrician',        Icon: Zap },
+  { value: 'HVAC',               Icon: Wind },
+  { value: 'Carpenter',          Icon: Hammer },
+  { value: 'General Contractor', Icon: HardHat },
+  { value: 'Landscaping',        Icon: Trees },
+  { value: 'Roofing',            Icon: Home },
+  { value: 'Painter',            Icon: PaintBucket },
+];
+
+function TradePicker({ value, onChange }) {
+  const tileValues = new Set(TRADE_TILES.map(t => t.value));
+  const showDropdown = value && !tileValues.has(value);
+  return (
+    <div className="trade-picker">
+      <div className="trade-tiles" role="radiogroup" aria-label="Select your trade">
+        {TRADE_TILES.map(({ value: v, Icon }) => (
+          <button
+            key={v}
+            type="button"
+            className={`trade-tile${value === v ? ' is-selected' : ''}`}
+            onClick={() => onChange(v)}
+            role="radio"
+            aria-checked={value === v}
+          >
+            <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
+            <span>{v}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`trade-tile${showDropdown ? ' is-selected' : ''}`}
+          onClick={() => onChange(showDropdown ? value : 'Other')}
+          role="radio"
+          aria-checked={showDropdown}
+        >
+          <MoreHorizontal size={20} strokeWidth={1.75} aria-hidden="true" />
+          <span>Other</span>
+        </button>
+      </div>
+      {showDropdown && (
+        <select
+          className="input trade-picker-fallback"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          aria-label="Choose trade"
+        >
+          {TRADES.filter(t => !tileValues.has(t)).map(t => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -175,10 +236,7 @@ export default function SignupPage() {
           </div>
           <div className="auth-field">
             <span className="field-label">Trade</span>
-            <select className="input" value={trade} onChange={e => setTrade(e.target.value)}>
-              <option value="" disabled>Select your trade…</option>
-              {TRADES.map(t => <option key={t}>{t}</option>)}
-            </select>
+            <TradePicker value={trade} onChange={setTrade} />
           </div>
           <div className="form-row">
             <div className="auth-field">

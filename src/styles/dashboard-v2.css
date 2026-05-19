@@ -4417,7 +4417,12 @@ a.dv2-headline-metric:hover {
   color: var(--text-2);
   line-height: 1;
   padding: 0 4px;
+  border-radius: 8px;
+  transition: color .15s ease, background .15s ease, transform .15s ease;
 }
+.qb-modal-close:hover { color: var(--text); background: var(--panel-3); }
+.qb-modal-close:active { transform: scale(.92); }
+.qb-modal-close:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .nudge-modal-note {
   font-size: var(--text-sm);
   color: var(--amber, #D97706);
@@ -4836,22 +4841,28 @@ a.dv2-headline-metric:hover {
 .jt-modal-bg {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 16px;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  /* Match .modal-overlay's fade-in so every modal in the app feels
+     like it belongs to one design language. */
+  animation: fadeIn .2s ease;
 }
 .jt-modal {
-  background: var(--panel);
+  background: var(--panel-2);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 18px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  box-shadow: 0 24px 64px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.1);
   overflow: hidden;
+  /* Same up-and-in choreography as .modal-content. */
+  animation: modalUp .25s cubic-bezier(.16,1,.3,1);
 }
 .jt-modal-hd {
   display: flex;
