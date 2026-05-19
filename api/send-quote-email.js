@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from './_supabase.js';
 import { blocked, getClientIp } from './_rate-limit.js';
 
 // Defensive Supabase client factory — never created at module level

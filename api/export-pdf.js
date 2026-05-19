@@ -15,7 +15,7 @@
  * Phase 6C — Approved amendments reflected in quote PDF
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from './_supabase.js';
 import { blocked, getClientIp } from './_rate-limit.js';
 
 function getSupabase() {
