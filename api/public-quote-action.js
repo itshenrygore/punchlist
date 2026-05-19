@@ -210,6 +210,17 @@ async function sendPushNotification(supabase, { userId, title, body, url }) {
 }
 
 export default async function handler(req, res) {
+  // CORS — allow punchlist.ca and any Vercel deployment URL
+  const origin = req.headers.origin || '';
+  const allowed = ['https://www.punchlist.ca', 'https://punchlist.ca'];
+  const isVercel = origin.endsWith('.vercel.app') || origin.includes('punchlist');
+  if (allowed.includes(origin) || isVercel) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { token, action, status, feedback, decline_reason } = req.body || {};
   if (!token) return res.status(400).json({ error: 'Missing token' });

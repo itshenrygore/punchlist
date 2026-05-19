@@ -178,7 +178,7 @@ export default function SignupPage() {
           <div className="form-row">
             <div className="auth-field">
               <span className="field-label">Country</span>
-              <select className="input" value={country} onChange={e => { setCountry(e.target.value); setProvince(e.target.value === 'US' ? 'TX' : 'AB'); }}>
+              <select className="input" value={country} onChange={e => { setCountry(e.target.value); setProvince(e.target.value === 'US' ? 'FL' : 'ON'); }}>
                 <option value="CA">Canada</option>
                 <option value="US">United States</option>
               </select>

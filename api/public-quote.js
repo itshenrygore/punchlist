@@ -2,8 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 import { blocked, getClientIp } from './_rate-limit.js';
 
 export default async function handler(req, res) {
-  // CORS headers for all responses
-  const allowed = ['https://www.punchlist.ca', 'https://punchlist.ca']; const origin = req.headers.origin; if (allowed.includes(origin)) { res.setHeader('Access-Control-Allow-Origin', origin); }
+  // CORS — allow punchlist.ca and any Vercel preview/deployment URL
+  const origin = req.headers.origin || '';
+  const allowed = ['https://www.punchlist.ca', 'https://punchlist.ca'];
+  const isVercel = origin.endsWith('.vercel.app') || origin.includes('punchlist');
+  if (allowed.includes(origin) || isVercel) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
@@ -63,10 +68,12 @@ export default async function handler(req, res) {
       .maybeSingle();
 
     if (quoteError) {
-      console.error('[public-quote] Quote query error:', quoteError.message, quoteError.code, quoteError.details);
-      return res.status(500).json({ 
+      console.error('[public-quote] Quote query error:', quoteError.message, quoteError.code, quoteError.details, quoteError.hint);
+      return res.status(500).json({
         error: 'Database error',
-        detail: quoteError.message
+        detail: quoteError.message,
+        code: quoteError.code,
+        hint: quoteError.hint || null,
       });
     }
 
