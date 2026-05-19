@@ -1674,8 +1674,12 @@ a.sched-drawer-sec-btn{text-decoration:underline}
 .tab-row{display:flex;gap:4px;flex-wrap:wrap}
 .tab-btn{border:1px solid var(--line-2);background:var(--panel-2);border-radius:var(--r-pill);padding:5px 11px;font-weight:600;font-size:11px;cursor:pointer;color:var(--muted);transition:all var(--fast)}
 .tab-btn.active{background:var(--brand-bg);color:var(--brand);border-color:var(--brand-line)}
-.filter-chip{border:1px solid var(--line-2);background:var(--panel-2);border-radius:var(--r-pill);padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;color:var(--muted);transition:all var(--fast)}
+.filter-chip{border:1px solid var(--line-2);background:var(--panel-2);border-radius:var(--r-pill);padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;color:var(--muted);transition:all var(--fast);position:relative}
+.filter-chip::after{content:'';position:absolute;inset:-12px -6px}
 .filter-chip.active{background:var(--brand-bg);color:var(--brand);border-color:var(--brand-line)}
+@media (max-width: 768px) {
+  .filter-chip { padding: 8px 14px; font-size: 12px; }
+}
 .quotes-filter-strip{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
 .deposit-computed{font-size:11px;color:var(--muted);font-weight:600}
 .input.field-error{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(239,68,68,.12)}
@@ -1718,7 +1722,7 @@ a.sched-drawer-sec-btn{text-decoration:underline}
 .mobile-nav-item.active .mobile-nav-icon{transform:scale(1.08)}
 .mobile-nav-label{font-size:11px;font-weight:700;letter-spacing:.01em}
 .mobile-nav-icon{font-size:16px;line-height:1}
-.mobile-nav-action{display:flex;align-items:center;justify-content:center;flex:0 0 46px;margin:4px;background:var(--brand);border-radius:50%;color:white;font-size:1.4rem;text-decoration:none;line-height:1;box-shadow:0 4px 12px rgba(249,115,22,.4);min-height:42px;transition:background var(--fast),box-shadow var(--fast)}
+.mobile-nav-action{display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;height:48px;margin:4px;background:var(--brand);border-radius:50%;color:white;font-size:1.4rem;text-decoration:none;line-height:1;box-shadow:0 4px 12px rgba(249,115,22,.4);min-height:48px;transition:background var(--fast),box-shadow var(--fast)}
 .mobile-nav-action:hover{background:var(--brand-dark);box-shadow:0 4px 16px rgba(249,115,22,.5)}
 .mobile-nav-action-icon{display:block}
 /* Public quote */
@@ -5229,7 +5233,7 @@ a,button{-webkit-tap-highlight-color:transparent}
   .mobile-nav-item.active{background:none} /* v103: pill highlight moved to .mobile-nav-icon (Phase 2) */
   .mobile-nav-icon{font-size:18px}
   .mobile-nav-label{font-size:11px;font-weight:700;letter-spacing:.01em}
-  .mobile-nav-action{width:42px;height:42px;margin:2px;border-radius:14px;font-size:22px;box-shadow:0 3px 10px rgba(249,115,22,.3)}
+  .mobile-nav-action{width:48px;height:48px;margin:2px;border-radius:16px;font-size:22px;box-shadow:0 3px 10px rgba(249,115,22,.3)}
 }
 
 /* ── Top Bar — cleaner spacing ── */
@@ -7417,17 +7421,20 @@ details > summary::-webkit-details-marker{display:none}
   margin-bottom: 10px;
 }
 .pq-changes-chip {
-  padding: 5px 12px;
+  padding: 10px 16px;
+  min-height: 40px;
   border-radius: 20px;
   border: 1.5px solid var(--doc-border, #e5e7eb);
   background: transparent;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   color: var(--doc-text);
   font-family: inherit;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent;
 }
+.pq-changes-chip:active { transform: scale(.97); }
 .pq-changes-chip--active {
   background: var(--doc-accent, #ea580c);
   color: #fff;

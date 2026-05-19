@@ -281,6 +281,12 @@
 }
 .doc-customer { font-size: 15px; color: var(--doc-text-2); }
 .doc-customer strong { color: var(--doc-text); font-weight: 700; }
+/* overflow-wrap: anywhere so a long address ("1234 Springbank Hill
+   Boulevard SW, Calgary, AB T3H 0N5") doesn't horizontally overflow
+   the doc card at 360 px viewport. Same for title + customer name. */
+.doc-address,
+.doc-title,
+.doc-customer-name { overflow-wrap: anywhere; word-break: break-word; }
 .doc-address { font-size: 13px; color: var(--doc-muted); margin-top: 4px; }
 .doc-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--doc-line-soft); }
 .doc-meta-item { }
@@ -1027,6 +1033,15 @@
   position: relative;
   transition: background .2s;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Expand the touch target to 44×44 without resizing the visible
+   switch — the toggle is the customer's primary price-changing
+   control on the public quote, can't have a 42×24 hit zone. */
+.pq-toggle::after {
+  content: '';
+  position: absolute;
+  inset: -10px -1px;
 }
 .pq-toggle--on { background: var(--doc-accent); }
 .pq-toggle-knob {

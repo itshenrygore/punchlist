@@ -133,6 +133,29 @@
   padding: 12px; background: #fff;
   border: 1px solid var(--ln2); border-radius: var(--r2);
   box-shadow: var(--sh4); gap: 2px;
+  z-index: 110;
+  animation: ln-menu-in .2s cubic-bezier(.16,1,.3,1);
+}
+@keyframes ln-menu-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Backdrop behind the mobile menu — dims the rest of the page so
+   the menu doesn't feel like floating debris. */
+.ln-nav-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 100;
+  animation: ln-nav-backdrop-in .2s ease both;
+}
+@keyframes ln-nav-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ln-nav-backdrop, .--open { animation: none; }
 }
 .--open .ln-nav-a { padding: 12px 16px; font-size: 15px; }
 /* Mobile dropdown always uses dark text on its white surface, even when
@@ -159,7 +182,16 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 6px 20px rgba(196,98,42,0.30);
 }
 .ln-btn:active { transform: translateY(0); }
-.ln-btn--sm { padding: 8px 16px; font-size: 13px; }
+.ln-btn--sm { padding: 8px 16px; font-size: 13px; min-height: 36px; }
+@media (max-width: 768px) {
+  /* iOS / Android touch target floor. The nav "Start free" + term
+     toggles are the most-tapped controls in the funnel — they need
+     the 44 px height. */
+  .ln-btn--sm    { min-height: 44px; padding: 10px 18px; }
+  .qc-t          { min-height: 44px; padding: 10px 14px; }
+  .ln-btn--hero  { min-height: 48px; padding: 14px 24px; }
+  .ln-btn--ghost { min-height: 44px; padding: 12px 18px; }
+}
 .ln-btn--hero { padding: 14px 28px; font-size: 15px; border-radius: 11px; }
 .ln-btn--xl { padding: 17px 36px; font-size: 16px; border-radius: 12px; }
 .ln-btn--ghost {

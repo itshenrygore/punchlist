@@ -29,8 +29,23 @@ function Nav() {
     window.addEventListener('scroll', h, { passive: true });
     return () => window.removeEventListener('scroll', h);
   }, []);
+  // Body scroll-lock + Esc-close + backdrop-click when the mobile
+  // menu is open. Previously it was a positioned dropdown with no
+  // way out: tapping outside didn't close, page scrolled behind it.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
   return (
-    <nav className={`ln-nav${scrolled ? ' ln-nav--s' : ''}`}>
+    <nav className={`ln-nav${scrolled ? ' ln-nav--s' : ''}${open ? ' ln-nav--open' : ''}`}>
+      {open && <div className="ln-nav-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />}
       <div className="ln-w ln-nav-in">
         <Link to="/" className="ln-nav-logo"><Logo size="sm" dark={!scrolled} /></Link>
         <div className={`ln-nav-links${open ? ' --open' : ''}`}>
@@ -39,7 +54,7 @@ function Nav() {
           <Link to="/login" className="ln-nav-a" onClick={() => setOpen(false)}>Log in</Link>
           <Link to="/signup" className="ln-btn ln-btn--sm" onClick={() => setOpen(false)}>Start free</Link>
         </div>
-        <button className="ln-nav-mob" onClick={() => setOpen(!open)} aria-label="Menu">
+        <button className="ln-nav-mob" onClick={() => setOpen(!open)} aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open}>
           {open ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>

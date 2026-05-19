@@ -1253,7 +1253,15 @@ export default function QuoteBuilderPage() {
             )}
             {error && <div className="jd-error" role="alert">{error}</div>}
             <div className="jd-footer qb-footer-mt">
-              <button type="button" onClick={async () => {
+              {/* AI scope is the headline feature the landing page sells —
+                  flipped to primary CTA. "Start from blank" sits below as
+                  an escape hatch for contractors who prefer to type their
+                  own items. */}
+              <button type="button" onClick={handleBuildScope} disabled={!description.trim() || scopeLoading} className="btn btn-primary btn-lg full-width">
+                {scopeLoading ? 'Building…' : 'Build with AI →'}
+              </button>
+              <div className="qb-pillar-teaser">Your customer sees the total, a monthly option, and can approve from their phone.</div>
+              <button className="btn-link qb-manual-link" type="button" disabled={!description.trim()} onClick={async () => {
                 if (!description.trim()) return setError('Describe the job first');
                 try {
                   const d = quoteId ? await updateQuote(quoteId, { title: title || description.slice(0, 64), description, trade, province, country }) : await createQuote(user.id, { title: title || description.slice(0, 64), description, trade, province, country, customer_id: null, status: 'draft', line_items: [] });
@@ -1263,9 +1271,7 @@ export default function QuoteBuilderPage() {
                   setDraft(prev => ({ ...prev, title: title || description.slice(0, 64), description }));
                   setPhase('review');
                 } catch (e) { setError(e.message || 'Failed'); }
-              }} disabled={!description.trim()} className="btn btn-primary btn-lg full-width">Add Line Items →</button>
-              <div className="qb-pillar-teaser">Your customer sees the total, a monthly option, and can approve from their phone.</div>
-              <button className="btn-link qb-manual-link" type="button" onClick={handleBuildScope} disabled={!description.trim() || scopeLoading}>{scopeLoading ? 'Building…' : 'or try AI-generated scope'} <ChevronRight size={14} /></button>
+              }}>or start from blank <ChevronRight size={14} /></button>
             </div>
           </Card>
         )}
