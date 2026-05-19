@@ -1115,7 +1115,7 @@ select.input{cursor:pointer}
    QUOTE DETAIL
    ═══════════════════════════════════════════ */
 .qd-grid{display:grid;grid-template-columns:1fr 296px;gap:16px;align-items:start;max-width:1200px;margin-left:auto;margin-right:auto;width:100%}
-.qd-main{display:grid;gap:14px;min-width:0}
+.qd-main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
 .qd-sidebar{display:grid;gap:10px;position:sticky;top:64px;min-width:0}
 
 /* ── Phase Banner ── */
@@ -5453,7 +5453,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Hero zone */
-.qd-hero{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:12px}
+.qd-hero{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .qd-hero-top{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
 .qd-hero-title{margin:0;font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:800;letter-spacing:-.03em;line-height:1.2;color:var(--text)}
 .qd-hero-meta{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:4px;font-size:12px;color:var(--muted)}
@@ -5465,7 +5465,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 }
 .qd-hero-compact{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .qd-hero-compact-info{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
-.qd-hero-compact-title{font-weight:700;font-size:var(--text-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qd-hero-compact-title{font-weight:700;font-size:var(--text-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .qd-hero-compact-sep{color:var(--muted)}
 .qd-hero-compact-total{font-weight:700;font-size:var(--text-sm);flex-shrink:0;font-variant-numeric:tabular-nums}
 
@@ -5488,7 +5488,7 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
   .qd-mobile-tabs{display:flex}
   .qd-zone-messages{display:none!important}
   .qd-zone-details{display:none!important}
-  .ql-strip{display:none}
+  .ql-strip{display:none!important}
 }
 .qd-feed-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
 .qd-feed-list{display:flex;flex-direction:column}
