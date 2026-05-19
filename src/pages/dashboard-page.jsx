@@ -17,6 +17,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronRight, DollarSign } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import OnboardingWizard from '../components/onboarding-wizard';
+import TodaySection from '../components/dashboard/today-section';
+import '../styles/today-section.css';
 import { Card } from '../components/ui';
 import { useToast } from '../components/toast';
 import { useAuth } from '../hooks/use-auth';
@@ -184,6 +186,22 @@ export default function DashboardPage() {
 
   const hasAnyData = quotes.length > 0;
 
+  // Today's scheduled work — quotes whose schedule_window falls on
+  // today's date. Surfaces address, phone, and a one-tap "On my way"
+  // SMS so the dashboard becomes the contractor's morning launchpad
+  // instead of just a quote-management screen.
+  const todayJobs = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return quotes.filter((q) => {
+      if (!q.schedule_window) return false;
+      const w = new Date(q.schedule_window);
+      return w >= today && w < tomorrow && !q.archived_at;
+    });
+  }, [quotes]);
+
   function handleJobSubmit(e) {
     e.preventDefault();
     trackQuoteFlowStarted({ source: 'home_job_input' });
@@ -309,6 +327,17 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ═══ TODAY ═══ — the contractor's morning launchpad. Renders
+            only when there are scheduled jobs today; otherwise hides
+            entirely (no persistent empty card eating space). */}
+        {!loading && todayJobs.length > 0 && (
+          <TodaySection
+            jobs={todayJobs}
+            contractorName={userProfile?.company_name || userProfile?.full_name || ''}
+            country={userProfile?.country || 'CA'}
+          />
         )}
 
         {/* ═══ ACTION REQUIRED ═══ */}
