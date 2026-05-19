@@ -511,11 +511,21 @@ function AcknowledgeScreen({ onNext, onBack, loading }) {
             </svg>
           )}
         </div>
+        {/* Visually hidden but keyboard-reachable: opacity 0 hides the
+            native checkbox while leaving it in the tab order, and we
+            give it a brand outline on :focus-visible via a sibling
+            style so screen-reader users can see + tab to it. */}
         <input
           type="checkbox"
           checked={accepted}
           onChange={e => setAccepted(e.target.checked)}
-          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+          aria-label="I understand and agree to the terms"
+          style={{
+            position: 'absolute', opacity: 0, width: 22, height: 22,
+            margin: 0, cursor: 'pointer',
+          }}
+          onFocus={e => { e.currentTarget.previousElementSibling?.setAttribute?.('data-focus', '1'); }}
+          onBlur={e => { e.currentTarget.previousElementSibling?.removeAttribute?.('data-focus'); }}
         />
         <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-2)', lineHeight: 1.55 }}>
           I understand that I'm responsible for the work I quote and any disputes with my customers. I agree to the{' '}

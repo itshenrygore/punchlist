@@ -1636,6 +1636,12 @@ a.sched-drawer-sec-btn{text-decoration:underline}
 /* Settings tab navigation */
 .settings-tabs{display:flex;gap:4px;max-width:580px;margin-bottom:16px;padding:3px;background:var(--panel-2);border-radius:var(--r-sm);border:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:56px;z-index:10;scrollbar-width:none}
 .settings-tabs::-webkit-scrollbar{display:none}
+/* Fade affordance — useScrollFade adds .scrolled-mid / .scrolled-end
+   classes; without these the tab strip clipped without visible hint.
+   Matches the .pl-tabstrip treatment in phase3-dashboard.css. */
+.settings-tabs:not(.scrolled-end){-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 8px,#000 92%,transparent 100%);mask-image:linear-gradient(to right,transparent 0%,#000 8px,#000 92%,transparent 100%)}
+.settings-tabs.scrolled-mid{-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 8px,#000 92%,transparent 100%);mask-image:linear-gradient(to right,transparent 0%,#000 8px,#000 92%,transparent 100%)}
+.settings-tabs.scrolled-end{-webkit-mask-image:none;mask-image:none}
 .settings-tab{flex:0 0 auto;padding:8px 14px;font-size:13px;font-weight:600;color:var(--muted);background:none;border:none;border-radius:calc(var(--r-sm) - 2px);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
 @media(min-width:640px){.settings-tab{flex:1 1 auto}}
 .settings-tab:hover{color:var(--text-2)}

@@ -87,7 +87,15 @@ function FollowupModal({ quote, userProfile, templates, onClose, onSent }) {
   async function handleSend() {
     if (sending) return;
     if (!hasPhone) {
-      try { await navigator.clipboard.writeText(msg); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
+      // No-phone path: copy to clipboard, briefly flash the button as
+      // "Copied! ✓", then close the modal so the user can paste into
+      // their messaging app. Previously the modal stayed open and the
+      // button label was the only feedback — easy to miss.
+      try {
+        await navigator.clipboard.writeText(msg);
+        setCopied(true);
+        setTimeout(() => { setCopied(false); onClose?.(); }, 900);
+      } catch { /* clipboard blocked — leave modal open */ }
       return;
     }
     setSending(true);
