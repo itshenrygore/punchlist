@@ -233,6 +233,42 @@ export default function DashboardPage() {
 
   const hasAnyData = quotes.length > 0;
 
+  // ── Welcome-back recap (audit #23) ──
+  // When a contractor returns after >24h away, summarize what changed
+  // while they were gone: quote views, deposits paid, invoices paid,
+  // quotes expired. Keeps them oriented instead of forcing them to
+  // hunt through pages to figure out "what happened since Friday?"
+  const [welcomeBack, setWelcomeBack] = useState(null);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+  useEffect(() => {
+    if (loading || !hasAnyData) return;
+    let lastSeen;
+    try {
+      lastSeen = localStorage.getItem('pl_last_seen');
+    } catch { return; }
+    const now = Date.now();
+    if (lastSeen) {
+      const since = Date.parse(lastSeen);
+      const hoursAway = (now - since) / 3600000;
+      // Only show for genuine returning visits (24h+) — anything less
+      // is normal active use where the contractor already saw the
+      // events live.
+      if (hoursAway >= 24 && hoursAway < 30 * 24) {
+        const sinceMs = since;
+        const sinceDays = Math.round(hoursAway / 24);
+        const newViews = quotes.filter(q => q.last_viewed_at && Date.parse(q.last_viewed_at) > sinceMs).length;
+        const newDeposits = quotes.filter(q => q.deposit_status === 'paid' && q.updated_at && Date.parse(q.updated_at) > sinceMs).length;
+        const newPaid = invoices.filter(i => i.status === 'paid' && i.paid_at && Date.parse(i.paid_at) > sinceMs).length;
+        const newExpired = quotes.filter(q => q.status === 'expired' && q.updated_at && Date.parse(q.updated_at) > sinceMs).length;
+        const total = newViews + newDeposits + newPaid + newExpired;
+        if (total > 0) {
+          setWelcomeBack({ days: sinceDays, newViews, newDeposits, newPaid, newExpired });
+        }
+      }
+    }
+    try { localStorage.setItem('pl_last_seen', new Date(now).toISOString()); } catch { /* private */ }
+  }, [loading, hasAnyData, quotes, invoices]);
+
   // Today's scheduled work — quotes whose schedule_window falls on
   // today's date. Surfaces address, phone, and a one-tap "On my way"
   // SMS so the dashboard becomes the contractor's morning launchpad
@@ -398,6 +434,37 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ═══ WELCOME BACK ═══ — re-orientation banner when contractor
+            returns after 24h+ away. Summarizes the events they missed
+            so they don't have to hunt across pages to find out what
+            happened over the weekend. Dismissable; auto-clears on
+            next visit when the recap window resets. */}
+        {!loading && welcomeBack && !welcomeDismissed && (
+          <div className="dv2-welcome-back dv2-enter" style={{ '--i': 1 }}>
+            <div className="dv2-welcome-back-body">
+              <div className="dv2-welcome-back-title">
+                Welcome back · {welcomeBack.days} day{welcomeBack.days !== 1 ? 's' : ''} away
+              </div>
+              <div className="dv2-welcome-back-sub">
+                {[
+                  welcomeBack.newPaid > 0 && `${welcomeBack.newPaid} invoice${welcomeBack.newPaid !== 1 ? 's' : ''} paid`,
+                  welcomeBack.newDeposits > 0 && `${welcomeBack.newDeposits} deposit${welcomeBack.newDeposits !== 1 ? 's' : ''}`,
+                  welcomeBack.newViews > 0 && `${welcomeBack.newViews} quote view${welcomeBack.newViews !== 1 ? 's' : ''}`,
+                  welcomeBack.newExpired > 0 && `${welcomeBack.newExpired} expired`,
+                ].filter(Boolean).join(' · ')}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="dv2-welcome-back-close"
+              onClick={() => setWelcomeDismissed(true)}
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
           </div>
         )}
 

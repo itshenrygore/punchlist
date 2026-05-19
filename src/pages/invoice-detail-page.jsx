@@ -9,7 +9,7 @@ import PaidCelebrationCard from '../components/paid-celebration-card';
 import '../styles/paid-celebration.css';
 import ConfirmModal from '../components/confirm-modal';
 import { getInvoice, getProfile, friendly, updateInvoiceStatus, updateInvoice, listPayments, recordPayment, deletePayment, getInvoiceBalance, updateInvoiceReminders, checkAndSendReminder, sendInvoiceEmail, setRecurringInterval, createNextRecurring, calculateLateFee } from '../lib/api';
-import { currency, formatDate } from '../lib/format';
+import { currency, formatDate, relativeTime as formatRelative } from '../lib/format';
 import { calculateTotals } from '../lib/pricing';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
@@ -740,6 +740,54 @@ export default function InvoiceDetailPage() {
               {isPaid && <div className="inv-paid-confirm id-paid-confirm">✓ This invoice has been paid</div>}
             </div>
           </div>
+
+          {/* Activity timeline — small chronological feed of what's
+              happened on this invoice. Built from existing columns
+              (created_at / sent_at / last_reminder_sent_at / paid_at)
+              plus the payments table, so no schema changes. Gives the
+              contractor the "when did I last text Lisa about this?"
+              answer without scrolling through their messages. */}
+          {(() => {
+            const events = [];
+            if (invoice.created_at) {
+              events.push({ at: invoice.created_at, label: 'Invoice created', icon: '✏️' });
+            }
+            if (invoice.sent_at || invoice.issued_at) {
+              events.push({ at: invoice.sent_at || invoice.issued_at, label: 'Sent to customer', icon: '↗' });
+            }
+            if (invoice.last_reminder_sent_at) {
+              events.push({ at: invoice.last_reminder_sent_at, label: 'Reminder sent', icon: '🔔' });
+            }
+            for (const p of payments) {
+              events.push({
+                at: p.paid_at,
+                label: `Payment ${currency(p.amount)}${p.method ? ` · ${p.method}` : ''}`,
+                icon: '💰',
+              });
+            }
+            if (invoice.paid_at && invoice.status === 'paid') {
+              events.push({ at: invoice.paid_at, label: 'Marked paid', icon: '✓', highlight: true });
+            }
+            const seen = new Set();
+            const sorted = events
+              .filter(e => e.at && !seen.has(`${e.at}:${e.label}`) && seen.add(`${e.at}:${e.label}`))
+              .sort((a, b) => new Date(b.at) - new Date(a.at));
+            if (sorted.length === 0) return null;
+            return (
+              <div className="qb-card inv-activity-card">
+                <span className="qb-label">Activity</span>
+                <ul className="inv-activity-list">
+                  {sorted.map((e, i) => (
+                    <li key={i} className={`inv-activity-item${e.highlight ? ' inv-activity-item--hi' : ''}`}>
+                      <span className="inv-activity-icon" aria-hidden="true">{e.icon}</span>
+                      <span className="inv-activity-label">{e.label}</span>
+                      <span className="inv-activity-when">{formatRelative(e.at)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
 
           {profile?.payment_instructions && (
             <div className="qb-card">

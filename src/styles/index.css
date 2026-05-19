@@ -9337,6 +9337,46 @@ kbd.pl-kbd {
   border-color: var(--brand); color: var(--brand);
 }
 
+/* Activity timeline — chronological feed on invoice sidebar. */
+.inv-activity-card { padding-bottom: 8px; }
+.inv-activity-list {
+  list-style: none; margin: 8px 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.inv-activity-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 4px;
+  border-radius: var(--r-sm);
+  font-size: var(--text-xs);
+  color: var(--text-2);
+}
+.inv-activity-item--hi {
+  background: var(--green-bg, rgba(34, 197, 94, .08));
+  color: var(--green);
+  font-weight: 600;
+}
+.inv-activity-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+  width: 18px;
+  text-align: center;
+}
+.inv-activity-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inv-activity-when {
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.inv-activity-item--hi .inv-activity-when { color: inherit; opacity: .8; }
+
 /* Payment instructions */
 .id-pay-instructions { padding: 8px 10px; background: var(--bg); border-radius: var(--r-sm); font-size: var(--text-2xs); color: var(--muted); }
 .id-pay-instructions-label { display: block; margin-bottom: 4px; font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: .06em; }

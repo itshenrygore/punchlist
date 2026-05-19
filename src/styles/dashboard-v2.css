@@ -178,6 +178,48 @@
   font-size: 13px; color: var(--text-2); margin-top: 2px;
 }
 
+/* Welcome-back recap — re-orientation banner after the contractor's
+   been gone 24h+. Brand-accent stripe + dismiss × in a tight 14px row
+   so it doesn't crowd the actual Action Required section underneath. */
+.dv2-welcome-back {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px 12px 18px;
+  margin-bottom: 14px;
+  background: var(--brand-bg, rgba(249, 115, 22, .06));
+  border: 1px solid var(--brand-line, rgba(249, 115, 22, .2));
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.dv2-welcome-back::before {
+  content: ''; position: absolute;
+  left: 0; top: 10px; bottom: 10px; width: 3px;
+  background: var(--brand);
+  border-radius: 0 3px 3px 0;
+}
+.dv2-welcome-back-body { flex: 1; min-width: 0; }
+.dv2-welcome-back-title {
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 700; letter-spacing: -.015em;
+  color: var(--text);
+}
+.dv2-welcome-back-sub {
+  font-size: 12px; color: var(--text-2);
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.dv2-welcome-back-close {
+  appearance: none; background: none; border: none;
+  width: 28px; height: 28px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 18px; line-height: 1; color: var(--muted);
+  cursor: pointer; flex-shrink: 0;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.dv2-welcome-back-close:hover {
+  background: rgba(0, 0, 0, .05); color: var(--text);
+}
+
 /* Money-chip cluster — pipeline + owed sit side by side on the
    greeting row, stack on small viewports. */
 .dv2-money-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
