@@ -23,54 +23,108 @@ export default async function handler(req, res) {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  try {
-    const { data: invoice, error: invErr } = await supabase
-      .from('invoices')
-      .select('id,invoice_number,quote_id,customer_id,user_id,title,description,status,subtotal,tax,discount,total,deposit_credited,remaining_balance,province,country,due_at,issued_at,paid_at,payment_method,notes,share_token,updated_at')
-      .eq('share_token', token)
-      .maybeSingle();
+  // Retry-on-missing-column helper: PostgREST errors with a recognizable
+  // message when a column doesn't exist (typically because a migration
+  // hasn't been applied). We strip the offending column and try again so
+  // the public page degrades gracefully instead of 500'ing.
+  async function selectWithFallback(table, cols, filter) {
+    let list = [...cols];
+    for (let attempt = 0; attempt <= cols.length; attempt++) {
+      const q = supabase.from(table).select(list.join(','));
+      const built = filter(q);
+      const { data, error } = await built;
+      if (!error) return { data, error: null, cols: list };
+      const missing =
+        error.message?.match(/column[s]? ["']?(\w+)["']? (of relation|does not exist)/i)?.[1] ||
+        error.message?.match(/Could not find the '(\w+)' column/i)?.[1];
+      if (missing && list.includes(missing)) {
+        console.warn(`[public-invoice] ${table} column missing, retrying without: ${missing}`);
+        list = list.filter(c => c !== missing);
+        continue;
+      }
+      return { data: null, error, cols: list };
+    }
+    return { data: null, error: { message: 'all columns failed' }, cols: list };
+  }
 
-    if (invErr) return res.status(500).json({ error: 'Database error', detail: invErr.message });
+  try {
+    const INVOICE_COLS = [
+      'id','invoice_number','quote_id','customer_id','user_id','title','description',
+      'status','subtotal','tax','discount','total','deposit_credited','remaining_balance',
+      'province','country','due_at','issued_at','paid_at','payment_method','notes',
+      'share_token','updated_at',
+    ];
+    const { data: invoice, error: invErr } = await selectWithFallback(
+      'invoices',
+      INVOICE_COLS,
+      q => q.eq('share_token', token).maybeSingle(),
+    );
+
+    if (invErr) {
+      console.error('[public-invoice] invoice query error:', invErr.message, invErr.code, invErr.hint);
+      return res.status(500).json({
+        error: 'Database error',
+        detail: invErr.message,
+        code: invErr.code || null,
+        hint: invErr.hint || null,
+      });
+    }
     if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
 
-    // Fetch invoice items
+    // Fetch invoice items (best-effort)
     let invoiceItems = [];
-    const { data: items } = await supabase
-      .from('invoice_items')
-      .select('id,name,quantity,unit_price,notes,category,sort_order,included')
-      .eq('invoice_id', invoice.id)
-      .order('sort_order', { ascending: true });
-    invoiceItems = (items || []).filter(i => i.included !== false);
+    try {
+      const { data: items, error: itemsErr } = await supabase
+        .from('invoice_items')
+        .select('id,name,quantity,unit_price,notes,category,sort_order,included')
+        .eq('invoice_id', invoice.id)
+        .order('sort_order', { ascending: true });
+      if (itemsErr) console.warn('[public-invoice] items error:', itemsErr.message);
+      invoiceItems = (items || []).filter(i => i.included !== false);
+    } catch (e) { console.warn('[public-invoice] items fetch threw:', e.message); }
 
-    // Fetch payments
+    // Fetch payments (best-effort)
     let payments = [];
-    const { data: pays } = await supabase
-      .from('payments')
-      .select('id,amount,method,notes,paid_at')
-      .eq('invoice_id', invoice.id)
-      .order('paid_at', { ascending: true });
-    payments = pays || [];
+    try {
+      const { data: pays, error: payErr } = await supabase
+        .from('payments')
+        .select('id,amount,method,notes,paid_at')
+        .eq('invoice_id', invoice.id)
+        .order('paid_at', { ascending: true });
+      if (payErr) console.warn('[public-invoice] payments error:', payErr.message);
+      payments = pays || [];
+    } catch (e) { console.warn('[public-invoice] payments fetch threw:', e.message); }
 
-    // Fetch customer
+    // Fetch customer (best-effort)
     let customer = null;
     if (invoice.customer_id) {
-      const { data: cust } = await supabase
-        .from('customers')
-        .select('name,email,phone,address')
-        .eq('id', invoice.customer_id)
-        .maybeSingle();
-      customer = cust;
+      try {
+        const { data: cust, error: custErr } = await supabase
+          .from('customers')
+          .select('name,email,phone,address')
+          .eq('id', invoice.customer_id)
+          .maybeSingle();
+        if (custErr) console.warn('[public-invoice] customer error:', custErr.message);
+        else customer = cust;
+      } catch (e) { console.warn('[public-invoice] customer fetch threw:', e.message); }
     }
 
-    // Fetch contractor profile
+    // Fetch contractor profile (with column fallback)
     let contractor = null;
     if (invoice.user_id) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name,company_name,phone,email,logo_url,payment_methods,payment_instructions,etransfer_email,venmo_zelle_handle,square_payment_link,paypal_link,stripe_payment_link,stripe_connect_account_id,stripe_connect_onboarded')
-        .eq('id', invoice.user_id)
-        .maybeSingle();
-      contractor = profile;
+      const PROFILE_COLS = [
+        'full_name','company_name','phone','email','logo_url','payment_methods',
+        'payment_instructions','etransfer_email','venmo_zelle_handle',
+        'square_payment_link','paypal_link','stripe_payment_link',
+        'stripe_connect_account_id','stripe_connect_onboarded',
+      ];
+      const { data: profile, error: profErr } = await selectWithFallback(
+        'profiles',
+        PROFILE_COLS,
+        q => q.eq('id', invoice.user_id).maybeSingle(),
+      );
+      if (profErr) console.warn('[public-invoice] profile error:', profErr.message);
+      else contractor = profile;
     }
 
     const payload = {
@@ -117,7 +171,12 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ invoice: payload });
   } catch (err) {
-    console.error('[public-invoice] Error:', err.message);
-    return res.status(500).json({ error: 'Server error', detail: err.message });
+    console.error('[public-invoice] Error:', err.message, err.stack);
+    return res.status(500).json({
+      error: 'Server error',
+      detail: err?.message || String(err),
+      code: err?.code || null,
+      hint: err?.hint || null,
+    });
   }
 }

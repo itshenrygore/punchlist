@@ -19,10 +19,19 @@ export default async function handler(req, res) {
     },
     db: null,
     invoice_id_column: null,
+    public_quote_columns: null,
+    public_invoice_columns: null,
   };
 
   if (!url || !key) {
     return res.status(500).json({ ok: false, error: 'Missing env vars', checks });
+  }
+
+  // Probe a single column to confirm it exists. Returns "exists" or the
+  // PostgREST error message.
+  async function probe(supabase, table, col) {
+    const { error } = await supabase.from(table).select(col).limit(1);
+    return error ? error.message : 'exists';
   }
 
   try {
@@ -39,17 +48,38 @@ export default async function handler(req, res) {
     }
     checks.db = { ok: true, quote_count: count };
 
-    // Test 2: check invoice_id column exists on quotes
-    const { data: sample } = await supabase
-      .from('quotes')
-      .select('id, status, invoice_id')
-      .limit(1);
-    checks.invoice_id_column = sample !== null ? 'exists' : 'query returned null';
+    // Test 2: check invoice_id column exists on quotes (the bug that
+    // surfaced as a 500 with a SQL error mentioning invoice_id + uuid).
+    const invIdResult = await probe(supabase, 'quotes', 'invoice_id');
+    checks.invoice_id_column = invIdResult;
+
+    // Test 3: every column public-quote.js selects from profiles. The
+    // public quote endpoint silently drops missing ones at runtime, but
+    // listing them here makes it obvious which migration is unapplied.
+    const profileCols = [
+      'stripe_connect_account_id','stripe_connect_onboarded','terms_conditions',
+      'sms_notifications_enabled','push_subscription',
+    ];
+    const profileProbes = {};
+    for (const c of profileCols) profileProbes[c] = await probe(supabase, 'profiles', c);
+    checks.public_quote_columns = profileProbes;
+
+    // Test 4: every column public-invoice.js selects on invoices.
+    const invoiceCols = ['remaining_balance','sent_at','recurring_interval','discount','deposit_credited'];
+    const invoiceProbes = {};
+    for (const c of invoiceCols) invoiceProbes[c] = await probe(supabase, 'invoices', c);
+    checks.public_invoice_columns = invoiceProbes;
 
   } catch (e) {
     checks.db = { ok: false, error: e.message };
     return res.status(500).json({ ok: false, error: 'Exception', checks });
   }
 
-  return res.status(200).json({ ok: true, checks });
+  // Overall health: green only if every column probe says "exists".
+  const allExists = (obj) => Object.values(obj || {}).every(v => v === 'exists');
+  const allOk = checks.invoice_id_column === 'exists'
+    && allExists(checks.public_quote_columns)
+    && allExists(checks.public_invoice_columns);
+
+  return res.status(allOk ? 200 : 503).json({ ok: allOk, checks });
 }
