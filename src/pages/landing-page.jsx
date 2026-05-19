@@ -429,10 +429,10 @@ export default function LandingPage() {
               <ul className="pr-feats">
                 {[
                   '5 quotes per month',
-                  'Scope builder',
-                  'Monthly payment display',
+                  'Scope builder — 1,000+ trade items',
+                  'Monthly payment display on quotes',
                   'Customer e-signature',
-                  'Push notifications when viewed',
+                  'Works from your phone',
                 ].map((f, i) => <li key={i} className="pr-f"><Check size={14} strokeWidth={2.5} />{f}</li>)}
               </ul>
               <Link to="/signup" className="ln-btn ln-btn--outline ln-btn--full">Get started — no card</Link>

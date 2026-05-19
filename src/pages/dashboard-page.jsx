@@ -184,10 +184,11 @@ export default function DashboardPage() {
         <div className="dv2-row1 dv2-enter" style={{ '--i': 0 }}>
           <div className="dv2-greeting-block">
             <h1 className="dv2-greeting font-display">{greeting}</h1>
-            {!loading && hasAnyData && (
+            {!loading && hasAnyData && (sentThisMonth > 0 || closeRate !== null) && (
               <p className="dv2-greeting-sub">
-                {sentThisMonth} quote{sentThisMonth !== 1 ? 's' : ''} sent this month
-                {closeRate !== null && ` · ${closeRate}% close rate`}
+                {sentThisMonth > 0 && `${sentThisMonth} quote${sentThisMonth !== 1 ? 's' : ''} sent this month`}
+                {sentThisMonth > 0 && closeRate !== null && ' · '}
+                {closeRate !== null && `${closeRate}% close rate`}
               </p>
             )}
           </div>
@@ -395,6 +396,15 @@ export default function DashboardPage() {
               </div>
               <ChevronRight size={13} className="dv2-qnav-arrow" />
             </Link>
+            {userProfile && isPro(userProfile) && (
+              <Link to="/app/invoices" className="dv2-qnav-tile">
+                <span className="dv2-qnav-icon">🧾</span>
+                <div className="dv2-qnav-content">
+                  <span className="dv2-qnav-label">Invoices</span>
+                </div>
+                <ChevronRight size={13} className="dv2-qnav-arrow" />
+              </Link>
+            )}
           </div>
         )}
 

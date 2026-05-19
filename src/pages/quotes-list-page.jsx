@@ -356,7 +356,12 @@ export default function QuotesListPage() {
     let result = quotes;
     if (hideCompleted) result = result.filter(q => ACTIVE_STATUSES.includes(q.status));
     if (statusFilter === 'needs_followup') {
-      result = result.filter(q => ['viewed','revision_requested'].includes(q.status) || (q.status === 'sent' && q.view_count > 0));
+      const threeDaysAgo = Date.now() - 3 * 86400000;
+      result = result.filter(q =>
+        ['viewed', 'revision_requested'].includes(q.status) ||
+        (q.status === 'sent' && q.view_count > 0) ||
+        (q.status === 'sent' && !q.view_count && q.sent_at && new Date(q.sent_at).getTime() < threeDaysAgo)
+      );
     } else if (statusFilter === 'approved') {
       result = result.filter(q => ['approved','approved_pending_deposit'].includes(q.status));
     } else if (statusFilter === 'done') {
