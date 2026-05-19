@@ -277,45 +277,59 @@ export default async function handler(req, res) {
     }
 
     // VIEW
+    //
+    // The whole branch is wrapped in try/catch + best-effort sub-calls so
+    // ANY failure (constraint violation, missing column, push provider
+    // outage, etc.) returns 200 to the customer's browser. Bookkeeping
+    // is best-effort; the customer must never see a 500 just because a
+    // contractor-side analytics insert misfired.
     if (action === 'view') {
-      const ip = (req.headers?.['x-forwarded-for'] || '').split(',')[0]?.trim() || req.headers?.['x-real-ip'] || 'unknown';
-      const ua = (req.headers?.['user-agent'] || '').slice(0, 200);
-      const updates = { last_viewed_at: new Date().toISOString(), view_count: (quote.view_count || 0) + 1 };
-      if (!['viewed', 'approved', 'approved_pending_deposit', 'deposit_paid', 'converted_to_invoice', 'paid'].includes(quote.status)) updates.status = 'viewed';
-      const isFirstView = !quote.first_viewed_at;
-      if (isFirstView) {
-        updates.first_viewed_at = new Date().toISOString();
-        // Only compute time_to_view_seconds on first view
-        if (quote.created_at) {
-          updates.time_to_view_seconds = Math.round((Date.now() - new Date(quote.created_at).getTime()) / 1000);
+      try {
+        const ip = (req.headers?.['x-forwarded-for'] || '').split(',')[0]?.trim() || req.headers?.['x-real-ip'] || 'unknown';
+        const ua = (req.headers?.['user-agent'] || '').slice(0, 200);
+        const updates = { last_viewed_at: new Date().toISOString(), view_count: (quote.view_count || 0) + 1 };
+        if (!['viewed', 'approved', 'approved_pending_deposit', 'deposit_paid', 'converted_to_invoice', 'paid'].includes(quote.status)) updates.status = 'viewed';
+        const isFirstView = !quote.first_viewed_at;
+        if (isFirstView) {
+          updates.first_viewed_at = new Date().toISOString();
+          if (quote.created_at) {
+            updates.time_to_view_seconds = Math.round((Date.now() - new Date(quote.created_at).getTime()) / 1000);
+          }
         }
-      }
-      await supabase.from('quotes').update(updates).eq('id', quote.id);
-      // Record in quote_views for per-view analytics (fire-and-forget, non-blocking)
-      supabase.from('quote_views').insert({ quote_id: quote.id, viewer_ip: ip, user_agent: ua }).then(() => {}).catch(() => {});
-      // Create in-app notification on first view (drives realtime value trigger)
-      if (isFirstView) {
-        await createInAppNotification(supabase, {
-          userId: quote.user_id,
-          type: 'quote_viewed',
-          title: `Quote viewed: ${quote.title || 'Untitled'}`,
-          body: `${customerName || 'Your customer'} opened your quote.`,
-          link: `/app/quotes/${quote.id}`,
-        });
-        // Web Push — this is the money notification
-        const pushTotal = Number(quote.total || 0);
-        const pushAmt = pushTotal > 0 ? ` $${Math.round(pushTotal).toLocaleString()}` : '';
-        sendPushNotification(supabase, {
-          userId: quote.user_id,
-          title: `${customerName || 'Your customer'} opened your${pushAmt} quote`,
-          body: quote.title || 'Tap to view details',
-          url: `/app/quotes/${quote.id}`,
-        }).catch(() => {});
-        // 9A: SMS — notify contractor of first view
-        const viewSmsPhone = await contractorSmsEnabled(supabase, quote.user_id);
-        if (viewSmsPhone) {
-          sendSMS(viewSmsPhone, `👀 ${customerName || 'Your customer'} just opened "${(quote.title || 'your quote').slice(0, 40)}". Follow up: ${appUrl}/app/quotes/${quote.id}`);
+        const { error: viewUpdErr } = await supabase.from('quotes').update(updates).eq('id', quote.id);
+        if (viewUpdErr) console.warn('[public-quote-action] view update failed:', viewUpdErr.message);
+
+        supabase.from('quote_views').insert({ quote_id: quote.id, viewer_ip: ip, user_agent: ua }).then(() => {}).catch(() => {});
+
+        if (isFirstView) {
+          try {
+            await createInAppNotification(supabase, {
+              userId: quote.user_id,
+              type: 'quote_viewed',
+              title: `Quote viewed: ${quote.title || 'Untitled'}`,
+              body: `${customerName || 'Your customer'} opened your quote.`,
+              link: `/app/quotes/${quote.id}`,
+            });
+          } catch (e) { console.warn('[public-quote-action] notif failed:', e?.message); }
+
+          const pushTotal = Number(quote.total || 0);
+          const pushAmt = pushTotal > 0 ? ` $${Math.round(pushTotal).toLocaleString()}` : '';
+          sendPushNotification(supabase, {
+            userId: quote.user_id,
+            title: `${customerName || 'Your customer'} opened your${pushAmt} quote`,
+            body: quote.title || 'Tap to view details',
+            url: `/app/quotes/${quote.id}`,
+          }).catch(() => {});
+
+          try {
+            const viewSmsPhone = await contractorSmsEnabled(supabase, quote.user_id);
+            if (viewSmsPhone) {
+              sendSMS(viewSmsPhone, `👀 ${customerName || 'Your customer'} just opened "${(quote.title || 'your quote').slice(0, 40)}". Follow up: ${appUrl}/app/quotes/${quote.id}`);
+            }
+          } catch (e) { console.warn('[public-quote-action] view SMS failed:', e?.message); }
         }
+      } catch (e) {
+        console.warn('[public-quote-action] view branch failed:', e?.message);
       }
       return res.status(200).json({ ok: true });
     }
@@ -718,6 +732,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Unknown action' });
   } catch (err) {
     console.error('public-quote-action:', err);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({
+      error: 'Server error',
+      detail: err?.message || String(err),
+      code: err?.code || null,
+      hint: err?.hint || null,
+    });
   }
 }

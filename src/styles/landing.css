@@ -118,6 +118,10 @@
   box-shadow: var(--sh4); gap: 2px;
 }
 .--open .ln-nav-a { padding: 12px 16px; font-size: 15px; }
+/* Mobile dropdown always uses dark text on its white surface, even when
+   the parent nav is over the dark hero (which otherwise paints links white). */
+.ln-nav:not(.ln-nav--s) .--open .ln-nav-a        { color: var(--t2); background: transparent; }
+.ln-nav:not(.ln-nav--s) .--open .ln-nav-a:hover  { color: var(--tx); background: var(--ln); }
 
 /* ════════════════════════════════════════════
    BUTTONS
