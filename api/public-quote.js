@@ -78,17 +78,29 @@ export default async function handler(req, res) {
     // console.log('[public-quote] Found quote:', quote.id);
 
     // Inline expiry: update status to 'expired' if past expires_at
-    // This is the no-cron solution — runs on every public quote load
+    // This is the no-cron solution — runs on every public quote load.
+    // Wrapped in try/catch so a constraint violation or trigger error
+    // (e.g. missing quotes_status_check value) can't 500 the preview;
+    // the worst case is the customer sees the old "sent" status until
+    // a contractor-side action expires the quote.
     if (
       quote.expires_at &&
       new Date(quote.expires_at) < new Date() &&
       ['sent', 'viewed'].includes(quote.status)
     ) {
-      await supabase
-        .from('quotes')
-        .update({ status: 'expired' })
-        .eq('id', quote.id);
-      quote.status = 'expired';
+      try {
+        const { error: expireErr } = await supabase
+          .from('quotes')
+          .update({ status: 'expired' })
+          .eq('id', quote.id);
+        if (expireErr) {
+          console.warn('[public-quote] Expire update failed:', expireErr.message);
+        } else {
+          quote.status = 'expired';
+        }
+      } catch (e) {
+        console.warn('[public-quote] Expire update threw:', e.message);
+      }
     }
 
     // Step 2: Fetch line items separately (more reliable than joins)
@@ -134,22 +146,46 @@ export default async function handler(req, res) {
     }
 
     // Step 4: Fetch contractor profile separately
+    //
+    // The select includes columns added by later migrations
+    // (stripe_connect_*, terms_conditions). If the DB hasn't run those
+    // migrations yet, drop the offending column and retry so the public
+    // page still loads. Without this guard a missing column 500s the
+    // whole quote preview with a SQL error mentioning the column name.
     let contractor = null;
     if (quote.user_id) {
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id,full_name,company_name,phone,email,logo_url,payment_methods,payment_instructions,etransfer_email,venmo_zelle_handle,square_payment_link,paypal_link,stripe_payment_link,stripe_connect_account_id,stripe_connect_onboarded,terms_conditions')
-          .eq('id', quote.user_id)
-          .maybeSingle();
-        
-        if (profileError) {
+      const PROFILE_COLS = [
+        'id','full_name','company_name','phone','email','logo_url',
+        'payment_methods','payment_instructions','etransfer_email',
+        'venmo_zelle_handle','square_payment_link','paypal_link',
+        'stripe_payment_link','stripe_connect_account_id',
+        'stripe_connect_onboarded','terms_conditions',
+      ];
+      let cols = [...PROFILE_COLS];
+      for (let attempt = 0; attempt <= PROFILE_COLS.length; attempt++) {
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select(cols.join(','))
+            .eq('id', quote.user_id)
+            .maybeSingle();
+
+          if (!profileError) { contractor = profile; break; }
+
+          const missing =
+            profileError.message?.match(/column[s]? ["']?(\w+)["']? (of relation|does not exist)/i)?.[1] ||
+            profileError.message?.match(/Could not find the '(\w+)' column/i)?.[1];
+          if (missing && cols.includes(missing)) {
+            console.warn('[public-quote] Profile column missing, retrying without:', missing);
+            cols = cols.filter(c => c !== missing);
+            continue;
+          }
           console.error('[public-quote] Profile error:', profileError.message);
-        } else {
-          contractor = profile;
+          break;
+        } catch (e) {
+          console.error('[public-quote] Profile fetch failed:', e.message);
+          break;
         }
-      } catch (e) {
-        console.error('[public-quote] Profile fetch failed:', e.message);
       }
     }
 

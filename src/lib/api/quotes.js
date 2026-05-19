@@ -563,10 +563,30 @@ export async function createInvoiceFromQuote(userId, quote) {
     if (itemsErr) console.warn('[PL] invoice_items insert error:', itemsErr.message);
   }
 
-  await supabase
+  // Try the full update first. If the DB hasn't had the
+  // migration_fix_quote_invoice_link.sql migration applied yet, either
+  // the invoice_id column or the converted_to_invoice status value will
+  // be missing — peel them off and retry so the contractor still gets
+  // the invoice created and a usable (if degraded) quote status.
+  let { error: linkErr } = await supabase
     .from('quotes')
     .update({ status: 'converted_to_invoice', invoice_id: invoice.id })
     .eq('id', quote.id);
+
+  if (linkErr) {
+    const msg = linkErr.message || '';
+    const missingCol = /column ["']?invoice_id["']? .*does not exist|Could not find the 'invoice_id' column/i.test(msg);
+    const badStatus  = /quotes_status_check|invalid input value for enum/i.test(msg);
+    if (missingCol || badStatus) {
+      console.warn('[PL] quote→invoice link degraded:', msg);
+      const fallback = badStatus ? { status: 'invoiced' } : { status: 'converted_to_invoice' };
+      if (!missingCol) fallback.invoice_id = invoice.id;
+      const { error: retryErr } = await supabase.from('quotes').update(fallback).eq('id', quote.id);
+      if (retryErr) console.warn('[PL] quote→invoice fallback failed:', retryErr.message);
+    } else {
+      console.warn('[PL] quote→invoice link failed:', msg);
+    }
+  }
 
   return invoice;
 }

@@ -539,6 +539,16 @@ ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS quote_number integer;
 -- Quotes: v70 — photo URL for job site photos
 ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS photo_url text;
 
+-- Quotes: link to the invoice this quote was converted into (set by
+-- createInvoiceFromQuote in src/lib/api/quotes.js). Without this column
+-- the conversion UPDATE fails with
+--   column "invoice_id" of relation "quotes" does not exist
+-- and the resulting SQL error (mentioning invoice_id + uuid) surfaces as
+-- a 500 on the next request that touches the quote.
+ALTER TABLE public.quotes
+  ADD COLUMN IF NOT EXISTS invoice_id uuid REFERENCES public.invoices(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_quotes_invoice_id ON public.quotes(invoice_id);
+
 -- Profiles: Phase 2 — terms and conditions
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS terms_conditions text DEFAULT '';
 
@@ -566,6 +576,9 @@ ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS stripe_payment_intent_id te
 ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS reminder_schedule jsonb DEFAULT '[]'::jsonb;
 ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS last_reminder_sent_at timestamptz;
 ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS deposit_credited numeric(10,2) DEFAULT 0;
+ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS remaining_balance numeric(10,2) DEFAULT 0;
+ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS sent_at timestamptz;
+ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS recurring_interval text;
 
 -- ================================================================
 -- PHASE 3: AMENDMENTS TABLE
@@ -626,9 +639,9 @@ CREATE TABLE IF NOT EXISTS public.payments (
 -- ================================================================
 ALTER TABLE public.quotes DROP CONSTRAINT IF EXISTS quotes_status_check;
 ALTER TABLE public.quotes ADD CONSTRAINT quotes_status_check
-  CHECK (status IN ('draft','sent','viewed','revision_requested','declined',
-    'approved','approved_pending_deposit','scheduled','completed',
-    'invoiced','paid','expired'));
+  CHECK (status IN ('draft','sent','viewed','question_asked','revision_requested','declined',
+    'approved','approved_pending_deposit','deposit_paid','scheduled','completed',
+    'invoiced','converted_to_invoice','paid','expired'));
 
 ALTER TABLE public.quotes DROP CONSTRAINT IF EXISTS quotes_deposit_status_check;
 ALTER TABLE public.quotes ADD CONSTRAINT quotes_deposit_status_check
