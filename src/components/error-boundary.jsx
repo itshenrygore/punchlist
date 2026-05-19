@@ -7,10 +7,17 @@ export default class ErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
-    const isChunkError = error?.name === 'ChunkLoadError' ||
-      error?.message?.includes('Loading chunk') ||
-      error?.message?.includes('Failed to fetch dynamically imported module') ||
-      error?.message?.includes('Importing a module script failed');
+    const msg = error?.message || '';
+    const isChunkError =
+      error?.name === 'ChunkLoadError' ||
+      msg.includes('Loading chunk') ||
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      // Deploy-drift on Vercel: an old asset hash falls back to /index.html,
+      // browser receives text/html and refuses to parse it as a module.
+      msg.includes("is not a valid JavaScript MIME type") ||
+      msg.includes('Unexpected token') ||
+      msg.includes('expected expression, got');
     return { error, isChunkError };
   }
 
