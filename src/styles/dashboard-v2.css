@@ -1392,20 +1392,26 @@
   align-items: flex-end;
   gap: 3px;
   min-width: 90px;
+  /* Don't let the row's flexbox squeeze this column so tight that
+     short labels like "1 quote" truncate to "1 quor". */
+  flex-shrink: 0;
 }
 .cust-stat-won {
   display: flex;
   align-items: baseline;
   gap: 3px;
+  white-space: nowrap;
 }
 .cust-stat-value {
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
+  white-space: nowrap;
 }
 .cust-stat-label {
   font-size: 11px;
   color: var(--muted);
+  white-space: nowrap;
 }
 .cust-open-badge {
   font-size: 11px;

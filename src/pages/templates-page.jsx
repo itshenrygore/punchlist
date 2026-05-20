@@ -282,7 +282,9 @@ export default function TemplatesPage() {
   const { show: toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') === 'jobs' ? 'jobs' : 'messages';
+  // Default to Job templates — that's the contractor's primary workflow.
+  // Message templates are a secondary tab they opt into for nudge copy.
+  const activeTab = searchParams.get('tab') === 'messages' ? 'messages' : 'jobs';
 
   const [loading, setLoading]         = useState(true);
   const [templates, setTemplates]     = useState([]);

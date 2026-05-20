@@ -528,13 +528,27 @@ export default function QuotesListPage() {
             </div>
             {/* Mobile card list */}
             <div className="ql-cards pl-ql-list">
-              {filtered.map(q => (
-                <div key={q.id} className="pl-ql-row-wrap">
-                  <SwipeableRow onSwipe={() => q.status === 'draft' ? handleDeleteDraft(q.id) : handleArchive(q.id)} label={q.status === 'draft' ? 'Delete' : 'Archive'} color={q.status === 'draft' ? 'var(--red, #ef4444)' : undefined}>
-                    <QuoteCard quote={q} onDuplicate={handleDuplicate} />
-                  </SwipeableRow>
-                </div>
-              ))}
+              {filtered.map(q => {
+                // Swipe-to-archive should only appear for quotes in a
+                // terminal or pre-send state. A contractor pulling on a
+                // quote the customer just viewed expects to follow up,
+                // not to file it away — and accidental archive of an
+                // in-flight quote is hard to recover from.
+                const TERMINAL = ['declined', 'expired', 'paid', 'converted_to_invoice'];
+                const swipeable = q.status === 'draft' || TERMINAL.includes(q.status);
+                return (
+                  <div key={q.id} className="pl-ql-row-wrap">
+                    <SwipeableRow
+                      onSwipe={() => q.status === 'draft' ? handleDeleteDraft(q.id) : handleArchive(q.id)}
+                      label={q.status === 'draft' ? 'Delete' : 'Archive'}
+                      color={q.status === 'draft' ? 'var(--red, #ef4444)' : undefined}
+                      disabled={!swipeable}
+                    >
+                      <QuoteCard quote={q} onDuplicate={handleDuplicate} />
+                    </SwipeableRow>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
