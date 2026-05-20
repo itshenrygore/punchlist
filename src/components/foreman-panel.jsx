@@ -14,6 +14,7 @@ import { useAuth } from '../hooks/use-auth';
 import { useToast } from './toast';
 import { supabase } from '../lib/supabase';
 import { currency } from '../lib/format';
+import ForemanLogo from './foreman-logo';
 
 /* ─── Contextual quick actions based on current page ─── */
 function getQuickActions(pathname, quoteContext) {
@@ -97,7 +98,7 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems }) {
 
   return (
     <div className={`fm-msg ${isUser ? 'fm-msg--user' : 'fm-msg--ai'}`}>
-      {!isUser && <div className="fm-msg-avatar">F</div>}
+      {!isUser && <div className="fm-msg-avatar"><ForemanLogo size={14} stroke /></div>}
       <div className="fm-msg-body">
         {msg.photo && (
           <div className="fm-msg-photo">
@@ -145,7 +146,7 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems }) {
 function TypingIndicator() {
   return (
     <div className="fm-msg fm-msg--ai">
-      <div className="fm-msg-avatar">F</div>
+      <div className="fm-msg-avatar"><ForemanLogo size={14} stroke /></div>
       <div className="fm-msg-body">
         <div className="fm-typing"><span /><span /><span /></div>
       </div>
@@ -460,7 +461,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
         {/* ── Header ── */}
         <div className="fm-header">
           <div className="fm-header-left">
-            <div className="fm-logo">F</div>
+            <div className="fm-logo"><ForemanLogo size={18} stroke /></div>
             <div>
               <div className="fm-header-title">Foreman</div>
               <div className="fm-header-sub">{hasQuote ? 'Quote assistant' : 'Your field assistant'}</div>
@@ -494,7 +495,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           {/* Empty state — warm and brief */}
           {messages.length === 0 && (
             <div className="fm-empty">
-              <div className="fm-empty-logo">F</div>
+              <div className="fm-empty-logo"><ForemanLogo size={28} stroke /></div>
               <h3 className="fm-empty-title">
                 {greetName ? `Hey ${greetName}` : 'Hey'} — what are we working on?
               </h3>

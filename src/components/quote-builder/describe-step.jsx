@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import { Mic, Camera, X } from 'lucide-react';
-import { TRADES } from '../../shared/tradeBrain';
+import { TRADES, inferTrade } from '../../shared/tradeBrain';
 import { CA_PROVINCES, US_STATES } from '../lib/pricing';
 
 /**
@@ -49,6 +49,14 @@ export default function DescribeStep({
   const recRef = useRef(null);
   const recTimeoutRef = useRef(null);
   const finalRef = useRef('');
+
+  // Live trade inference. We don't auto-overwrite a user's manual
+  // choice — we just surface what the description matches so they
+  // can accept it with one tap. Empty description → no suggestion.
+  const inferredTrade = description.trim().length >= 8
+    ? inferTrade(description, trade)
+    : null;
+  const showTradeSuggestion = inferredTrade && inferredTrade !== trade && inferredTrade !== 'Other';
 
   // Auto-grow textarea
   const growDesc = useCallback(() => {
@@ -187,7 +195,19 @@ export default function DescribeStep({
       {/* Trade + Province — compact row */}
       <div className="jd-row qb-trade-row" style={{ marginTop: 8, gap: 8 }}>
         <div className="jd-section qb-trade-col" style={{ flex: 1 }}>
-          <label className="jd-label" style={{ fontSize: 'var(--text-xs)', marginBottom: 4 }}>Trade</label>
+          <label className="jd-label" style={{ fontSize: 'var(--text-xs)', marginBottom: 4 }}>
+            Trade
+            {showTradeSuggestion && (
+              <button
+                type="button"
+                className="jd-trade-suggest"
+                onClick={() => onTradeChange(inferredTrade)}
+                title="Tap to apply the suggested trade"
+              >
+                · auto-detected: <strong>{inferredTrade}</strong> ↗
+              </button>
+            )}
+          </label>
           <select className="jd-input jd-select" value={trade} onChange={e => onTradeChange(e.target.value)} aria-label="Trade">
             {TRADES.map(t => <option key={t}>{t}</option>)}
           </select>

@@ -147,6 +147,7 @@ export default function SettingsPage() {
     paypal_link: '',
     terms_conditions: '',
     email_notifications: true,
+    sms_notifications_enabled: true,
   });
   const [saving, setSaving] = useState(false);
   const [savePending, setSavePending] = useState(false);
@@ -274,6 +275,7 @@ export default function SettingsPage() {
           paypal_link: p.paypal_link || '',
           terms_conditions: p.terms_conditions || '',
           email_notifications: p.email_notifications !== false,
+          sms_notifications_enabled: p.sms_notifications_enabled !== false,
         };
         lastSavedJson.current = JSON.stringify(loaded);
         setForm(loaded);
@@ -1024,6 +1026,35 @@ export default function SettingsPage() {
 
         {/* ═══ NOTIFICATIONS TAB ═══ */}
         {settingsTab === 'notifications' && <>
+        <div className="panel">
+          <div className="eyebrow">Text messages</div>
+          <p className="muted small settings-hint">
+            Get a text when a customer opens, approves, asks a question, or requests changes to a quote — with a one-tap link straight to the conversation.
+          </p>
+          <div className="stack">
+            <div>
+              <span className="field-label">Texts sent to</span>
+              <div className="sp-notif-email-row">
+                <span className="sp-notif-email">{form.phone || 'No phone set — add one in Profile'}</span>
+                {form.phone && <span className="muted small">Standard message rates may apply</span>}
+              </div>
+            </div>
+            <label className="sp-toggle-row">
+              <div className="sp-toggle-info">
+                <span className="field-label">Customer activity texts</span>
+                <span className="muted small">Quote opened, approved, declined, customer message, change request</span>
+              </div>
+              <input
+                type="checkbox"
+                className="settings-checkbox"
+                checked={form.sms_notifications_enabled !== false}
+                disabled={!form.phone}
+                onChange={e => setForm(p => ({ ...p, sms_notifications_enabled: e.target.checked }))}
+              />
+            </label>
+          </div>
+        </div>
+
         <div className="panel">
           <div className="eyebrow">Push notifications</div>
           <p className="muted small settings-hint">
