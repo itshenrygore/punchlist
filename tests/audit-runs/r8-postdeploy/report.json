@@ -1,0 +1,11 @@
+{
+  "ok": [
+    "Landing hero terms = 3/6/12 (no 24mo)",
+    "Foreman section uses photo example",
+    "Dashboard contains no $X/mo",
+    "Quotes list contains no $X/mo"
+  ],
+  "warn": [
+    "Suggestions panel missing — panel=0, addAll=0, items=0"
+  ]
+}

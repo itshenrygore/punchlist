@@ -265,8 +265,10 @@ export default function QuoteItemsEditor({
           </div>
         )}
 
-        {/* Empty state */}
-        {lineItems.length === 0 && !scopeError && (
+        {/* Empty state — suppressed when there are suggestions to accept,
+            since the user's obvious next action is the panel below, not
+            "Browse catalog". */}
+        {lineItems.length === 0 && !scopeError && suggestions.length === 0 && (
           <div className="qe-empty">
             <div className="qe-empty-title">No items yet</div>
             <div className="qe-empty-desc">Add items from the catalog or create custom line items.</div>
