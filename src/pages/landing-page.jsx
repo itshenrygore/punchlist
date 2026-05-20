@@ -453,18 +453,8 @@ export default function LandingPage() {
             </div>
             <div className="ln-foreman-card">
               <div className="ln-foreman-chat">
-                <div className="ln-foreman-bubble ln-foreman-bubble--user ln-foreman-bubble--photo">
-                  <div className="ln-foreman-photo-thumb" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="ln-foreman-photo-label">On the job — kitchen sink</div>
-                    <div className="ln-foreman-photo-cap">"Customer says this faucet's been dripping for weeks. Wants it fixed today."</div>
-                  </div>
+                <div className="ln-foreman-bubble ln-foreman-bubble--user">
+                  Reviewing my 200A panel upgrade quote — $12,400, Edmonton, 1970s home. Anything I'm missing before I send it?
                 </div>
                 <div className="ln-foreman-msg">
                   <div className="ln-foreman-avatar" aria-hidden="true">
@@ -474,12 +464,16 @@ export default function LandingPage() {
                     </svg>
                   </div>
                   <div className="ln-foreman-bubble">
-                    Single-handle Moen — looks like the <strong>1225 cartridge</strong>. Cartridge swap's a 25-minute job, ~$45 part. While you're under there the supply hoses look 10+ years old too — common upsell. Want me to put a quick scope together you can review?
+                    Solid scope. Three things you'll want to add for Alberta:
+                    <br/>(1) <strong>Meter base swap</strong> to 200A rated (~$320 + utility coordination)
+                    <br/>(2) <strong>AFCI breakers on bedroom circuits</strong> — CEC 2024 requirement (~$240 in parts)
+                    <br/>(3) <strong>EPCOR temporary disconnect</strong> for the cutover (~$180, schedule 5 days ahead)
+                    <br/><br/>Permit + final inspection ~$285. Want me to add these to the scope?
                   </div>
                 </div>
                 <div className="ln-foreman-action-row">
-                  <button type="button" className="ln-foreman-chip">+ Suggest scope</button>
-                  <button type="button" className="ln-foreman-chip">What if it's behind the wall?</button>
+                  <button type="button" className="ln-foreman-chip">+ Add all 4 items</button>
+                  <button type="button" className="ln-foreman-chip">Skip — already covered</button>
                 </div>
               </div>
             </div>
