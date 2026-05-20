@@ -1500,9 +1500,11 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
   /* Workflow: single column, tighten vis cards */
   .wf-step-desc { margin-bottom: 12px; }
 
-  /* Features: 2-col, show first 4 only */
-  .feat-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
-  .feat-card:nth-child(n+5) { display: none; }
+  /* Features: legacy 6-card grid → updated for the 3-card big layout.
+     Single column on phones so each big card has room for its
+     longer descriptive paragraph; no orphan. */
+  .feat-grid { grid-template-columns: 1fr; gap: 10px; }
+  .feat-grid--big { grid-template-columns: 1fr !important; }
 
   /* Testimonials: featured full-width, stack supporting cards */
   .testi-feature { padding: 24px 20px 22px; }
