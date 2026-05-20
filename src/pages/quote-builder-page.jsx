@@ -1258,7 +1258,7 @@ export default function QuoteBuilderPage() {
                   an escape hatch for contractors who prefer to type their
                   own items. */}
               <button type="button" onClick={handleBuildScope} disabled={!description.trim() || scopeLoading} className="btn btn-primary btn-lg full-width">
-                {scopeLoading ? 'Building…' : 'Build with AI →'}
+                {scopeLoading ? 'Building…' : 'Build the scope →'}
               </button>
               <div className="qb-pillar-teaser">Your customer sees the total, a monthly option, and can approve from their phone.</div>
               <button className="btn-link qb-manual-link" type="button" disabled={!description.trim()} onClick={async () => {
