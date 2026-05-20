@@ -1,0 +1,11 @@
+import { chromium, devices } from 'playwright';
+const browser = await chromium.launch({ headless: true });
+const ctx = await browser.newContext({ ...devices['iPhone 14 Pro'] });
+const page = await ctx.newPage();
+await page.goto('http://localhost:4173/', { waitUntil: 'networkidle' });
+await page.waitForTimeout(2000);
+await page.evaluate(() => document.querySelector('.ln-foreman-card')?.scrollIntoView({ block: 'center' }));
+await page.waitForTimeout(700);
+await page.screenshot({ path: 'tests/audit-runs/r11-hero-foreman/05_mobile_foreman-chat.png' });
+await browser.close();
+console.log('done');

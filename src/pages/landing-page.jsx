@@ -254,10 +254,9 @@ export default function LandingPage() {
               <span className="ln-hi">not just quote them.</span>
             </h1>
             <p className="ln-hero-p rv rv--d1">
-              Describe the job — Punchlist surfaces matching line items and provincial
-              pricing from a 1,300-item catalog. You review, edit, and add. Foreman
-              flags what's missing. Customers see a monthly option and approve from
-              their phone.
+              Describe the job. Get a starting scope with pricing for your area.
+              Edit, adjust, send. Your customer signs and picks how to pay —
+              all from their phone.
             </p>
             <div className="ln-hero-ctas rv rv--d2">
               <Link to="/signup" className="ln-btn ln-btn--hero">
@@ -433,8 +432,8 @@ export default function LandingPage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="ln-foreman-photo-label">Snapped at the customer's house</div>
-                    <div className="ln-foreman-photo-cap">"What am I looking at — and what should I quote?"</div>
+                    <div className="ln-foreman-photo-label">On the job — kitchen sink</div>
+                    <div className="ln-foreman-photo-cap">"Customer says this faucet's been dripping for weeks. Wants it fixed today."</div>
                   </div>
                 </div>
                 <div className="ln-foreman-msg">
@@ -445,12 +444,12 @@ export default function LandingPage() {
                     </svg>
                   </div>
                   <div className="ln-foreman-bubble">
-                    That looks like an <strong>80k BTU mid-efficiency furnace</strong>, pre-2000. Copper flue means you'll need to swap to <strong>PVC venting</strong> on the new unit. In Alberta the scope usually runs: removal + disposal, new 96% AFUE furnace, PVC vent kit, electrical tie-in, and a <strong>permit + inspection</strong> (~$185). Want me to put together suggested line items you can review?
+                    Single-handle Moen — looks like the <strong>1225 cartridge</strong>. Cartridge swap's a 25-minute job, ~$45 part. While you're under there the supply hoses look 10+ years old too — common upsell. Want me to put a quick scope together you can review?
                   </div>
                 </div>
                 <div className="ln-foreman-action-row">
                   <button type="button" className="ln-foreman-chip">+ Suggest scope</button>
-                  <button type="button" className="ln-foreman-chip">What's the right BTU?</button>
+                  <button type="button" className="ln-foreman-chip">What if it's behind the wall?</button>
                 </div>
               </div>
             </div>
