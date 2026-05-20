@@ -450,7 +450,17 @@ export default function QuoteBuilderPage() {
   //   catalog matches and never sees an error.
   async function handleBuildScope() {
     if (!description.trim()) { setError('Describe the job first'); return; }
-    const inferred = inferTrade(description, trade);
+    // Force inferTrade to evaluate the description (passing the
+    // currently-selected trade short-circuits the helper). If the
+    // description clearly implies a different trade than the
+    // contractor's default profile trade, prefer the inferred one
+    // for this job — otherwise scope suggestions will come back
+    // from the wrong trade catalog (e.g. landscaping items returned
+    // for a "replace water heater" description because the profile
+    // default was Landscaping).
+    const inferredFromText = inferTrade(description, null);
+    const useInferred = inferredFromText && inferredFromText !== 'Other' && inferredFromText !== trade;
+    const inferred = useInferred ? inferredFromText : trade;
     if (inferred !== trade) setTrade(inferred);
     setError('');
     setPhase('building');
