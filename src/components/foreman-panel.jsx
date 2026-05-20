@@ -596,9 +596,10 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
                   : 'Pricing, scoping, schedule, follow-ups — tap or type.'}
               </p>
 
-              {/* First-time intro — explains what Foreman does in three
-                  short lines. Hidden after the user dismisses it, or
-                  permanently after the user actually sends a message. */}
+              {/* First-time intro — one tight paragraph so the prompts
+                  below stay visible above the keyboard. Dismissed
+                  permanently via the X or implicitly once the user
+                  starts a real conversation. */}
               {showIntro && !hasQuote && (
                 <div className="fm-intro">
                   <button
@@ -609,13 +610,9 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
-                  <p className="fm-intro-lead">A few things I'm good at:</p>
-                  <ul className="fm-intro-list">
-                    <li><span className="fm-intro-dot" /> Reviewing your scope before you send — flag missing items, check pricing for your province</li>
-                    <li><span className="fm-intro-dot" /> Drafting customer follow-ups when a quote stalls</li>
-                    <li><span className="fm-intro-dot" /> Looking up prices or helping you diagnose what you're seeing in the field</li>
-                  </ul>
-                  <p className="fm-intro-tail">Tap a prompt below or just type a question.</p>
+                  <p className="fm-intro-lead">
+                    I review your scopes, draft customer follow-ups, look up prices, and help diagnose what you see in the field.
+                  </p>
                 </div>
               )}
 

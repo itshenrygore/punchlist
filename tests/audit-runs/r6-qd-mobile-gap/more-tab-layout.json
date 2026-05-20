@@ -4,7 +4,7 @@
     "tag": "DIV",
     "cls": "qd-grid",
     "top": 3,
-    "h": 729,
+    "h": 597,
     "display": "grid"
   },
   {
@@ -12,7 +12,7 @@
     "tag": "SECTION",
     "cls": "qd-main",
     "top": 3,
-    "h": 258,
+    "h": 126,
     "display": "grid"
   },
   {
@@ -59,7 +59,7 @@
     "depth": 1,
     "tag": "ASIDE",
     "cls": "qd-sidebar qd-sidebar--mobile-inline",
-    "top": 269,
+    "top": 137,
     "h": 351,
     "display": "grid"
   },
@@ -67,7 +67,7 @@
     "depth": 2,
     "tag": "DIV",
     "cls": "qb-card",
-    "top": 269,
+    "top": 137,
     "h": 160,
     "display": "block"
   },
@@ -75,7 +75,7 @@
     "depth": 3,
     "tag": "DIV",
     "cls": "qd-send-grid",
-    "top": 344,
+    "top": 212,
     "h": 44,
     "display": "grid"
   },
@@ -83,7 +83,7 @@
     "depth": 4,
     "tag": "BUTTON",
     "cls": "btn btn-secondary full-width",
-    "top": 344,
+    "top": 212,
     "h": 44,
     "display": "flex"
   },
@@ -91,7 +91,7 @@
     "depth": 2,
     "tag": "DIV",
     "cls": "qb-card",
-    "top": 439,
+    "top": 307,
     "h": 93,
     "display": "block"
   },
@@ -99,7 +99,7 @@
     "depth": 3,
     "tag": "LABEL",
     "cls": "qd-photo-upload-label",
-    "top": 479,
+    "top": 347,
     "h": 36,
     "display": "flex"
   },
@@ -107,7 +107,7 @@
     "depth": 2,
     "tag": "DETAILS",
     "cls": "qb-card qd-more-actions-card",
-    "top": 542,
+    "top": 410,
     "h": 78,
     "display": "block"
   },
@@ -115,7 +115,7 @@
     "depth": 3,
     "tag": "SUMMARY",
     "cls": "pl-toggle-row qd-more-actions-summary",
-    "top": 559,
+    "top": 427,
     "h": 44,
     "display": "flex"
   },
@@ -123,7 +123,7 @@
     "depth": 3,
     "tag": "DIV",
     "cls": "qd-send-grid qd-more-actions-body",
-    "top": 609,
+    "top": 477,
     "h": 194,
     "display": "grid"
   },
@@ -131,7 +131,7 @@
     "depth": 4,
     "tag": "BUTTON",
     "cls": "btn btn-secondary full-width fs-12",
-    "top": 609,
+    "top": 477,
     "h": 44,
     "display": "flex"
   },
@@ -139,7 +139,7 @@
     "depth": 4,
     "tag": "BUTTON",
     "cls": "btn btn-secondary full-width fs-12",
-    "top": 659,
+    "top": 527,
     "h": 44,
     "display": "flex"
   },
@@ -147,7 +147,7 @@
     "depth": 4,
     "tag": "BUTTON",
     "cls": "btn btn-secondary full-width fs-12",
-    "top": 709,
+    "top": 577,
     "h": 44,
     "display": "flex"
   },
@@ -155,7 +155,7 @@
     "depth": 4,
     "tag": "BUTTON",
     "cls": "btn btn-secondary full-width qd-btn-danger",
-    "top": 759,
+    "top": 627,
     "h": 44,
     "display": "flex"
   }
