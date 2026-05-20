@@ -2853,3 +2853,94 @@
 /* Auth page: password field wrapper + forgot row */
 .auth-pass-wrap { position: relative; }
 .auth-forgot-row { text-align: right; margin-top: -8px; }
+
+/* ──────────────────────────────────────────────────────────────
+   R23 LAYOUT SWEEP — small-screen safety net
+   Sweep at 320×568 (iPhone SE 1st gen) caught a handful of cards
+   that bled past the viewport. Cluster fixes here so future cards
+   inherit them automatically.
+   ────────────────────────────────────────────────────────────── */
+
+/* Billing — generous desktop padding + large display type caused
+   the plan name, ROI amount, and price columns to overflow at 320px.
+   Pull padding in, drop the headline a notch, and stack the pricing
+   panels so each gets a full row. */
+@media (max-width: 380px) {
+  .bp-root { gap: 12px; }
+  .bp-plan-card { padding: 22px 16px; }
+  .bp-plan-name { font-size: var(--text-3xl); word-break: break-word; }
+  .bp-usage-card,
+  .bp-manage-card,
+  .bp-stats-card,
+  .bp-account-card { padding: 18px 14px; }
+  .bp-upgrade-card { padding: 20px 14px; }
+  .bp-roi-card { padding: 20px 14px; }
+  .bp-roi-amount { font-size: var(--text-3xl); word-break: break-word; }
+  .bp-pricing-grid { grid-template-columns: 1fr; gap: 8px; }
+  .bp-price-amount { font-size: var(--text-2xl); }
+  .bp-stats-grid { gap: 8px; }
+  .bp-stat-value { font-size: var(--text-xl); }
+  .bp-roi-math { padding: 10px 12px; font-size: 13px; }
+  .bp-pro-features { max-width: 100%; }
+}
+
+/* Marketing header — the Log in + Start free pair crowded the
+   right gutter on 320px because the buttons used desktop padding.
+   Shrink them, drop nav padding, and ensure the inner row can flex
+   without spilling. */
+@media (max-width: 380px) {
+  .header-inner,
+  .marketing-header-inner { gap: 8px; padding-left: 12px; padding-right: 12px; }
+  .header-actions { gap: 4px; flex-shrink: 0; }
+  .header-actions .btn { padding: 6px 10px; font-size: 12px; }
+  .header-nav { display: none; }
+}
+
+/* Templates — the Pro upgrade button can crowd the header row on
+   narrow viewports. Let it shrink + wrap text rather than pushing
+   the page wider. */
+@media (max-width: 480px) {
+  .tmpl-upgrade-btn { max-width: 100%; white-space: normal; }
+  .tmpl-pro-banner { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 16px; }
+  .tmpl-pro-cta { width: 100%; }
+  .tmpl-pro-cta .btn { width: 100%; }
+}
+
+/* Schedule — `.sch-day--today` uses `margin: -4px -12px` to extend
+   the today highlight into the AppShell gutter. On tight viewports
+   where the gutter is already minimal this pushed the card a few
+   pixels past the right edge. Cap the negative margin to what's
+   actually available. */
+@media (max-width: 380px) {
+  .sch-day--today { margin: -4px -8px; padding: 10px 8px; }
+  .sch-job { padding: 8px 10px; }
+  .sch-job-time { min-width: 44px; }
+}
+
+/* Analytics — let the range tabs scroll horizontally if they ever
+   exceed the row width (4 tabs × labels can crowd at 320px with
+   localized strings). */
+@media (max-width: 380px) {
+  .an-range-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+  }
+  .an-range-tabs::-webkit-scrollbar { display: none; }
+  .an-page-title { font-size: var(--text-2xl); }
+}
+
+/* Settings — already overflow-x:auto, but the underline indicator
+   could draw past the parent at very narrow widths. Constrain it
+   alongside the scrollable container. */
+@media (max-width: 380px) {
+  .settings-tab { padding: 7px 10px; font-size: 12px; }
+}
+
+/* Universal guard — keep AppShell content from inducing a body
+   horizontal scroll on tiny phones. Belt-and-suspenders with the
+   per-card fixes above. */
+@media (max-width: 380px) {
+  body, html { overflow-x: hidden; }
+}
