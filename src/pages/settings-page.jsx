@@ -554,11 +554,13 @@ export default function SettingsPage() {
         {/* ═══ PROFILE TAB ═══ */}
         {settingsTab === 'profile' && <>
         {/* Business profile */}
-        <div className="panel">
-          <div className="eyebrow">Business profile</div>
-          <p className="muted small settings-hint">
-            This appears on quotes and invoices sent to your customers.
-          </p>
+        <details className="panel sp-collapsible" open>
+          <summary className="sp-collapsible-summary">
+            <div className="eyebrow">Business profile</div>
+            <p className="muted small settings-hint">
+              This appears on quotes and invoices sent to your customers.
+            </p>
+          </summary>
           <div className="stack">
             <div className="form-row">
               <div>
@@ -637,14 +639,16 @@ export default function SettingsPage() {
               <div className="muted small sp-hint">This is your login email. Change it through your account provider.</div>
             </div>
           </div>
-        </div>
+        </details>
 
         {/* Quote defaults */}
-        <div className="panel">
-          <div className="eyebrow">Quote defaults</div>
-          <p className="muted small settings-hint">
-            These values are applied automatically to every new quote. You can always override them per-quote in the quote builder.
-          </p>
+        <details className="panel sp-collapsible">
+          <summary className="sp-collapsible-summary">
+            <div className="eyebrow">Quote defaults</div>
+            <p className="muted small settings-hint">
+              These values are applied automatically to every new quote. You can always override them per-quote in the quote builder.
+            </p>
+          </summary>
           <div className="stack">
             <div>
               <span className="field-label">Default quote expiry</span>
@@ -665,20 +669,22 @@ export default function SettingsPage() {
               Quotes expire {form.default_expiry_days} days after being sent. Drafts have no expiry.
             </div>
           </div>
-        </div>
+        </details>
 
         {/* ═══ QUOTE TRACKING — explainer ═══ */}
-        <div className="panel">
-          <div className="eyebrow">Quote Tracking</div>
-          <p className="muted small sp-tracking-desc">
-            Every quote you send is tracked automatically. You'll see when your customer opens it, how many times they've viewed it, and get prompted when it's time to follow up. No extra setup needed.
-          </p>
+        <details className="panel sp-collapsible">
+          <summary className="sp-collapsible-summary">
+            <div className="eyebrow">Quote Tracking</div>
+            <p className="muted small sp-tracking-desc">
+              Every quote you send is tracked automatically. You'll see when your customer opens it, how many times they've viewed it, and get prompted when it's time to follow up. No extra setup needed.
+            </p>
+          </summary>
           <div className="sp-tracking-grid">
             <div className="flex-row-gap-8">View counts and timestamps on every sent quote</div>
             <div className="flex-row-gap-8">Notifications when a customer opens your quote</div>
             <div className="flex-row-gap-8">Follow-up prompts based on viewing patterns</div>
           </div>
-        </div>
+        </details>
         </>}
 
         {/* ═══ PAYMENTS TAB ═══ */}

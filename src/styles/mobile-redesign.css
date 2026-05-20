@@ -2521,6 +2521,32 @@
 }
 
 
+/* Foreman drag handle — hidden by default, surfaced on mobile in the
+   block below. Centered pill with subtle hover so a thumb tap is
+   forgiving. */
+.fm-drag-handle {
+  display: none;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 8px 0 4px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+.fm-drag-handle-bar {
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-2, #d4d2cc);
+  transition: background .15s ease;
+}
+.fm-drag-handle:active .fm-drag-handle-bar,
+.fm-drag-handle:hover  .fm-drag-handle-bar {
+  background: var(--muted, #9c9a92);
+}
+
 /* ─────────────────────────────────────────────────────────────────
    21. FOREMAN BOTTOM SHEET
    ───────────────────────────────────────────────────────────────── */
@@ -2528,8 +2554,15 @@
   .fm-overlay { align-items: flex-end !important; padding: 0 !important; }
   .fm-panel {
     max-width: 100% !important;
-    height: min(380px, 52vh) !important;
+    /* Was min(380px, 52vh) — covered ~60% of an iPhone, hiding the
+       row the user was about to tap. Dropped to ~45vh so the
+       dashboard remains glanceable underneath. */
+    height: min(340px, 45vh) !important;
     border-radius: 14px 14px 0 0 !important;
+  }
+  /* Drag-handle bar — purely visual at first; tap also dismisses. */
+  .fm-drag-handle {
+    display: flex !important;
   }
   .fm-header { padding: 12px 14px; }
   .fm-header-title { font-size: 15px; font-weight: 800; }

@@ -29,10 +29,12 @@ const SORT_OPTIONS = [
   { value: 'number',  label: 'Quote number' },
 ];
 
-// Simplified status pills — fewer options, all fit on screen
+// Simplified status pills — fewer options, all fit on screen.
+// shortLabel is rendered on phones where "Needs follow-up" would push
+// the rightmost pill off-screen.
 const STATUS_PILLS = [
   { value: null,             label: 'All' },
-  { value: 'needs_followup', label: 'Needs follow-up' },
+  { value: 'needs_followup', label: 'Needs follow-up', shortLabel: 'Follow-up' },
   { value: 'draft',          label: 'Draft' },
   { value: 'sent',           label: 'Sent' },
   { value: 'viewed',         label: 'Viewed' },
@@ -434,7 +436,12 @@ export default function QuotesListPage() {
               className={`pl-tab${active ? ' is-active' : ''}`}
               onClick={() => setStatusFilter(p.value)}
             >
-              {p.label}
+              {p.shortLabel
+                ? <>
+                    <span className="pl-tab-label-full">{p.label}</span>
+                    <span className="pl-tab-label-short">{p.shortLabel}</span>
+                  </>
+                : p.label}
             </button>
           );
         })}

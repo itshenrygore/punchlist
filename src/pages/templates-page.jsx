@@ -458,6 +458,56 @@ export default function TemplatesPage() {
             )}
             {loading ? (
               <div className="tmpl-skel-list">{[...Array(4)].map((_, i) => <div key={i} className="tmpl-skel-card" />)}</div>
+            ) : !isProUser ? (
+              // Free users used to see all 8 phases locked, which read
+              // as a paywall ghost town during onboarding. Show ONE
+              // example so they understand the feature, then a Pro
+              // summary callout, then stop.
+              <>
+                {PHASE_GROUPS.slice(0, 1).map(group => (
+                  <div key={group.label} className="tmpl-group">
+                    <div className="tmpl-group-hd">
+                      <h2 className="tmpl-group-title">{group.label}</h2>
+                      <p className="tmpl-group-desc">{group.description}</p>
+                    </div>
+                    <div className="tmpl-group-cards">
+                      {group.keys.slice(0, 1).map(key => (
+                        <TemplateCard
+                          key={key}
+                          template={tmplByKey[key]}
+                          label={TEMPLATE_LABELS[key] || key}
+                          hint={TEMPLATE_HINTS[key] || ''}
+                          isProUser={false}
+                          onSave={handleSaveMessage}
+                          onReset={handleResetMessage}
+                          saving={savingKey === key}
+                          resetting={resettingKey === key}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div className="tmpl-pro-summary">
+                  <div className="tmpl-pro-summary-hd">
+                    <h2 className="tmpl-pro-summary-title">Plus 7 more on Pro</h2>
+                    <p className="tmpl-pro-summary-desc">
+                      Customise the full nudge sequence — first nudge, second nudge, last nudge,
+                      thanks-for-approving, deposit-received, invoice-ready, and job-complete.
+                    </p>
+                  </div>
+                  <ul className="tmpl-pro-summary-list">
+                    {PHASE_GROUPS.flatMap(g => g.keys).slice(1).map(key => (
+                      <li key={key} className="tmpl-pro-summary-item">
+                        <span className="tmpl-pro-summary-dot" aria-hidden="true" />
+                        {TEMPLATE_LABELS[key] || key}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/app/billing" className="btn btn-primary tmpl-pro-summary-cta">
+                    Upgrade to Pro →
+                  </Link>
+                </div>
+              </>
             ) : (
               PHASE_GROUPS.map(group => (
                 <div key={group.label} className="tmpl-group">
