@@ -6,8 +6,12 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* ── ROOT & CONTAINER ── */
-.qe-root { display: flex; flex-direction: column; gap: 8px; }
-.qe-items-section { display: flex; flex-direction: column; gap: 4px; }
+/* min-width:0 + max-width:100% so a long line-item name can't push the
+   editor wider than its container and bleed off the right edge of a
+   phone. Belt-and-suspenders alongside the parent grid's min-width:0
+   in mobile-quote-review's S.page. */
+.qe-root { display: flex; flex-direction: column; gap: 8px; min-width: 0; max-width: 100%; }
+.qe-items-section { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .qe-items-header { display: flex; align-items: center; justify-content: space-between; }
 .qe-items-count { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted, #6b6459); }
 
@@ -86,6 +90,12 @@
   z-index: 1;
   background: var(--card, #fff);
   transform: translateX(0);
+}
+/* will-change only applies while a row is actively being swiped or
+   expanded — keeping it on every row pins GPU layers indefinitely
+   and made long lists scroll jankily after catalog adds. */
+.li-row--swiped .li-content,
+.li-row--open .li-content {
   will-change: transform;
 }
 
