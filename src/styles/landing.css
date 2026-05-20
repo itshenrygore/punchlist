@@ -597,6 +597,33 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
   margin-left: auto;
   border-radius: 14px 14px 4px 14px;
 }
+.ln-foreman-bubble--photo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px 10px 10px;
+  max-width: 88%;
+}
+.ln-foreman-photo-thumb {
+  width: 56px; height: 56px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.16);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: rgba(255,255,255,.92);
+}
+.ln-foreman-photo-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.ln-foreman-photo-cap {
+  font-size: 0.92rem;
+  line-height: 1.4;
+  margin-top: 2px;
+}
 .ln-foreman-bubble strong { color: var(--brand); font-weight: 700; }
 .ln-foreman-bubble--user strong { color: #fff; }
 .ln-foreman-msg {

@@ -28,7 +28,8 @@ import { listCustomers } from '../lib/api/customers';
 import { isPro, countSentThisMonth, FREE_QUOTE_LIMIT } from '../lib/billing';
 import { currency } from '../lib/format';
 import { normalizeStatus, chipForStatus } from '../lib/workflow';
-import { estimateMonthly, showFinancing } from '../lib/financing';
+// Monthly payment estimates removed from contractor screens — that
+// number is only meaningful on the customer-facing public quote.
 import { identify, trackQuoteFlowStarted } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { usePwaInstall } from '../hooks/use-pwa-install';
@@ -744,7 +745,6 @@ export default function DashboardPage() {
               {recentQuotes.map((q, i) => {
                 const status = normalizeStatus(q.status);
                 const total = q.total || q.subtotal || 0;
-                const monthly = showFinancing(total) ? estimateMonthly(total) : null;
                 const dotClass = {
                   draft: 'dv2-arow-dot--muted',
                   sent: 'dv2-arow-dot--blue',
@@ -784,7 +784,6 @@ export default function DashboardPage() {
                       </span>
                       <span className="dv2-arow-secondary">
                         {customer || 'No customer'}
-                        {monthly && <> · <strong className="dv2-monthly-price">{currency(monthly)}/mo</strong></>}
                       </span>
                     </div>
                     {total > 0 && <span className="dv2-arow-num">{currency(total)}</span>}

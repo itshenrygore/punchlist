@@ -521,41 +521,25 @@ export default function QuoteBuilderPage() {
       let items = (r.items || r.line_items || []).map((it, i) => normSuggestion(it, i));
       items.sort((a, b) => ({ labour: 0, services: 1, materials: 2 }[a.tab] ?? 3) - ({ labour: 0, services: 1, materials: 2 }[b.tab] ?? 3));
       const upgrades = (r.optional_upgrades || []).map((u, i) => ({ id: genLineItemId(), name: u.description || '', category: u.category || 'Services', tab: classifyItem(u.description || '', u.category || ''), unit_price: Number(u.unit_price || 0), typical_low: 0, typical_high: 0, why: u.why || '', when_needed: '', when_not_needed: '', notes: '', confidence: 'medium', source: 'Recommended upgrade', selected: false, isUpgrade: true }));
-      setSuggestions([...items, ...upgrades]);
+      // The contractor is in control — every suggestion starts un-accepted
+      // and lives in the Suggestions panel until they tap Add (one-by-one
+      // or "Add all"). Nothing ships to the scope without their sign-off.
+      const allSuggestions = [...items, ...upgrades].map(s => ({ ...s, selected: false }));
+      setSuggestions(allSuggestions);
       setScopeGaps(r.gaps || []);
       setScopeMeta({ scope_summary: r.scope_summary || '', assumptions: (r.assumptions || []).join('\n'), exclusions: (r.exclusions || []).join('\n') });
 
-      // Convert to line items immediately
-      const selected = [...items, ...upgrades].filter(s => s.selected);
-      const newLineItems = selected.map((s, i) => ({ id: s.id, name: s.name, quantity: s.quantity || 1, unit_price: s.unit_price || 0, notes: '', category: s.category || '', included: true }));
-      setLineItems(newLineItems);
+      // Line items start empty — contractor accepts suggestions to add
+      setLineItems([]);
       setDraft(d => ({ ...d, title: title || description.slice(0, 64), description, scope_summary: r.scope_summary || d.scope_summary, assumptions: (r.assumptions || []).join('\n') || d.assumptions, exclusions: (r.exclusions || []).join('\n') || d.exclusions }));
       initialLoadComplete.current = true;
 
-      // Save to quote
-      await updateQuote(draftId, { scope_summary: r.scope_summary || '', assumptions: (r.assumptions || []).join('\n'), exclusions: (r.exclusions || []).join('\n'), line_items: newLineItems });
+      // Save scope metadata only — items get persisted as the contractor
+      // accepts them via the suggestions panel.
+      await updateQuote(draftId, { scope_summary: r.scope_summary || '', assumptions: (r.assumptions || []).join('\n'), exclusions: (r.exclusions || []).join('\n') });
 
-      if (items.length < 2) toast('Fewer items than expected were suggested. Add more below.', 'info');
-      else {
-        // §6.1 — Undo last item add: 12s window to revert the entire AI-added set
-        const snapshotBefore = preAiLineItemsRef.current || [];
-        const addedCount = newLineItems.length - snapshotBefore.length;
-        if (addedCount > 0) {
-          showUndo(
-            `${addedCount} item${addedCount !== 1 ? 's' : ''} added by AI`,
-            12000,
-            null, // onCommit — no-op, items are already set
-            () => {
-              // onUndo — restore the snapshot
-              setLineItems(snapshotBefore);
-              markDirty();
-              toast('AI items removed', 'info');
-            }
-          );
-        } else {
-          toast(`${items.length} items added to your quote`, 'success');
-        }
-      }
+      if (allSuggestions.length === 0) toast('No suggestions came back. Add items from the catalog or create custom line items.', 'info');
+      else toast(`${allSuggestions.length} suggested item${allSuggestions.length === 1 ? '' : 's'} ready to review`, 'success');
       trackQuoteFlowScopeReady(newLineItems.length); // B13
       setPhase('review');
     } catch (e) {
@@ -607,6 +591,33 @@ export default function QuoteBuilderPage() {
     setDismissedSugIds(prev => { const n = new Set(prev); n.add(sug.id); return n; });
     markDirty();
     toast(`Added: ${sug.name}`, 'success');
+  }
+  /** Batched accept for the panel's "Add all" button — one state
+   *  update, one toast. Avoids 10 stacked notifications when the user
+   *  takes the entire suggested scope. */
+  function addAllSuggestionsToItems(sugs) {
+    const existingNames = new Set(lineItems.map(li => (li.name || '').toLowerCase().trim()));
+    const fresh = (sugs || []).filter(s => !existingNames.has((s.name || '').toLowerCase().trim()));
+    if (fresh.length === 0) return;
+    setLineItems(p => [
+      ...p,
+      ...fresh.map(sug => ({
+        id: genLineItemId(),
+        name: sug.name,
+        quantity: Number(sug.quantity || 1),
+        unit_price: Number(sug.unit_price || 0),
+        notes: '',
+        category: sug.category || '',
+        included: true,
+      })),
+    ]);
+    setDismissedSugIds(prev => {
+      const n = new Set(prev);
+      for (const s of sugs || []) n.add(s.id);
+      return n;
+    });
+    markDirty();
+    toast(`Added ${fresh.length} item${fresh.length === 1 ? '' : 's'} to your scope`, 'success');
   }
   function dismissSuggestion(id) {
     setDismissedSugIds(prev => { const n = new Set(prev); n.add(id); return n; });
@@ -1345,6 +1356,10 @@ export default function QuoteBuilderPage() {
             SmsComposerField: null, // 2.0: SMS composer removed
             toast, currency,
             inlinePhone, setInlinePhone,
+            // Mobile needs the suggestions panel too — the contractor-
+            // in-control flow lands users on an empty scope until they
+            // accept suggested items.
+            visibleSuggestions, addSuggestionToItems, addAllSuggestionsToItems, dismissSuggestion,
           }} />
         )}
         {phase === 'review' && !isMobile && (
@@ -1440,6 +1455,7 @@ export default function QuoteBuilderPage() {
                   catalogResults={catalogResults}
                   suggestions={visibleSuggestions}
                   onAddSuggestion={addSuggestionToItems}
+                  onAddAllSuggestions={addAllSuggestionsToItems}
                   onDismissSuggestion={dismissSuggestion}
                   onOpenForeman={() => {
                     if ((() => {})) {
