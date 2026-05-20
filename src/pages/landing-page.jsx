@@ -287,7 +287,7 @@ export default function LandingPage() {
               <span><Check size={12} strokeWidth={3} />No credit card</span>
             </div>
             <div className="ln-hero-trust rv rv--d3">
-              Quote like a shop ten times your size.
+              Stop losing jobs to whoever quoted first.
             </div>
           </div>
           <div className="ln-hero-card rv rv--d1">
