@@ -1,0 +1,1435 @@
+{
+  "base": "https://punchlist.ca",
+  "email": "test@test.ca",
+  "startedAt": "2026-05-20T00:31:52.539Z",
+  "personas": [
+    {
+      "name": "anonymous",
+      "steps": [
+        {
+          "label": "landing /",
+          "startedAt": "2026-05-20T00:32:04.536Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/",
+          "bodyText": "punchlist\nHow it works\nPricing\nLog in\nStart free\nBuilt to close jobs,\nnot just quote them.\n\nDescribe the job, get a full scope back in seconds. Monthly payments get the yes. You see when they open it — we follow up until it's closed.\n\nStart free\nSee how it works\n5 free quotes/month\nWorks from your phone\nNo credit card\nLIVE DEMO — TRY IT\nCA\nComfort Air HVAC Ltd.\nFurnace + AC Replacement — Full Syst",
+          "screenshot": "001_landing__.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 7654
+        },
+        {
+          "label": "login page",
+          "startedAt": "2026-05-20T00:32:12.190Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "002_login_page.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2478
+        },
+        {
+          "label": "signup page",
+          "startedAt": "2026-05-20T00:32:14.668Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/signup",
+          "bodyText": "punchlist\nSTART FREE — NO CARD NEEDED\nCreate your account\nBuild professional quotes in minutes. Your customer sees the total and a monthly option — and you get paid in full.\nYOUR NAME\nCOMPANY NAME (OPTIONAL)\nEMAIL ADDRESS\nPASSWORD\nI agree to the Punchlist Terms of Service and Privacy Policy\nTick the box above to continue.\nContinue →\nUsed by plumbers, electricians, HVAC techs, and contractors acros",
+          "screenshot": "003_signup_page.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2380
+        },
+        {
+          "label": "pricing page",
+          "startedAt": "2026-05-20T00:32:17.048Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/pricing",
+          "bodyText": "punchlist\nDemo\nHow it works\nPricing\nLog in\nStart free\nPRICING\nSimple pricing.\nPays for itself on one job.\n\nStart free. No credit card. Upgrade when Punchlist is making you money.\n\nOne missed line item on one job costs more than 8 months of Pro. Most contractors miss $150–$300 per job.\nFREE\n$0\nNo credit card, no time limit\nUp to 5 quotes per month\nScope builder — 1,000+ trade items\nProfessional cus",
+          "screenshot": "004_pricing_page.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2770
+        },
+        {
+          "label": "terms page",
+          "startedAt": "2026-05-20T00:32:19.818Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/terms",
+          "bodyText": "Punchlist\nTerms of Service\n\nLast updated: April 2026\n\nBy using Punchlist to create, send, or accept quotes and payments, you (\"Contractor\") acknowledge and agree to the following:\n\n1. Independent Transaction Relationship\n\nPunchlist acts solely as a technology platform facilitating quoting, invoicing, and payment enablement. Punchlist is not a party to any agreement between Contractor and Customer.",
+          "screenshot": "005_terms_page.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2399
+        },
+        {
+          "label": "privacy page",
+          "startedAt": "2026-05-20T00:32:22.217Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/privacy",
+          "bodyText": "Punchlist\nPrivacy Policy\n\nLast updated: May 2026\n\nPunchlist Technologies Inc. (\"Punchlist\", \"we\", \"our\") is committed to protecting your personal information in compliance with the Personal Information Protection and Electronic Documents Act (PIPEDA) and applicable provincial privacy legislation. This policy explains what we collect, why we collect it, how we use it, and your rights.\n\n1. Who This ",
+          "screenshot": "006_privacy_page.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2474
+        },
+        {
+          "label": "unknown public route",
+          "startedAt": "2026-05-20T00:32:24.692Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/this-page-does-not-exist",
+          "bodyText": "Page not found\n\nThis page doesn't exist or has moved.\n\nBack to home",
+          "screenshot": "007_unknown_public_route.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2518
+        },
+        {
+          "label": "deep-link /app while logged out",
+          "startedAt": "2026-05-20T00:32:27.210Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "008_deep-link__app_while_logged_out.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2365
+        },
+        {
+          "label": "deep-link /app/quotes/new while logged out",
+          "startedAt": "2026-05-20T00:32:29.575Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "009_deep-link__app_quotes_new_while_logged_out.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2350
+        },
+        {
+          "label": "landing → click pricing nav link",
+          "startedAt": "2026-05-20T00:32:31.925Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/#pricing",
+          "bodyText": "punchlist\nHow it works\nPricing\nLog in\nStart free\nBuilt to close jobs,\nnot just quote them.\n\nDescribe the job, get a full scope back in seconds. Monthly payments get the yes. You see when they open it — we follow up until it's closed.\n\nStart free\nSee how it works\n5 free quotes/month\nWorks from your phone\nNo credit card\nLIVE DEMO — TRY IT\nCA\nComfort Air HVAC Ltd.\nFurnace + AC Replacement — Full Syst",
+          "screenshot": "010_landing___click_pricing_nav_link.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4668
+        },
+        {
+          "label": "landing → click Start free CTA",
+          "startedAt": "2026-05-20T00:32:36.594Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/signup",
+          "bodyText": "punchlist\nSTART FREE — NO CARD NEEDED\nCreate your account\nBuild professional quotes in minutes. Your customer sees the total and a monthly option — and you get paid in full.\nYOUR NAME\nCOMPANY NAME (OPTIONAL)\nEMAIL ADDRESS\nPASSWORD\nI agree to the Punchlist Terms of Service and Privacy Policy\nTick the box above to continue.\nContinue →\nUsed by plumbers, electricians, HVAC techs, and contractors acros",
+          "screenshot": "011_landing___click_Start_free_CTA.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3965
+        }
+      ]
+    },
+    {
+      "name": "login-errors",
+      "steps": [
+        {
+          "label": "login submit empty form",
+          "startedAt": "2026-05-20T00:32:40.599Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "012_login_submit_empty_form.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4644
+        },
+        {
+          "label": "login wrong password",
+          "startedAt": "2026-05-20T00:32:45.243Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nEmail or password is incorrect. Double-check and try again.\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "013_login_wrong_password.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 400 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://mbwzibdugiecccjuibzm.supabase.co/auth/v1/token?grant_type=password",
+                "status": 400,
+                "method": "POST"
+              }
+            ]
+          },
+          "ms": 4878
+        },
+        {
+          "label": "login bad email format",
+          "startedAt": "2026-05-20T00:32:50.121Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "014_login_bad_email_format.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3871
+        }
+      ]
+    },
+    {
+      "name": "signup-errors",
+      "steps": [
+        {
+          "label": "signup empty submit",
+          "startedAt": "2026-05-20T00:32:54.025Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/signup",
+          "bodyText": "punchlist\nSTART FREE — NO CARD NEEDED\nCreate your account\nBuild professional quotes in minutes. Your customer sees the total and a monthly option — and you get paid in full.\nYOUR NAME\nCOMPANY NAME (OPTIONAL)\nEMAIL ADDRESS\nPASSWORD\nI agree to the Punchlist Terms of Service and Privacy Policy\nTick the box above to continue.\nContinue →\nUsed by plumbers, electricians, HVAC techs, and contractors acros",
+          "screenshot": "015_signup_empty_submit.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 34756
+        },
+        {
+          "label": "signup invalid email",
+          "startedAt": "2026-05-20T00:33:28.781Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/signup",
+          "bodyText": "punchlist\nSTART FREE — NO CARD NEEDED\nCreate your account\nBuild professional quotes in minutes. Your customer sees the total and a monthly option — and you get paid in full.\nYOUR NAME\nCOMPANY NAME (OPTIONAL)\nEMAIL ADDRESS\nPASSWORD\nI agree to the Punchlist Terms of Service and Privacy Policy\nTick the box above to continue.\nContinue →\nUsed by plumbers, electricians, HVAC techs, and contractors acros",
+          "screenshot": "016_signup_invalid_email.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 33914
+        },
+        {
+          "label": "signup existing email (uses owner email)",
+          "startedAt": "2026-05-20T00:34:02.695Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/signup",
+          "bodyText": "punchlist\nSTART FREE — NO CARD NEEDED\nCreate your account\nBuild professional quotes in minutes. Your customer sees the total and a monthly option — and you get paid in full.\nYOUR NAME\nCOMPANY NAME (OPTIONAL)\nEMAIL ADDRESS\nPASSWORD\nI agree to the Punchlist Terms of Service and Privacy Policy\nTick the box above to continue.\nContinue →\nUsed by plumbers, electricians, HVAC techs, and contractors acros",
+          "screenshot": "017_signup_existing_email__uses_owner_email_.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 34898
+        }
+      ]
+    },
+    {
+      "name": "owner",
+      "steps": [
+        {
+          "label": "login: navigate",
+          "startedAt": "2026-05-20T00:34:37.628Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "018_login__navigate.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3060
+        },
+        {
+          "label": "login: submit valid creds",
+          "startedAt": "2026-05-20T00:34:40.688Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nGood morning, Test\n\n2 quotes sent this month · 50% close rate\n\n$1,293\n1 in open quote\n+ New quote\nPunchlist builds the full scope automatically.\ne.g. Furnace + AC replacement\nNeeds attention\n1\nRelocate Kitchen Sink and Dishwasher to Is",
+          "screenshot": "019_login__submit_valid_creds.png",
+          "findings": {
+            "consoleErrors": [],
+            "consoleWarnings": [],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3667
+        },
+        {
+          "label": "visit /login while authed",
+          "startedAt": "2026-05-20T00:34:44.355Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "020_visit__login_while_authed.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2436
+        },
+        {
+          "label": "visit /signup while authed",
+          "startedAt": "2026-05-20T00:34:46.791Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/signup",
+          "bodyText": "punchlist\nSTART FREE — NO CARD NEEDED\nCreate your account\nBuild professional quotes in minutes. Your customer sees the total and a monthly option — and you get paid in full.\nYOUR NAME\nCOMPANY NAME (OPTIONAL)\nEMAIL ADDRESS\nPASSWORD\nI agree to the Punchlist Terms of Service and Privacy Policy\nTick the box above to continue.\nContinue →\nUsed by plumbers, electricians, HVAC techs, and contractors acros",
+          "screenshot": "021_visit__signup_while_authed.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2366
+        },
+        {
+          "label": "owner: visit dashboard",
+          "startedAt": "2026-05-20T00:34:49.157Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nGood morning, Test\n\n2 quotes sent this month · 50% close rate\n\n$1,293\n1 in open quote\n+ New quote\nPunchlist builds the full scope automatically.\ne.g. Furnace + AC replacement\nNeeds attention\n1\nRelocate Kitchen Sink and Dishwasher to Is",
+          "screenshot": "022_owner__visit_dashboard.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3737
+        },
+        {
+          "label": "owner: visit quotes-list",
+          "startedAt": "2026-05-20T00:34:52.895Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/quotes",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nQuotes\n\n3 quotes · 50% close rate\n\nNew quote\nAll\nNeeds follow-up\nDraft\nSent\nViewed\nApproved\nDone\nDeclined\nLast updated\nDate created\nTotal (high → low)\nQuote number\nHide completed\nQUOTE\nSTATUS\nTOTAL\nRelocate Kitchen Sink and Dishwasher ",
+          "screenshot": "023_owner__visit_quotes-list.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3520
+        },
+        {
+          "label": "owner: visit quote-builder-new",
+          "startedAt": "2026-05-20T00:34:56.415Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/quotes/new",
+          "bodyText": "Skip to main content\npunchlist\nNEW QUOTE\nTest Electrical\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\n1\nJOB\n2\nBUILD\n3\nSCOPE\n4\nTERMS\nSend professional quotes in 60 seconds\nPunchlist builds the scope, pricing, and send flow for you\nWHAT'S THE JOB?\n📷 Add photo\nTRADE\nPlumber\nElectrician\nHVAC\nCarpenter\nGeneral Con",
+          "screenshot": "024_owner__visit_quote-builder-new.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4055
+        },
+        {
+          "label": "owner: visit quote-detail bad id",
+          "startedAt": "2026-05-20T00:35:00.471Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/quotes/00000000-0000-0000-0000-000000000000",
+          "bodyText": "Skip to main content\npunchlist\nQUOTE\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nQuote not found\nBack to dashboard\n✕\nQuote not found. It may have been deleted.\n×",
+          "screenshot": "025_owner__visit_quote-detail_bad_id.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3397
+        },
+        {
+          "label": "owner: visit quote-edit bad id",
+          "startedAt": "2026-05-20T00:35:03.868Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/quotes",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nQuotes\n\n3 quotes · 50% close rate\n\nNew quote\nAll\nNeeds follow-up\nDraft\nSent\nViewed\nApproved\nDone\nDeclined\nLast updated\nDate created\nTotal (high → low)\nQuote number\nHide completed\nQUOTE\nSTATUS\nTOTAL\nRelocate Kitchen Sink and Dishwasher ",
+          "screenshot": "026_owner__visit_quote-edit_bad_id.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3530
+        },
+        {
+          "label": "owner: visit invoices-list",
+          "startedAt": "2026-05-20T00:35:07.398Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/invoices",
+          "bodyText": "Skip to main content\npunchlist\nINVOICES\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nNew invoice\nPAID\nRelocate Kitchen Sink and Dishwasher\nPaid\n$422",
+          "screenshot": "027_owner__visit_invoices-list.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3298
+        },
+        {
+          "label": "owner: visit invoices-new",
+          "startedAt": "2026-05-20T00:35:10.696Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/invoices/new",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nINVOICES\nNew invoice\nCustomer\nTitle\nDescription\nLine items\n$0\n+ Add line item\nDiscount ($)\nDue date\nNotes\nSubtotal\n$0\nTax\n$0\nTotal\n$0\nCancel\nCreate invoice",
+          "screenshot": "028_owner__visit_invoices-new.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3308
+        },
+        {
+          "label": "owner: visit invoice-detail bad id",
+          "startedAt": "2026-05-20T00:35:14.004Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/invoices/00000000-0000-0000-0000-000000000000",
+          "bodyText": "Skip to main content\npunchlist\nINVOICE\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\n🧾\nInvoice not found\n\nThis invoice may have been deleted, or the link could be wrong.\n\nView all invoices\n✕\nInvoice not found. It may have been deleted.\n×",
+          "screenshot": "029_owner__visit_invoice-detail_bad_id.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3445
+        },
+        {
+          "label": "owner: visit customers",
+          "startedAt": "2026-05-20T00:35:17.449Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/customers",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nCustomers\n\n0 customers · $422 revenue tracked\n\nExport\nImport CSV\n+ Add\n👥\nNo customers yet\n\nCustomers are added automatically when you create a quote, or add them manually.\n\nAdd your first customer",
+          "screenshot": "030_owner__visit_customers.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3222
+        },
+        {
+          "label": "owner: visit schedule",
+          "startedAt": "2026-05-20T00:35:20.671Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/schedule",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nSCHEDULE\nThis week\nSun, May 17\n+\nOpen\nMon, May 18\n+\nOpen\nYesterday\n+\nOpen\nToday\n+\nOpen\nTomorrow\n+\nOpen\nFri, May 22\n+\nOpen\nSat, May 23\n+\nOpen",
+          "screenshot": "031_owner__visit_schedule.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3306
+        },
+        {
+          "label": "owner: visit analytics",
+          "startedAt": "2026-05-20T00:35:23.977Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/analytics",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nAnalytics\n\n3 quotes · 6 months\n\n3 months\n6 months\n12 months\nAll time\n$422\nRevenue tracked\n1 job closed\n50%\nClose rate\n1 of 2 sent\n$1,293\nOpen pipeline\n1 quote active\n$422\nAvg job value\non closed jobs\n16d\nAvg days to close\nfrom quote to",
+          "screenshot": "032_owner__visit_analytics.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3295
+        },
+        {
+          "label": "owner: visit templates",
+          "startedAt": "2026-05-20T00:35:27.272Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/templates",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nTemplates\n\nCustomize the texts sent to customers at each stage.\n\nUnlock customization →\nMessage templates\nJob templates\nPro feature — customize your message copy to match your brand voice. The defaults are already optimized for close r",
+          "screenshot": "033_owner__visit_templates.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3459
+        },
+        {
+          "label": "owner: visit settings",
+          "startedAt": "2026-05-20T00:35:30.731Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nBUSINESS PROFILE\n\nThis appears on quotes and invoices sent to your customers.\n\nYOUR NAME *\nBUSINESS NAME\nLOGO (SHOWN ON QUOTES AND INVOICES)\nUpload image\nor paste a URL:\nTRADE\nPl",
+          "screenshot": "034_owner__visit_settings.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3776
+        },
+        {
+          "label": "owner: visit billing",
+          "startedAt": "2026-05-20T00:35:34.507Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/billing",
+          "bodyText": "Skip to main content\npunchlist\nBILLING\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nYOUR PLAN\nFree\n5 quotes/month · Upgrade for unlimited\nMONTHLY USAGE\n2 of 5\nquotes used this month\nUPGRADE TO PRO\n\nSend unlimited quotes. See when customers open them. Let them pay monthly. Collect deposits, schedule jobs, and i",
+          "screenshot": "035_owner__visit_billing.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3515
+        },
+        {
+          "label": "owner: visit payments-setup",
+          "startedAt": "2026-05-20T00:35:38.022Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/payments/setup",
+          "bodyText": "Checking your payment status…",
+          "screenshot": "036_owner__visit_payments-setup.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 401 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script.",
+              "WebSocket connection to 'wss://mbwzibdugiecccjuibzm.supabase.co/realtime/v1/websocket?apikey=sb_publishable_E6DNbQLiHKFMlhnicrE3KQ_fF1x7niB&vsn=2.0.0' failed: WebSocket is closed before the connection is established.",
+              "[payments-onboarding] status 401"
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://www.punchlist.ca/api/connect-onboarding",
+                "status": 401,
+                "method": "POST"
+              }
+            ]
+          },
+          "ms": 3031
+        },
+        {
+          "label": "owner: visit legacy contacts",
+          "startedAt": "2026-05-20T00:35:41.053Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/customers",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nCustomers\n\n0 customers · $422 revenue tracked\n\nExport\nImport CSV\n+ Add\n👥\nNo customers yet\n\nCustomers are added automatically when you create a quote, or add them manually.\n\nAdd your first customer",
+          "screenshot": "037_owner__visit_legacy_contacts.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3173
+        },
+        {
+          "label": "owner: visit legacy bookings",
+          "startedAt": "2026-05-20T00:35:44.226Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nGood morning, Test\n\n2 quotes sent this month · 50% close rate\n\n+ New quote\nPunchlist builds the full scope automatically.\ne.g. Furnace + AC replacement\n✓\nYou're all caught up\nNo quotes need follow-up today. Nice. · 2 sent this month\nRe",
+          "screenshot": "038_owner__visit_legacy_bookings.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3898
+        },
+        {
+          "label": "owner: visit legacy additional-work",
+          "startedAt": "2026-05-20T00:35:48.124Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nGood morning, Test\n\n2 quotes sent this month · 50% close rate\n\n+ New quote\nPunchlist builds the full scope automatically.\ne.g. Furnace + AC replacement\n✓\nYou're all caught up\nNo quotes need follow-up today. Nice. · 2 sent this month\nRe",
+          "screenshot": "039_owner__visit_legacy_additional-work.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3609
+        },
+        {
+          "label": "owner: visit in-app 404",
+          "startedAt": "2026-05-20T00:35:51.733Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/no-such",
+          "bodyText": "Page not found\n\nThis page doesn't exist or has moved.\n\nBack to home",
+          "screenshot": "040_owner__visit_in-app_404.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2788
+        },
+        {
+          "label": "dashboard: click header \"New quote\"",
+          "startedAt": "2026-05-20T00:35:54.521Z",
+          "ok": false,
+          "error": "locator.click: Error: strict mode violation: getByRole('link', { name: /new quote/i }).first().or(getByRole('button', { name: /new quote/i }).first()) resolved to 2 elements:\n    1) <a href=\"/app/quotes/new\" class=\"btn btn-primary btn-sm topbar-new-quote\">New quote</a> aka getByRole('link', { name: 'New quote' })\n    2) <button type=\"submit\" class=\"dv2-job-go\">…</button> aka getByRole('button', { ",
+          "url": "https://www.punchlist.ca/app",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nGood morning, Test\n\n2 quotes sent this month · 50% close rate\n\n+ New quote\nPunchlist builds the full scope automatically.\ne.g. Furnace + AC replacement\n✓\nYou're all caught up\nNo quotes need follow-up today. Nice. · 2 sent this month\nRe",
+          "screenshot": "041_dashboard__click_header__New_quote_.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4188
+        },
+        {
+          "label": "dashboard: click sidebar Customers link",
+          "startedAt": "2026-05-20T00:35:58.709Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/customers",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nCustomers\n\n0 customers · $422 revenue tracked\n\nExport\nImport CSV\n+ Add\n👥\nNo customers yet\n\nCustomers are added automatically when you create a quote, or add them manually.\n\nAdd your first customer",
+          "screenshot": "042_dashboard__click_sidebar_Customers_link.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4741
+        },
+        {
+          "label": "quote builder: fill description",
+          "startedAt": "2026-05-20T00:36:03.450Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/quotes/new",
+          "bodyText": "Skip to main content\npunchlist\nNEW QUOTE\nTest Electrical\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\n1\nJOB\n2\nBUILD\n3\nSCOPE\n4\nTERMS\nSend professional quotes in 60 seconds\nPunchlist builds the scope, pricing, and send flow for you\nWHAT'S THE JOB?\n43 chars\n📷 Add photo\nTRADE\nPlumber\nElectrician\nHVAC\nCarpenter\nGe",
+          "screenshot": "043_quote_builder__fill_description.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4021
+        },
+        {
+          "label": "quote builder: click \"start from blank\"",
+          "startedAt": "2026-05-20T00:36:07.471Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/quotes/new",
+          "bodyText": "Skip to main content\npunchlist\nNEW QUOTE\nTest Electrical\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\n1\nJOB\n2\nBUILD\n3\nSCOPE\n4\nTERMS\nSend professional quotes in 60 seconds\nPunchlist builds the scope, pricing, and send flow for you\nWHAT'S THE JOB?\n📷 Add photo\nTRADE\nPlumber\nElectrician\nHVAC\nCarpenter\nGeneral Con",
+          "screenshot": "044_quote_builder__click__start_from_blank_.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [
+              {
+                "url": "https://www.punchlist.ca/api/ai-scope",
+                "method": "POST",
+                "reason": "net::ERR_ABORTED"
+              }
+            ],
+            "badResponses": []
+          },
+          "ms": 35008
+        },
+        {
+          "label": "customers: open Add modal",
+          "startedAt": "2026-05-20T00:36:42.479Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/customers",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nCustomers\n\n0 customers · $422 revenue tracked\n\nExport\nImport CSV\n+ Add\n👥\nNo customers yet\n\nCustomers are added automatically when you create a quote, or add them manually.\n\nAdd your first customer\nAdd customer\nName *\nPhone\nEmail\nAddre",
+          "screenshot": "045_customers__open_Add_modal.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4102
+        },
+        {
+          "label": "customers: close Add modal (Esc)",
+          "startedAt": "2026-05-20T00:36:46.581Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/customers",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nCustomers\n\n0 customers · $422 revenue tracked\n\nExport\nImport CSV\n+ Add\n👥\nNo customers yet\n\nCustomers are added automatically when you create a quote, or add them manually.\n\nAdd your first customer\nAdd customer\nName *\nPhone\nEmail\nAddre",
+          "screenshot": "046_customers__close_Add_modal__Esc_.png",
+          "findings": {
+            "consoleErrors": [],
+            "consoleWarnings": [],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 777
+        },
+        {
+          "label": "invoices new: fill title + cancel",
+          "startedAt": "2026-05-20T00:36:47.358Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/invoices",
+          "bodyText": "Skip to main content\npunchlist\nINVOICES\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nNew invoice\nPAID\nRelocate Kitchen Sink and Dishwasher\nPaid\n$422",
+          "screenshot": "047_invoices_new__fill_title___cancel.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4377
+        },
+        {
+          "label": "settings tab: profile",
+          "startedAt": "2026-05-20T00:36:51.735Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nBUSINESS PROFILE\n\nThis appears on quotes and invoices sent to your customers.\n\nYOUR NAME *\nBUSINESS NAME\nLOGO (SHOWN ON QUOTES AND INVOICES)\nUpload image\nor paste a URL:\nTRADE\nPl",
+          "screenshot": "048_settings_tab__profile.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4090
+        },
+        {
+          "label": "settings tab: payments?",
+          "startedAt": "2026-05-20T00:36:55.825Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nPAYMENTS\n\nGet paid faster. Customers can pay monthly, by deposit, or in full — directly from your quotes and invoices.\n\nPunchlist Payments\nYou get paid in full. Customers pay mon",
+          "screenshot": "049_settings_tab__payments_.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4425
+        },
+        {
+          "label": "settings tab: messages",
+          "startedAt": "2026-05-20T00:37:00.250Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nFOLLOW-UP SCHEDULE\n\nHow many days after sending a quote should each nudge go out?\n\nFirst nudge\ndays\nSecond nudge\ndays\nLast nudge\ndays\n\nUpgrade to Pro to customize follow-up timin",
+          "screenshot": "050_settings_tab__messages.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4020
+        },
+        {
+          "label": "settings tab: notifications",
+          "startedAt": "2026-05-20T00:37:04.270Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nFOLLOW-UP SCHEDULE\n\nHow many days after sending a quote should each nudge go out?\n\nFirst nudge\ndays\nSecond nudge\ndays\nLast nudge\ndays\n\nUpgrade to Pro to customize follow-up timin",
+          "screenshot": "051_settings_tab__notifications.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4153
+        },
+        {
+          "label": "settings tab: account",
+          "startedAt": "2026-05-20T00:37:08.423Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nDATA & PRIVACY\n\nExport all your data or permanently delete your account. Required for PIPEDA and GDPR compliance.\n\nExport all my data (CSV)\nDelete my account\nABOUT PUNCHLIST\nPunc",
+          "screenshot": "052_settings_tab__account.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 4116
+        },
+        {
+          "label": "settings tab: branding",
+          "startedAt": "2026-05-20T00:37:12.539Z",
+          "ok": false,
+          "error": "tab not visible",
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nDATA & PRIVACY\n\nExport all your data or permanently delete your account. Required for PIPEDA and GDPR compliance.\n\nExport all my data (CSV)\nDelete my account\nABOUT PUNCHLIST\nPunc",
+          "screenshot": "053_settings_tab__branding.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3070
+        },
+        {
+          "label": "settings tab: tax",
+          "startedAt": "2026-05-20T00:37:15.609Z",
+          "ok": false,
+          "error": "tab not visible",
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nDATA & PRIVACY\n\nExport all your data or permanently delete your account. Required for PIPEDA and GDPR compliance.\n\nExport all my data (CSV)\nDelete my account\nABOUT PUNCHLIST\nPunc",
+          "screenshot": "054_settings_tab__tax.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2958
+        },
+        {
+          "label": "settings tab: team",
+          "startedAt": "2026-05-20T00:37:18.567Z",
+          "ok": false,
+          "error": "tab not visible",
+          "url": "https://www.punchlist.ca/app/settings",
+          "bodyText": "Skip to main content\npunchlist\nSETTINGS\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nProfile\nPayments\nMessages\nNotifications\nAccount\nDATA & PRIVACY\n\nExport all your data or permanently delete your account. Required for PIPEDA and GDPR compliance.\n\nExport all my data (CSV)\nDelete my account\nABOUT PUNCHLIST\nPunc",
+          "screenshot": "055_settings_tab__team.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3119
+        },
+        {
+          "label": "analytics: click 6 months",
+          "startedAt": "2026-05-20T00:37:21.687Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/analytics",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nAnalytics\n\n3 quotes · 6 months\n\n3 months\n6 months\n12 months\nAll time\n$422\nRevenue tracked\n1 job closed\n50%\nClose rate\n1 of 2 sent\n$1,293\nOpen pipeline\n1 quote active\n$422\nAvg job value\non closed jobs\n16d\nAvg days to close\nfrom quote to",
+          "screenshot": "056_analytics__click_6_months.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 3833
+        },
+        {
+          "label": "analytics: click All time",
+          "startedAt": "2026-05-20T00:37:25.520Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/analytics",
+          "bodyText": "Skip to main content\npunchlist\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nAnalytics\n\n3 quotes\n\n3 months\n6 months\n12 months\nAll time\n$422\nRevenue tracked\n1 job closed\n50%\nClose rate\n1 of 2 sent\n$1,293\nOpen pipeline\n1 quote active\n$422\nAvg job value\non closed jobs\n16d\nAvg days to close\nfrom quote to approval\n1",
+          "screenshot": "057_analytics__click_All_time.png",
+          "findings": {
+            "consoleErrors": [],
+            "consoleWarnings": [],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 1134
+        },
+        {
+          "label": "quotes list: click first row",
+          "startedAt": "2026-05-20T00:37:26.654Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/quotes/a17c0966-f6b3-41eb-a9c5-bff567c6ab03",
+          "bodyText": "Skip to main content\npunchlist\nQUOTE\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nSent\nViewed\nApproved\nDeposit paid\nInvoiced\nPaid\nRelocate Kitchen Sink and Dishwasher to Island\nQ-1278\nNo customer\n· Plumber\n· $1,293\nEdit\nCustomer is reviewing (4×)\nThey've looked 4 times — the monthly option (from $66/mo) may be",
+          "screenshot": "058_quotes_list__click_first_row.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 5123
+        },
+        {
+          "label": "invoices list: click first row",
+          "startedAt": "2026-05-20T00:37:31.777Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/app/invoices/aa97db44-fd6f-41b9-a9b8-316d179f36e4",
+          "bodyText": "Skip to main content\npunchlist\nINVOICE INV-MOX5X2RM\nView quote\n⌘K\nForeman\n⌘⇧K\nNew quote\nTest Electrical\nHome\nQuotes\nSchedule\nCustomers\nInvoices\nAnalytics\nTemplates\nForeman AI\n⌘⇧K\nSettings\nSign out\nQuote sent\nApproved\nInvoiced\nPaid\nINV-MOX5X2RM\nRelocate Kitchen Sink and Dishwasher\nPAID\nBILL TO\nNo customer linked\nDETAILS\nIssued\nMay 8, 2026\nDue\nJun 7, 2026\nPaid\nMay 8, 2026\nMethod\nCash\nRelocate Kitche",
+          "screenshot": "059_invoices_list__click_first_row.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 5124
+        },
+        {
+          "label": "logout",
+          "startedAt": "2026-05-20T00:37:36.901Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/",
+          "bodyText": "punchlist\nHow it works\nPricing\nLog in\nStart free\nBuilt to close jobs,\nnot just quote them.\n\nDescribe the job, get a full scope back in seconds. Monthly payments get the yes. You see when they open it — we follow up until it's closed.\n\nStart free\nSee how it works\n5 free quotes/month\nWorks from your phone\nNo credit card\nLIVE DEMO — TRY IT\nCA\nComfort Air HVAC Ltd.\nFurnace + AC Replacement — Full Syst",
+          "screenshot": "060_logout.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [
+              {
+                "url": "https://mbwzibdugiecccjuibzm.supabase.co/auth/v1/logout?scope=global",
+                "method": "POST",
+                "reason": "net::ERR_ABORTED"
+              }
+            ],
+            "badResponses": []
+          },
+          "ms": 6024
+        },
+        {
+          "label": "after logout: /app should redirect",
+          "startedAt": "2026-05-20T00:37:42.925Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/login",
+          "bodyText": "punchlist\nWELCOME BACK\nLog in\nBuild, send, and track quotes from your phone.\nEMAIL ADDRESS\nPASSWORD\nForgot password?\nLog in\nYour quotes and customer data are waiting.\nDon't have an account? Start free",
+          "screenshot": "061_after_logout___app_should_redirect.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script."
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": []
+          },
+          "ms": 2328
+        }
+      ]
+    },
+    {
+      "name": "recipient",
+      "steps": [
+        {
+          "label": "public quote /q/garbage",
+          "startedAt": "2026-05-20T00:37:45.306Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/q/this-token-does-not-exist",
+          "bodyText": "Quote unavailable\n\nThis quote link has expired or been removed.\n\nTry again",
+          "screenshot": "062_public_quote__q_garbage.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 404 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://www.punchlist.ca/api/public-quote?token=this-token-does-not-exist",
+                "status": 404,
+                "method": "GET"
+              }
+            ]
+          },
+          "ms": 5531
+        },
+        {
+          "label": "public invoice /i/garbage",
+          "startedAt": "2026-05-20T00:37:50.837Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/i/this-token-does-not-exist",
+          "bodyText": "Invoice unavailable\n\nThis link may have expired. Contact your contractor for a new link.\n\nTry again",
+          "screenshot": "063_public_invoice__i_garbage.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 404 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://www.punchlist.ca/api/public-invoice?token=this-token-does-not-exist",
+                "status": 404,
+                "method": "GET"
+              }
+            ]
+          },
+          "ms": 4412
+        },
+        {
+          "label": "legacy /public/garbage",
+          "startedAt": "2026-05-20T00:37:55.250Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/public/this-token-does-not-exist",
+          "bodyText": "Quote unavailable\n\nThis quote link has expired or been removed.\n\nTry again",
+          "screenshot": "064_legacy__public_garbage.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 404 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://www.punchlist.ca/api/public-quote?token=this-token-does-not-exist",
+                "status": 404,
+                "method": "GET"
+              }
+            ]
+          },
+          "ms": 4019
+        },
+        {
+          "label": "legacy /project/garbage",
+          "startedAt": "2026-05-20T00:37:59.269Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/project/this-token-does-not-exist",
+          "bodyText": "Quote unavailable\n\nThis quote link has expired or been removed.\n\nTry again",
+          "screenshot": "065_legacy__project_garbage.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 404 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://www.punchlist.ca/api/public-quote?token=this-token-does-not-exist",
+                "status": 404,
+                "method": "GET"
+              }
+            ]
+          },
+          "ms": 3700
+        },
+        {
+          "label": "legacy /public/invoice/garbage",
+          "startedAt": "2026-05-20T00:38:02.969Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/public/invoice/this-token-does-not-exist",
+          "bodyText": "Invoice unavailable\n\nThis link may have expired. Contact your contractor for a new link.\n\nTry again",
+          "screenshot": "066_legacy__public_invoice_garbage.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 404 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://www.punchlist.ca/api/public-invoice?token=this-token-does-not-exist",
+                "status": 404,
+                "method": "GET"
+              }
+            ]
+          },
+          "ms": 3787
+        },
+        {
+          "label": "mobile viewport: /q/garbage",
+          "startedAt": "2026-05-20T00:38:06.756Z",
+          "ok": true,
+          "url": "https://www.punchlist.ca/q/another-bad-token",
+          "bodyText": "Quote unavailable\n\nThis quote link has expired or been removed.\n\nTry again",
+          "screenshot": "067_mobile_viewport___q_garbage.png",
+          "findings": {
+            "consoleErrors": [
+              "An SSL certificate error occurred when fetching the script.",
+              "Failed to load resource: the server responded with a status of 404 ()"
+            ],
+            "consoleWarnings": [
+              "[Punchlist] SW registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://www.punchlist.ca/') with script ('https://www.punchlist.ca/sw.js'): An SSL certificate error occurred when fetching the script."
+            ],
+            "pageErrors": [],
+            "failedRequests": [],
+            "badResponses": [
+              {
+                "url": "https://www.punchlist.ca/api/public-quote?token=another-bad-token",
+                "status": 404,
+                "method": "GET"
+              }
+            ]
+          },
+          "ms": 3961
+        }
+      ]
+    }
+  ],
+  "finishedAt": "2026-05-20T00:38:10.727Z"
+}

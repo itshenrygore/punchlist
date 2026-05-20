@@ -1,13 +1,18 @@
-/* Click-through audit for https://punchlist.ca
+/* Click-through audit for https://punchlist.ca — multi-persona.
  *
- * Logs in with provided creds, then visits every route, clicks notable
- * buttons/links, and records:
- *   - console errors/warnings
- *   - network failures (4xx/5xx, request errors)
- *   - unhandled page errors
- *   - per-route screenshot
+ * Personas:
+ *   1. Anonymous visitor   — public pages, blocked deep-links, bad share tokens
+ *   2. Login error states  — empty form, wrong password
+ *   3. Signup error states — empty, invalid email, weak password, existing email
+ *   4. Authenticated owner — every authed route + interaction flows
+ *   5. Customer / recipient — public quote + public invoice with garbage tokens
  *
- * Outputs JSON report + screenshots to tests/audit-runs/<stamp>/.
+ * For every page we record console errors/warnings, page errors,
+ * network failures, ≥400 responses, body length, final URL, and a
+ * full-page screenshot. Each step also gets its own console / network
+ * bucket so issues are pinned to the action that caused them.
+ *
+ * Outputs: tests/audit-runs/<stamp>/report.json plus per-step pngs.
  */
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -24,244 +29,444 @@ const report = {
   base: BASE,
   email: EMAIL,
   startedAt: new Date().toISOString(),
-  routes: [],
-  flows: [],
-  globalConsoleNoise: [],
+  personas: [],
 };
 
-/** Attach listeners to a page; collect per-route bucket. */
-function instrument(page) {
-  const bucket = {
-    consoleErrors: [],
-    consoleWarnings: [],
-    pageErrors: [],
-    failedRequests: [],
-    badResponses: [],
-  };
+let stepCounter = 0;
+function nextStepIndex() {
+  stepCounter += 1;
+  return String(stepCounter).padStart(3, '0');
+}
+
+/** Wrap a page with per-step bucketing. Returns a controller. */
+function controllerFor(page) {
+  let active = freshBucket();
   page.on('console', (msg) => {
-    const type = msg.type();
-    const text = msg.text();
-    if (type === 'error') bucket.consoleErrors.push(text);
-    else if (type === 'warning') bucket.consoleWarnings.push(text);
+    const t = msg.type();
+    if (t === 'error') active.consoleErrors.push(msg.text());
+    else if (t === 'warning') active.consoleWarnings.push(msg.text());
   });
-  page.on('pageerror', (err) => {
-    bucket.pageErrors.push(String(err?.message || err));
-  });
+  page.on('pageerror', (e) => active.pageErrors.push(String(e?.message || e)));
   page.on('requestfailed', (req) => {
     const f = req.failure();
-    bucket.failedRequests.push({ url: req.url(), method: req.method(), reason: f?.errorText });
+    active.failedRequests.push({ url: req.url(), method: req.method(), reason: f?.errorText });
   });
   page.on('response', (res) => {
-    const status = res.status();
-    if (status >= 400) {
-      bucket.badResponses.push({ url: res.url(), status, method: res.request().method() });
-    }
+    const s = res.status();
+    if (s >= 400) active.badResponses.push({ url: res.url(), status: s, method: res.request().method() });
   });
-  return bucket;
+  return {
+    reset() { active = freshBucket(); return active; },
+    snapshot() { return active; },
+  };
+}
+function freshBucket() {
+  return { consoleErrors: [], consoleWarnings: [], pageErrors: [], failedRequests: [], badResponses: [] };
 }
 
-/** Snapshot a route: nav + settle + screenshot + bucket. */
-async function visit(page, label, urlPath, opts = {}) {
-  const url = urlPath.startsWith('http') ? urlPath : BASE + urlPath;
-  console.log(`→ ${label}: ${url}`);
-  const bucket = instrument(page);
-  const entry = { label, url, path: urlPath };
+async function screenshot(page, label) {
+  const idx = nextStepIndex();
+  const safe = label.replace(/[^a-z0-9-]/gi, '_').slice(0, 80);
+  const file = `${idx}_${safe}.png`;
+  await page.screenshot({ path: path.join(OUT, file), fullPage: true }).catch(() => {});
+  return file;
+}
+
+/** A single recorded step in a persona's journey. */
+async function step(persona, ctrl, page, label, body) {
+  ctrl.reset();
+  const t0 = Date.now();
+  const step = { label, startedAt: new Date().toISOString() };
   try {
-    const resp = await page.goto(url, { waitUntil: 'networkidle', timeout: 25_000 });
-    entry.httpStatus = resp ? resp.status() : null;
-    entry.finalUrl = page.url();
-    // Let lazy chunks / app shell render
-    await page.waitForTimeout(opts.settle || 1500);
-    // Sanity: is there visible content?
-    entry.bodyText = (await page.locator('body').innerText().catch(() => '')).slice(0, 500);
-    const screenshotPath = path.join(OUT, `${label.replace(/[^a-z0-9-]/gi, '_')}.png`);
-    await page.screenshot({ path: screenshotPath, fullPage: true }).catch((e) => { entry.screenshotError = String(e.message); });
-    entry.screenshot = path.basename(screenshotPath);
+    await body();
+    step.ok = true;
   } catch (e) {
-    entry.navError = String(e?.message || e);
+    step.ok = false;
+    step.error = String(e?.message || e).slice(0, 400);
   }
-  entry.findings = bucket;
-  report.routes.push(entry);
-  return entry;
+  step.url = page.url();
+  step.bodyText = (await page.locator('body').innerText().catch(() => '')).slice(0, 400);
+  step.screenshot = await screenshot(page, label);
+  step.findings = ctrl.snapshot();
+  step.ms = Date.now() - t0;
+  persona.steps.push(step);
+  console.log(`  [${persona.name}] ${label} ${step.ok ? '✓' : '✗'} ${step.ms}ms`);
+  return step;
 }
 
-async function login(page) {
-  console.log('Logging in…');
-  const bucket = instrument(page);
-  const flow = { name: 'login', steps: [] };
-  try {
-    await page.goto(BASE + '/login', { waitUntil: 'networkidle', timeout: 25_000 });
-    flow.steps.push({ ok: true, step: 'load /login' });
-    // Try common selectors
-    const emailInput = page.locator('input[type="email"], input[name="email"], input[autocomplete="email"]').first();
-    const passInput = page.locator('input[type="password"], input[name="password"]').first();
-    await emailInput.waitFor({ state: 'visible', timeout: 8000 });
-    await emailInput.fill(EMAIL);
-    await passInput.fill(PASSWORD);
-    flow.steps.push({ ok: true, step: 'fill credentials' });
-    // Submit
-    const submit = page.locator('button[type="submit"], button:has-text("Log in"), button:has-text("Sign in"), button:has-text("Login")').first();
-    await Promise.all([
-      page.waitForURL(/\/app(\/|$)/, { timeout: 20_000 }).catch(() => null),
-      submit.click(),
-    ]);
-    await page.waitForTimeout(1500);
-    flow.finalUrl = page.url();
-    flow.loggedIn = /\/app/.test(page.url());
-    flow.steps.push({ ok: flow.loggedIn, step: 'reach /app' });
-    // Screenshot post-login
-    const sp = path.join(OUT, '00_post-login.png');
-    await page.screenshot({ path: sp, fullPage: true }).catch(() => {});
-    flow.screenshot = path.basename(sp);
-  } catch (e) {
-    flow.error = String(e?.message || e);
-  }
-  flow.findings = bucket;
-  report.flows.push(flow);
-  return flow.loggedIn;
+async function gotoSettle(page, url, ms = 1500) {
+  await page.goto(url, { waitUntil: 'networkidle', timeout: 25_000 });
+  await page.waitForTimeout(ms);
 }
 
-/** Click first matching element if it exists; returns whether it clicked. */
-async function tryClick(page, locator, label) {
-  try {
-    const el = locator.first();
-    if (await el.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await el.click({ timeout: 4000 });
-      await page.waitForTimeout(800);
-      return { clicked: true, label };
-    }
-  } catch (e) {
-    return { clicked: false, label, error: String(e?.message || e) };
-  }
-  return { clicked: false, label, reason: 'not visible' };
-}
-
-async function exerciseDashboard(page) {
-  const flow = { name: 'dashboard interactions', steps: [] };
-  const bucket = instrument(page);
-  try {
-    await page.goto(BASE + '/app', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1500);
-    // Try clicking visible CTAs
-    const candidates = [
-      ['New quote', page.getByRole('link', { name: /new quote/i })],
-      ['New quote button', page.getByRole('button', { name: /new quote/i })],
-      ['Create quote', page.getByRole('link', { name: /create quote/i })],
-      ['New invoice', page.getByRole('link', { name: /new invoice/i })],
-      ['Customers nav', page.getByRole('link', { name: /^customers$/i })],
-      ['Quotes nav', page.getByRole('link', { name: /^quotes$/i })],
-      ['Invoices nav', page.getByRole('link', { name: /^invoices$/i })],
-      ['Schedule nav', page.getByRole('link', { name: /^schedule$/i })],
-      ['Settings nav', page.getByRole('link', { name: /^settings$/i })],
-    ];
-    for (const [label, loc] of candidates) {
-      flow.steps.push(await tryClick(page, loc, label));
-      await page.goto(BASE + '/app', { waitUntil: 'networkidle' }).catch(() => {});
-      await page.waitForTimeout(500);
-    }
-  } catch (e) {
-    flow.error = String(e?.message || e);
-  }
-  flow.findings = bucket;
-  report.flows.push(flow);
-}
-
-async function exerciseQuoteBuilder(page) {
-  const flow = { name: 'quote builder new', steps: [] };
-  const bucket = instrument(page);
-  try {
-    await page.goto(BASE + '/app/quotes/new', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1500);
-    flow.steps.push({ step: 'loaded builder', url: page.url() });
-    // Fill obvious inputs if present
-    const textInputs = await page.locator('input[type="text"], input:not([type])').all();
-    flow.steps.push({ step: 'text input count', count: textInputs.length });
-    // Try clicking "Add line item" / scope buttons
-    for (const name of [/add line item/i, /add scope/i, /next/i, /continue/i, /save/i]) {
-      const btn = page.getByRole('button', { name }).first();
-      if (await btn.isVisible({ timeout: 500 }).catch(() => false)) {
-        flow.steps.push(await tryClick(page, page.getByRole('button', { name }), `click ${name}`));
-      }
-    }
-    const sp = path.join(OUT, 'flow_quote-builder.png');
-    await page.screenshot({ path: sp, fullPage: true }).catch(() => {});
-    flow.screenshot = path.basename(sp);
-  } catch (e) {
-    flow.error = String(e?.message || e);
-  }
-  flow.findings = bucket;
-  report.flows.push(flow);
-}
-
-async function exerciseSettings(page) {
-  const flow = { name: 'settings tabs', steps: [] };
-  const bucket = instrument(page);
-  try {
-    await page.goto(BASE + '/app/settings', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1500);
-    // Tabs / sections
-    const tabNames = [/profile/i, /business/i, /branding/i, /tax/i, /payments?/i, /notifications/i, /team/i, /integrations/i];
-    for (const name of tabNames) {
-      const tab = page.getByRole('tab', { name }).or(page.getByRole('button', { name })).or(page.getByRole('link', { name })).first();
-      if (await tab.isVisible({ timeout: 500 }).catch(() => false)) {
-        flow.steps.push(await tryClick(page, tab, `settings tab ${name}`));
-        await page.waitForTimeout(400);
-      }
-    }
-    const sp = path.join(OUT, 'flow_settings.png');
-    await page.screenshot({ path: sp, fullPage: true }).catch(() => {});
-    flow.screenshot = path.basename(sp);
-  } catch (e) {
-    flow.error = String(e?.message || e);
-  }
-  flow.findings = bucket;
-  report.flows.push(flow);
-}
-
-(async () => {
-  const browser = await chromium.launch({ headless: true });
+// ────────────────────────────────────────────────────────────
+// PERSONA 1: Anonymous visitor
+// ────────────────────────────────────────────────────────────
+async function personaAnonymous(browser) {
+  const persona = { name: 'anonymous', steps: [] };
+  report.personas.push(persona);
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, ignoreHTTPSErrors: true });
   const page = await ctx.newPage();
+  const ctrl = controllerFor(page);
 
-  // ── PUBLIC ROUTES ───────────────────────────────────
-  await visit(page, '01_landing', '/');
-  await visit(page, '02_login', '/login');
-  await visit(page, '03_signup', '/signup');
-  await visit(page, '04_pricing', '/pricing');
-  await visit(page, '05_terms', '/terms');
-  await visit(page, '06_privacy', '/privacy');
-  await visit(page, '07_unknown-route', '/this-page-does-not-exist');
+  await step(persona, ctrl, page, 'landing /',           () => gotoSettle(page, BASE + '/', 2000));
+  await step(persona, ctrl, page, 'login page',          () => gotoSettle(page, BASE + '/login'));
+  await step(persona, ctrl, page, 'signup page',         () => gotoSettle(page, BASE + '/signup'));
+  await step(persona, ctrl, page, 'pricing page',        () => gotoSettle(page, BASE + '/pricing'));
+  await step(persona, ctrl, page, 'terms page',          () => gotoSettle(page, BASE + '/terms'));
+  await step(persona, ctrl, page, 'privacy page',        () => gotoSettle(page, BASE + '/privacy'));
+  await step(persona, ctrl, page, 'unknown public route', () => gotoSettle(page, BASE + '/this-page-does-not-exist'));
+  // Deep-link to protected route while logged out
+  await step(persona, ctrl, page, 'deep-link /app while logged out', async () => {
+    await gotoSettle(page, BASE + '/app');
+  });
+  await step(persona, ctrl, page, 'deep-link /app/quotes/new while logged out', async () => {
+    await gotoSettle(page, BASE + '/app/quotes/new');
+  });
+  // Click landing → pricing
+  await step(persona, ctrl, page, 'landing → click pricing nav link', async () => {
+    await gotoSettle(page, BASE + '/', 1500);
+    const link = page.getByRole('link', { name: /^pricing$/i }).first();
+    if (await link.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await link.click();
+      await page.waitForTimeout(1500);
+    }
+  });
+  // Click landing → Start free CTA
+  await step(persona, ctrl, page, 'landing → click Start free CTA', async () => {
+    await gotoSettle(page, BASE + '/', 1500);
+    const cta = page.getByRole('link', { name: /start free/i }).first();
+    if (await cta.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await cta.click();
+      await page.waitForTimeout(1500);
+    }
+  });
 
-  // ── LOGIN ───────────────────────────────────────────
-  const loggedIn = await login(page);
-  if (!loggedIn) {
-    console.error('LOGIN FAILED — aborting authenticated checks');
-    report.loginFailed = true;
-  } else {
-    // ── AUTHENTICATED ROUTES ──────────────────────────
-    await visit(page, '10_app-dashboard', '/app');
-    await visit(page, '11_quotes-list', '/app/quotes');
-    await visit(page, '12_quotes-new', '/app/quotes/new');
-    await visit(page, '13_invoices-list', '/app/invoices');
-    await visit(page, '14_invoices-new', '/app/invoices/new');
-    await visit(page, '15_customers', '/app/customers');
-    await visit(page, '16_schedule', '/app/schedule');
-    await visit(page, '17_analytics', '/app/analytics');
-    await visit(page, '18_templates', '/app/templates');
-    await visit(page, '19_settings', '/app/settings');
-    await visit(page, '20_billing', '/app/billing');
-    await visit(page, '21_payments-setup', '/app/payments/setup');
-    // Legacy redirects
-    await visit(page, '22_legacy-contacts', '/app/contacts');
-    await visit(page, '23_legacy-bookings', '/app/bookings');
-    // 404 in-app
-    await visit(page, '24_app-not-found', '/app/no-such');
+  await ctx.close();
+}
 
-    // ── INTERACTION FLOWS ─────────────────────────────
-    await exerciseDashboard(page);
-    await exerciseQuoteBuilder(page);
-    await exerciseSettings(page);
+// ────────────────────────────────────────────────────────────
+// PERSONA 2: Login error states
+// ────────────────────────────────────────────────────────────
+async function personaLoginErrors(browser) {
+  const persona = { name: 'login-errors', steps: [] };
+  report.personas.push(persona);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, ignoreHTTPSErrors: true });
+  const page = await ctx.newPage();
+  const ctrl = controllerFor(page);
+
+  // Empty submit
+  await step(persona, ctrl, page, 'login submit empty form', async () => {
+    await gotoSettle(page, BASE + '/login');
+    const submit = page.locator('button[type="submit"]').first();
+    if (await submit.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await submit.click().catch(() => {});
+      await page.waitForTimeout(1200);
+    }
+  });
+  // Wrong password
+  await step(persona, ctrl, page, 'login wrong password', async () => {
+    await gotoSettle(page, BASE + '/login');
+    await page.locator('input[type="email"], input[name="email"]').first().fill(EMAIL);
+    await page.locator('input[type="password"], input[name="password"]').first().fill('definitely-not-the-real-password');
+    await page.locator('button[type="submit"]').first().click();
+    await page.waitForTimeout(2500);
+  });
+  // Bad email format
+  await step(persona, ctrl, page, 'login bad email format', async () => {
+    await gotoSettle(page, BASE + '/login');
+    await page.locator('input[type="email"], input[name="email"]').first().fill('not-an-email');
+    await page.locator('input[type="password"], input[name="password"]').first().fill('whatever123');
+    await page.locator('button[type="submit"]').first().click().catch(() => {});
+    await page.waitForTimeout(1500);
+  });
+
+  await ctx.close();
+}
+
+// ────────────────────────────────────────────────────────────
+// PERSONA 3: Signup error states (no real account created)
+// ────────────────────────────────────────────────────────────
+async function personaSignupErrors(browser) {
+  const persona = { name: 'signup-errors', steps: [] };
+  report.personas.push(persona);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, ignoreHTTPSErrors: true });
+  const page = await ctx.newPage();
+  const ctrl = controllerFor(page);
+
+  await step(persona, ctrl, page, 'signup empty submit', async () => {
+    await gotoSettle(page, BASE + '/signup');
+    const submit = page.locator('button[type="submit"]').first();
+    if (await submit.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await submit.click().catch(() => {});
+      await page.waitForTimeout(1200);
+    }
+  });
+  await step(persona, ctrl, page, 'signup invalid email', async () => {
+    await gotoSettle(page, BASE + '/signup');
+    const emailIn = page.locator('input[type="email"], input[name="email"]').first();
+    if (await emailIn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await emailIn.fill('garbage');
+      const pwIn = page.locator('input[type="password"], input[name="password"]').first();
+      if (await pwIn.isVisible({ timeout: 500 }).catch(() => false)) await pwIn.fill('short');
+      await page.locator('button[type="submit"]').first().click().catch(() => {});
+      await page.waitForTimeout(1500);
+    }
+  });
+  await step(persona, ctrl, page, 'signup existing email (uses owner email)', async () => {
+    await gotoSettle(page, BASE + '/signup');
+    const emailIn = page.locator('input[type="email"], input[name="email"]').first();
+    if (await emailIn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await emailIn.fill(EMAIL);
+      const pwIn = page.locator('input[type="password"], input[name="password"]').first();
+      if (await pwIn.isVisible({ timeout: 500 }).catch(() => false)) await pwIn.fill('AnythingStrong!1');
+      await page.locator('button[type="submit"]').first().click().catch(() => {});
+      await page.waitForTimeout(2500);
+    }
+  });
+
+  await ctx.close();
+}
+
+// ────────────────────────────────────────────────────────────
+// PERSONA 4: Authenticated owner — full walkthrough
+// ────────────────────────────────────────────────────────────
+async function personaOwner(browser) {
+  const persona = { name: 'owner', steps: [] };
+  report.personas.push(persona);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, ignoreHTTPSErrors: true });
+  const page = await ctx.newPage();
+  const ctrl = controllerFor(page);
+
+  // ── Login ──
+  await step(persona, ctrl, page, 'login: navigate', () => gotoSettle(page, BASE + '/login'));
+  const login = await step(persona, ctrl, page, 'login: submit valid creds', async () => {
+    await page.locator('input[type="email"], input[name="email"]').first().fill(EMAIL);
+    await page.locator('input[type="password"], input[name="password"]').first().fill(PASSWORD);
+    await Promise.all([
+      page.waitForURL(/\/app(\/|$)/, { timeout: 20_000 }).catch(() => null),
+      page.locator('button[type="submit"]').first().click(),
+    ]);
+    await page.waitForTimeout(2000);
+  });
+  if (!/\/app/.test(login.url)) {
+    persona.aborted = 'login did not reach /app';
+    await ctx.close();
+    return;
   }
+
+  // ── Visit /login while already authed (should bounce) ──
+  await step(persona, ctrl, page, 'visit /login while authed', async () => {
+    await gotoSettle(page, BASE + '/login', 1500);
+  });
+  await step(persona, ctrl, page, 'visit /signup while authed', async () => {
+    await gotoSettle(page, BASE + '/signup', 1500);
+  });
+
+  // ── All authed routes ──
+  const authedRoutes = [
+    ['/app', 'dashboard'],
+    ['/app/quotes', 'quotes-list'],
+    ['/app/quotes/new', 'quote-builder-new'],
+    ['/app/quotes/00000000-0000-0000-0000-000000000000', 'quote-detail bad id'],
+    ['/app/quotes/00000000-0000-0000-0000-000000000000/edit', 'quote-edit bad id'],
+    ['/app/invoices', 'invoices-list'],
+    ['/app/invoices/new', 'invoices-new'],
+    ['/app/invoices/00000000-0000-0000-0000-000000000000', 'invoice-detail bad id'],
+    ['/app/customers', 'customers'],
+    ['/app/schedule', 'schedule'],
+    ['/app/analytics', 'analytics'],
+    ['/app/templates', 'templates'],
+    ['/app/settings', 'settings'],
+    ['/app/billing', 'billing'],
+    ['/app/payments/setup', 'payments-setup'],
+    // Legacy redirects
+    ['/app/contacts', 'legacy contacts'],
+    ['/app/bookings', 'legacy bookings'],
+    ['/app/additional-work/anything', 'legacy additional-work'],
+    // In-app 404
+    ['/app/no-such', 'in-app 404'],
+  ];
+  for (const [p, name] of authedRoutes) {
+    await step(persona, ctrl, page, `owner: visit ${name}`, () => gotoSettle(page, BASE + p, 1800));
+  }
+
+  // ── Dashboard interactions ──
+  await step(persona, ctrl, page, 'dashboard: click header "New quote"', async () => {
+    await gotoSettle(page, BASE + '/app', 1500);
+    const btn = page.getByRole('link', { name: /new quote/i }).first()
+      .or(page.getByRole('button', { name: /new quote/i }).first());
+    await btn.click({ timeout: 4000 });
+    await page.waitForTimeout(1500);
+  });
+  await step(persona, ctrl, page, 'dashboard: click sidebar Customers link', async () => {
+    await gotoSettle(page, BASE + '/app', 1500);
+    const link = page.getByRole('link', { name: /^customers$/i }).first();
+    await link.click({ timeout: 4000 });
+    await page.waitForTimeout(1500);
+  });
+
+  // ── Quote builder: fill what's-the-job, change trade ──
+  await step(persona, ctrl, page, 'quote builder: fill description', async () => {
+    await gotoSettle(page, BASE + '/app/quotes/new', 1800);
+    const ta = page.locator('textarea').first();
+    if (await ta.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await ta.fill('Replace kitchen sink and dishwasher hookups');
+      await page.waitForTimeout(600);
+    }
+    // Trade select
+    const trade = page.locator('select').first();
+    if (await trade.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await trade.selectOption({ index: 2 }).catch(() => {});
+    }
+  });
+  await step(persona, ctrl, page, 'quote builder: click "start from blank"', async () => {
+    await gotoSettle(page, BASE + '/app/quotes/new', 1800);
+    const blank = page.getByText(/start from blank/i).first();
+    if (await blank.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await blank.click().catch(() => {});
+      await page.waitForTimeout(1500);
+    }
+  });
+
+  // ── Customers: open Add modal, then close ──
+  await step(persona, ctrl, page, 'customers: open Add modal', async () => {
+    await gotoSettle(page, BASE + '/app/customers', 1500);
+    const add = page.getByRole('button', { name: /\+\s*add|add customer|add your first customer/i }).first();
+    if (await add.isVisible({ timeout: 2500 }).catch(() => false)) {
+      await add.click();
+      await page.waitForTimeout(800);
+    }
+  });
+  await step(persona, ctrl, page, 'customers: close Add modal (Esc)', async () => {
+    await page.keyboard.press('Escape').catch(() => {});
+    await page.waitForTimeout(600);
+  });
+
+  // ── Invoices new: fill basic fields, then cancel ──
+  await step(persona, ctrl, page, 'invoices new: fill title + cancel', async () => {
+    await gotoSettle(page, BASE + '/app/invoices/new', 1800);
+    const title = page.locator('input').filter({ hasNot: page.locator('[type=hidden]') }).nth(1);
+    if (await title.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await title.fill('Audit-only — do not save').catch(() => {});
+    }
+    const cancel = page.getByRole('button', { name: /^cancel$/i }).first()
+      .or(page.getByRole('link', { name: /^cancel$/i }).first());
+    if (await cancel.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await cancel.click().catch(() => {});
+      await page.waitForTimeout(800);
+    }
+  });
+
+  // ── Settings: cycle every tab ──
+  const settingsTabs = [/profile/i, /payments?/i, /messages/i, /notifications/i, /account/i, /branding/i, /tax/i, /team/i];
+  for (const name of settingsTabs) {
+    await step(persona, ctrl, page, `settings tab: ${name.source}`, async () => {
+      await gotoSettle(page, BASE + '/app/settings', 1500);
+      const tab = page.getByRole('tab', { name })
+        .or(page.getByRole('button', { name }))
+        .or(page.getByText(name).first());
+      const visible = await tab.first().isVisible({ timeout: 1500 }).catch(() => false);
+      if (visible) {
+        await tab.first().click().catch(() => {});
+        await page.waitForTimeout(800);
+      } else {
+        throw new Error('tab not visible');
+      }
+    }).catch(() => {});
+  }
+
+  // ── Analytics: cycle time-range chips ──
+  await step(persona, ctrl, page, 'analytics: click 6 months', async () => {
+    await gotoSettle(page, BASE + '/app/analytics', 1500);
+    const btn = page.getByRole('button', { name: /6\s*months/i }).first();
+    if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await btn.click();
+      await page.waitForTimeout(800);
+    }
+  });
+  await step(persona, ctrl, page, 'analytics: click All time', async () => {
+    const btn = page.getByRole('button', { name: /all time/i }).first();
+    if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await btn.click();
+      await page.waitForTimeout(800);
+    }
+  });
+
+  // ── Open existing quote (if any) ──
+  await step(persona, ctrl, page, 'quotes list: click first row', async () => {
+    await gotoSettle(page, BASE + '/app/quotes', 1500);
+    const firstRow = page.locator('a[href*="/app/quotes/"]').filter({ hasNotText: /new/i }).first();
+    if (await firstRow.isVisible({ timeout: 2500 }).catch(() => false)) {
+      await firstRow.click();
+      await page.waitForTimeout(2000);
+    } else {
+      throw new Error('no quote rows');
+    }
+  }).catch(() => {});
+  await step(persona, ctrl, page, 'invoices list: click first row', async () => {
+    await gotoSettle(page, BASE + '/app/invoices', 1500);
+    const firstRow = page.locator('a[href*="/app/invoices/"]').filter({ hasNotText: /new/i }).first();
+    if (await firstRow.isVisible({ timeout: 2500 }).catch(() => false)) {
+      await firstRow.click();
+      await page.waitForTimeout(2000);
+    } else {
+      throw new Error('no invoice rows');
+    }
+  }).catch(() => {});
+
+  // ── Logout ──
+  await step(persona, ctrl, page, 'logout', async () => {
+    await gotoSettle(page, BASE + '/app', 1200);
+    const out = page.getByRole('button', { name: /sign out|log out|logout/i }).first()
+      .or(page.getByRole('link', { name: /sign out|log out|logout/i }).first());
+    if (await out.isVisible({ timeout: 2500 }).catch(() => false)) {
+      await out.click();
+      await page.waitForTimeout(2500);
+    } else {
+      throw new Error('sign-out control not found');
+    }
+  });
+  await step(persona, ctrl, page, 'after logout: /app should redirect', async () => {
+    await gotoSettle(page, BASE + '/app', 1500);
+  });
+
+  await ctx.close();
+}
+
+// ────────────────────────────────────────────────────────────
+// PERSONA 5: Customer / share-token recipient (bad tokens)
+// ────────────────────────────────────────────────────────────
+async function personaRecipient(browser) {
+  const persona = { name: 'recipient', steps: [] };
+  report.personas.push(persona);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, ignoreHTTPSErrors: true });
+  const page = await ctx.newPage();
+  const ctrl = controllerFor(page);
+
+  await step(persona, ctrl, page, 'public quote /q/garbage', () => gotoSettle(page, BASE + '/q/this-token-does-not-exist', 2500));
+  await step(persona, ctrl, page, 'public invoice /i/garbage', () => gotoSettle(page, BASE + '/i/this-token-does-not-exist', 2500));
+  await step(persona, ctrl, page, 'legacy /public/garbage', () => gotoSettle(page, BASE + '/public/this-token-does-not-exist', 2500));
+  await step(persona, ctrl, page, 'legacy /project/garbage', () => gotoSettle(page, BASE + '/project/this-token-does-not-exist', 2500));
+  await step(persona, ctrl, page, 'legacy /public/invoice/garbage', () => gotoSettle(page, BASE + '/public/invoice/this-token-does-not-exist', 2500));
+  await step(persona, ctrl, page, 'mobile viewport: /q/garbage', async () => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await gotoSettle(page, BASE + '/q/another-bad-token', 2500);
+    await page.setViewportSize({ width: 1280, height: 800 });
+  });
+
+  await ctx.close();
+}
+
+// ────────────────────────────────────────────────────────────
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  console.log(`\n=== Click-through audit against ${BASE} ===\n`);
+  await personaAnonymous(browser);
+  await personaLoginErrors(browser);
+  await personaSignupErrors(browser);
+  await personaOwner(browser);
+  await personaRecipient(browser);
 
   report.finishedAt = new Date().toISOString();
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

@@ -416,7 +416,7 @@ export default function CustomersPage() {
             {!loading && (
               <p className="cust-page-sub">
                 {stats.total} customer{stats.total !== 1 ? 's' : ''}
-                {stats.wonRevenue > 0 && ` · ${currency(stats.wonRevenue)} revenue tracked`}
+                {stats.total > 0 && stats.wonRevenue > 0 && ` · ${currency(stats.wonRevenue)} revenue tracked`}
               </p>
             )}
           </div>

@@ -28,8 +28,13 @@
 @media (min-width: 768px) { .ln-w { padding: 0 32px; } }
 
 /* ── Scroll reveal ── */
-.rv { opacity: 0; transform: translateY(22px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
-.rv.vis { opacity: 1; transform: none; }
+/* Reveal-on-scroll. Default is visible so anyone without JS, or where
+   IntersectionObserver never fires (small headless screenshot windows,
+   etc.), still sees content. JS adds .js-reveal on the documentElement
+   before the IO is wired up — only then do we start invisible-and-fade. */
+.rv { opacity: 1; transform: none; transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+html.js-reveal .rv { opacity: 0; transform: translateY(22px); }
+html.js-reveal .rv.vis { opacity: 1; transform: none; }
 .rv--d1 { transition-delay: 0.1s; }
 .rv--d2 { transition-delay: 0.2s; }
 .rv--d3 { transition-delay: 0.3s; }
