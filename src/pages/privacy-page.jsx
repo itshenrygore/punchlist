@@ -87,17 +87,20 @@ export default function PrivacyPage() {
           </p>
 
           <h3 className="terms-heading">6. Your Rights</h3>
-          <p>Under PIPEDA and applicable law, you have the right to:</p>
+          <p>Under PIPEDA (Canada), the California Consumer Privacy Act (CCPA) for California residents, and other applicable privacy laws, you have the right to:</p>
           <ul className="terms-list">
             <li>Access the personal information we hold about you</li>
             <li>Correct inaccurate information</li>
             <li>Request deletion of your account and associated data</li>
             <li>Withdraw consent for non-essential data uses</li>
-            <li>File a complaint with the Office of the Privacy Commissioner of Canada</li>
+            <li>Opt out of any "sale" or "sharing" of personal information for cross-context behavioural advertising (we do neither)</li>
           </ul>
           <p>
             To exercise any of these rights, contact us at{' '}
             <a href="mailto:privacy@punchlist.ca">privacy@punchlist.ca</a>.
+            Canadian residents may also file a complaint with the Office of the Privacy
+            Commissioner of Canada. California residents may file a complaint with the
+            California Attorney General.
           </p>
 
           <h3 className="terms-heading">7. Security</h3>

@@ -7,19 +7,30 @@ export function currency(n, country) {
   return _fmtCAD.format(num);
 }
 
-export function formatDate(iso) {
+// Default locale picks up the user's browser preference (en-US for
+// US devices, en-CA for Canada). Both render the same month-abbrev
+// format ("May 20") for date contexts where we don't need numerics,
+// so callers don't usually need to pass country — but it's available
+// for cases where we want strict US-style or CA-style output.
+function _localeFor(country) {
+  if (country === 'US') return 'en-US';
+  if (country === 'CA') return 'en-CA';
+  return undefined; // browser default
+}
+
+export function formatDate(iso, country) {
   if (!iso) return 'Not set';
   try {
-    return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+    return new Date(iso).toLocaleDateString(_localeFor(country), { year: 'numeric', month: 'short', day: 'numeric' });
   } catch {
     return iso;
   }
 }
 
-export function formatDateTime(iso) {
+export function formatDateTime(iso, country) {
   if (!iso) return 'Not set';
   try {
-    return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    return new Date(iso).toLocaleString(_localeFor(country), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
   } catch {
     return iso;
   }
