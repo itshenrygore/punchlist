@@ -1025,7 +1025,35 @@ export default function QuoteDetailPage() {
           <details className="qb-card qd-more-actions-card"><summary className="pl-toggle-row qd-more-actions-summary">
             <span className="qd-more-actions-title">More actions</span>
             <span className="pl-chevron" />
-          </summary><div className="qd-send-grid qd-more-actions-body"><button className="btn btn-secondary full-width fs-12" type="button" disabled={pdfLoading} onClick={handleDownloadPdf}>{pdfLoading?'Generating…':'Download PDF'}</button>{typeof navigator!=='undefined'&&navigator.share&&<button className="btn btn-secondary full-width fs-12" type="button" onClick={()=>nativeShare({title:quote.title||'Quote',url:shareUrl},showToast)}>Share</button>}<button className="btn btn-secondary full-width fs-12" type="button" onClick={handleDuplicate}>Duplicate as new quote</button><button className="btn btn-secondary full-width fs-12" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }}>Save as job template</button>{!confirmDelete?<button className="btn btn-secondary full-width qd-btn-danger" type="button" onClick={()=>setConfirmDelete(true)}>{quote.signed_at?'Archive':'Delete'}</button>:<div className="qd-delete-confirm-row"><button className="btn btn-secondary btn-sm qd-btn-danger" type="button" onClick={handleDelete}>{quote.signed_at?'Archive':'Delete'}</button><button className="btn btn-secondary btn-sm" type="button" onClick={()=>setConfirmDelete(false)}>Cancel</button></div>}</div></details>
+          </summary><div className="qd-send-grid qd-more-actions-body">
+            <button className="btn btn-secondary full-width fs-12" type="button" disabled={pdfLoading} onClick={handleDownloadPdf}>{pdfLoading?'Generating…':'Download PDF'}</button>
+            {typeof navigator!=='undefined'&&navigator.share&&<button className="btn btn-secondary full-width fs-12" type="button" onClick={()=>nativeShare({title:quote.title||'Quote',url:shareUrl},showToast)}>Share</button>}
+            <button className="btn btn-secondary full-width fs-12" type="button" onClick={handleDuplicate}>Duplicate as new quote</button>
+            <button className="btn btn-secondary full-width fs-12" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }}>Save as job template</button>
+            {/* Manual outcome record — for the contractor who closed the
+                quote via phone, in-person, or email and just wants to
+                mark it won/lost without forcing the customer through
+                the e-sign flow. */}
+            {['sent','viewed','revision_requested'].includes(quote.status) && (
+              <>
+                <button className="btn btn-secondary full-width fs-12" type="button" onClick={async () => {
+                  try {
+                    await updateQuoteStatus(quote.id, { status: 'approved', approved_at: new Date().toISOString() });
+                    setQuote(p => ({ ...p, status: 'approved', approved_at: new Date().toISOString() }));
+                    showToast('Marked as approved', 'success');
+                  } catch (e) { showToast(friendly(e), 'error'); }
+                }}>Mark as approved (manually)</button>
+                <button className="btn btn-secondary full-width fs-12" type="button" onClick={async () => {
+                  try {
+                    await updateQuoteStatus(quote.id, { status: 'declined' });
+                    setQuote(p => ({ ...p, status: 'declined' }));
+                    showToast('Marked as declined', 'info');
+                  } catch (e) { showToast(friendly(e), 'error'); }
+                }}>Mark as declined</button>
+              </>
+            )}
+            {!confirmDelete?<button className="btn btn-secondary full-width qd-btn-danger" type="button" onClick={()=>setConfirmDelete(true)}>{quote.signed_at?'Archive':'Delete'}</button>:<div className="qd-delete-confirm-row"><button className="btn btn-secondary btn-sm qd-btn-danger" type="button" onClick={handleDelete}>{quote.signed_at?'Archive':'Delete'}</button><button className="btn btn-secondary btn-sm" type="button" onClick={()=>setConfirmDelete(false)}>Cancel</button></div>}
+          </div></details>
         </aside>
       </div>
 

@@ -362,10 +362,28 @@ export default function DashboardPage() {
   // most-scarce vertical space).
   const recentQuotes = useMemo(() => {
     const actionIds = new Set(actionItemsRaw.map(q => q.id));
-    return [...quotes]
+    const candidates = [...quotes]
       .filter(q => !actionIds.has(q.id))
-      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
-      .slice(0, 6);
+      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
+
+    // Collapse near-identical drafts so the dashboard doesn't look
+    // like a wall of "50 Gallon Hot Water Tank Replac… No customer Draft"
+    // when a contractor abandoned a few attempts at the same job.
+    // Rule: keep only the most-recent draft per normalized title +
+    // customer (or "no customer"). Non-draft quotes are never collapsed.
+    const seenDraftKeys = new Set();
+    const out = [];
+    for (const q of candidates) {
+      const isDraft = (q.status || 'draft').toLowerCase() === 'draft';
+      if (isDraft) {
+        const key = `${(q.title || '').trim().toLowerCase().slice(0, 40)}::${q.customer_id || 'none'}`;
+        if (seenDraftKeys.has(key)) continue;
+        seenDraftKeys.add(key);
+      }
+      out.push(q);
+      if (out.length >= 6) break;
+    }
+    return out;
   }, [quotes, actionItemsRaw]);
 
   const hasAnyData = quotes.length > 0;

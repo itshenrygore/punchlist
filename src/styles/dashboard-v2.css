@@ -4267,6 +4267,12 @@ a.dv2-headline-metric:hover {
   transition: border-color .15s ease, background .15s ease;
 }
 .sch-empty-day:hover { border-color: var(--brand); background: var(--brand-bg, rgba(249,115,22,.04)); }
+.sch-empty-day--clickable {
+  text-decoration: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.sch-empty-day--clickable:hover { color: var(--brand); }
 .sch-empty-day-icon {
   display: inline-grid; place-items: center;
   width: 18px; height: 18px;

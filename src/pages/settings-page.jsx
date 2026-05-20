@@ -589,9 +589,7 @@ export default function SettingsPage() {
                     } catch (err) { showToast(friendly(err), 'error'); }
                   }} />
                 </label>
-                <span className="sp-logo-url-hint">or paste a URL:</span>
               </div>
-              <input className="input sp-logo-url-input" value={form.logo_url || ''} onChange={e => setForm(p => ({ ...p, logo_url: e.target.value }))} placeholder="https://yoursite.com/logo.png" />
               {form.logo_url && (
                 <div className="sp-logo-preview-row">
                   <img src={form.logo_url} alt="Logo preview" className="sp-logo-preview-img" onError={e => { e.target.style.display = 'none'; }} />

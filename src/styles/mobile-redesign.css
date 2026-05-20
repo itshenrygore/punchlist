@@ -176,6 +176,24 @@
   }
 
   /* Pillar teaser text */
+  /* Sticky build-scope CTA on phones — the button used to sit below
+     the fold once the contractor typed a multi-line description. Now
+     it pins to the bottom of the viewport with the teaser as a
+     supporting line. */
+  .qb-build-cta {
+    position: sticky;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    z-index: 5;
+    margin-top: 12px;
+    padding: 8px 10px 10px;
+    background: linear-gradient(180deg, rgba(246,245,242,0) 0%, var(--bg) 30%);
+    border-radius: 14px;
+  }
+  .qb-build-cta .qb-pillar-teaser {
+    text-align: center;
+    padding-top: 8px;
+  }
+
   .qb-pillar-teaser {
     font-size: 12px;
     color: var(--subtle);
