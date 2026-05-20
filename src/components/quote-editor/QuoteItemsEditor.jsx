@@ -32,6 +32,7 @@ export default function QuoteItemsEditor({
   catalogResults,
   suggestions = [],
   onAddSuggestion,
+  onAddAllSuggestions,
   onDismissSuggestion,
   onOpenForeman,
   onRetryScopeAI,
@@ -324,12 +325,22 @@ export default function QuoteItemsEditor({
         )
       )}
 
-      {/* Foreman suggestions */}
+      {/* Suggested items — contractor accepts each (or all) before they
+          land in the scope. Nothing gets added without their sign-off. */}
       {suggestions.length > 0 && (
         <div className="qe-suggestions">
           <div className="qe-sug-header">
-            <span className="qe-sug-title">Foreman suggests</span>
-            <span className="qe-sug-count">{suggestions.length}</span>
+            <div className="qe-sug-header-text">
+              <span className="qe-sug-title">Suggested for this job</span>
+              <span className="qe-sug-subtitle">Catalog matches based on your description. Review and add the ones you want — you're in control.</span>
+            </div>
+            <button
+              type="button"
+              className="qe-sug-add-all"
+              onClick={() => onAddAllSuggestions ? onAddAllSuggestions(suggestions) : suggestions.forEach(sug => onAddSuggestion(sug))}
+            >
+              Add all ({suggestions.length})
+            </button>
           </div>
           <div className="qe-sug-list">
             {suggestions.map(sug => (
@@ -343,7 +354,7 @@ export default function QuoteItemsEditor({
                   {sug.why && <span className="qe-sug-why">{sug.why}</span>}
                 </div>
                 <div className="qe-sug-actions">
-                  <button type="button" className="qe-sug-btn qe-sug-btn--add" onClick={() => onAddSuggestion(sug)}>Add</button>
+                  <button type="button" className="qe-sug-btn qe-sug-btn--add" onClick={() => onAddSuggestion(sug)}>+ Add</button>
                   <button type="button" className="qe-sug-btn" onClick={() => onDismissSuggestion(sug.id)}>Skip</button>
                 </div>
               </div>

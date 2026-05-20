@@ -97,15 +97,18 @@ function calcMonthly(principal, termMonths, apr) {
   const r = apr / 12;
   return Math.ceil(principal * (r * Math.pow(1 + r, termMonths)) / (Math.pow(1 + r, termMonths) - 1));
 }
+// Affirm's home-improvement category commonly approves 3 / 6 / 12-mo
+// terms for residential job sizes. Showing 18 / 24 mo here is rare for
+// typical Punchlist quotes and would misrepresent what the customer
+// actually sees at checkout. Cap the marketing card at 12 mo.
 const TERMS = [
-  { months: 6,  apr: 0,      label: '6mo', monthly: calcMonthly(TOTAL, 6,  0) },
+  { months: 3,  apr: 0,      label: '3mo',  monthly: calcMonthly(TOTAL, 3,  0) },
+  { months: 6,  apr: 0,      label: '6mo',  monthly: calcMonthly(TOTAL, 6,  0) },
   { months: 12, apr: 0.0999, label: '12mo', monthly: calcMonthly(TOTAL, 12, 0.0999) },
-  { months: 18, apr: 0.1499, label: '18mo', monthly: calcMonthly(TOTAL, 18, 0.1499) },
-  { months: 24, apr: 0.1999, label: '24mo', monthly: calcMonthly(TOTAL, 24, 0.1999) },
 ];
 
 function LiveQuoteCard() {
-  const [termIdx, setTermIdx] = useState(2); // default: 24 mo
+  const [termIdx, setTermIdx] = useState(2); // default: 12 mo (longest realistic)
   const [approved, setApproved] = useState(false);
   const termObj = TERMS[termIdx];
   const monthly = termObj.monthly;
@@ -240,9 +243,10 @@ export default function LandingPage() {
               <span className="ln-hi">not just quote them.</span>
             </h1>
             <p className="ln-hero-p rv rv--d1">
-              Describe the job. Punchlist builds the full scope from a 1,300-item
-              trade catalog, priced for your province. Foreman flags what most
-              contractors miss. Monthly payments get the yes — you get paid in full.
+              Describe the job — Punchlist surfaces matching line items and provincial
+              pricing from a 1,300-item catalog. You review, edit, and add. Foreman
+              flags what's missing. Customers see a monthly option and approve from
+              their phone.
             </p>
             <div className="ln-hero-ctas rv rv--d2">
               <Link to="/signup" className="ln-btn ln-btn--hero">
@@ -293,8 +297,8 @@ export default function LandingPage() {
             {/* Step 1 — Scope */}
             <div className="wf-step rv">
               <div className="wf-step-num">01</div>
-              <h3 className="wf-step-head">Describe the job. Get the full scope.</h3>
-              <p className="wf-step-desc">Trade-accurate line items, quantities, and pricing — back in seconds.</p>
+              <h3 className="wf-step-head">Describe it. We surface matching line items.</h3>
+              <p className="wf-step-desc">Suggested items + provincial pricing pulled from a 1,300-item trade catalog. You add the ones you want, edit prices, drop in anything we missed.</p>
               <div className="wf-vis wf-vis--scope">
                 <div className="wf-vis-tag">Generated in 9 sec</div>
                 {[
@@ -367,8 +371,8 @@ export default function LandingPage() {
               // versions of the same glyphs vary by platform (Apple's
               // robot vs Google's robot) and read as low-effort on a
               // page where every other detail is custom.
-              { Icon: Sparkles,    title: 'Smart scope builder',      desc: 'Describe the job — Punchlist pulls itemized scope from a 1,300-item trade catalog and prices each line for your province or state.' },
-              { Icon: ShieldCheck, title: 'Foreman — your assistant', desc: 'On the job? Foreman helps you diagnose, plan, and price what you find. Back at the truck? It reviews your scope, flags missing permits, and catches underbid labour before you send.' },
+              { Icon: Sparkles,    title: 'Catalog + provincial pricing', desc: 'Describe the job — Punchlist surfaces matching line items from a 1,300-item trade catalog, priced for your province. You review, edit prices, and add anything we missed. You\'re in control of the final scope.' },
+              { Icon: ShieldCheck, title: 'Foreman — your assistant',     desc: 'Snap a photo or describe what you\'re looking at. Foreman suggests scope items, flags missing permits, and helps you diagnose in the field. Every suggestion is yours to accept or skip.' },
               { Icon: Eye,         title: 'See when they view it',    desc: 'Real-time open tracking. Know the moment your customer reads the quote — get a text when they do.' },
               { Icon: CreditCard,  title: 'Monthly pay or full',      desc: 'Customers pick monthly payments on bigger jobs; Affirm pays you the full amount in 1–2 business days. Deposits and invoicing built in.' },
               { Icon: Smartphone,  title: 'Built for the job site',   desc: 'Build, send, and track quotes from your phone. First quote takes 3 minutes — works offline.' },
@@ -394,22 +398,32 @@ export default function LandingPage() {
                 Your second set of eyes on every quote.
               </h2>
               <p className="ln-foreman-p">
-                Tap the hard hat from any screen. Foreman reviews the scope you've
-                built, flags missing line items, checks your prices against your
-                province, and helps you think through the job before you send it.
-                Always in your pocket — at the truck or on the job.
+                Snap a photo or describe what you're looking at. Foreman suggests
+                a scope, checks your prices against your province, and flags items
+                you'd want to include. Every suggestion is just that — a suggestion.
+                You're the one who adds it to the quote.
               </p>
               <ul className="ln-foreman-list">
-                <li><span className="ln-foreman-dot" /> Reviews every scope and flags missing line items — permits, disposal, common omissions for your trade</li>
-                <li><span className="ln-foreman-dot" /> Checks labour and material pricing against your province before you send</li>
-                <li><span className="ln-foreman-dot" /> Suggests smart upsells based on the job you're describing</li>
-                <li><span className="ln-foreman-dot" /> Pull it up in the field for a second opinion on a part, code, or repair</li>
+                <li><span className="ln-foreman-dot" /> Photo or text in — suggested scope items + pricing back</li>
+                <li><span className="ln-foreman-dot" /> Flags missing line items (permits, disposal, common omissions for your trade)</li>
+                <li><span className="ln-foreman-dot" /> Checks labour and material pricing against your province</li>
+                <li><span className="ln-foreman-dot" /> Field-ready: pull it up for a second opinion on a part, code, or repair</li>
               </ul>
             </div>
             <div className="ln-foreman-card">
               <div className="ln-foreman-chat">
-                <div className="ln-foreman-bubble ln-foreman-bubble--user">
-                  Check my pricing on this furnace replacement?
+                <div className="ln-foreman-bubble ln-foreman-bubble--user ln-foreman-bubble--photo">
+                  <div className="ln-foreman-photo-thumb" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="ln-foreman-photo-label">Snapped at the customer's house</div>
+                    <div className="ln-foreman-photo-cap">"What am I looking at — and what should I quote?"</div>
+                  </div>
                 </div>
                 <div className="ln-foreman-msg">
                   <div className="ln-foreman-avatar" aria-hidden="true">
@@ -419,12 +433,12 @@ export default function LandingPage() {
                     </svg>
                   </div>
                   <div className="ln-foreman-bubble">
-                    Two things — your $4,180 furnace line is right for a 96% AFUE 80k BTU in Alberta, but you're missing the <strong>combustion air assessment</strong> (~$120) and the <strong>permit + inspection</strong> (~$185). Also: the lineset isn't typically needed on a furnace-only swap. Want me to update the scope?
+                    That looks like an <strong>80k BTU mid-efficiency furnace</strong>, pre-2000. Copper flue means you'll need to swap to <strong>PVC venting</strong> on the new unit. In Alberta the scope usually runs: removal + disposal, new 96% AFUE furnace, PVC vent kit, electrical tie-in, and a <strong>permit + inspection</strong> (~$185). Want me to put together suggested line items you can review?
                   </div>
                 </div>
                 <div className="ln-foreman-action-row">
-                  <button type="button" className="ln-foreman-chip">+ Add missing items</button>
-                  <button type="button" className="ln-foreman-chip">Remove lineset</button>
+                  <button type="button" className="ln-foreman-chip">+ Suggest scope</button>
+                  <button type="button" className="ln-foreman-chip">What's the right BTU?</button>
                 </div>
               </div>
             </div>
@@ -457,17 +471,19 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Supporting */}
+          {/* Supporting — keep one monthly-pay win, add one Foreman win
+              and one open-tracking win so the proof reflects the whole
+              feature set, not just financing. */}
           <div className="testi-grid testi-grid--2-centered rv rv--d1">
             {[
               {
-                amount: '$9,180 closed', result: 'Approved next morning',
-                quote: 'Lady said $9,180 was too much for the furnace and AC. I just resent it as $421/month — she approved it the next morning. Literally the same job, same price.',
-                name: 'Dave K.', trade: 'HVAC · Edmonton, AB', initials: 'DK',
+                amount: 'Caught $420 in misses', result: 'Before sending',
+                quote: 'Snapped a photo of the panel and Foreman flagged that the breaker count I had wouldn\'t pass inspection in BC. Added the upgrade before I hit send — that would\'ve been a callback.',
+                name: 'Marcus T.', trade: 'Electrician · Burnaby, BC', initials: 'MT',
               },
               {
-                amount: '$7,440 closed', result: 'Approved same evening',
-                quote: 'Guy ghosted me after I quoted $7,440 for a main drain. Sent it again at $341/month and he texted back that night. I don\'t do the financing part — the lender handles all that.',
+                amount: 'Closed in 18 min', result: 'From first text to deposit',
+                quote: 'Got the notification she opened the quote four times. Called her right then, answered her one question about the drain rough-in, deposit hit my account before I finished the call.',
                 name: 'Mike S.', trade: 'Plumber · Calgary, AB', initials: 'MS',
               },
             ].map((t, i) => (

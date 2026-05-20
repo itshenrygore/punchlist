@@ -9,7 +9,8 @@ import { chipForStatus } from '../lib/workflow';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { usePullToRefresh, haptic } from '../hooks/use-mobile-ux';
-import { estimateMonthly, showFinancing } from '../lib/financing';
+// Monthly payment estimates are hidden on contractor screens — they
+// belong on the customer-facing public quote view only.
 import { Card, PageHeader, RevealOnView } from '../components/ui';
 import { useScrollFade } from '../hooks/use-scroll-fade';
 import { useScrollRestore } from '../hooks/use-scroll-restore';
@@ -96,7 +97,6 @@ function QuoteRow({ quote, onDuplicate, isSelected, onToggleSelect }) {
   const status = quote.status;
   const viewBadge = quote.view_count > 0 && ['sent','viewed','revision_requested'].includes(status);
   const total = quote.total || 0;
-  const monthly = showFinancing(total) ? estimateMonthly(total) : null;
   const expiry = expiryLabel(quote.expires_at, status);
 
   const customerName = quote.customer?.name;
@@ -119,7 +119,6 @@ function QuoteRow({ quote, onDuplicate, isSelected, onToggleSelect }) {
         </span>
         <span className="ql-row-meta">
           {num}
-          {monthly && <> · <strong className="ql-row-monthly">{currency(monthly)}/mo</strong></>}
           <span className="ql-row-date">{formatDate(quote.updated_at || quote.created_at)}</span>
         </span>
       </div>
@@ -152,7 +151,6 @@ function QuoteCard({ quote, onDuplicate }) {
   const viewBadge = quote.view_count > 0 && ['sent','viewed','revision_requested'].includes(status);
   const hasCustomer = quote.customer?.name;
   const total = quote.total || 0;
-  const monthly = showFinancing(total) ? estimateMonthly(total) : null;
   const expiry = expiryLabel(quote.expires_at, status);
 
   return (
@@ -167,7 +165,6 @@ function QuoteCard({ quote, onDuplicate }) {
         <span className="ql-row-meta">
           {hasCustomer ? quote.customer.name : <span className="ql-row-draft-label">Draft</span>}
           {num && <span className="ql-row-num-dim"> · {num}</span>}
-          {monthly && <> · <strong className="ql-row-monthly">{currency(monthly)}/mo</strong></>}
           {expiry && <span className={`ql-expiry ${expiry.cls}`}> · {expiry.text}</span>}
         </span>
       </div>

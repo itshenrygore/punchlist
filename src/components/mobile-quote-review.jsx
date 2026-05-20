@@ -721,9 +721,10 @@ export default function MobileQuoteReview({ ctx }) {
             catalogQuery={catalogQuery}
             setCatalogQuery={setCatalogQuery}
             catalogResults={catalogResults}
-            suggestions={[]}
-            onAddSuggestion={() => {}}
-            onDismissSuggestion={() => {}}
+            suggestions={ctx.visibleSuggestions || []}
+            onAddSuggestion={ctx.addSuggestionToItems || (() => {})}
+            onAddAllSuggestions={ctx.addAllSuggestionsToItems || null}
+            onDismissSuggestion={ctx.dismissSuggestion || (() => {})}
             hideConfidence={true}
             onOpenForeman={() => {
               if(window.__punchlistOpenForeman){const j=description||title||'';window.__punchlistOpenForeman({starters:[`What else should I include for this ${trade.toLowerCase()} job?`,j?`Review my scope: "${j.slice(0,80)}${j.length>80?'…':''}"` :'Help me scope this quote',`What do ${trade.toLowerCase()}s commonly forget to quote?`],quoteContext:{description:j,trade,title:title||'',items:lineItems.filter(i=>i.name?.trim()).map(i=>({name:i.name,qty:i.quantity,price:i.unit_price})),total:grandTotal,province,country}});}

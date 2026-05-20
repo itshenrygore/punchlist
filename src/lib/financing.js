@@ -19,8 +19,15 @@
 /** Minimum quote value to show financing options */
 export const FINANCING_THRESHOLD = 500;
 
-/** Default term in months */
-export const DEFAULT_TERM_MONTHS = 24;
+/** Default term in months for the customer-facing "as low as" estimate.
+ * Affirm's home-improvement category commonly approves 3 / 6 / 12-month
+ * terms for typical residential jobs. We cap at 12 — the longest term
+ * most contractors will see consistently approved — so the "as low as"
+ * headline reflects what customers will actually be offered at checkout. */
+export const DEFAULT_TERM_MONTHS = 12;
+
+/** Hard cap on any term we display. Keeps estimates honest. */
+export const MAX_TERM_MONTHS = 12;
 
 /**
  * Realistic representative APR for home improvement BNPL.
@@ -52,10 +59,13 @@ export function estimateMonthly(total, termMonths = DEFAULT_TERM_MONTHS, apr = R
  */
 export function getMonthlyOptions(total) {
   if (!total || total < FINANCING_THRESHOLD) return [];
+  // Affirm home-improvement typically offers 3 / 6 / 12-month terms
+  // for residential job sizes. 24 / 36 are rare for sub-$10k jobs and
+  // misrepresent what most customers will actually be offered.
   return [
-    { term: 12, apr: 0.0999,  label: '12 mo', monthly: estimateMonthly(total, 12, 0.0999) },
-    { term: 24, apr: 0.1999,  label: '24 mo', monthly: estimateMonthly(total, 24, 0.1999) },
-    { term: 36, apr: 0.2499,  label: '36 mo', monthly: estimateMonthly(total, 36, 0.2499) },
+    { term: 3,  apr: 0.0,    label: '3 mo',  monthly: estimateMonthly(total, 3,  0.0) },
+    { term: 6,  apr: 0.0,    label: '6 mo',  monthly: estimateMonthly(total, 6,  0.0) },
+    { term: 12, apr: 0.0999, label: '12 mo', monthly: estimateMonthly(total, 12, 0.0999) },
   ].filter(o => o.monthly !== null);
 }
 
