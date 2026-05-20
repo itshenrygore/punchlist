@@ -451,7 +451,8 @@
 .dv2-arow {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  /* Columns: avatar · labels · num · chip · (optional) quick-action */
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: var(--space-3);
   min-height: var(--dv2-row-h-desktop);
@@ -462,6 +463,39 @@
   overflow: hidden;
   isolation: isolate;
   transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+/* One-touch quick-action button inside Needs-attention rows. Subtle
+   by default (no fill) so the row's primary affordance is still
+   tapping anywhere → detail; hover/active states make the action
+   feel discoverable without competing for attention. */
+.dv2-arow-quick {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.2;
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard);
+}
+.dv2-arow-quick:hover  { background: var(--brand-bg); border-color: var(--brand-line); }
+.dv2-arow-quick:active { transform: translateY(1px); }
+.dv2-arow-quick:disabled { opacity: .55; cursor: default; }
+.dv2-arow-quick-sub {
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 2px;
+}
+@media (max-width: 640px) {
+  /* On phones, drop the dollar-amount and chip if needed but keep
+     the quick action visible. Make the button slightly smaller. */
+  .dv2-arow-quick { padding: 5px 10px; font-size: 11px; }
 }
 
 /* Hover surface via pseudo opacity — NOT box-shadow transition. */
@@ -1831,18 +1865,22 @@
 .an-chart-legend {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--muted);
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 600;
 }
 .an-legend-dot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   display: inline-block;
-  margin-right: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
 }
-.an-legend-dot--sent { background: rgba(59,130,246,.2); border: 2px solid rgba(59,130,246,.4); }
+/* Brand-color tokens, full opacity — the previous .2/.4 alpha render
+   was unreadable next to the white card on a sunny mobile screen. */
+.an-legend-dot--sent { background: var(--blue, #3B82F6); }
 .an-legend-dot--won  { background: var(--brand); }
 
 /* ── Revenue by trade ── */
@@ -1991,6 +2029,94 @@
   flex: 1;
 }
 .tmpl-pro-cta { flex-shrink: 0; }
+
+/* Pro-summary block for free users — shown after a single example
+   template card so the page doesn't read as a wall of locked content. */
+.tmpl-pro-summary {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg, 18px);
+  padding: 20px 22px;
+  background: linear-gradient(135deg, rgba(231,106,60,.05) 0%, transparent 70%);
+  display: grid;
+  gap: 14px;
+}
+.tmpl-pro-summary-hd { display: grid; gap: 4px; }
+.tmpl-pro-summary-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--text);
+  margin: 0;
+}
+.tmpl-pro-summary-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin: 0;
+}
+.tmpl-pro-summary-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 6px 18px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.tmpl-pro-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.tmpl-pro-summary-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+.tmpl-pro-summary-cta { justify-self: flex-start; }
+@media (max-width: 640px) {
+  .tmpl-pro-summary-cta { justify-self: stretch; }
+}
+
+/* Collapsible settings panels — open by default on desktop, used to
+   tame the 9-field Profile wall on mobile. <details>/<summary>
+   handles the toggle natively so it's a11y-friendly. */
+.sp-collapsible {
+  padding: 0;
+  overflow: hidden;
+}
+.sp-collapsible-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 20px;
+  display: grid;
+  gap: 4px;
+  position: relative;
+}
+.sp-collapsible-summary::-webkit-details-marker { display: none; }
+.sp-collapsible-summary::after {
+  content: "⌄";
+  position: absolute;
+  right: 18px; top: 14px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
+  transition: transform .15s ease;
+}
+.sp-collapsible[open] > .sp-collapsible-summary::after {
+  transform: rotate(180deg);
+}
+/* Body padding lives on the inner content; summary keeps its own. */
+.sp-collapsible > .stack,
+.sp-collapsible > .sp-tracking-grid {
+  padding: 0 20px 20px;
+}
+.sp-collapsible-summary .eyebrow { margin: 0; }
+.sp-collapsible-summary .settings-hint,
+.sp-collapsible-summary .sp-tracking-desc { margin: 0; }
 
 /* ── Group ── */
 .tmpl-group {

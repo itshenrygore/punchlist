@@ -223,6 +223,15 @@
   }
 }
 
+/* Mobile-aware pill labels — show the short label on phones so the
+   rightmost pills don't get clipped off the edge. */
+.pl-tab-label-short { display: none; }
+.pl-tab-label-full  { display: inline; }
+@media (max-width: 640px) {
+  .pl-tab-label-short { display: inline; }
+  .pl-tab-label-full  { display: none; }
+}
+
 /* ── Quotes-list row wrapper — stable min-height, hover ──── */
 .pl-ql-list {
   contain: layout paint;

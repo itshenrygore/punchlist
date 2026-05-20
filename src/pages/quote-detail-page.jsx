@@ -1013,11 +1013,13 @@ export default function QuoteDetailPage() {
         </aside>
       </div>
 
-      {/* Mobile bars */}
-      {isDraft && <div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Continue editing →</Link></div>}
-      {!isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" disabled={sendingText} onClick={handleSendText}><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>{sendingText?'Sending…':`Text ${quote.customer?.name?.split(' ')[0]||'quote'}`}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink}><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>{linkCopied?'Copied! ✓':'Copy link'}</button>}<button className={`btn btn-secondary qd-copy-link-btn qd-copy-link-btn-compact${linkCopied?' qd-copy-link-btn--copied':''}`} type="button" onClick={handleCopyLink} aria-label="Copy quote link"><Link2 size={14}/><span className="qd-copy-link-text">{linkCopied?'✓':'Link'}</span></button></div>}
-      {isRevision&&<div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Revise & resend →</Link></div>}
-      {isApproved && <div className="qd-mobile-send-bar"><button className="btn btn-primary flex-1" type="button" disabled={creatingInvoice} onClick={handleCreateInvoice}>{creatingInvoice ? 'Creating…' : 'Create invoice'}</button></div>}
+      {/* Mobile bars — hide on the "More" tab where the in-card Share
+          controls render the same actions inline. Otherwise the user
+          sees the same Resend/Copy-link pair twice on one screen. */}
+      {mobileTab !== 'more' && isDraft && <div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Continue editing →</Link></div>}
+      {mobileTab !== 'more' && !isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" disabled={sendingText} onClick={handleSendText}><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>{sendingText?'Sending…':`Text ${quote.customer?.name?.split(' ')[0]||'quote'}`}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink}><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>{linkCopied?'Copied! ✓':'Copy link'}</button>}<button className={`btn btn-secondary qd-copy-link-btn qd-copy-link-btn-compact${linkCopied?' qd-copy-link-btn--copied':''}`} type="button" onClick={handleCopyLink} aria-label="Copy quote link"><Link2 size={14}/><span className="qd-copy-link-text">{linkCopied?'✓':'Link'}</span></button></div>}
+      {mobileTab !== 'more' && isRevision&&<div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Revise & resend →</Link></div>}
+      {mobileTab !== 'more' && isApproved && <div className="qd-mobile-send-bar"><button className="btn btn-primary flex-1" type="button" disabled={creatingInvoice} onClick={handleCreateInvoice}>{creatingInvoice ? 'Creating…' : 'Create invoice'}</button></div>}
 
       {/* v100 M3: Nudge modal — shown for sent/viewed quotes */}
       {showNudgeModal && quote && (

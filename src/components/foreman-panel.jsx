@@ -445,6 +445,17 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
     <>
       <div className="fm-overlay" onClick={onClose} />
       <div className="fm-panel" role="dialog" aria-label="Foreman AI assistant">
+        {/* Drag handle — visual affordance that this is a dismissable
+            bottom sheet on mobile. Tapping it closes the sheet for
+            users who don't notice the X in the corner. */}
+        <button
+          type="button"
+          className="fm-drag-handle"
+          onClick={onClose}
+          aria-label="Close Foreman"
+        >
+          <span className="fm-drag-handle-bar" />
+        </button>
 
         {/* ── Header ── */}
         <div className="fm-header">
