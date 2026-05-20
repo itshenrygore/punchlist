@@ -5252,17 +5252,19 @@ a.dv2-headline-metric:hover {
   gap: 10px;
 }
 .fm-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--brand);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  /* Soft brand gradient + inner highlight gives the helmet badge a
+     premium feel instead of the previous flat orange square. */
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 55%),
+    linear-gradient(165deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 80%, #000 20%) 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 16px;
-  font-family: var(--font-display);
+  box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 4px 10px rgba(231,106,60,.22);
 }
 .fm-header-title {
   font-size: 15px;
@@ -5340,18 +5342,27 @@ a.dv2-headline-metric:hover {
   margin: auto 0;
 }
 .fm-empty-logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: var(--brand);
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 55%),
+    linear-gradient(165deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 78%, #000 22%) 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 22px;
-  font-family: var(--font-display);
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 0 rgba(255,255,255,.45) inset, 0 8px 18px rgba(231,106,60,.28);
+  /* Tiny float so the empty state feels alive rather than static. */
+  animation: fm-empty-float 3.6s ease-in-out infinite;
+}
+@keyframes fm-empty-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fm-empty-logo { animation: none; }
 }
 .fm-empty-title {
   font-size: 18px;
@@ -5461,15 +5472,16 @@ a.dv2-headline-metric:hover {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--brand);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 55%),
+    linear-gradient(165deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 80%, #000 20%) 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 12px;
   flex-shrink: 0;
   margin-top: 2px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 2px 6px rgba(231,106,60,.18);
 }
 
 .fm-msg-body {

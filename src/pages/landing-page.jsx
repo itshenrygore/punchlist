@@ -240,8 +240,9 @@ export default function LandingPage() {
               <span className="ln-hi">not just quote them.</span>
             </h1>
             <p className="ln-hero-p rv rv--d1">
-              Describe the job, get a full scope back in seconds. Monthly payments get the yes.
-              You see when they open it — we follow up until it's closed.
+              Describe the job. Punchlist builds the full scope from a 1,300-item
+              trade catalog, priced for your province. Foreman flags what most
+              contractors miss. Monthly payments get the yes — you get paid in full.
             </p>
             <div className="ln-hero-ctas rv rv--d2">
               <Link to="/signup" className="ln-btn ln-btn--hero">
@@ -366,12 +367,12 @@ export default function LandingPage() {
               // versions of the same glyphs vary by platform (Apple's
               // robot vs Google's robot) and read as low-effort on a
               // page where every other detail is custom.
-              { Icon: Sparkles,    title: 'AI Scope Builder',       desc: 'Describe the job. Get a full itemized scope with trade-accurate line items in seconds — not 45 minutes.' },
-              { Icon: Eye,         title: 'See when they view it',  desc: 'Know the moment your customer opens the quote. No more guessing when to follow up.' },
-              { Icon: ShieldCheck, title: 'Foreman',                desc: 'Catches missed line items and underpricing before you send. Your margin, protected on every job.' },
-              { Icon: CreditCard,  title: 'Deposits & invoicing',   desc: 'Collect a deposit on approval. Invoice when done. Track what\'s paid — all in one place.' },
-              { Icon: Smartphone,  title: 'Built for the job site', desc: 'Build, send, and track quotes from your phone. First quote takes 3 minutes.' },
-              { Icon: PenLine,     title: 'E-signature',            desc: 'Customers sign on the quote link. No printing, no scanning, no back and forth.' },
+              { Icon: Sparkles,    title: 'Smart scope builder',      desc: 'Describe the job — Punchlist pulls itemized scope from a 1,300-item trade catalog and prices each line for your province or state.' },
+              { Icon: ShieldCheck, title: 'Foreman — your assistant', desc: 'On the job? Foreman helps you diagnose, plan, and price what you find. Back at the truck? It reviews your scope, flags missing permits, and catches underbid labour before you send.' },
+              { Icon: Eye,         title: 'See when they view it',    desc: 'Real-time open tracking. Know the moment your customer reads the quote — get a text when they do.' },
+              { Icon: CreditCard,  title: 'Monthly pay or full',      desc: 'Customers pick monthly payments on bigger jobs; Affirm pays you the full amount in 1–2 business days. Deposits and invoicing built in.' },
+              { Icon: Smartphone,  title: 'Built for the job site',   desc: 'Build, send, and track quotes from your phone. First quote takes 3 minutes — works offline.' },
+              { Icon: PenLine,     title: 'E-signature & messaging',  desc: 'Customers sign on the link. Ask questions, request changes, edit the scope — all from one share URL. You get texted instantly.' },
             ].map((f, i) => (
               <div key={i} className={`feat-card feat-card--dark rv rv--d${Math.min(i % 3, 2)}`}>
                 <div className="feat-icon" aria-hidden="true"><f.Icon size={26} strokeWidth={1.75} /></div>
@@ -379,6 +380,54 @@ export default function LandingPage() {
                 <div className="feat-desc">{f.desc}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ 4b. FOREMAN SPOTLIGHT ═══ */}
+      <section className="ln-foreman">
+        <div className="ln-w">
+          <div className="ln-foreman-grid">
+            <div className="ln-foreman-txt">
+              <span className="ln-ey">Meet Foreman</span>
+              <h2 className="ln-h2 ln-foreman-h">
+                Your second set of eyes on every quote.
+              </h2>
+              <p className="ln-foreman-p">
+                Tap the hard hat from any screen. Foreman reviews the scope you've
+                built, flags missing line items, checks your prices against your
+                province, and helps you think through the job before you send it.
+                Always in your pocket — at the truck or on the job.
+              </p>
+              <ul className="ln-foreman-list">
+                <li><span className="ln-foreman-dot" /> Reviews every scope and flags missing line items — permits, disposal, common omissions for your trade</li>
+                <li><span className="ln-foreman-dot" /> Checks labour and material pricing against your province before you send</li>
+                <li><span className="ln-foreman-dot" /> Suggests smart upsells based on the job you're describing</li>
+                <li><span className="ln-foreman-dot" /> Pull it up in the field for a second opinion on a part, code, or repair</li>
+              </ul>
+            </div>
+            <div className="ln-foreman-card">
+              <div className="ln-foreman-chat">
+                <div className="ln-foreman-bubble ln-foreman-bubble--user">
+                  Check my pricing on this furnace replacement?
+                </div>
+                <div className="ln-foreman-msg">
+                  <div className="ln-foreman-avatar" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 17h18" /><path d="M5 17a7 7 0 0 1 14 0" />
+                      <path d="M12 5v5" /><path d="M8.5 11.5l-.5 4" /><path d="M15.5 11.5l.5 4" />
+                    </svg>
+                  </div>
+                  <div className="ln-foreman-bubble">
+                    Two things — your $4,180 furnace line is right for a 96% AFUE 80k BTU in Alberta, but you're missing the <strong>combustion air assessment</strong> (~$120) and the <strong>permit + inspection</strong> (~$185). Also: the lineset isn't typically needed on a furnace-only swap. Want me to update the scope?
+                  </div>
+                </div>
+                <div className="ln-foreman-action-row">
+                  <button type="button" className="ln-foreman-chip">+ Add missing items</button>
+                  <button type="button" className="ln-foreman-chip">Remove lineset</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

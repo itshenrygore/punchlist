@@ -513,6 +513,130 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
 .ln-sec--alt { background: var(--bg2); }
 
 /* ════════════════════════════════════════════
+   FOREMAN SPOTLIGHT
+   ════════════════════════════════════════════ */
+.ln-foreman {
+  padding: 80px 0;
+  background:
+    radial-gradient(ellipse at 80% 20%, rgba(231, 106, 60, 0.08), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(231, 106, 60, 0.04), transparent 50%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+}
+@media (min-width: 768px) { .ln-foreman { padding: 110px 0; } }
+.ln-foreman-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .ln-foreman-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
+}
+.ln-foreman-h {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 12px 0 18px;
+  color: var(--text);
+}
+.ln-foreman-p {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-2);
+  margin: 0 0 20px;
+  max-width: 480px;
+}
+.ln-foreman-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.ln-foreman-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.95rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.ln-foreman-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  flex-shrink: 0;
+  margin-top: 9px;
+}
+/* The conversation card mocks the in-app Foreman bubble UI so the
+   landing visual is a faithful preview, not a generic stock graphic. */
+.ln-foreman-card {
+  background: var(--panel, #fff);
+  border: 1px solid var(--line, #e8e6e1);
+  border-radius: 20px;
+  padding: 22px 22px 18px;
+  box-shadow:
+    0 12px 32px rgba(20, 20, 18, 0.06),
+    0 2px 8px rgba(20, 20, 18, 0.04);
+}
+.ln-foreman-chat { display: grid; gap: 12px; }
+.ln-foreman-bubble {
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  background: var(--bg2, #f5f4f1);
+  color: var(--text);
+  max-width: 92%;
+  align-self: flex-start;
+}
+.ln-foreman-bubble--user {
+  background: var(--brand);
+  color: #fff;
+  align-self: flex-end;
+  margin-left: auto;
+  border-radius: 14px 14px 4px 14px;
+}
+.ln-foreman-bubble strong { color: var(--brand); font-weight: 700; }
+.ln-foreman-bubble--user strong { color: #fff; }
+.ln-foreman-msg {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.ln-foreman-avatar {
+  width: 28px; height: 28px; border-radius: 8px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.2) 0%, rgba(255,255,255,0) 55%),
+    linear-gradient(165deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 78%, #000 22%) 100%);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 2px 6px rgba(231,106,60,.18);
+}
+.ln-foreman-action-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: 38px;
+  margin-top: -2px;
+}
+.ln-foreman-chip {
+  appearance: none;
+  background: var(--panel, #fff);
+  border: 1px solid var(--line, #e8e6e1);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.ln-foreman-chip:hover { background: var(--brand-bg, rgba(231,106,60,.08)); border-color: var(--brand); }
+
+/* ════════════════════════════════════════════
    DARK SECTION (Before/After)
    ════════════════════════════════════════════ */
 .ln-dark {
@@ -1146,8 +1270,12 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
   .ln-dark { padding: 52px 0; }
   .ln-final { padding: 60px 0 72px; }
 
-  /* Hero: hide line items so card is compact enough */
-  .qc-items { display: none; }
+  /* Hero: keep the first two line items visible on phones so the
+     auto-generated scope is still readable proof. Hiding all of them
+     was hiding the entire value prop on the device contractors
+     actually arrive on. */
+  .qc-items { display: block; }
+  .qc-items .qc-item:nth-child(n+3) { display: none; }
 
   /* Workflow: single column, tighten vis cards */
   .wf-step-desc { margin-bottom: 12px; }

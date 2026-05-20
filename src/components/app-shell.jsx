@@ -24,6 +24,7 @@ import { useToast } from './toast';
 import { useKeyboardVisible } from '../hooks/use-keyboard-visible';
 import { useHideOnScroll } from '../hooks/use-hide-on-scroll';
 import ForemanPanel from './foreman-panel';
+import ForemanLogo from './foreman-logo';
 import { useForeman } from '../contexts/foreman-context';
 
 export default function AppShell({ title, subtitle, children, actions, hideTitle = false }) {
@@ -134,7 +135,7 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
               <kbd className="topbar-foreman-kbd">⌘K</kbd>
             </button>
             <button className="btn btn-ghost btn-sm topbar-foreman-btn" type="button" onClick={() => setForemanOpen(true)} aria-label="Open Foreman AI" title="Foreman AI (⌘⇧K)">
-              <svg className="topbar-foreman-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.09 6.26L20.18 9l-5 4.09L16.82 20 12 16.54 7.18 20l1.64-6.91L3.82 9l6.09-.74z"/></svg>
+              <ForemanLogo className="topbar-foreman-icon" size={18} stroke />
               <span className="topbar-foreman-label">Foreman</span>
               <kbd className="topbar-foreman-kbd">⌘⇧K</kbd>
             </button>

@@ -1,0 +1,10 @@
+import { chromium, devices } from 'playwright';
+const browser = await chromium.launch({ headless: true });
+const ctx = await browser.newContext({ ...devices['iPhone 14 Pro'] });
+const page = await ctx.newPage();
+await page.goto('http://localhost:4173/', { waitUntil: 'networkidle' });
+await page.waitForTimeout(2500);
+await page.evaluate(() => document.querySelector('.ln-hero-card')?.scrollIntoView({ block: 'center' }));
+await page.waitForTimeout(800);
+await page.screenshot({ path: 'tests/audit-runs/r4-local-landing/mobile_hero-card.png' });
+await browser.close();

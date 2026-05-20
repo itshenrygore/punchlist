@@ -227,14 +227,30 @@ export default function QuoteDetailPage() {
     } catch (e) { console.warn('[PL]', e); }
   }, [quote, quoteId]);
 
-  // Auto-open nudge from notification action (?action=nudge)
+  // Auto-open nudge from notification action (?action=nudge), and
+  // deep-link straight to the Messages tab when the contractor taps
+  // an SMS that says "Reply:" (e.g. customer-asked / changes-requested
+  // notifications). The mobile tab bar exists only on phone widths,
+  // but setting state on desktop is harmless — the layout already
+  // shows all zones at once.
   useEffect(() => {
     if (!quote) return;
     const p = new URLSearchParams(window.location.search);
+    let mutated = false;
     if (p.get('action') === 'nudge') {
       setShowNudgeModal(true);
-      window.history.replaceState({}, '', window.location.pathname);
+      mutated = true;
     }
+    if (p.get('tab') === 'messages') {
+      setMobileTab('messages');
+      // Scroll the feed into view on mobile so the conversation is
+      // the first thing the contractor sees after tapping the SMS.
+      requestAnimationFrame(() => {
+        mobileTabBarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      mutated = true;
+    }
+    if (mutated) window.history.replaceState({}, '', window.location.pathname);
   }, [quote]);
 
   // Derived
