@@ -147,6 +147,7 @@ export default function SettingsPage() {
     paypal_link: '',
     terms_conditions: '',
     email_notifications: true,
+    sms_notifications_enabled: true,
   });
   const [saving, setSaving] = useState(false);
   const [savePending, setSavePending] = useState(false);
@@ -274,6 +275,7 @@ export default function SettingsPage() {
           paypal_link: p.paypal_link || '',
           terms_conditions: p.terms_conditions || '',
           email_notifications: p.email_notifications !== false,
+          sms_notifications_enabled: p.sms_notifications_enabled !== false,
         };
         lastSavedJson.current = JSON.stringify(loaded);
         setForm(loaded);
@@ -554,11 +556,13 @@ export default function SettingsPage() {
         {/* ═══ PROFILE TAB ═══ */}
         {settingsTab === 'profile' && <>
         {/* Business profile */}
-        <div className="panel">
-          <div className="eyebrow">Business profile</div>
-          <p className="muted small settings-hint">
-            This appears on quotes and invoices sent to your customers.
-          </p>
+        <details className="panel sp-collapsible" open>
+          <summary className="sp-collapsible-summary">
+            <div className="eyebrow">Business profile</div>
+            <p className="muted small settings-hint">
+              This appears on quotes and invoices sent to your customers.
+            </p>
+          </summary>
           <div className="stack">
             <div className="form-row">
               <div>
@@ -585,9 +589,7 @@ export default function SettingsPage() {
                     } catch (err) { showToast(friendly(err), 'error'); }
                   }} />
                 </label>
-                <span className="sp-logo-url-hint">or paste a URL:</span>
               </div>
-              <input className="input sp-logo-url-input" value={form.logo_url || ''} onChange={e => setForm(p => ({ ...p, logo_url: e.target.value }))} placeholder="https://yoursite.com/logo.png" />
               {form.logo_url && (
                 <div className="sp-logo-preview-row">
                   <img src={form.logo_url} alt="Logo preview" className="sp-logo-preview-img" onError={e => { e.target.style.display = 'none'; }} />
@@ -637,14 +639,16 @@ export default function SettingsPage() {
               <div className="muted small sp-hint">This is your login email. Change it through your account provider.</div>
             </div>
           </div>
-        </div>
+        </details>
 
         {/* Quote defaults */}
-        <div className="panel">
-          <div className="eyebrow">Quote defaults</div>
-          <p className="muted small settings-hint">
-            These values are applied automatically to every new quote. You can always override them per-quote in the quote builder.
-          </p>
+        <details className="panel sp-collapsible">
+          <summary className="sp-collapsible-summary">
+            <div className="eyebrow">Quote defaults</div>
+            <p className="muted small settings-hint">
+              These values are applied automatically to every new quote. You can always override them per-quote in the quote builder.
+            </p>
+          </summary>
           <div className="stack">
             <div>
               <span className="field-label">Default quote expiry</span>
@@ -665,20 +669,22 @@ export default function SettingsPage() {
               Quotes expire {form.default_expiry_days} days after being sent. Drafts have no expiry.
             </div>
           </div>
-        </div>
+        </details>
 
         {/* ═══ QUOTE TRACKING — explainer ═══ */}
-        <div className="panel">
-          <div className="eyebrow">Quote Tracking</div>
-          <p className="muted small sp-tracking-desc">
-            Every quote you send is tracked automatically. You'll see when your customer opens it, how many times they've viewed it, and get prompted when it's time to follow up. No extra setup needed.
-          </p>
+        <details className="panel sp-collapsible">
+          <summary className="sp-collapsible-summary">
+            <div className="eyebrow">Quote Tracking</div>
+            <p className="muted small sp-tracking-desc">
+              Every quote you send is tracked automatically. You'll see when your customer opens it, how many times they've viewed it, and get prompted when it's time to follow up. No extra setup needed.
+            </p>
+          </summary>
           <div className="sp-tracking-grid">
             <div className="flex-row-gap-8">View counts and timestamps on every sent quote</div>
             <div className="flex-row-gap-8">Notifications when a customer opens your quote</div>
             <div className="flex-row-gap-8">Follow-up prompts based on viewing patterns</div>
           </div>
-        </div>
+        </details>
         </>}
 
         {/* ═══ PAYMENTS TAB ═══ */}
@@ -1018,6 +1024,35 @@ export default function SettingsPage() {
 
         {/* ═══ NOTIFICATIONS TAB ═══ */}
         {settingsTab === 'notifications' && <>
+        <div className="panel">
+          <div className="eyebrow">Text messages</div>
+          <p className="muted small settings-hint">
+            Get a text when a customer opens, approves, asks a question, or requests changes to a quote — with a one-tap link straight to the conversation.
+          </p>
+          <div className="stack">
+            <div>
+              <span className="field-label">Texts sent to</span>
+              <div className="sp-notif-email-row">
+                <span className="sp-notif-email">{form.phone || 'No phone set — add one in Profile'}</span>
+                {form.phone && <span className="muted small">Standard message rates may apply</span>}
+              </div>
+            </div>
+            <label className="sp-toggle-row">
+              <div className="sp-toggle-info">
+                <span className="field-label">Customer activity texts</span>
+                <span className="muted small">Quote opened, approved, declined, customer message, change request</span>
+              </div>
+              <input
+                type="checkbox"
+                className="settings-checkbox"
+                checked={form.sms_notifications_enabled !== false}
+                disabled={!form.phone}
+                onChange={e => setForm(p => ({ ...p, sms_notifications_enabled: e.target.checked }))}
+              />
+            </label>
+          </div>
+        </div>
+
         <div className="panel">
           <div className="eyebrow">Push notifications</div>
           <p className="muted small settings-hint">

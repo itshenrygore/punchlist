@@ -9,7 +9,8 @@ import { chipForStatus } from '../lib/workflow';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { usePullToRefresh, haptic } from '../hooks/use-mobile-ux';
-import { estimateMonthly, showFinancing } from '../lib/financing';
+// Monthly payment estimates are hidden on contractor screens — they
+// belong on the customer-facing public quote view only.
 import { Card, PageHeader, RevealOnView } from '../components/ui';
 import { useScrollFade } from '../hooks/use-scroll-fade';
 import { useScrollRestore } from '../hooks/use-scroll-restore';
@@ -29,10 +30,12 @@ const SORT_OPTIONS = [
   { value: 'number',  label: 'Quote number' },
 ];
 
-// Simplified status pills — fewer options, all fit on screen
+// Simplified status pills — fewer options, all fit on screen.
+// shortLabel is rendered on phones where "Needs follow-up" would push
+// the rightmost pill off-screen.
 const STATUS_PILLS = [
   { value: null,             label: 'All' },
-  { value: 'needs_followup', label: 'Needs follow-up' },
+  { value: 'needs_followup', label: 'Needs follow-up', shortLabel: 'Follow-up' },
   { value: 'draft',          label: 'Draft' },
   { value: 'sent',           label: 'Sent' },
   { value: 'viewed',         label: 'Viewed' },
@@ -94,7 +97,6 @@ function QuoteRow({ quote, onDuplicate, isSelected, onToggleSelect }) {
   const status = quote.status;
   const viewBadge = quote.view_count > 0 && ['sent','viewed','revision_requested'].includes(status);
   const total = quote.total || 0;
-  const monthly = showFinancing(total) ? estimateMonthly(total) : null;
   const expiry = expiryLabel(quote.expires_at, status);
 
   const customerName = quote.customer?.name;
@@ -117,7 +119,6 @@ function QuoteRow({ quote, onDuplicate, isSelected, onToggleSelect }) {
         </span>
         <span className="ql-row-meta">
           {num}
-          {monthly && <> · <strong className="ql-row-monthly">{currency(monthly)}/mo</strong></>}
           <span className="ql-row-date">{formatDate(quote.updated_at || quote.created_at)}</span>
         </span>
       </div>
@@ -150,7 +151,6 @@ function QuoteCard({ quote, onDuplicate }) {
   const viewBadge = quote.view_count > 0 && ['sent','viewed','revision_requested'].includes(status);
   const hasCustomer = quote.customer?.name;
   const total = quote.total || 0;
-  const monthly = showFinancing(total) ? estimateMonthly(total) : null;
   const expiry = expiryLabel(quote.expires_at, status);
 
   return (
@@ -165,7 +165,6 @@ function QuoteCard({ quote, onDuplicate }) {
         <span className="ql-row-meta">
           {hasCustomer ? quote.customer.name : <span className="ql-row-draft-label">Draft</span>}
           {num && <span className="ql-row-num-dim"> · {num}</span>}
-          {monthly && <> · <strong className="ql-row-monthly">{currency(monthly)}/mo</strong></>}
           {expiry && <span className={`ql-expiry ${expiry.cls}`}> · {expiry.text}</span>}
         </span>
       </div>
@@ -434,7 +433,12 @@ export default function QuotesListPage() {
               className={`pl-tab${active ? ' is-active' : ''}`}
               onClick={() => setStatusFilter(p.value)}
             >
-              {p.label}
+              {p.shortLabel
+                ? <>
+                    <span className="pl-tab-label-full">{p.label}</span>
+                    <span className="pl-tab-label-short">{p.shortLabel}</span>
+                  </>
+                : p.label}
             </button>
           );
         })}
@@ -528,13 +532,27 @@ export default function QuotesListPage() {
             </div>
             {/* Mobile card list */}
             <div className="ql-cards pl-ql-list">
-              {filtered.map(q => (
-                <div key={q.id} className="pl-ql-row-wrap">
-                  <SwipeableRow onSwipe={() => q.status === 'draft' ? handleDeleteDraft(q.id) : handleArchive(q.id)} label={q.status === 'draft' ? 'Delete' : 'Archive'} color={q.status === 'draft' ? 'var(--red, #ef4444)' : undefined}>
-                    <QuoteCard quote={q} onDuplicate={handleDuplicate} />
-                  </SwipeableRow>
-                </div>
-              ))}
+              {filtered.map(q => {
+                // Swipe-to-archive should only appear for quotes in a
+                // terminal or pre-send state. A contractor pulling on a
+                // quote the customer just viewed expects to follow up,
+                // not to file it away — and accidental archive of an
+                // in-flight quote is hard to recover from.
+                const TERMINAL = ['declined', 'expired', 'paid', 'converted_to_invoice'];
+                const swipeable = q.status === 'draft' || TERMINAL.includes(q.status);
+                return (
+                  <div key={q.id} className="pl-ql-row-wrap">
+                    <SwipeableRow
+                      onSwipe={() => q.status === 'draft' ? handleDeleteDraft(q.id) : handleArchive(q.id)}
+                      label={q.status === 'draft' ? 'Delete' : 'Archive'}
+                      color={q.status === 'draft' ? 'var(--red, #ef4444)' : undefined}
+                      disabled={!swipeable}
+                    >
+                      <QuoteCard quote={q} onDuplicate={handleDuplicate} />
+                    </SwipeableRow>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

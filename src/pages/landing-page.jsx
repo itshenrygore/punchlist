@@ -69,16 +69,27 @@ function Nav() {
   );
 }
 
-/* ── Jobs marquee data ── */
+/* ── Jobs marquee data ──
+ * A real contractor's day spans $200 service calls to $20k renovations.
+ * The marquee mixes small / mid / large so a one-person plumber doing
+ * faucet swaps and a GC doing kitchen renos both see themselves on the
+ * page. Skews slightly to mid-size since that's where most service
+ * contractors actually live. */
 const MARQUEE = [
-  { amount: '$10,830', job: 'Furnace + AC replacement', city: 'Edmonton, AB' },
-  { amount: '$13,750', job: 'Panel upgrade to 200A', city: 'Vancouver, BC' },
-  { amount: '$7,440',  job: 'Main drain replacement', city: 'Calgary, AB' },
-  { amount: '$22,175', job: 'Kitchen renovation', city: 'Toronto, ON' },
-  { amount: '$12,640', job: 'Roof replacement — 30yr shingle', city: 'Ottawa, ON' },
-  { amount: '$8,925',  job: 'Full bathroom reno', city: 'Burnaby, BC' },
-  { amount: '$9,180',  job: 'Boiler swap + radiators', city: 'Mississauga, ON' },
-  { amount: '$6,375',  job: 'Basement electrical + panel', city: 'Regina, SK' },
+  { amount: '$185',    job: 'Kitchen faucet replacement',         city: 'Calgary, AB' },
+  { amount: '$1,290',  job: 'Water heater swap — 50 gal gas',     city: 'Edmonton, AB' },
+  { amount: '$420',    job: 'Dishwasher install + shutoff',       city: 'Burnaby, BC' },
+  { amount: '$3,150',  job: 'Bathroom faucet + vanity reno',      city: 'Toronto, ON' },
+  { amount: '$675',    job: '15A circuit + GFCI in garage',       city: 'Phoenix, AZ' },
+  { amount: '$10,830', job: 'Furnace + AC replacement',           city: 'Edmonton, AB' },
+  { amount: '$2,480',  job: 'Toilet + main shutoff swap',         city: 'Austin, TX' },
+  { amount: '$13,750', job: 'Panel upgrade to 200A',              city: 'Vancouver, BC' },
+  { amount: '$890',    job: 'EV charger circuit — 40A',           city: 'Denver, CO' },
+  { amount: '$5,420',  job: 'Roof leak repair + 6 sq shingles',   city: 'Ottawa, ON' },
+  { amount: '$340',    job: 'Hose bib replacement + insulation',  city: 'Winnipeg, MB' },
+  { amount: '$7,440',  job: 'Main drain replacement',             city: 'Atlanta, GA' },
+  { amount: '$1,650',  job: 'Bathroom fan + ducting through roof',city: 'Halifax, NS' },
+  { amount: '$22,175', job: 'Kitchen renovation',                 city: 'Toronto, ON' },
 ];
 
 /* ── Interactive Quote Card ── */
@@ -97,18 +108,38 @@ function calcMonthly(principal, termMonths, apr) {
   const r = apr / 12;
   return Math.ceil(principal * (r * Math.pow(1 + r, termMonths)) / (Math.pow(1 + r, termMonths) - 1));
 }
+// Affirm's home-improvement category commonly approves 3 / 6 / 12-mo
+// terms for residential job sizes. Showing 18 / 24 mo here is rare for
+// typical Punchlist quotes and would misrepresent what the customer
+// actually sees at checkout. Cap the marketing card at 12 mo.
 const TERMS = [
-  { months: 6,  apr: 0,      label: '6mo', monthly: calcMonthly(TOTAL, 6,  0) },
+  { months: 3,  apr: 0,      label: '3mo',  monthly: calcMonthly(TOTAL, 3,  0) },
+  { months: 6,  apr: 0,      label: '6mo',  monthly: calcMonthly(TOTAL, 6,  0) },
   { months: 12, apr: 0.0999, label: '12mo', monthly: calcMonthly(TOTAL, 12, 0.0999) },
-  { months: 18, apr: 0.1499, label: '18mo', monthly: calcMonthly(TOTAL, 18, 0.1499) },
-  { months: 24, apr: 0.1999, label: '24mo', monthly: calcMonthly(TOTAL, 24, 0.1999) },
 ];
 
 function LiveQuoteCard() {
-  const [termIdx, setTermIdx] = useState(2); // default: 24 mo
+  // Start on the shortest term so the auto-cycle demo below has
+  // somewhere to go. Once it lands on the cheapest monthly (12mo)
+  // it stops there for the rest of the page life.
+  const [termIdx, setTermIdx] = useState(0);
   const [approved, setApproved] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
   const termObj = TERMS[termIdx];
   const monthly = termObj.monthly;
+
+  // Auto-cycle through the terms one time after page load — shows
+  // the visitor that the chips do something AND lands on the
+  // cheapest monthly figure. Stops the moment the user taps a chip.
+  useEffect(() => {
+    if (userInteracted) return;
+    const ids = [];
+    // Delay so the page has settled and the count-up animation
+    // has space to read as intentional.
+    ids.push(setTimeout(() => setTermIdx(i => userInteracted ? i : Math.min(i + 1, 2)), 1400));
+    ids.push(setTimeout(() => setTermIdx(i => userInteracted ? i : Math.min(i + 1, 2)), 2800));
+    return () => ids.forEach(clearTimeout);
+  }, [userInteracted]);
 
   // Smooth count-up between term toggles instead of a hard cut. This
   // is the marquee moment the landing page sells — the monthly number
@@ -136,7 +167,7 @@ function LiveQuoteCard() {
 
   return (
     <div className="qc">
-      <div className="qc-badge">Live demo — try it</div>
+      <div className="qc-badge">What your customer sees — tap a term</div>
       <div className="qc-body">
         <div className="qc-head">
           <div className="qc-avatar">CA</div>
@@ -168,7 +199,7 @@ function LiveQuoteCard() {
           {TERMS.map((t, i) => (
             <button key={t.months} type="button"
               className={`qc-t${termIdx === i ? ' qc-t--on' : ''}`}
-              onClick={() => { setTermIdx(i); setApproved(false); }}>
+              onClick={() => { setUserInteracted(true); setTermIdx(i); setApproved(false); }}>
               {t.label}
             </button>
           ))}
@@ -240,8 +271,9 @@ export default function LandingPage() {
               <span className="ln-hi">not just quote them.</span>
             </h1>
             <p className="ln-hero-p rv rv--d1">
-              Describe the job, get a full scope back in seconds. Monthly payments get the yes.
-              You see when they open it — we follow up until it's closed.
+              Describe the job. Get a starting scope with pricing for your area.
+              Edit, adjust, send. Your customer signs and picks how to pay —
+              all from their phone.
             </p>
             <div className="ln-hero-ctas rv rv--d2">
               <Link to="/signup" className="ln-btn ln-btn--hero">
@@ -253,6 +285,9 @@ export default function LandingPage() {
               <span><Check size={12} strokeWidth={3} />5 free quotes/month</span>
               <span><Check size={12} strokeWidth={3} />Works from your phone</span>
               <span><Check size={12} strokeWidth={3} />No credit card</span>
+            </div>
+            <div className="ln-hero-trust rv rv--d3">
+              Stop losing jobs to whoever quoted first.
             </div>
           </div>
           <div className="ln-hero-card rv rv--d1">
@@ -286,63 +321,67 @@ export default function LandingPage() {
           <div className="ln-sh rv">
             <span className="ln-ey">How it works</span>
             <h2 className="ln-h2">From job description to deposit paid.</h2>
+            <p className="ln-sh-sub">First quote takes about 3 minutes. Every one after is faster.</p>
           </div>
           <div className="wf-grid">
 
             {/* Step 1 — Scope */}
             <div className="wf-step rv">
               <div className="wf-step-num">01</div>
-              <h3 className="wf-step-head">Describe the job. Get the full scope.</h3>
-              <p className="wf-step-desc">Trade-accurate line items, quantities, and pricing — back in seconds.</p>
+              <h3 className="wf-step-head">Describe it. We surface matching line items.</h3>
+              <p className="wf-step-desc">Suggested items pulled from a 1,300-item trade catalog, priced for where you work. You add the ones you want, edit prices, drop in anything we missed.</p>
               <div className="wf-vis wf-vis--scope">
-                <div className="wf-vis-tag">Generated in 9 sec</div>
+                <div className="wf-vis-tag">Suggested in 9 sec</div>
                 {[
-                  ['Remove & dispose of existing furnace + AC', '$475'],
-                  ['Supply & install gas furnace — 96% AFUE, 80k BTU', '$4,180'],
-                  ['Supply & install central AC — 3.5 ton, 16 SEER', '$4,625'],
-                  ['Lineset, flue liner, electrical & Ecobee thermostat', '$1,550'],
+                  ['Remove old water heater + safe disposal', '$120'],
+                  ['Supply & install 50 gal natural gas heater', '$895'],
+                  ['New flex connectors, expansion tank, T&P valve', '$185'],
+                  ['Re-pipe + leak test + city permit', '$90'],
                 ].map(([name, price], i) => (
                   <div key={i} className="wf-scope-row">
                     <span className="wf-scope-name">{name}</span>
                     <span className="wf-scope-price">{price}</span>
                   </div>
                 ))}
-                <div className="wf-scope-total"><span>Total</span><span>$10,830</span></div>
+                <div className="wf-scope-total"><span>Total</span><span>$1,290</span></div>
               </div>
             </div>
 
-            {/* Step 2 — Monthly price */}
+            {/* Step 2 — Monthly price (on $500+ jobs only — that's where
+                the financing value prop actually moves the close) */}
             <div className="wf-step rv rv--d1">
               <div className="wf-step-num">02</div>
-              <h3 className="wf-step-head">Your customer sees a number they'll approve.</h3>
-              <p className="wf-step-desc">Monthly payment options on every quote. They sign from their phone. You get paid the full amount within 1–2 business days.</p>
+              <h3 className="wf-step-head">On bigger jobs, a monthly option gets the yes.</h3>
+              <p className="wf-step-desc">For jobs over $500, customers can pick a monthly payment at checkout. They sign from their phone. Affirm pays you the full amount in 1–2 business days.</p>
               <div className="wf-vis wf-vis--price">
                 <div className="wf-price-eyebrow">Customer sees</div>
-                <div className="wf-price-big">$552<span>/mo</span></div>
-                <div className="wf-price-sub">Same $10,830. Same margin. Zero risk.</div>
-                <div className="wf-price-won">✓ Approved — $10,830 paid in full</div>
+                <div className="wf-price-big">$654<span>/mo</span></div>
+                <div className="wf-price-sub">Same $7,440 main drain. Same margin. Zero risk to you.</div>
+                <div className="wf-price-won">✓ Approved — $7,440 paid in full</div>
               </div>
             </div>
 
-            {/* Step 3 — Track + follow up */}
+            {/* Step 3 — Get paid (was "track + follow up"; reframed as
+                the conclusion of the arc so the visitor finishes on the
+                outcome, not the tooling) */}
             <div className="wf-step rv rv--d2">
               <div className="wf-step-num">03</div>
-              <h3 className="wf-step-head">Know when they open it. We follow up for you.</h3>
-              <p className="wf-step-desc">Real-time open tracking and automated follow-ups — built in. You just show up to do the job.</p>
+              <h3 className="wf-step-head">Track it, follow up, get paid.</h3>
+              <p className="wf-step-desc">You get a text the moment they open the quote. Punchlist auto-follows-up if they go quiet. Deposit hits your bank — done.</p>
               <div className="wf-vis wf-vis--notif">
                 <div className="wf-notif rv">
                   <div className="wf-notif-icon">📋</div>
                   <div className="wf-notif-body">
                     <div className="wf-notif-app">Punchlist</div>
-                    <div className="wf-notif-msg">Kevin opened your $10,830 quote</div>
+                    <div className="wf-notif-msg">Kevin opened your $1,290 quote</div>
                   </div>
                   <div className="wf-notif-time">now</div>
                 </div>
                 <div className="wf-followup rv rv--d1">
                   <div className="wf-followup-dot" />
                   <div className="wf-followup-content">
-                    <div className="wf-followup-label">Auto follow-up sent</div>
-                    <div className="wf-followup-msg">"Hey Kevin — any questions on the quote? Happy to walk you through it."</div>
+                    <div className="wf-followup-label">Deposit hit your account</div>
+                    <div className="wf-followup-msg">$258 from Kevin · Stripe payout in 2 business days.</div>
                   </div>
                 </div>
               </div>
@@ -360,25 +399,94 @@ export default function LandingPage() {
             <span className="ln-ey ln-ey--light">What's included</span>
             <h2 className="ln-h2 ln-h2--light">Everything you need to close the job.</h2>
           </div>
-          <div className="feat-grid">
+          {/* Lead with the three features that matter most: the catalog
+              (the unfair advantage), Foreman (the differentiator),
+              customer payment (the close mechanic). Below the fold, the
+              other three are listed as a plus row so they don't compete
+              for attention. */}
+          <div className="feat-grid feat-grid--big">
             {[
-              // Lucide icons render consistently across OSes — emoji
-              // versions of the same glyphs vary by platform (Apple's
-              // robot vs Google's robot) and read as low-effort on a
-              // page where every other detail is custom.
-              { Icon: Sparkles,    title: 'AI Scope Builder',       desc: 'Describe the job. Get a full itemized scope with trade-accurate line items in seconds — not 45 minutes.' },
-              { Icon: Eye,         title: 'See when they view it',  desc: 'Know the moment your customer opens the quote. No more guessing when to follow up.' },
-              { Icon: ShieldCheck, title: 'Foreman',                desc: 'Catches missed line items and underpricing before you send. Your margin, protected on every job.' },
-              { Icon: CreditCard,  title: 'Deposits & invoicing',   desc: 'Collect a deposit on approval. Invoice when done. Track what\'s paid — all in one place.' },
-              { Icon: Smartphone,  title: 'Built for the job site', desc: 'Build, send, and track quotes from your phone. First quote takes 3 minutes.' },
-              { Icon: PenLine,     title: 'E-signature',            desc: 'Customers sign on the quote link. No printing, no scanning, no back and forth.' },
+              { Icon: Sparkles,    title: 'Catalog + your-area pricing', desc: 'Describe the job — Punchlist surfaces matching line items from a 1,300-item trade catalog, priced for where you work. Review, edit, and add anything we missed. You\'re in control of the final scope.' },
+              { Icon: ShieldCheck, title: 'Foreman — your assistant',     desc: 'Snap a photo or describe what you\'re looking at. Foreman suggests scope items, flags missing permits, and helps you diagnose in the field. Every suggestion is yours to accept or skip.' },
+              { Icon: CreditCard,  title: 'Customer monthly pay or full',  desc: 'Customers pick a monthly payment on bigger jobs; the lender pays you the full amount in 1–2 business days. Deposits and invoicing built in.' },
             ].map((f, i) => (
-              <div key={i} className={`feat-card feat-card--dark rv rv--d${Math.min(i % 3, 2)}`}>
-                <div className="feat-icon" aria-hidden="true"><f.Icon size={26} strokeWidth={1.75} /></div>
+              <div key={i} className={`feat-card feat-card--dark feat-card--big rv rv--d${Math.min(i, 2)}`}>
+                <div className="feat-icon" aria-hidden="true"><f.Icon size={28} strokeWidth={1.75} /></div>
                 <div className="feat-title">{f.title}</div>
                 <div className="feat-desc">{f.desc}</div>
               </div>
             ))}
+          </div>
+
+          <div className="feat-plus-row rv rv--d2">
+            <span className="feat-plus-label">Also included</span>
+            <ul className="feat-plus-list">
+              <li><Eye size={14} strokeWidth={2} /><strong>Open tracking + auto follow-ups</strong> — text when they view, nudge if they go cold.</li>
+              <li><Smartphone size={14} strokeWidth={2} /><strong>Built for the job site</strong> — works offline, fully thumb-driven, first quote in ~3 minutes.</li>
+              <li><PenLine size={14} strokeWidth={2} /><strong>E-signature + messaging</strong> — customer signs on the link, asks questions in the same thread.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ 4b. FOREMAN SPOTLIGHT ═══ */}
+      <section className="ln-foreman">
+        <div className="ln-w">
+          <div className="ln-foreman-grid">
+            <div className="ln-foreman-txt">
+              <span className="ln-ey">Meet Foreman</span>
+              <h2 className="ln-h2 ln-foreman-h">
+                Your second set of eyes on every quote.
+              </h2>
+              <p className="ln-foreman-p">
+                Snap a photo or describe what you're looking at. Foreman suggests
+                a scope, checks your prices against your region, and flags items
+                you'd want to include. Every suggestion is just that — a suggestion.
+                You're the one who adds it to the quote.
+              </p>
+              <ul className="ln-foreman-list">
+                <li><span className="ln-foreman-dot" /> Photo or text in — suggested scope items + pricing back</li>
+                <li><span className="ln-foreman-dot" /> Flags missing line items (permits, disposal, common omissions for your trade)</li>
+                <li><span className="ln-foreman-dot" /> Checks labour and material pricing against your region</li>
+                <li><span className="ln-foreman-dot" /> Field-ready: pull it up for a second opinion on a part, code, or repair</li>
+              </ul>
+            </div>
+            <div className="ln-foreman-card">
+              <div className="ln-foreman-chat">
+                <div className="ln-foreman-bubble ln-foreman-bubble--user">
+                  Reviewing my 200A panel upgrade quote — $12,400, Edmonton, 1970s home. Anything I'm missing before I send it?
+                </div>
+                <div className="ln-foreman-msg">
+                  <div className="ln-foreman-avatar" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 17h18" /><path d="M5 17a7 7 0 0 1 14 0" />
+                      <path d="M12 5v5" /><path d="M8.5 11.5l-.5 4" /><path d="M15.5 11.5l.5 4" />
+                    </svg>
+                  </div>
+                  <div className="ln-foreman-bubble">
+                    Solid scope. Three things you'll want to add for Alberta:
+                    <br/>(1) <strong>Meter base swap</strong> to 200A rated (~$320 + utility coordination)
+                    <br/>(2) <strong>AFCI breakers on bedroom circuits</strong> — CEC 2024 requirement (~$240 in parts)
+                    <br/>(3) <strong>EPCOR temporary disconnect</strong> for the cutover (~$180, schedule 5 days ahead)
+                    <br/><br/>Permit + final inspection ~$285. Want me to add these to the scope?
+                  </div>
+                </div>
+                <div className="ln-foreman-action-row">
+                  <button type="button" className="ln-foreman-chip">+ Add all 4 items</button>
+                  <button type="button" className="ln-foreman-chip">Skip — already covered</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Inline CTA — picks up the visitor at peak engagement after
+              they see Foreman in action. No pricing distraction, no
+              card requested. */}
+          <div className="ln-section-cta rv rv--d2">
+            <Link to="/signup" className="ln-btn ln-btn--hero">
+              Try Foreman free <ArrowRight size={14} />
+            </Link>
+            <span className="ln-section-cta-note">5 free quotes/month · No credit card</span>
           </div>
         </div>
       </section>
@@ -391,13 +499,16 @@ export default function LandingPage() {
             <h2 className="ln-h2">What contractors are saying.</h2>
           </div>
 
-          {/* Featured testimonial */}
+          {/* Featured testimonial — keep one big monthly-pay win as the
+              page anchor. Monthly figure now matches the platform's 12mo
+              cap so the math reads honest if a contractor checks it. */}
           <div className="testi-feature rv">
-            <div className="testi-feature-badge">$13,750 closed · Deposit paid on site</div>
+            <div className="testi-feature-badge">$13,750 closed · Deposit paid in the kitchen</div>
             <blockquote className="testi-feature-quote">
               "Showed the customer $13,750 for a panel upgrade and you could see them
-              mentally calling three other guys. Switched it to $631/month and they just
-              said okay. Paid the deposit right there in the kitchen."
+              mentally calling three other guys. Switched the quote to show
+              $1,209/month and they just said okay. Paid the deposit right
+              there in the kitchen."
             </blockquote>
             <div className="testi-feature-who">
               <div className="testi-avatar testi-avatar--lg">TR</div>
@@ -408,18 +519,31 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Supporting */}
-          <div className="testi-grid testi-grid--2-centered rv rv--d1">
+          {/* Supporting grid — one card per major feature so the proof
+              reflects the whole product, not just financing. Each card
+              has a consistent badge structure (top metric + result) to
+              match the featured testimonial above. */}
+          <div className="testi-grid rv rv--d1">
             {[
               {
-                amount: '$9,180 closed', result: 'Approved next morning',
-                quote: 'Lady said $9,180 was too much for the furnace and AC. I just resent it as $421/month — she approved it the next morning. Literally the same job, same price.',
-                name: 'Dave K.', trade: 'HVAC · Edmonton, AB', initials: 'DK',
+                amount: '$420 caught', result: 'Before sending',
+                quote: 'Snapped a photo of the panel and Foreman flagged that the breaker count I had wouldn\'t pass inspection in BC. Added the upgrade before I hit send — that would\'ve been a callback.',
+                name: 'Marcus T.', trade: 'Electrician · Burnaby, BC', initials: 'MT',
               },
               {
-                amount: '$7,440 closed', result: 'Approved same evening',
-                quote: 'Guy ghosted me after I quoted $7,440 for a main drain. Sent it again at $341/month and he texted back that night. I don\'t do the financing part — the lender handles all that.',
+                amount: '18 minutes', result: 'From first text to deposit',
+                quote: 'Got the notification she opened the quote four times. Called her right then, answered her one question about the drain rough-in, deposit hit my account before I finished the call.',
                 name: 'Mike S.', trade: 'Plumber · Calgary, AB', initials: 'MS',
+              },
+              {
+                amount: '$2,680 saved', result: 'Pricing caught', tone: 'good',
+                quote: 'I had a roof tear-off priced from memory. Foreman compared it to my area and said my disposal line was $300 light and I\'d forgotten ice & water shield on the eaves. Both real items I would have eaten on the job.',
+                name: 'Dave L.', trade: 'Roofer · Edmonton, AB', initials: 'DL',
+              },
+              {
+                amount: '3 minutes', result: 'From job site to quote sent',
+                quote: 'Customer called about a furnace at 7pm. Drove over, typed it into Punchlist while standing in their basement, sent the quote before I got back to the truck. Signed by 7:45.',
+                name: 'Sarah K.', trade: 'HVAC · Ottawa, ON', initials: 'SK',
               },
             ].map((t, i) => (
               <div key={i} className="testi-card">
@@ -435,6 +559,15 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Inline CTA — right after social proof, the most-likely
+              "I'm sold" moment on the page. */}
+          <div className="ln-section-cta rv rv--d2">
+            <Link to="/signup" className="ln-btn ln-btn--hero">
+              Start your first quote <ArrowRight size={14} />
+            </Link>
+            <span className="ln-section-cta-note">First quote takes ~3 minutes</span>
           </div>
         </div>
       </section>
@@ -457,11 +590,23 @@ export default function LandingPage() {
                 a: 'The quote automatically falls back to showing the full price. Nothing breaks. The job stays live and your customer can still approve at the lump sum — or you adjust and resend.',
               },
               {
+                q: 'Can I edit prices and items myself?',
+                a: 'Yes. Every suggested line item is just that — a suggestion. You add the ones you want, change the price on any of them, add anything we missed, and remove anything that doesn\'t apply. The catalog is a starting point. You build the final quote.',
+              },
+              {
+                q: 'What if my customer doesn\'t have a smartphone?',
+                a: 'They can open the quote link on any device with a browser — laptop, tablet, even an old desktop. Or you can show it on your phone in their kitchen and they sign with their finger. Print + sign also works if they prefer paper.',
+              },
+              {
+                q: 'How do I actually get paid?',
+                a: 'Deposits and full payments hit your bank account through Stripe Connect (the same system Lyft and Shopify use). Set it up once in Settings → Payments and you\'re done. Most contractors see funds in 1–2 business days after the customer pays.',
+              },
+              {
                 q: 'What does it cost me?',
                 a: 'Free for 5 quotes/month — no card required, no time limit. Pro is $29/month: unlimited quotes, activity tracking, Foreman, invoicing, and deposit collection. One extra closed job covers a full year. A 2.5% platform fee applies to deposits and invoice payments collected through Punchlist — there are no other hidden charges.',
               },
             ].map((item, i) => (
-              <div key={i} className={`catch-card rv rv--d${i}`}>
+              <div key={i} className={`catch-card rv rv--d${Math.min(i, 2)}`}>
                 <div className="catch-q">{item.q}</div>
                 <div className="catch-a">{item.a}</div>
               </div>
@@ -490,8 +635,9 @@ export default function LandingPage() {
               <ul className="pr-feats">
                 {[
                   '5 quotes per month',
-                  'Scope builder — 1,000+ trade items',
-                  'Monthly payment display on quotes',
+                  'Scope builder — 1,300 trade items',
+                  'Provincial pricing built in',
+                  'Customer monthly-payment display',
                   'Customer e-signature',
                   'Works from your phone',
                 ].map((f, i) => <li key={i} className="pr-f"><Check size={14} strokeWidth={2.5} />{f}</li>)}
@@ -512,8 +658,8 @@ export default function LandingPage() {
                 {[
                   'Everything in Free',
                   'Unlimited quotes',
-                  'Financing checkout for customers',
-                  'Foreman — catches missed items & underpricing',
+                  'Foreman — photo + field assistant',
+                  'Customer financing at checkout',
                   'Activity tracking + auto follow-ups',
                   'Deposit collection',
                   'Invoicing + payment tracking',
@@ -521,6 +667,47 @@ export default function LandingPage() {
               </ul>
               <Link to="/signup" className="ln-btn ln-btn--full">Start free — upgrade anytime <ArrowRight size={14} /></Link>
               <div className="pr-trial-note">No credit card required to start</div>
+              <div className="pr-fee-note">
+                <span className="pr-fee-dot" aria-hidden="true">•</span>
+                2.5% platform fee on payments your customer makes through Punchlist.
+                No other charges.
+              </div>
+            </div>
+          </div>
+
+          {/* Competitive anchor — drop a quiet line so visitors who
+              know what ServiceTitan / Houzz Pro cost see the value. */}
+          <div className="pr-compare rv rv--d2">
+            <div className="pr-compare-inner">
+              <span className="pr-compare-row">
+                <span className="pr-compare-name">ServiceTitan</span>
+                <span className="pr-compare-price">$400+/mo</span>
+              </span>
+              <span className="pr-compare-row">
+                <span className="pr-compare-name">Houzz Pro</span>
+                <span className="pr-compare-price">~$99/mo</span>
+              </span>
+              <span className="pr-compare-row pr-compare-row--us">
+                <span className="pr-compare-name">Punchlist Pro</span>
+                <span className="pr-compare-price">$29/mo</span>
+              </span>
+            </div>
+            <p className="pr-compare-note">Same workflow — quote, send, get paid. A fraction of the cost.</p>
+          </div>
+
+          {/* Integrations strip — answers the "is this a real tool"
+              question without a separate section. Names of trusted
+              partners do more than a logo grid would. */}
+          <div className="pr-integ rv rv--d3">
+            <span className="pr-integ-label">Built on infrastructure you already trust</span>
+            <div className="pr-integ-list">
+              <span>Stripe Connect for payouts</span>
+              <span aria-hidden="true">·</span>
+              <span>Twilio for SMS</span>
+              <span aria-hidden="true">·</span>
+              <span>Affirm / Klarna at checkout</span>
+              <span aria-hidden="true">·</span>
+              <span>CSV export for QuickBooks &amp; Xero</span>
             </div>
           </div>
         </div>

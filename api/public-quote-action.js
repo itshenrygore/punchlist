@@ -548,7 +548,7 @@ export default async function handler(req, res) {
         // 9A: SMS — notify contractor of revision request
         const revSmsPhone = await contractorSmsEnabled(supabase, quote.user_id);
         if (revSmsPhone) {
-          sendSMS(revSmsPhone, `✏️ ${safeSmsSegment(customerName || 'Customer')} requested changes to "${safeSmsSegment((quote.title || 'your quote').slice(0, 40))}".${reason ? ' "' + safeSmsSegment(reason.slice(0, 80)) + '"' : ''} Revise: ${appUrl}/app/quotes/${quote.id}`);
+          sendSMS(revSmsPhone, `✏️ ${safeSmsSegment(customerName || 'Customer')} requested changes to "${safeSmsSegment((quote.title || 'your quote').slice(0, 40))}".${reason ? ' "' + safeSmsSegment(reason.slice(0, 80)) + '"' : ''} Revise: ${appUrl}/app/quotes/${quote.id}?tab=messages`);
         }
       } catch (notifyErr) {
         console.warn('[public-quote-action] revision notifications failed:', notifyErr?.message);
@@ -655,7 +655,7 @@ export default async function handler(req, res) {
       // 9A: SMS — notify contractor of customer question
       const qSmsPhone = await contractorSmsEnabled(supabase, quote.user_id);
       if (qSmsPhone) {
-        sendSMS(qSmsPhone, `💬 ${safeSmsSegment(customerName || 'Customer')} asked about "${safeSmsSegment((quote.title || 'your quote').slice(0, 30))}": "${safeSmsSegment(question.slice(0, 80))}${question.length > 80 ? '…' : ''}" Reply: ${appUrl}/app/quotes/${quote.id}`);
+        sendSMS(qSmsPhone, `💬 ${safeSmsSegment(customerName || 'Customer')} asked about "${safeSmsSegment((quote.title || 'your quote').slice(0, 30))}": "${safeSmsSegment(question.slice(0, 80))}${question.length > 80 ? '…' : ''}" Reply: ${appUrl}/app/quotes/${quote.id}?tab=messages`);
       }
       // If conversation column was saved, return the full thread for real-time display.
       // If not, return empty array — the client will show a success banner but not a thread

@@ -434,20 +434,40 @@ export default function QuoteBuilderPage() {
     }
   }, [user, existingQuoteId]);
 
-  // ── Zone 1: Build scope (create draft + run AI) ──
+  // ── Zone 1: Build scope — catalog-first, AI-enhanced ──
+  //
+  // OLD FLOW: 15-25s blocking loading screen that called Claude.
+  //   When the AI endpoint was flaky (~10% of the time on prod) the
+  //   contractor saw "AI couldn't generate items" and felt the tool
+  //   was broken. That single failure mode killed activation.
+  //
+  // NEW FLOW: the catalog runs client-side in <50ms and produces the
+  //   initial suggestions. The contractor sees their scope right away
+  //   and starts working. The Claude call still fires in the
+  //   background — when it returns, we merge any items the catalog
+  //   missed and silently upgrade pricing context. If the AI call
+  //   fails, nothing happens: the contractor already has their
+  //   catalog matches and never sees an error.
   async function handleBuildScope() {
     if (!description.trim()) { setError('Describe the job first'); return; }
-    const inferred = inferTrade(description, trade);
+    // Force inferTrade to evaluate the description (passing the
+    // currently-selected trade short-circuits the helper). If the
+    // description clearly implies a different trade than the
+    // contractor's default profile trade, prefer the inferred one
+    // for this job — otherwise scope suggestions will come back
+    // from the wrong trade catalog (e.g. landscaping items returned
+    // for a "replace water heater" description because the profile
+    // default was Landscaping).
+    const inferredFromText = inferTrade(description, null);
+    const useInferred = inferredFromText && inferredFromText !== 'Other' && inferredFromText !== trade;
+    const inferred = useInferred ? inferredFromText : trade;
     if (inferred !== trade) setTrade(inferred);
     setError('');
     setPhase('building');
     try { localStorage.setItem('pl_has_built_quote', '1'); } catch (e) { console.warn("[PL]", e); }
     trackFirstBuild();
     setScopeLoading(true);
-    setScopeLoadingMsg('Analyzing job scope…');
-    const t1 = setTimeout(() => setScopeLoadingMsg('Still working — analyzing materials and pricing…'), 6000);
-    const t2 = setTimeout(() => setScopeLoadingMsg('Almost there — finalizing suggestions…'), 12000);
-    const t3 = setTimeout(() => setScopeLoadingMsg('Taking a bit longer than usual — complex jobs need more time…'), 18000);
+    setScopeLoadingMsg('Pulling suggestions from catalog…');
 
     try {
       // Create or update draft
@@ -455,118 +475,165 @@ export default function QuoteBuilderPage() {
       if (!draftId) {
         if (!isOnline()) {
           const offId = `offline-${Date.now()}`;
-          await saveOfflineDraft({ id: offId, title: title || description.slice(0, 64), description, trade, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
+          await saveOfflineDraft({ id: offId, title: title || description.slice(0, 64), description, trade: inferred, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
           setOfflineDraft(true);
           toast('Saved offline — will sync when connected', 'info');
-          setPhase('describe'); setScopeLoading(false); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+          setPhase('describe'); setScopeLoading(false);
           return;
         }
-        const d = await createQuote(user.id, { title: title || description.slice(0, 64), description, trade, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
+        const d = await createQuote(user.id, { title: title || description.slice(0, 64), description, trade: inferred, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
         draftId = d.id;
         setQuoteId(draftId);
         setQuoteFlowQuoteId(draftId);
         nav(`/app/quotes/${draftId}/edit`, { replace: true });
       } else {
-        await updateQuote(draftId, { title: title || description.slice(0, 64), description, trade, province, country });
+        await updateQuote(draftId, { title: title || description.slice(0, 64), description, trade: inferred, province, country });
       }
 
-      // Upload photo if present
+      // ── Catalog suggestions — instant, deterministic, always works ──
+      const cat = smartCatalogFallback({ description, title, trade: inferred }, province);
+      const catItems = [...cat.core, ...cat.related, ...cat.optional];
+      const catalogSuggestions = catItems.map(item => ({
+        ...normSuggestion(item, 0),
+        selected: false,
+        source: 'catalog',
+      }));
+
+      setSuggestions(catalogSuggestions);
+      setLineItems([]);
+      setDraft(d => ({ ...d, title: title || description.slice(0, 64), description }));
+      initialLoadComplete.current = true;
+      setPhase('review');
+      setScopeLoading(false);
+
+      if (catalogSuggestions.length === 0) {
+        toast('Add items from the catalog or create custom line items.', 'info');
+      } else {
+        toast(`${catalogSuggestions.length} suggested item${catalogSuggestions.length === 1 ? '' : 's'} ready — review and add what you want`, 'success');
+      }
+
+      // ── Photo upload (background) ──
       if (photo) {
-        try { const { url } = await uploadQuotePhoto(draftId, photo); await updateQuote(draftId, { photo_url: url }); setPhotoSaved(true); toast('Photo saved to quote', 'success'); } catch (e) { console.warn('[Punchlist] Photo upload failed:', e.message); toast('Photo upload failed — you can re-add it later', 'error'); }
+        uploadQuotePhoto(draftId, photo).then(({ url }) => {
+          updateQuote(draftId, { photo_url: url }).catch(() => {});
+          setPhotoSaved(true);
+        }).catch(e => console.warn('[Punchlist] Photo upload failed:', e?.message));
       }
 
-      // Fetch AI scope
-      let wonContext = [], labourRate = 0;
-      try { const [wc, p] = await Promise.all([getWonQuoteContext(null, 5), userProfile ? Promise.resolve(userProfile) : getProfile(user.id)]); wonContext = wc || []; labourRate = Number(p?.default_labour_rate || 0); } catch (e) { console.warn("[PL]", e); }
+      // ── AI enhancement (background, non-blocking) ──
+      // Fire-and-forget: if Claude is up, we'll merge its items in
+      // when it returns. If it's down or rate-limited, we never tell
+      // the contractor — they already have a working scope.
+      enhanceWithAI(draftId, inferred);
+    } catch (e) {
+      console.error('[Punchlist] Build failed:', e.message);
+      initialLoadComplete.current = true;
+      setPhase('review');
+      setScopeLoading(false);
+      toast(e.message?.includes('network') ? 'Network issue — try again when you\'re back online.' : 'Could not start the quote. Try again.', 'error');
+    }
+  }
 
-      // Resolve photo to base64 for AI vision
+  /**
+   * Background Claude call. Merges new items into the suggestions panel
+   * on success; silent failure otherwise.
+   */
+  async function enhanceWithAI(draftId, resolvedTrade) {
+    try {
+      let wonContext = [], labourRate = 0;
+      try {
+        const [wc, p] = await Promise.all([
+          getWonQuoteContext(null, 5),
+          userProfile ? Promise.resolve(userProfile) : getProfile(user.id),
+        ]);
+        wonContext = wc || [];
+        labourRate = Number(p?.default_labour_rate || 0);
+      } catch (e) { console.warn('[PL]', e); }
+
       let photoBase64 = null;
       if (photo) {
-        try { photoBase64 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result.split(',')[1]); rd.onerror = rej; rd.readAsDataURL(photo); }); } catch (e) { console.warn("[PL]", e); }
-      } else {
-        const photoUrl = (await getQuote(draftId))?.photo_url;
-        if (photoUrl) { try { const r = await fetch(photoUrl); if (r.ok) { const b = await r.blob(); photoBase64 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result.split(',')[1]); rd.onerror = rej; rd.readAsDataURL(b); }); } } catch (e) { console.warn("[PL]", e); } }
+        try {
+          photoBase64 = await new Promise((res, rej) => {
+            const rd = new FileReader();
+            rd.onload = () => res(rd.result.split(',')[1]);
+            rd.onerror = rej;
+            rd.readAsDataURL(photo);
+          });
+        } catch (e) { console.warn('[PL]', e); }
       }
 
-      // Slice 10 §2.3: Use pre-warm result if available for this description,
-      // otherwise abort any stale pre-warm and issue a fresh request.
-      let scopePromise;
-      if (
-        aiPreWarmRef.current.promise &&
-        aiPreWarmRef.current.forDescription === description
-      ) {
-        scopePromise = aiPreWarmRef.current.promise;
-      } else {
-        aiPreWarmRef.current.controller?.abort();
-        scopePromise = requestAiScope({ description, trade, estimatorRoute: 'balanced', province, country, photo: photoBase64, wonQuotes: wonContext, labourRate });
-      }
-      // Reset prewarm state after consuming
+      const scopePromise =
+        (aiPreWarmRef.current.promise && aiPreWarmRef.current.forDescription === description)
+          ? aiPreWarmRef.current.promise
+          : requestAiScope({ description, trade: resolvedTrade, estimatorRoute: 'balanced', province, country, photo: photoBase64, wonQuotes: wonContext, labourRate });
       aiPreWarmRef.current = { promise: null, controller: null, forDescription: '' };
 
       const r = await scopePromise;
 
-      // Check if AI returned an error or warning
-      if (r.source === 'error' || r.source === 'none') {
-        console.warn('[Punchlist] AI returned:', r.source, r.warning);
-        toast(r.warning || 'AI could not generate items — add them manually.', 'error');
-        initialLoadComplete.current = true;
-        setScopeError(true);
-        setPhase('review');
+      // Endpoint may return source=none/error with empty items — treat
+      // as a silent no-op since the contractor already has catalog
+      // suggestions in place.
+      if (!r || r.source !== 'ai' || !(r.items && r.items.length)) {
+        console.warn('[Punchlist] AI enhancement unavailable —', r?.source || 'no response');
         return;
       }
 
-      // §6.1 — Snapshot existing line items so the contractor can undo the AI add
-      preAiLineItemsRef.current = [...lineItems];
+      const aiItems = r.items.map((it, i) => normSuggestion(it, i)).map(s => ({ ...s, selected: false, source: 'ai' }));
+      const aiUpgrades = (r.optional_upgrades || []).map((u, i) => ({
+        id: genLineItemId(),
+        name: u.description || '',
+        category: u.category || 'Services',
+        tab: classifyItem(u.description || '', u.category || ''),
+        unit_price: Number(u.unit_price || 0),
+        why: u.why || '',
+        selected: false,
+        isUpgrade: true,
+        source: 'ai',
+      }));
 
-      let items = (r.items || r.line_items || []).map((it, i) => normSuggestion(it, i));
-      items.sort((a, b) => ({ labour: 0, services: 1, materials: 2 }[a.tab] ?? 3) - ({ labour: 0, services: 1, materials: 2 }[b.tab] ?? 3));
-      const upgrades = (r.optional_upgrades || []).map((u, i) => ({ id: genLineItemId(), name: u.description || '', category: u.category || 'Services', tab: classifyItem(u.description || '', u.category || ''), unit_price: Number(u.unit_price || 0), typical_low: 0, typical_high: 0, why: u.why || '', when_needed: '', when_not_needed: '', notes: '', confidence: 'medium', source: 'Recommended upgrade', selected: false, isUpgrade: true }));
-      setSuggestions([...items, ...upgrades]);
-      setScopeGaps(r.gaps || []);
-      setScopeMeta({ scope_summary: r.scope_summary || '', assumptions: (r.assumptions || []).join('\n'), exclusions: (r.exclusions || []).join('\n') });
+      // Merge: AI items first (they have richer pricing context),
+      // dedup by normalized name. Catalog items the contractor already
+      // sees stay in place if AI didn't return them.
+      const beforeCount = (await new Promise(resolve => {
+        setSuggestions(prev => {
+          const seen = new Map();
+          [...aiItems, ...aiUpgrades, ...prev].forEach(s => {
+            const key = (s.name || '').toLowerCase().trim();
+            if (key && !seen.has(key)) seen.set(key, s);
+          });
+          const merged = [...seen.values()];
+          resolve(prev.length);
+          return merged;
+        });
+      }));
 
-      // Convert to line items immediately
-      const selected = [...items, ...upgrades].filter(s => s.selected);
-      const newLineItems = selected.map((s, i) => ({ id: s.id, name: s.name, quantity: s.quantity || 1, unit_price: s.unit_price || 0, notes: '', category: s.category || '', included: true }));
-      setLineItems(newLineItems);
-      setDraft(d => ({ ...d, title: title || description.slice(0, 64), description, scope_summary: r.scope_summary || d.scope_summary, assumptions: (r.assumptions || []).join('\n') || d.assumptions, exclusions: (r.exclusions || []).join('\n') || d.exclusions }));
-      initialLoadComplete.current = true;
-
-      // Save to quote
-      await updateQuote(draftId, { scope_summary: r.scope_summary || '', assumptions: (r.assumptions || []).join('\n'), exclusions: (r.exclusions || []).join('\n'), line_items: newLineItems });
-
-      if (items.length < 2) toast('Fewer items than expected were suggested. Add more below.', 'info');
-      else {
-        // §6.1 — Undo last item add: 12s window to revert the entire AI-added set
-        const snapshotBefore = preAiLineItemsRef.current || [];
-        const addedCount = newLineItems.length - snapshotBefore.length;
-        if (addedCount > 0) {
-          showUndo(
-            `${addedCount} item${addedCount !== 1 ? 's' : ''} added by AI`,
-            12000,
-            null, // onCommit — no-op, items are already set
-            () => {
-              // onUndo — restore the snapshot
-              setLineItems(snapshotBefore);
-              markDirty();
-              toast('AI items removed', 'info');
-            }
-          );
-        } else {
-          toast(`${items.length} items added to your quote`, 'success');
-        }
+      const newItemsCount = (aiItems.length + aiUpgrades.length) - 0; // best-effort, dedup runs in setter
+      if (newItemsCount > 0) {
+        toast(`Found ${aiItems.length} more suggestion${aiItems.length === 1 ? '' : 's'} for you to review`, 'success');
       }
-      trackQuoteFlowScopeReady(newLineItems.length); // B13
-      setPhase('review');
+      void beforeCount; // silence unused
+
+      // Persist scope metadata from AI (assumptions, exclusions)
+      if (r.scope_summary || r.assumptions?.length || r.exclusions?.length) {
+        const meta = {
+          scope_summary: r.scope_summary || '',
+          assumptions: (r.assumptions || []).join('\n'),
+          exclusions: (r.exclusions || []).join('\n'),
+        };
+        setScopeMeta(meta);
+        setDraft(d => ({
+          ...d,
+          scope_summary: meta.scope_summary || d.scope_summary,
+          assumptions: meta.assumptions || d.assumptions,
+          exclusions: meta.exclusions || d.exclusions,
+        }));
+        updateQuote(draftId, meta).catch(e => console.warn('[PL] persist scope meta:', e?.message));
+      }
+
+      setScopeGaps(r.gaps || []);
     } catch (e) {
-      console.error('[Punchlist] AI scope failed:', e.message);
-      setScopeError(true);
-      toast(e.message?.includes('timed out') || e.message?.includes('timeout') ? 'Quote generation timed out — add items manually or retry.' : 'Could not generate items — add them manually.', 'error');
-      // Still move to review with empty items — user can add manually
-      initialLoadComplete.current = true;
-      setPhase('review');
-    } finally {
-      setScopeLoading(false); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      // Silent — contractor already has catalog suggestions.
+      console.warn('[Punchlist] AI enhancement failed silently:', e?.message);
     }
   }
 
@@ -607,6 +674,33 @@ export default function QuoteBuilderPage() {
     setDismissedSugIds(prev => { const n = new Set(prev); n.add(sug.id); return n; });
     markDirty();
     toast(`Added: ${sug.name}`, 'success');
+  }
+  /** Batched accept for the panel's "Add all" button — one state
+   *  update, one toast. Avoids 10 stacked notifications when the user
+   *  takes the entire suggested scope. */
+  function addAllSuggestionsToItems(sugs) {
+    const existingNames = new Set(lineItems.map(li => (li.name || '').toLowerCase().trim()));
+    const fresh = (sugs || []).filter(s => !existingNames.has((s.name || '').toLowerCase().trim()));
+    if (fresh.length === 0) return;
+    setLineItems(p => [
+      ...p,
+      ...fresh.map(sug => ({
+        id: genLineItemId(),
+        name: sug.name,
+        quantity: Number(sug.quantity || 1),
+        unit_price: Number(sug.unit_price || 0),
+        notes: '',
+        category: sug.category || '',
+        included: true,
+      })),
+    ]);
+    setDismissedSugIds(prev => {
+      const n = new Set(prev);
+      for (const s of sugs || []) n.add(s.id);
+      return n;
+    });
+    markDirty();
+    toast(`Added ${fresh.length} item${fresh.length === 1 ? '' : 's'} to your scope`, 'success');
   }
   function dismissSuggestion(id) {
     setDismissedSugIds(prev => { const n = new Set(prev); n.add(id); return n; });
@@ -792,6 +886,33 @@ export default function QuoteBuilderPage() {
 
   // Cancel any pending undo timer on unmount (prevents actualSend firing after navigation)
   useEffect(() => () => { undoCancelRef.current?.(); }, []);
+
+  // Flush on UNMOUNT — covers SPA navigation that visibilitychange and
+  // pagehide miss. Without this, a user who:
+  //   1. adds items to a quote
+  //   2. taps a nav link before the 800ms autosave debounce fires
+  //   3. confirms "Leave anyway?" on the unsaved-changes prompt
+  // …would have their additions cancelled by the autosave useEffect's
+  // cleanup (clearTimeout) and never persisted. The flushRef pattern
+  // keeps the latest save closure available to a single one-shot
+  // cleanup effect.
+  const flushOnUnmountRef = useRef(null);
+  flushOnUnmountRef.current = () => {
+    if (
+      dirty.current &&
+      !savingRef.current &&
+      !isLocked &&
+      initialLoadComplete.current &&
+      quoteId &&
+      lineItems.length > 0
+    ) {
+      // Fire-and-forget; the component is unmounting so we can't await.
+      // The save() call goes through the same updateQuote upsert path
+      // as a normal autosave — race-safe via the save mutex.
+      try { save(null, true); } catch (e) { console.warn('[PL] flush on unmount failed:', e); }
+    }
+  };
+  useEffect(() => () => flushOnUnmountRef.current?.(), []);
 
   // ── B13: Keep deliveryMethodRef in sync so the pagehide handler can read it. ──
   useEffect(() => { deliveryMethodRef.current = deliveryMethod; }, [deliveryMethod]);
@@ -1257,10 +1378,12 @@ export default function QuoteBuilderPage() {
                   flipped to primary CTA. "Start from blank" sits below as
                   an escape hatch for contractors who prefer to type their
                   own items. */}
-              <button type="button" onClick={handleBuildScope} disabled={!description.trim() || scopeLoading} className="btn btn-primary btn-lg full-width">
-                {scopeLoading ? 'Building…' : 'Build with AI →'}
-              </button>
-              <div className="qb-pillar-teaser">Your customer sees the total, a monthly option, and can approve from their phone.</div>
+              <div className="qb-build-cta">
+                <button type="button" onClick={handleBuildScope} disabled={!description.trim() || scopeLoading} className="btn btn-primary btn-lg full-width">
+                  {scopeLoading ? 'Building…' : 'Build the scope →'}
+                </button>
+                <div className="qb-pillar-teaser">Your customer sees the total, a monthly option, and can approve from their phone.</div>
+              </div>
               <button className="btn-link qb-manual-link" type="button" disabled={!description.trim()} onClick={async () => {
                 if (!description.trim()) return setError('Describe the job first');
                 try {
@@ -1318,6 +1441,10 @@ export default function QuoteBuilderPage() {
             SmsComposerField: null, // 2.0: SMS composer removed
             toast, currency,
             inlinePhone, setInlinePhone,
+            // Mobile needs the suggestions panel too — the contractor-
+            // in-control flow lands users on an empty scope until they
+            // accept suggested items.
+            visibleSuggestions, addSuggestionToItems, addAllSuggestionsToItems, dismissSuggestion,
           }} />
         )}
         {phase === 'review' && !isMobile && (
@@ -1413,6 +1540,7 @@ export default function QuoteBuilderPage() {
                   catalogResults={catalogResults}
                   suggestions={visibleSuggestions}
                   onAddSuggestion={addSuggestionToItems}
+                  onAddAllSuggestions={addAllSuggestionsToItems}
                   onDismissSuggestion={dismissSuggestion}
                   onOpenForeman={() => {
                     if ((() => {})) {

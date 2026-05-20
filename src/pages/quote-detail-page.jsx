@@ -227,14 +227,30 @@ export default function QuoteDetailPage() {
     } catch (e) { console.warn('[PL]', e); }
   }, [quote, quoteId]);
 
-  // Auto-open nudge from notification action (?action=nudge)
+  // Auto-open nudge from notification action (?action=nudge), and
+  // deep-link straight to the Messages tab when the contractor taps
+  // an SMS that says "Reply:" (e.g. customer-asked / changes-requested
+  // notifications). The mobile tab bar exists only on phone widths,
+  // but setting state on desktop is harmless — the layout already
+  // shows all zones at once.
   useEffect(() => {
     if (!quote) return;
     const p = new URLSearchParams(window.location.search);
+    let mutated = false;
     if (p.get('action') === 'nudge') {
       setShowNudgeModal(true);
-      window.history.replaceState({}, '', window.location.pathname);
+      mutated = true;
     }
+    if (p.get('tab') === 'messages') {
+      setMobileTab('messages');
+      // Scroll the feed into view on mobile so the conversation is
+      // the first thing the contractor sees after tapping the SMS.
+      requestAnimationFrame(() => {
+        mobileTabBarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      mutated = true;
+    }
+    if (mutated) window.history.replaceState({}, '', window.location.pathname);
   }, [quote]);
 
   // Derived
@@ -1009,15 +1025,45 @@ export default function QuoteDetailPage() {
           <details className="qb-card qd-more-actions-card"><summary className="pl-toggle-row qd-more-actions-summary">
             <span className="qd-more-actions-title">More actions</span>
             <span className="pl-chevron" />
-          </summary><div className="qd-send-grid qd-more-actions-body"><button className="btn btn-secondary full-width fs-12" type="button" disabled={pdfLoading} onClick={handleDownloadPdf}>{pdfLoading?'Generating…':'Download PDF'}</button>{typeof navigator!=='undefined'&&navigator.share&&<button className="btn btn-secondary full-width fs-12" type="button" onClick={()=>nativeShare({title:quote.title||'Quote',url:shareUrl},showToast)}>Share</button>}<button className="btn btn-secondary full-width fs-12" type="button" onClick={handleDuplicate}>Duplicate as new quote</button><button className="btn btn-secondary full-width fs-12" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }}>Save as job template</button>{!confirmDelete?<button className="btn btn-secondary full-width qd-btn-danger" type="button" onClick={()=>setConfirmDelete(true)}>{quote.signed_at?'Archive':'Delete'}</button>:<div className="qd-delete-confirm-row"><button className="btn btn-secondary btn-sm qd-btn-danger" type="button" onClick={handleDelete}>{quote.signed_at?'Archive':'Delete'}</button><button className="btn btn-secondary btn-sm" type="button" onClick={()=>setConfirmDelete(false)}>Cancel</button></div>}</div></details>
+          </summary><div className="qd-send-grid qd-more-actions-body">
+            <button className="btn btn-secondary full-width fs-12" type="button" disabled={pdfLoading} onClick={handleDownloadPdf}>{pdfLoading?'Generating…':'Download PDF'}</button>
+            {typeof navigator!=='undefined'&&navigator.share&&<button className="btn btn-secondary full-width fs-12" type="button" onClick={()=>nativeShare({title:quote.title||'Quote',url:shareUrl},showToast)}>Share</button>}
+            <button className="btn btn-secondary full-width fs-12" type="button" onClick={handleDuplicate}>Duplicate as new quote</button>
+            <button className="btn btn-secondary full-width fs-12" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }}>Save as job template</button>
+            {/* Manual outcome record — for the contractor who closed the
+                quote via phone, in-person, or email and just wants to
+                mark it won/lost without forcing the customer through
+                the e-sign flow. */}
+            {['sent','viewed','revision_requested'].includes(quote.status) && (
+              <>
+                <button className="btn btn-secondary full-width fs-12" type="button" onClick={async () => {
+                  try {
+                    await updateQuoteStatus(quote.id, { status: 'approved', approved_at: new Date().toISOString() });
+                    setQuote(p => ({ ...p, status: 'approved', approved_at: new Date().toISOString() }));
+                    showToast('Marked as approved', 'success');
+                  } catch (e) { showToast(friendly(e), 'error'); }
+                }}>Mark as approved (manually)</button>
+                <button className="btn btn-secondary full-width fs-12" type="button" onClick={async () => {
+                  try {
+                    await updateQuoteStatus(quote.id, { status: 'declined' });
+                    setQuote(p => ({ ...p, status: 'declined' }));
+                    showToast('Marked as declined', 'info');
+                  } catch (e) { showToast(friendly(e), 'error'); }
+                }}>Mark as declined</button>
+              </>
+            )}
+            {!confirmDelete?<button className="btn btn-secondary full-width qd-btn-danger" type="button" onClick={()=>setConfirmDelete(true)}>{quote.signed_at?'Archive':'Delete'}</button>:<div className="qd-delete-confirm-row"><button className="btn btn-secondary btn-sm qd-btn-danger" type="button" onClick={handleDelete}>{quote.signed_at?'Archive':'Delete'}</button><button className="btn btn-secondary btn-sm" type="button" onClick={()=>setConfirmDelete(false)}>Cancel</button></div>}
+          </div></details>
         </aside>
       </div>
 
-      {/* Mobile bars */}
-      {isDraft && <div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Continue editing →</Link></div>}
-      {!isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" disabled={sendingText} onClick={handleSendText}><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>{sendingText?'Sending…':`Text ${quote.customer?.name?.split(' ')[0]||'quote'}`}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink}><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>{linkCopied?'Copied! ✓':'Copy link'}</button>}<button className={`btn btn-secondary qd-copy-link-btn qd-copy-link-btn-compact${linkCopied?' qd-copy-link-btn--copied':''}`} type="button" onClick={handleCopyLink} aria-label="Copy quote link"><Link2 size={14}/><span className="qd-copy-link-text">{linkCopied?'✓':'Link'}</span></button></div>}
-      {isRevision&&<div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Revise & resend →</Link></div>}
-      {isApproved && <div className="qd-mobile-send-bar"><button className="btn btn-primary flex-1" type="button" disabled={creatingInvoice} onClick={handleCreateInvoice}>{creatingInvoice ? 'Creating…' : 'Create invoice'}</button></div>}
+      {/* Mobile bars — hide on the "More" tab where the in-card Share
+          controls render the same actions inline. Otherwise the user
+          sees the same Resend/Copy-link pair twice on one screen. */}
+      {mobileTab !== 'more' && isDraft && <div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Continue editing →</Link></div>}
+      {mobileTab !== 'more' && !isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" disabled={sendingText} onClick={handleSendText}><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>{sendingText?'Sending…':`Text ${quote.customer?.name?.split(' ')[0]||'quote'}`}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink}><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>{linkCopied?'Copied! ✓':'Copy link'}</button>}<button className={`btn btn-secondary qd-copy-link-btn qd-copy-link-btn-compact${linkCopied?' qd-copy-link-btn--copied':''}`} type="button" onClick={handleCopyLink} aria-label="Copy quote link"><Link2 size={14}/><span className="qd-copy-link-text">{linkCopied?'✓':'Link'}</span></button></div>}
+      {mobileTab !== 'more' && isRevision&&<div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Revise & resend →</Link></div>}
+      {mobileTab !== 'more' && isApproved && <div className="qd-mobile-send-bar"><button className="btn btn-primary flex-1" type="button" disabled={creatingInvoice} onClick={handleCreateInvoice}>{creatingInvoice ? 'Creating…' : 'Create invoice'}</button></div>}
 
       {/* v100 M3: Nudge modal — shown for sent/viewed quotes */}
       {showNudgeModal && quote && (

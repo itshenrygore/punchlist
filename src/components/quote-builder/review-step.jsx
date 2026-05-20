@@ -258,9 +258,10 @@ export default function ReviewStep({
         <div className="rs-footer-right">
           <div className="rs-footer-total tabular">
             {currency(grandTotal, country)}
-            {showFinancing(grandTotal) && (
-              <span className="rs-footer-monthly">or from {currency(estimateMonthly(grandTotal), country)}/mo</span>
-            )}
+            {/* Monthly estimate intentionally hidden on contractor
+                surfaces — that number is meaningful to the customer
+                on the public quote, not to the contractor while
+                building. */}
           </div>
           {itemCount === 0 ? (
             <button className="btn btn-primary btn-lg rs-send-btn" type="button" disabled>

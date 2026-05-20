@@ -6,8 +6,12 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* ── ROOT & CONTAINER ── */
-.qe-root { display: flex; flex-direction: column; gap: 8px; }
-.qe-items-section { display: flex; flex-direction: column; gap: 4px; }
+/* min-width:0 + max-width:100% so a long line-item name can't push the
+   editor wider than its container and bleed off the right edge of a
+   phone. Belt-and-suspenders alongside the parent grid's min-width:0
+   in mobile-quote-review's S.page. */
+.qe-root { display: flex; flex-direction: column; gap: 8px; min-width: 0; max-width: 100%; }
+.qe-items-section { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .qe-items-header { display: flex; align-items: center; justify-content: space-between; }
 .qe-items-count { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted, #6b6459); }
 
@@ -86,6 +90,12 @@
   z-index: 1;
   background: var(--card, #fff);
   transform: translateX(0);
+}
+/* will-change only applies while a row is actively being swiped or
+   expanded — keeping it on every row pins GPU layers indefinitely
+   and made long lists scroll jankily after catalog adds. */
+.li-row--swiped .li-content,
+.li-row--open .li-content {
   will-change: transform;
 }
 
@@ -409,15 +419,37 @@
   border-radius: 10px; overflow: hidden;
 }
 .qe-sug-header {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 12px;
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line, #e8e2d9);
+  background: var(--brand-bg, rgba(231,106,60,.04));
 }
+.qe-sug-header-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .qe-sug-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.qe-sug-subtitle { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
 .qe-sug-count {
   font-size: 11px; font-weight: 700;
   padding: 1px 6px; border-radius: 10px;
   background: var(--brand, #c45a2d); color: #fff;
+}
+.qe-sug-add-all {
+  flex-shrink: 0;
+  background: var(--brand);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.qe-sug-add-all:hover { filter: brightness(1.05); }
+.qe-sug-add-all:active { transform: translateY(1px); }
+@media (max-width: 480px) {
+  .qe-sug-header { flex-direction: column; align-items: stretch; }
+  .qe-sug-add-all { align-self: flex-start; }
 }
 .qe-sug-list { display: flex; flex-direction: column; }
 .qe-sug-item {

@@ -2735,7 +2735,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .jd-page{max-width:540px;margin:0 auto;display:grid;gap:0}
 .jd-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 20px;display:grid;gap:20px;box-shadow:var(--shadow)}
 .jd-section{display:grid;gap:6px}
-.jd-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.jd-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.jd-trade-suggest{appearance:none;background:none;border:0;color:var(--brand);font-size:10px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;padding:0;font-family:inherit}
+.jd-trade-suggest strong{color:var(--brand);font-weight:700}
+.jd-trade-suggest:hover{text-decoration:underline;text-underline-offset:2px}
 .jd-input{width:100%;border:1px solid var(--input-border);border-radius:var(--r-sm);background:var(--input-bg);padding:11px 13px;font-size:16px;color:var(--text);outline:none;font-family:inherit;transition:border-color var(--fast),box-shadow var(--fast)}
 .jd-input:focus{border-color:var(--input-focus-border);box-shadow:0 0 0 3px var(--input-focus-glow)}
 .jd-input::placeholder{color:var(--subtle)}

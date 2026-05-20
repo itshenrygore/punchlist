@@ -1,0 +1,162 @@
+[
+  {
+    "depth": 0,
+    "tag": "DIV",
+    "cls": "qd-grid",
+    "top": 3,
+    "h": 597,
+    "display": "grid"
+  },
+  {
+    "depth": 1,
+    "tag": "SECTION",
+    "cls": "qd-main",
+    "top": 3,
+    "h": 126,
+    "display": "grid"
+  },
+  {
+    "depth": 2,
+    "tag": "DIV",
+    "cls": "qd-mobile-tabs",
+    "top": 3,
+    "h": 46,
+    "display": "flex"
+  },
+  {
+    "depth": 3,
+    "tag": "BUTTON",
+    "cls": "qd-mobile-tab",
+    "top": 7,
+    "h": 42,
+    "display": "flex"
+  },
+  {
+    "depth": 3,
+    "tag": "BUTTON",
+    "cls": "qd-mobile-tab",
+    "top": 7,
+    "h": 42,
+    "display": "flex"
+  },
+  {
+    "depth": 3,
+    "tag": "BUTTON",
+    "cls": "qd-mobile-tab qd-mobile-tab--more qd-mobile-tab--active",
+    "top": 7,
+    "h": 42,
+    "display": "flex"
+  },
+  {
+    "depth": 2,
+    "tag": "DIV",
+    "cls": "qd-hero qd-hero--compact",
+    "top": 75,
+    "h": 55,
+    "display": "grid"
+  },
+  {
+    "depth": 1,
+    "tag": "ASIDE",
+    "cls": "qd-sidebar qd-sidebar--mobile-inline",
+    "top": 137,
+    "h": 351,
+    "display": "grid"
+  },
+  {
+    "depth": 2,
+    "tag": "DIV",
+    "cls": "qb-card",
+    "top": 137,
+    "h": 160,
+    "display": "block"
+  },
+  {
+    "depth": 3,
+    "tag": "DIV",
+    "cls": "qd-send-grid",
+    "top": 212,
+    "h": 44,
+    "display": "grid"
+  },
+  {
+    "depth": 4,
+    "tag": "BUTTON",
+    "cls": "btn btn-secondary full-width",
+    "top": 212,
+    "h": 44,
+    "display": "flex"
+  },
+  {
+    "depth": 2,
+    "tag": "DIV",
+    "cls": "qb-card",
+    "top": 307,
+    "h": 93,
+    "display": "block"
+  },
+  {
+    "depth": 3,
+    "tag": "LABEL",
+    "cls": "qd-photo-upload-label",
+    "top": 347,
+    "h": 36,
+    "display": "flex"
+  },
+  {
+    "depth": 2,
+    "tag": "DETAILS",
+    "cls": "qb-card qd-more-actions-card",
+    "top": 410,
+    "h": 78,
+    "display": "block"
+  },
+  {
+    "depth": 3,
+    "tag": "SUMMARY",
+    "cls": "pl-toggle-row qd-more-actions-summary",
+    "top": 427,
+    "h": 44,
+    "display": "flex"
+  },
+  {
+    "depth": 3,
+    "tag": "DIV",
+    "cls": "qd-send-grid qd-more-actions-body",
+    "top": 477,
+    "h": 194,
+    "display": "grid"
+  },
+  {
+    "depth": 4,
+    "tag": "BUTTON",
+    "cls": "btn btn-secondary full-width fs-12",
+    "top": 477,
+    "h": 44,
+    "display": "flex"
+  },
+  {
+    "depth": 4,
+    "tag": "BUTTON",
+    "cls": "btn btn-secondary full-width fs-12",
+    "top": 527,
+    "h": 44,
+    "display": "flex"
+  },
+  {
+    "depth": 4,
+    "tag": "BUTTON",
+    "cls": "btn btn-secondary full-width fs-12",
+    "top": 577,
+    "h": 44,
+    "display": "flex"
+  },
+  {
+    "depth": 4,
+    "tag": "BUTTON",
+    "cls": "btn btn-secondary full-width qd-btn-danger",
+    "top": 627,
+    "h": 44,
+    "display": "flex"
+  }
+]

@@ -23,12 +23,13 @@ import { Card } from '../components/ui';
 import { useToast } from '../components/toast';
 import { useAuth } from '../hooks/use-auth';
 import { haptic, usePullToRefresh } from '../hooks/use-mobile-ux';
-import { listQuotes, getProfile, expireStaleDrafts, friendly, listInvoices } from '../lib/api';
+import { listQuotes, getProfile, expireStaleDrafts, friendly, listInvoices, updateQuoteStatus } from '../lib/api';
 import { listCustomers } from '../lib/api/customers';
 import { isPro, countSentThisMonth, FREE_QUOTE_LIMIT } from '../lib/billing';
 import { currency } from '../lib/format';
 import { normalizeStatus, chipForStatus } from '../lib/workflow';
-import { estimateMonthly, showFinancing } from '../lib/financing';
+// Monthly payment estimates removed from contractor screens — that
+// number is only meaningful on the customer-facing public quote.
 import { identify, trackQuoteFlowStarted } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { usePwaInstall } from '../hooks/use-pwa-install';
@@ -48,6 +49,68 @@ const AVATAR_COLOR = {
   declined: 'dv2-arow-avatar--red', expired: 'dv2-arow-avatar--red',
 };
 
+// Per-row Needs-attention quick action. Each Needs-attention `_reason`
+// has exactly one obvious next step — surface that as a trailing
+// button so the contractor doesn't have to drill into the quote
+// detail just to send a follow-up text or extend the expiry.
+function quickActionFor(reason) {
+  if (!reason) return null;
+  if (reason === 'Expires today!' || reason.startsWith('Expires in ')) {
+    return { kind: 'renew', label: 'Renew', sub: '+14d' };
+  }
+  if (reason === 'Deposit pending') {
+    return { kind: 'copy', label: 'Copy link' };
+  }
+  if (reason === 'Viewed — follow up' || reason.includes('going cold')) {
+    return { kind: 'nudge', label: 'Send follow-up' };
+  }
+  if (reason === 'Changes requested') {
+    return { kind: 'open', label: 'Open editor' };
+  }
+  return null;
+}
+
+function ActionRow({ quote: q, status, customer, quickAction, onQuickAction, busy, style }) {
+  const navigate = useNavigate();
+  function rowClick() { navigate(`/app/quotes/${q.id}`); }
+  function rowKey(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rowClick(); }
+  }
+  return (
+    <div
+      className="dv2-arow dv2-arow--hot dv2-enter"
+      style={{ ...style, textDecoration: 'none', cursor: 'pointer' }}
+      role="button"
+      tabIndex={0}
+      onClick={rowClick}
+      onKeyDown={rowKey}
+      aria-label={`${q.title || 'Quote'} — ${q._reason || ''}`}
+    >
+      {customer
+        ? <span className={`dv2-arow-avatar ${AVATAR_COLOR[status] || ''} dv2-arow-avatar--live`}>{initials(customer)}</span>
+        : <span className="dv2-arow-dot dv2-arow-dot--amber dv2-arow-dot--live" />
+      }
+      <div className="dv2-arow-labels">
+        <span className="dv2-arow-primary">{q.title || 'Untitled quote'}</span>
+        <span className="dv2-arow-secondary">{q._reason}</span>
+      </div>
+      {(q.total || q.subtotal) > 0 && <span className="dv2-arow-num">{currency(q.total || q.subtotal)}</span>}
+      <span className={`chip chip-${status}`}>{chipForStatus(status)}</span>
+      {quickAction && (
+        <button
+          type="button"
+          className="dv2-arow-quick"
+          onClick={(e) => { e.stopPropagation(); onQuickAction(); }}
+          disabled={busy}
+          aria-label={`${quickAction.label} — ${q.title || 'Quote'}`}
+        >
+          {busy ? '…' : quickAction.label}{quickAction.sub && <span className="dv2-arow-quick-sub"> {quickAction.sub}</span>}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -62,8 +125,44 @@ export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [jobInput, setJobInput] = useState('');
   const [installLeaving, setInstallLeaving] = useState(false);
+  const [quickActionBusy, setQuickActionBusy] = useState(null);
   const jobInputRef = useRef(null);
   const { canInstall, install: installPwa, dismiss: dismissPwa } = usePwaInstall();
+
+  async function handleQuickAction(quote, action) {
+    if (!action) return;
+    setQuickActionBusy(quote.id);
+    try {
+      if (action.kind === 'copy') {
+        if (!quote.share_token) {
+          toast('Save this quote first to get a share link.', 'error');
+        } else {
+          const url = `${window.location.origin}/q/${quote.share_token}`;
+          try { await navigator.clipboard.writeText(url); toast('Link copied — paste into your messages app.', 'success'); }
+          catch { toast(url, 'info'); }
+        }
+      } else if (action.kind === 'renew') {
+        const next = new Date();
+        next.setDate(next.getDate() + 14);
+        await updateQuoteStatus(quote.id, { expires_at: next.toISOString() });
+        setQuotes(prev => prev.map(q => q.id === quote.id ? { ...q, expires_at: next.toISOString() } : q));
+        toast('Expiry extended by 14 days.', 'success');
+      } else if (action.kind === 'nudge' || action.kind === 'open') {
+        // The quote detail page already has a polished follow-up
+        // composer (`FollowupModal`) and a robust edit flow. Route
+        // there so the contractor finishes the action with full
+        // context (last view time, draft template variants).
+        const target = action.kind === 'open'
+          ? `/app/quotes/${quote.id}/edit`
+          : `/app/quotes/${quote.id}?action=nudge`;
+        navigate(target);
+      }
+    } catch (e) {
+      toast(friendly(e), 'error');
+    } finally {
+      setQuickActionBusy(null);
+    }
+  }
 
   // ── Data fetch ──
   useEffect(() => {
@@ -263,10 +362,28 @@ export default function DashboardPage() {
   // most-scarce vertical space).
   const recentQuotes = useMemo(() => {
     const actionIds = new Set(actionItemsRaw.map(q => q.id));
-    return [...quotes]
+    const candidates = [...quotes]
       .filter(q => !actionIds.has(q.id))
-      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
-      .slice(0, 6);
+      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
+
+    // Collapse near-identical drafts so the dashboard doesn't look
+    // like a wall of "50 Gallon Hot Water Tank Replac… No customer Draft"
+    // when a contractor abandoned a few attempts at the same job.
+    // Rule: keep only the most-recent draft per normalized title +
+    // customer (or "no customer"). Non-draft quotes are never collapsed.
+    const seenDraftKeys = new Set();
+    const out = [];
+    for (const q of candidates) {
+      const isDraft = (q.status || 'draft').toLowerCase() === 'draft';
+      if (isDraft) {
+        const key = `${(q.title || '').trim().toLowerCase().slice(0, 40)}::${q.customer_id || 'none'}`;
+        if (seenDraftKeys.has(key)) continue;
+        seenDraftKeys.add(key);
+      }
+      out.push(q);
+      if (out.length >= 6) break;
+    }
+    return out;
   }, [quotes, actionItemsRaw]);
 
   const hasAnyData = quotes.length > 0;
@@ -585,24 +702,18 @@ export default function DashboardPage() {
               {actionItems.map((q, i) => {
                 const status = normalizeStatus(q.status);
                 const customer = q.customer?.name;
+                const quickAction = quickActionFor(q._reason || '');
                 return (
-                  <Link
+                  <ActionRow
                     key={q.id}
-                    to={`/app/quotes/${q.id}`}
-                    className="dv2-arow dv2-arow--hot dv2-enter"
-                    style={{ '--i': i + 3, textDecoration: 'none' }}
-                  >
-                    {customer
-                      ? <span className={`dv2-arow-avatar ${AVATAR_COLOR[status] || ''} dv2-arow-avatar--live`}>{initials(customer)}</span>
-                      : <span className="dv2-arow-dot dv2-arow-dot--amber dv2-arow-dot--live" />
-                    }
-                    <div className="dv2-arow-labels">
-                      <span className="dv2-arow-primary">{q.title || 'Untitled quote'}</span>
-                      <span className="dv2-arow-secondary">{q._reason}</span>
-                    </div>
-                    {(q.total || q.subtotal) > 0 && <span className="dv2-arow-num">{currency(q.total || q.subtotal)}</span>}
-                    <span className={`chip chip-${status}`}>{chipForStatus(status)}</span>
-                  </Link>
+                    quote={q}
+                    status={status}
+                    customer={customer}
+                    quickAction={quickAction}
+                    onQuickAction={() => handleQuickAction(q, quickAction)}
+                    busy={quickActionBusy === q.id}
+                    style={{ '--i': i + 3 }}
+                  />
                 );
               })}
               {actionOverflow > 0 && (
@@ -652,7 +763,6 @@ export default function DashboardPage() {
               {recentQuotes.map((q, i) => {
                 const status = normalizeStatus(q.status);
                 const total = q.total || q.subtotal || 0;
-                const monthly = showFinancing(total) ? estimateMonthly(total) : null;
                 const dotClass = {
                   draft: 'dv2-arow-dot--muted',
                   sent: 'dv2-arow-dot--blue',
@@ -692,7 +802,6 @@ export default function DashboardPage() {
                       </span>
                       <span className="dv2-arow-secondary">
                         {customer || 'No customer'}
-                        {monthly && <> · <strong className="dv2-monthly-price">{currency(monthly)}/mo</strong></>}
                       </span>
                     </div>
                     {total > 0 && <span className="dv2-arow-num">{currency(total)}</span>}
