@@ -241,7 +241,29 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [messages, setMessages] = useState([]);
+  // Persist the chat across panel open/close + page reloads so the
+  // contractor can revisit a pricing question they asked an hour ago.
+  // Stored per-user under pl_foreman_chat:<userId>. Auto-trims to the
+  // last 30 messages to keep localStorage payload small. Cleared by
+  // the New Chat button or when the user signs out (handled by the
+  // browser session-storage on logout).
+  const _fmStorageKey = user?.id ? `pl_foreman_chat:${user.id}` : null;
+  const [messages, setMessages] = useState(() => {
+    if (!_fmStorageKey) return [];
+    try {
+      const raw = localStorage.getItem(_fmStorageKey);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.slice(-30) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    if (!_fmStorageKey) return;
+    try {
+      if (messages.length === 0) localStorage.removeItem(_fmStorageKey);
+      else localStorage.setItem(_fmStorageKey, JSON.stringify(messages.slice(-30)));
+    } catch { /* private mode / quota */ }
+  }, [messages, _fmStorageKey]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
