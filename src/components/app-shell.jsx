@@ -198,7 +198,7 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
         <main id="main-content" className="app-main app-main-padded app-content app-content-enter" key={location.pathname}>{children}</main>
       </div>
 
-      <MobileNav />
+      <MobileNav foremanOpen={foremanOpen} onOpenForeman={() => setForemanOpen(true)} />
       <CommandPalette open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
       <ForemanPanel
         open={foremanOpen}

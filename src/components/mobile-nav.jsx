@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { haptic } from '../hooks/use-mobile-ux';
+import ForemanLogo from './foreman-logo';
 
 const NavIcon = ({ d }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -9,13 +10,26 @@ const NavIcon = ({ d }) => (
   </svg>
 );
 
-export default function MobileNav() {
+/**
+ * MobileNav — fixed bottom navigation on phones.
+ *
+ * Slots: Home · Quotes · +New · Customers · Foreman
+ *
+ * Foreman lives here (replacing the previous "Menu" link to Settings)
+ * because it's a primary action contractors reach for mid-job, not a
+ * secondary preferences panel. Settings + Analytics + Templates etc.
+ * are still one tap away via the topbar hamburger.
+ *
+ * Props:
+ *   foremanOpen   — boolean, drives the active state of the Foreman slot
+ *   onOpenForeman — callback to open the Foreman side-panel
+ */
+export default function MobileNav({ foremanOpen = false, onOpenForeman }) {
   const { pathname } = useLocation();
 
   const isHome      = pathname === '/app';
   const isQuotes    = pathname.startsWith('/app/quotes');
   const isCustomers = pathname.startsWith('/app/customers');
-  const isSettings  = pathname.startsWith('/app/settings') || pathname.startsWith('/app/analytics') || pathname.startsWith('/app/invoices') || pathname.startsWith('/app/billing') || pathname.startsWith('/app/templates');
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Main navigation">
@@ -63,16 +77,16 @@ export default function MobileNav() {
         <span className="mobile-nav-label">Customers</span>
       </NavLink>
 
-      <NavLink
-        to="/app/settings"
-        className={() => `mobile-nav-item${isSettings ? ' active' : ''}`}
-        onClick={() => haptic('selection')}
+      <button
+        type="button"
+        className={`mobile-nav-item mobile-nav-foreman${foremanOpen ? ' active' : ''}`}
+        aria-label="Open Foreman"
+        aria-expanded={foremanOpen}
+        onClick={() => { haptic('medium'); onOpenForeman?.(); }}
       >
-        <span className="mobile-nav-icon">
-          <NavIcon d="M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-        </span>
-        <span className="mobile-nav-label">Menu</span>
-      </NavLink>
+        <span className="mobile-nav-icon"><ForemanLogo size={20} stroke /></span>
+        <span className="mobile-nav-label">Foreman</span>
+      </button>
     </nav>
   );
 }
