@@ -584,6 +584,63 @@
   gap: var(--space-8);
 }
 
+/* Invoice list header — outstanding total + filter actions sit above
+   the status-filter pills. The big dollar number is the page's
+   primary anchor — what the contractor is actually owed. */
+.inv-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.inv-list-outstanding {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.inv-list-outstanding-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.inv-list-outstanding-amount {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.inv-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.inv-list-empty-filter {
+  margin: 32px auto;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13.5px;
+  background: var(--panel);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  max-width: 460px;
+}
+@media (max-width: 480px) {
+  .inv-list-header { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px; }
+  .inv-list-actions { justify-content: stretch; }
+  .inv-list-actions .btn { flex: 1; }
+}
+
 .ql-group {
   display: flex;
   flex-direction: column;
