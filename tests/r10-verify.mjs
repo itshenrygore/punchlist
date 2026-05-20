@@ -35,7 +35,13 @@ await page.waitForSelector('.qe-suggestions, .qe-empty', { timeout: 10_000 });
 const t1 = Date.now();
 const elapsed = t1 - t0;
 
+// Wait extra for React to flush setTrade
+await page.waitForTimeout(2000);
 await page.screenshot({ path: path.join(OUT, '01_after-build.png'), fullPage: true });
+
+// Read trade badge from DOM
+const tradeBadge = await page.locator('text=/LANDSCAPING|PLUMBER|ELECTRICIAN|HVAC|CARPENTER|ROOFER|PAINTER|GENERAL/i').first().textContent().catch(() => '');
+console.log(`Trade badge text: "${tradeBadge?.trim()}"`);
 
 const sugPanelCount = await page.locator('.qe-suggestions').count();
 const sugItemCount = await page.locator('.qe-sug-item').count();
