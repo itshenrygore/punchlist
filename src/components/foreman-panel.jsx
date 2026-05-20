@@ -16,44 +16,124 @@ import { supabase } from '../lib/supabase';
 import { currency } from '../lib/format';
 import ForemanLogo from './foreman-logo';
 
-/* ─── Contextual quick actions based on current page ─── */
+/* ─── Contextual quick actions based on current page ───
+ * These are the entry-point prompts contractors see before they type.
+ * Each one is a sentence that gets sent verbatim to the model, so the
+ * wording matters — they need to read as something a real contractor
+ * would ask in the moment, and they need to surface Foreman's most
+ * valuable capabilities (scope review, missed items, pricing checks,
+ * follow-up drafts, field diagnosis, pipeline triage).
+ */
 function getQuickActions(pathname, quoteContext) {
+  // ── In the quote builder / quote detail, with a live scope ───
   if (quoteContext) {
-    const trade = quoteContext.trade?.toLowerCase() || 'this';
+    const tradeWord = quoteContext.trade?.toLowerCase() || 'this';
     return [
-      { key: 'missing',  label: "What's missing?",        send: `What items am I missing from this ${trade} quote?` },
-      { key: 'pricing',  label: 'Check my pricing',       send: 'Are my prices reasonable for this scope? Flag anything too high or too low.' },
-      { key: 'scope',    label: 'Scope check',            send: 'Do a quick scope review — anything I should add, remove, or clarify?' },
-      { key: 'upsell',   label: 'Smart upsells',          send: 'What optional add-ons could I offer the customer to increase this quote value?' },
+      { key: 'review',  label: 'Review this scope',
+        send: `Review this ${tradeWord} scope end-to-end. Flag anything missing (permits, disposal, common code items), anything underbid for my province, and any line items that don't belong.` },
+      { key: 'missing', label: "What am I missing?",
+        send: `What line items do contractors typically forget on a ${tradeWord} job like this? Be specific with item names and a fair price range.` },
+      { key: 'upsell',  label: 'Smart upsells',
+        send: `Based on this scope, what 2-3 optional upsells should I offer the customer? Pick add-ons they're likely to say yes to and explain why each one matters.` },
+      { key: 'pricing', label: 'Check my pricing',
+        send: 'Walk through my line items and tell me which prices look low, high, or right for my province. Use catalog ranges, not gut feel.' },
     ];
   }
+
+  // ── On a specific quote detail page (no live scope context yet) ──
+  if (/^\/app\/quotes\/[^/]+$/.test(pathname) || /^\/app\/quotes\/[^/]+\/edit$/.test(pathname)) {
+    return [
+      { key: 'followup', label: 'Draft a follow-up',
+        send: 'Draft a short follow-up text I can send the customer on this quote — friendly, specific, no pressure. Mention the monthly option if it makes sense.' },
+      { key: 'objection', label: 'Likely objections',
+        send: 'What objections should I be ready for on this quote? Give me a one-line response to each.' },
+      { key: 'close',    label: 'How do I close this?',
+        send: 'This quote has been sitting. What can I do to move it forward without dropping price?' },
+      { key: 'pricing',  label: 'Check my pricing',
+        send: 'Quick pricing check on this quote — anything off for my province?' },
+    ];
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────
   if (pathname === '/app' || pathname === '/app/') {
     return [
-      { key: 'today',    label: 'What should I do today?', send: 'What should I focus on today? Check my pipeline and follow-ups.' },
-      { key: 'followup', label: 'Who needs a follow-up?',  send: 'Which quotes need follow-up? Show me the most urgent ones.' },
-      { key: 'revenue',  label: 'How am I doing?',         send: 'Give me a quick business snapshot — close rate, pipeline, revenue.' },
-      { key: 'pricing',  label: 'Look up pricing',         send: '' },
+      { key: 'today',    label: 'What should I focus on today?',
+        send: "Look at my pipeline. What are the 2-3 highest-value things I should do today — quotes to follow up on, deposits to chase, jobs to schedule." },
+      { key: 'risk',     label: 'Jobs at risk',
+        send: 'Which of my open quotes are at risk of going cold or being declined? What should I do about each?' },
+      { key: 'pricing',  label: 'Look up a price',
+        send: '' },
+      { key: 'snapshot', label: 'How am I doing?',
+        send: 'Give me a 3-sentence business snapshot — close rate this month, pipeline value, and the one thing to fix to grow.' },
     ];
   }
+
+  // ── Quote builder index / list ────────────────────────────
   if (pathname.startsWith('/app/quotes')) {
     return [
-      { key: 'new',      label: 'Start a new quote',       send: 'Help me start a new quote.' },
-      { key: 'followup', label: 'Who needs follow-up?',    send: 'Which of my sent quotes need follow-up?' },
-      { key: 'pricing',  label: 'Look up pricing',         send: '' },
-      { key: 'tips',     label: 'Closing tips',            send: 'Give me 2-3 tips to improve my close rate based on my recent quotes.' },
+      { key: 'scope-help', label: 'Help me scope a job',
+        send: '' },
+      { key: 'followup',   label: 'Who needs a follow-up?',
+        send: 'Which of my sent quotes need follow-up right now? Sort by urgency and tell me what to say to each.' },
+      { key: 'pricing',    label: 'Look up a price',
+        send: '' },
+      { key: 'close-rate', label: 'Boost my close rate',
+        send: 'Look at my last 10 quotes. What patterns do you see in the ones that closed vs the ones that didn\'t? Give me 2-3 concrete changes.' },
     ];
   }
+
+  // ── Customers ─────────────────────────────────────────────
   if (pathname.startsWith('/app/customers')) {
     return [
-      { key: 'search',   label: 'Find a customer',         send: '' },
-      { key: 'history',  label: 'Customer history',         send: '' },
+      { key: 'top',         label: 'Top customers',
+        send: 'Who are my top 5 customers by lifetime revenue, and what kind of work do they buy?' },
+      { key: 'reengage',    label: 'Who to reach back out to',
+        send: "Which customers haven't I quoted in 60+ days that are worth reaching out to again? Suggest a one-line message for each." },
+      { key: 'open',        label: 'Anyone with open quotes?',
+        send: 'List every customer with at least one open or viewed quote, and what stage each one is at.' },
+      { key: 'history',     label: 'Customer history',
+        send: '' },
     ];
   }
+
+  // ── Invoices ──────────────────────────────────────────────
+  if (pathname.startsWith('/app/invoices')) {
+    return [
+      { key: 'unpaid',   label: 'Who hasn\'t paid?',
+        send: 'Which invoices are unpaid? Sort by days overdue and draft a polite follow-up I can send for each one.' },
+      { key: 'cashflow', label: 'My cash flow this month',
+        send: 'What\'s my cash flow situation this month — paid, expected, overdue. One short paragraph.' },
+      { key: 'fix',      label: 'Fix a bad invoice',
+        send: '' },
+      { key: 'late-fee', label: 'When to add a late fee',
+        send: 'When is it appropriate to add a late fee on an unpaid invoice, and how do I word it without burning the relationship?' },
+    ];
+  }
+
+  // ── Analytics ─────────────────────────────────────────────
+  if (pathname.startsWith('/app/analytics')) {
+    return [
+      { key: 'underprice', label: 'Am I underpricing?',
+        send: 'Compare my recent quote totals to what\'s typical in my trade and province. Where am I leaving money on the table?' },
+      { key: 'win',        label: 'Why am I winning?',
+        send: 'Look at my won quotes vs declined ones. What jobs do I close best? What jobs should I stop quoting?' },
+      { key: 'pricing',    label: 'Reprice an old job',
+        send: '' },
+      { key: 'grow',       label: 'Where to grow',
+        send: 'Based on my close rate by trade and job type, what kind of work should I be chasing more of?' },
+    ];
+  }
+
+  // ── Default catch-all (settings, billing, etc.) ───────────
   return [
-    { key: 'today',    label: 'What should I do today?', send: 'What should I focus on today?' },
-    { key: 'pricing',  label: 'Look up pricing',         send: '' },
-    { key: 'followup', label: 'Who needs follow-up?',    send: 'Which quotes need follow-up?' },
-    { key: 'new',      label: 'Start a quote',           send: 'Help me start a new quote.' },
+    { key: 'today',    label: 'What should I focus on today?',
+      send: 'What should I focus on today? Check my pipeline and follow-ups.' },
+    { key: 'pricing',  label: 'Look up a price',
+      send: '' },
+    { key: 'scope',    label: 'Help me scope a job',
+      send: '' },
+    { key: 'followup', label: 'Who needs a follow-up?',
+      send: 'Which quotes need follow-up right now?' },
   ];
 }
 
