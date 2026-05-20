@@ -2554,10 +2554,10 @@
   .fm-overlay { align-items: flex-end !important; padding: 0 !important; }
   .fm-panel {
     max-width: 100% !important;
-    /* Was min(380px, 52vh) — covered ~60% of an iPhone, hiding the
-       row the user was about to tap. Dropped to ~45vh so the
-       dashboard remains glanceable underneath. */
-    height: min(340px, 45vh) !important;
+    /* 50vh ≈ half the phone — tall enough to fit greeting + intro +
+       4 prompt chips above the input, short enough that the page
+       behind stays glanceable. */
+    height: min(420px, 50vh) !important;
     border-radius: 14px 14px 0 0 !important;
   }
   /* Drag-handle bar — purely visual at first; tap also dismisses. */
