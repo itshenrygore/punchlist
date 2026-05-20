@@ -283,15 +283,16 @@ export default function QuoteItemsEditor({
           </div>
         )}
 
-        {/* AI error state */}
+        {/* Error fallback — catalog returned nothing either. Rare. */}
         {lineItems.length === 0 && scopeError && (
           <div className="qe-empty qe-empty--error">
-            <div className="qe-empty-title">AI couldn't generate items</div>
-            <div className="qe-empty-desc">Try adding more detail, or add items manually.</div>
+            <div className="qe-empty-title">No suggestions yet</div>
+            <div className="qe-empty-desc">Add more detail to your job description, or build the scope manually from the catalog.</div>
             <div className="qe-empty-actions">
               {onRetryScopeAI && (
-                <button type="button" className="qe-btn qe-btn--primary" onClick={onRetryScopeAI}>Edit & retry</button>
+                <button type="button" className="qe-btn qe-btn--primary" onClick={onRetryScopeAI}>Edit description</button>
               )}
+              <button type="button" className="qe-btn qe-btn--secondary" onClick={() => setCatalogOpen(true)}>Browse catalog</button>
               <button type="button" className="qe-btn qe-btn--secondary" onClick={addBlankItem}>+ Add manually</button>
             </div>
           </div>
