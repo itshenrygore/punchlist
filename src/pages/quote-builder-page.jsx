@@ -793,6 +793,33 @@ export default function QuoteBuilderPage() {
   // Cancel any pending undo timer on unmount (prevents actualSend firing after navigation)
   useEffect(() => () => { undoCancelRef.current?.(); }, []);
 
+  // Flush on UNMOUNT — covers SPA navigation that visibilitychange and
+  // pagehide miss. Without this, a user who:
+  //   1. adds items to a quote
+  //   2. taps a nav link before the 800ms autosave debounce fires
+  //   3. confirms "Leave anyway?" on the unsaved-changes prompt
+  // …would have their additions cancelled by the autosave useEffect's
+  // cleanup (clearTimeout) and never persisted. The flushRef pattern
+  // keeps the latest save closure available to a single one-shot
+  // cleanup effect.
+  const flushOnUnmountRef = useRef(null);
+  flushOnUnmountRef.current = () => {
+    if (
+      dirty.current &&
+      !savingRef.current &&
+      !isLocked &&
+      initialLoadComplete.current &&
+      quoteId &&
+      lineItems.length > 0
+    ) {
+      // Fire-and-forget; the component is unmounting so we can't await.
+      // The save() call goes through the same updateQuote upsert path
+      // as a normal autosave — race-safe via the save mutex.
+      try { save(null, true); } catch (e) { console.warn('[PL] flush on unmount failed:', e); }
+    }
+  };
+  useEffect(() => () => flushOnUnmountRef.current?.(), []);
+
   // ── B13: Keep deliveryMethodRef in sync so the pagehide handler can read it. ──
   useEffect(() => { deliveryMethodRef.current = deliveryMethod; }, [deliveryMethod]);
 
