@@ -405,8 +405,10 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
 }
 
 .qc-terms {
-  display: grid; grid-template-columns: repeat(4,1fr);
-  gap: 4px; margin-bottom: 12px;
+  /* 3 chips (3 / 6 / 12 mo) — the old repeat(4,1fr) left a phantom
+     empty column on the right that made the row feel uncentered. */
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 6px; margin-bottom: 12px;
 }
 .qc-t {
   padding: 7px 0; border-radius: 7px;
