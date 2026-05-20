@@ -1386,6 +1386,15 @@
   text-align: left;
   transition: background .12s;
   color: var(--text);
+  /* Touching the value column on iOS used to trigger a text-selection
+     highlight on "$X · won" / "1 quote" / "1 open" instead of firing
+     the row's button click. Disable selection on the whole row and
+     hint to the browser that this is a tap target, not a selectable
+     paragraph. The row's <button> still receives the click. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .cust-row:last-child { border-bottom: none; }
 .cust-row:hover { background: var(--bg-2); }
@@ -5760,9 +5769,35 @@ a.dv2-headline-metric:hover {
   font-family: inherit;
 }
 @media (max-width: 640px) {
-  .topbar-foreman-label,
+  /* On phones the desktop ghost-square treatment read as a fifth tiny
+     utility icon in a row of utility icons, and the hard-hat glyph
+     was hard to identify at 18px on a white square. Promote Foreman
+     to a brand-filled pill with both icon AND short label so it's
+     unmistakably the primary assistant entry point. */
   .topbar-foreman-kbd { display: none; }
-  .topbar-foreman-btn { padding: 4px 6px !important; }
+  .topbar-foreman-btn {
+    padding: 6px 12px !important;
+    background:
+      linear-gradient(160deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 55%),
+      linear-gradient(165deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 80%, #000 20%) 100%) !important;
+    border-color: transparent !important;
+    border-radius: 999px !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 4px 10px rgba(231,106,60,.22);
+    gap: 5px;
+  }
+  .topbar-foreman-btn .topbar-foreman-icon { color: #fff !important; }
+  .topbar-foreman-label {
+    display: inline !important;
+    color: #fff !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.005em;
+  }
+  .topbar-foreman-btn:hover {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.45) inset,
+      0 6px 14px rgba(231,106,60,.32);
+  }
 }
 
 /* ── Sidebar Foreman button styling ── */
