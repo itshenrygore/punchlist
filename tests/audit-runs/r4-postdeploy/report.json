@@ -1,0 +1,16 @@
+{
+  "ok": [
+    "landing desktop: zero \"AI\" mentions",
+    "landing desktop: 6 Foreman mention(s)",
+    "landing mobile: zero \"AI\" mentions",
+    "landing mobile: 6 Foreman mention(s)",
+    "topbar Foreman button renders hard-hat icon (1)",
+    "Foreman panel: header svg=1, empty-state svg=1",
+    "Settings → Notifications: \"Text messages\" heading=0, checkboxes=0",
+    "trade auto-detect badge visible: no",
+    "?tab=messages deep link → Messages tab active"
+  ],
+  "warn": [],
+  "started": "2026-05-20T03:31:26.350Z",
+  "finished": "2026-05-20T03:32:23.266Z"
+}

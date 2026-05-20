@@ -261,7 +261,7 @@ export default function SignupPage() {
           </div>
           {trade && (
             <div className="auth-trade-hint">
-              Your AI scope, catalog, and pricing will be calibrated for <strong>{trade}</strong> work.
+              Your scope, catalog, and pricing will be calibrated for <strong>{trade}</strong> work.
             </div>
           )}
           <button className="btn btn-primary full-width" type="button" disabled={loading || !trade} onClick={handleStep2}>

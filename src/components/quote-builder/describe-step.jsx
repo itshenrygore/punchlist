@@ -53,10 +53,13 @@ export default function DescribeStep({
   // Live trade inference. We don't auto-overwrite a user's manual
   // choice — we just surface what the description matches so they
   // can accept it with one tap. Empty description → no suggestion.
+  // NB: inferTrade short-circuits when a selectedTrade is non-Other,
+  // so we pass null to force it to evaluate the description text.
   const inferredTrade = description.trim().length >= 8
-    ? inferTrade(description, trade)
+    ? inferTrade(description, null)
     : null;
-  const showTradeSuggestion = inferredTrade && inferredTrade !== trade && inferredTrade !== 'Other';
+  const showTradeSuggestion =
+    inferredTrade && inferredTrade !== 'Other' && inferredTrade !== trade;
 
   // Auto-grow textarea
   const growDesc = useCallback(() => {
