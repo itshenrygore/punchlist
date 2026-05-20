@@ -248,6 +248,17 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   const [photoBase64, setPhotoBase64] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
   const [listening, setListening] = useState(false);
+  // First-time intro card. Persists dismissal in localStorage so it
+  // doesn't reappear after the user has seen it, even if they never
+  // actually send a message.
+  const [showIntro, setShowIntro] = useState(() => {
+    try { return !localStorage.getItem('pl_foreman_intro_seen'); }
+    catch { return true; }
+  });
+  function dismissIntro() {
+    setShowIntro(false);
+    try { localStorage.setItem('pl_foreman_intro_seen', '1'); } catch { /* private mode */ }
+  }
 
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -584,6 +595,29 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
                   ? 'I can see your quote. Tap below or just ask.'
                   : 'Pricing, scoping, schedule, follow-ups — tap or type.'}
               </p>
+
+              {/* First-time intro — explains what Foreman does in three
+                  short lines. Hidden after the user dismisses it, or
+                  permanently after the user actually sends a message. */}
+              {showIntro && !hasQuote && (
+                <div className="fm-intro">
+                  <button
+                    type="button"
+                    className="fm-intro-close"
+                    onClick={dismissIntro}
+                    aria-label="Dismiss"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                  <p className="fm-intro-lead">A few things I'm good at:</p>
+                  <ul className="fm-intro-list">
+                    <li><span className="fm-intro-dot" /> Reviewing your scope before you send — flag missing items, check pricing for your province</li>
+                    <li><span className="fm-intro-dot" /> Drafting customer follow-ups when a quote stalls</li>
+                    <li><span className="fm-intro-dot" /> Looking up prices or helping you diagnose what you're seeing in the field</li>
+                  </ul>
+                  <p className="fm-intro-tail">Tap a prompt below or just type a question.</p>
+                </div>
+              )}
 
               {/* Quick actions — contextual to current page */}
               <div className="fm-quick-actions">
