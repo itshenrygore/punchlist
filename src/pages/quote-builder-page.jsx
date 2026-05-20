@@ -1378,10 +1378,12 @@ export default function QuoteBuilderPage() {
                   flipped to primary CTA. "Start from blank" sits below as
                   an escape hatch for contractors who prefer to type their
                   own items. */}
-              <button type="button" onClick={handleBuildScope} disabled={!description.trim() || scopeLoading} className="btn btn-primary btn-lg full-width">
-                {scopeLoading ? 'Building…' : 'Build the scope →'}
-              </button>
-              <div className="qb-pillar-teaser">Your customer sees the total, a monthly option, and can approve from their phone.</div>
+              <div className="qb-build-cta">
+                <button type="button" onClick={handleBuildScope} disabled={!description.trim() || scopeLoading} className="btn btn-primary btn-lg full-width">
+                  {scopeLoading ? 'Building…' : 'Build the scope →'}
+                </button>
+                <div className="qb-pillar-teaser">Your customer sees the total, a monthly option, and can approve from their phone.</div>
+              </div>
               <button className="btn-link qb-manual-link" type="button" disabled={!description.trim()} onClick={async () => {
                 if (!description.trim()) return setError('Describe the job first');
                 try {

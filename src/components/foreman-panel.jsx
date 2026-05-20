@@ -677,7 +677,8 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           <button
             className="fm-input-icon-btn"
             onClick={() => fileRef.current?.click()}
-            title="Attach photo"
+            title="Snap a photo for diagnosis"
+            aria-label="Snap a photo for diagnosis"
             type="button"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
