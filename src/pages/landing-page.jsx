@@ -69,16 +69,27 @@ function Nav() {
   );
 }
 
-/* ── Jobs marquee data ── */
+/* ── Jobs marquee data ──
+ * A real contractor's day spans $200 service calls to $20k renovations.
+ * The marquee mixes small / mid / large so a one-person plumber doing
+ * faucet swaps and a GC doing kitchen renos both see themselves on the
+ * page. Skews slightly to mid-size since that's where most service
+ * contractors actually live. */
 const MARQUEE = [
-  { amount: '$10,830', job: 'Furnace + AC replacement', city: 'Edmonton, AB' },
-  { amount: '$13,750', job: 'Panel upgrade to 200A', city: 'Vancouver, BC' },
-  { amount: '$7,440',  job: 'Main drain replacement', city: 'Calgary, AB' },
-  { amount: '$22,175', job: 'Kitchen renovation', city: 'Toronto, ON' },
-  { amount: '$12,640', job: 'Roof replacement — 30yr shingle', city: 'Ottawa, ON' },
-  { amount: '$8,925',  job: 'Full bathroom reno', city: 'Burnaby, BC' },
-  { amount: '$9,180',  job: 'Boiler swap + radiators', city: 'Mississauga, ON' },
-  { amount: '$6,375',  job: 'Basement electrical + panel', city: 'Regina, SK' },
+  { amount: '$185',    job: 'Kitchen faucet replacement',         city: 'Calgary, AB' },
+  { amount: '$1,290',  job: 'Water heater swap — 50 gal gas',     city: 'Edmonton, AB' },
+  { amount: '$420',    job: 'Dishwasher install + shutoff',       city: 'Burnaby, BC' },
+  { amount: '$3,150',  job: 'Bathroom faucet + vanity reno',      city: 'Toronto, ON' },
+  { amount: '$675',    job: '15A circuit + GFCI in garage',       city: 'Saskatoon, SK' },
+  { amount: '$10,830', job: 'Furnace + AC replacement',           city: 'Edmonton, AB' },
+  { amount: '$2,480',  job: 'Toilet + main shutoff swap',         city: 'Vancouver, BC' },
+  { amount: '$13,750', job: 'Panel upgrade to 200A',              city: 'Vancouver, BC' },
+  { amount: '$890',    job: 'EV charger circuit — 40A',           city: 'Mississauga, ON' },
+  { amount: '$5,420',  job: 'Roof leak repair + 6 sq shingles',   city: 'Ottawa, ON' },
+  { amount: '$340',    job: 'Hose bib replacement + insulation',  city: 'Winnipeg, MB' },
+  { amount: '$7,440',  job: 'Main drain replacement',             city: 'Calgary, AB' },
+  { amount: '$1,650',  job: 'Bathroom fan + ducting through roof',city: 'Halifax, NS' },
+  { amount: '$22,175', job: 'Kitchen renovation',                 city: 'Toronto, ON' },
 ];
 
 /* ── Interactive Quote Card ── */
@@ -300,32 +311,33 @@ export default function LandingPage() {
               <h3 className="wf-step-head">Describe it. We surface matching line items.</h3>
               <p className="wf-step-desc">Suggested items + provincial pricing pulled from a 1,300-item trade catalog. You add the ones you want, edit prices, drop in anything we missed.</p>
               <div className="wf-vis wf-vis--scope">
-                <div className="wf-vis-tag">Generated in 9 sec</div>
+                <div className="wf-vis-tag">Suggested in 9 sec</div>
                 {[
-                  ['Remove & dispose of existing furnace + AC', '$475'],
-                  ['Supply & install gas furnace — 96% AFUE, 80k BTU', '$4,180'],
-                  ['Supply & install central AC — 3.5 ton, 16 SEER', '$4,625'],
-                  ['Lineset, flue liner, electrical & Ecobee thermostat', '$1,550'],
+                  ['Remove old water heater + safe disposal', '$120'],
+                  ['Supply & install 50 gal natural gas heater', '$895'],
+                  ['New flex connectors, expansion tank, T&P valve', '$185'],
+                  ['Re-pipe + leak test + city permit', '$90'],
                 ].map(([name, price], i) => (
                   <div key={i} className="wf-scope-row">
                     <span className="wf-scope-name">{name}</span>
                     <span className="wf-scope-price">{price}</span>
                   </div>
                 ))}
-                <div className="wf-scope-total"><span>Total</span><span>$10,830</span></div>
+                <div className="wf-scope-total"><span>Total</span><span>$1,290</span></div>
               </div>
             </div>
 
-            {/* Step 2 — Monthly price */}
+            {/* Step 2 — Monthly price (on $500+ jobs only — that's where
+                the financing value prop actually moves the close) */}
             <div className="wf-step rv rv--d1">
               <div className="wf-step-num">02</div>
-              <h3 className="wf-step-head">Your customer sees a number they'll approve.</h3>
-              <p className="wf-step-desc">Monthly payment options on every quote. They sign from their phone. You get paid the full amount within 1–2 business days.</p>
+              <h3 className="wf-step-head">On bigger jobs, a monthly option gets the yes.</h3>
+              <p className="wf-step-desc">For jobs over $500, customers can pick a monthly payment at checkout. They sign from their phone. Affirm pays you the full amount in 1–2 business days.</p>
               <div className="wf-vis wf-vis--price">
                 <div className="wf-price-eyebrow">Customer sees</div>
-                <div className="wf-price-big">$552<span>/mo</span></div>
-                <div className="wf-price-sub">Same $10,830. Same margin. Zero risk.</div>
-                <div className="wf-price-won">✓ Approved — $10,830 paid in full</div>
+                <div className="wf-price-big">$654<span>/mo</span></div>
+                <div className="wf-price-sub">Same $7,440 main drain. Same margin. Zero risk to you.</div>
+                <div className="wf-price-won">✓ Approved — $7,440 paid in full</div>
               </div>
             </div>
 
@@ -339,7 +351,7 @@ export default function LandingPage() {
                   <div className="wf-notif-icon">📋</div>
                   <div className="wf-notif-body">
                     <div className="wf-notif-app">Punchlist</div>
-                    <div className="wf-notif-msg">Kevin opened your $10,830 quote</div>
+                    <div className="wf-notif-msg">Kevin opened your $1,290 quote</div>
                   </div>
                   <div className="wf-notif-time">now</div>
                 </div>
