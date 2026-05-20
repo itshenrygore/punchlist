@@ -160,13 +160,17 @@ export default function AnalyticsPage() {
     // and "Furnace + AC replacement" merged with "Furnace + AC tune-up".
     // We lowercase, strip punctuation, and keep up to the first six
     // tokens so distinct jobs remain distinct.
+    // 10 tokens (was 6): two near-identical titles like
+    // "Relocate Kitchen Sink and Dishwasher to island" vs
+    // "…and Dishwasher hookups" collided at 6, then rendered as two
+    // visually identical "Relocate Kitchen Sink and Dishwasher…" rows.
     const norm = (t) =>
       t.toLowerCase()
         .replace(/[^\p{L}\p{N}\s]/gu, ' ')
         .replace(/\s+/g, ' ')
         .trim()
         .split(' ')
-        .slice(0, 6)
+        .slice(0, 10)
         .join(' ');
     const map = {};
     for (const q of quotes) {
@@ -322,7 +326,11 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="an-chart">
-                  {monthly.map(m => (
+                  {/* Skip empty months — a row of grey pills next to "—"
+                      reads as "broken data" to a contractor scanning the
+                      page on their phone. Only show months that have
+                      actual sent volume. */}
+                  {monthly.filter(m => m.sent > 0).map(m => (
                     <MonthBar
                       key={m.key}
                       label={m.label}
@@ -378,7 +386,7 @@ export default function AnalyticsPage() {
                   {topJobs.map((j, i) => (
                     <div key={j.title} className="an-job-row">
                       <span className="an-job-rank">{i + 1}</span>
-                      <span className="an-job-title">{j.title}…</span>
+                      <span className="an-job-title" title={j.title}>{j.title}</span>
                       <span className="an-job-count">{j.count} quote{j.count !== 1 ? 's' : ''}</span>
                       {j.winRate !== null && (
                         <span className={`an-job-winrate${j.winRate >= 60 ? ' an-job-winrate--good' : j.winRate < 30 ? ' an-job-winrate--low' : ''}`}>
@@ -417,7 +425,7 @@ export default function AnalyticsPage() {
             {stats.awaitingAction > 0 && (
               <div className="an-action-card">
                 <div className="an-action-lbl">
-                  {stats.awaitingAction} quote{stats.awaitingAction !== 1 ? 's' : ''} need a follow-up
+                  {stats.awaitingAction} quote{stats.awaitingAction !== 1 ? 's' : ''} need{stats.awaitingAction === 1 ? 's' : ''} a follow-up
                 </div>
                 <Link to="/app/quotes?filter=needs_followup" className="btn btn-secondary an-action-btn">
                   Review →
