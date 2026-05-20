@@ -3,6 +3,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
+import { supabase } from '../lib/supabase';
+
+async function authHeaders() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const h = { 'Content-Type': 'application/json' };
+  if (session?.access_token) h.Authorization = `Bearer ${session.access_token}`;
+  return h;
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    PAYMENTS ONBOARDING FLOW
@@ -782,13 +790,17 @@ export default function PaymentsOnboardingPage() {
     try {
       const r = await fetch('/api/connect-onboarding', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ action: 'status', userId: user.id }),
       });
-      // Reject non-2xx so a transient 500 doesn't bounce an already-
-      // onboarded contractor back to the intro funnel.
       if (!r.ok) {
         console.warn('[payments-onboarding] status', r.status);
+        // Drop into intro for "no Stripe account yet" cases (401/404 on
+        // first visit). For 5xx the user still sees an actionable
+        // screen instead of an infinite loader.
+        if (r.status === 401 || r.status === 404 || r.status >= 500) {
+          setScreen('intro');
+        }
         return null;
       }
       const data = await r.json().catch(() => null);
@@ -856,7 +868,7 @@ export default function PaymentsOnboardingPage() {
 
       const r = await fetch('/api/connect-onboarding', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({
           action,
           userId: user.id,
@@ -885,7 +897,7 @@ export default function PaymentsOnboardingPage() {
     try {
       const r = await fetch('/api/connect-onboarding', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({
           action: 'accept_terms',
           userId: user.id,

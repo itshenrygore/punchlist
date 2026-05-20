@@ -70,17 +70,25 @@ export default function DashboardPage() {
     if (!user) return;
     identify(user.id, { email: user.email });
     expireStaleDrafts().catch(() => {});
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const hdrs = { 'Content-Type': 'application/json' };
-      if (session?.access_token) hdrs['Authorization'] = `Bearer ${session.access_token}`;
-      // Fire-and-forget but swallow rejections so an outage doesn't
-      // emit unhandled-rejection warnings on every dashboard load.
-      fetch('/api/activation-email', {
-        method: 'POST',
-        headers: hdrs,
-        body: JSON.stringify({ user_id: user.id }),
+    // Server-side throttles to one email per 24h, but each dashboard
+    // mount was still hitting the IP-level 5/min limit and surfacing
+    // a 429 in the console. Gate per-user, per-browser-session so we
+    // POST at most once per tab.
+    const activationKey = `pl_activation_email_${user.id}`;
+    let alreadyPinged = false;
+    try { alreadyPinged = !!sessionStorage.getItem(activationKey); } catch { /* private mode */ }
+    if (!alreadyPinged) {
+      try { sessionStorage.setItem(activationKey, '1'); } catch { /* private mode */ }
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        const hdrs = { 'Content-Type': 'application/json' };
+        if (session?.access_token) hdrs['Authorization'] = `Bearer ${session.access_token}`;
+        fetch('/api/activation-email', {
+          method: 'POST',
+          headers: hdrs,
+          body: JSON.stringify({ user_id: user.id }),
+        }).catch(() => {});
       }).catch(() => {});
-    }).catch(() => {});
+    }
 
     Promise.all([listQuotes(user.id), getProfile(user.id), listCustomers(user.id), listInvoices(user.id).catch(() => [])])
       .then(([q, profile, customers, invoices]) => {

@@ -9,6 +9,10 @@ import '../styles/landing.css';
 
 function useReveal() {
   useEffect(() => {
+    // Opt in to the fade-in: until this class is present .rv elements
+    // render visible so non-JS / small-viewport users always see
+    // content even if the IO callback never fires.
+    document.documentElement.classList.add('js-reveal');
     const obs = new IntersectionObserver(
       entries => entries.forEach(e => {
         if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
@@ -16,7 +20,10 @@ function useReveal() {
       { threshold: 0.06, rootMargin: '0px 0px -40px 0px' }
     );
     document.querySelectorAll('.rv').forEach(el => obs.observe(el));
-    return () => obs.disconnect();
+    return () => {
+      obs.disconnect();
+      document.documentElement.classList.remove('js-reveal');
+    };
   }, []);
 }
 
