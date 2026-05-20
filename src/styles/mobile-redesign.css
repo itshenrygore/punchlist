@@ -2663,6 +2663,15 @@
   padding-bottom: calc(80px + var(--bottom-chrome-height, 0px));
 }
 
+/* The 80px reserve above is room for the sticky bottom send-bar on
+   the Details/Messages tabs. On the More tab the sticky bar is
+   hidden (R3 dedup), so the reserve turned into a 130px whitespace
+   gap between the compact header and the in-card Share controls.
+   When the sidebar drops inline (More tab marker), zero the reserve. */
+.qd-grid:has(.qd-sidebar--mobile-inline) .qd-main {
+  padding-bottom: 0;
+}
+
 .qd-edit-link {
   color: var(--brand);
   text-decoration: none;
