@@ -4248,8 +4248,26 @@ a.dv2-headline-metric:hover {
 .sch-job-info { flex: 1; min-width: 0; }
 .sch-job-title { display: block; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sch-job-meta { font-size: 12px; color: var(--muted); }
+/* Time pill on each scheduled job — leftmost so the day reads like a
+   calendar (8am, 9:30am, 2pm down the column). */
+.sch-job-time {
+  flex-shrink: 0;
+  min-width: 52px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.sch-job-actions { display: flex; gap: 2px; flex-shrink: 0; }
 .sch-nav-btn { all: unset; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--muted); flex-shrink: 0; }
-.sch-nav-btn:hover { color: var(--primary); background: var(--hover-bg, rgba(0,0,0,.04)); }
+.sch-nav-btn:hover { color: var(--brand); background: var(--hover-bg, rgba(0,0,0,.04)); }
+/* .ics export button sits flush right in the week nav */
+.sch-export-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 480px) {
+  .sch-export-btn span { display: none; }
+  .sch-export-btn { padding: 6px 10px !important; }
+}
 .sch-job--multi { border-left: 3px solid var(--accent, #c8702a); }
 .sch-job--multi:not(.sch-job--first) { opacity: 0.8; }
 .sch-job--multi:not(.sch-job--first) .sch-job-title { font-weight: 500; }

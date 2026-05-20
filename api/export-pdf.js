@@ -478,7 +478,40 @@ function buildInvoiceHTML(inv, contractor, payments) {
   ` : '';
 
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<style>${SHARED_CSS}</style></head><body>
+<style>${SHARED_CSS}
+/* Invoice PDF — compact overrides so a typical 4-8 item invoice
+   fits on a single Letter page. Quotes intentionally keep the
+   roomier SHARED_CSS spacing for the "legal document" feel; an
+   invoice is the bill, it just needs to fit one sheet of paper. */
+body { padding: 32px 40px 24px; font-size: 11.5px; line-height: 1.45; }
+.header { padding-bottom: 14px; margin-bottom: 16px; border-bottom-width: 2px; }
+.logo { max-height: 44px; margin-bottom: 6px; }
+.company { font-size: 20px; }
+.contact { margin-top: 5px; font-size: 10.5px; }
+.hero { padding: 14px 0; margin-bottom: 14px; }
+.title { font-size: 20px; margin-bottom: 4px; }
+.customer { font-size: 13px; }
+.address { font-size: 11px; margin-top: 2px; }
+.meta-grid { margin-top: 10px; padding-top: 10px; gap: 12px; }
+.meta-label { font-size: 8.5px; margin-bottom: 2px; }
+.meta-value { font-size: 12px; }
+.items { padding: 12px 0; }
+.section-title { font-size: 9.5px; margin-bottom: 8px; }
+.group-label { padding: 8px 0 5px; }
+.item { gap: 16px; padding: 7px 0; }
+.item-name { font-size: 12px; line-height: 1.35; }
+.item-note { font-size: 10px; margin-top: 2px; line-height: 1.4; }
+.item-qty { font-size: 10px; margin-top: 2px; }
+.item-price { font-size: 12.5px; }
+.totals { padding: 14px 18px; margin: 14px 0; border-radius: 8px; }
+.total-row { padding: 4px 0; font-size: 12px; }
+.total-row.grand { font-size: 17px; padding-top: 10px; margin-top: 6px; border-top-width: 2px; }
+.total-row.balance-due { font-size: 15px; padding-top: 10px; margin-top: 6px; border-top-width: 2px; }
+.paid-stamp { font-size: 28px; padding: 6px 22px; margin: 12px 0 2px; }
+.paid-stamp-date { font-size: 11px; margin-top: 4px; }
+.section { padding: 12px 0; }
+.footer { margin-top: 18px; padding-top: 10px; font-size: 9.5px; }
+</style></head><body>
 
 <div class="header">
   <div class="brand">
