@@ -287,7 +287,7 @@ export default function LandingPage() {
               <span><Check size={12} strokeWidth={3} />No credit card</span>
             </div>
             <div className="ln-hero-trust rv rv--d3">
-              Built in Calgary — for the contractors we'd trust with our own house.
+              Built for trades who do their own quoting.
             </div>
           </div>
           <div className="ln-hero-card rv rv--d1">
