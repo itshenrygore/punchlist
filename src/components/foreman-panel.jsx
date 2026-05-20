@@ -590,11 +590,16 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
               <h3 className="fm-empty-title">
                 {greetName ? `Hey ${greetName}` : 'Hey'} — what are we working on?
               </h3>
-              <p className="fm-empty-body">
-                {hasQuote
-                  ? 'I can see your quote. Tap below or just ask.'
-                  : 'Pricing, scoping, schedule, follow-ups — tap or type.'}
-              </p>
+              {/* Hide the generic subtitle while the first-time intro
+                  is showing — they convey the same thing and the
+                  doubled copy pushed the prompt chips off the sheet. */}
+              {!(showIntro && !hasQuote) && (
+                <p className="fm-empty-body">
+                  {hasQuote
+                    ? 'I can see your quote. Tap below or just ask.'
+                    : 'Pricing, scoping, schedule, follow-ups — tap or type.'}
+                </p>
+              )}
 
               {/* First-time intro — one tight paragraph so the prompts
                   below stay visible above the keyboard. Dismissed
