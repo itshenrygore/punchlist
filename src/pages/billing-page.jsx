@@ -4,7 +4,7 @@ import { BillingSkeleton } from '../components/skeletons';
 import { UsageMeter } from '../components/upgrade-prompt';
 import { getProfile, listQuotes, createCheckout, openBillingPortal } from '../lib/api';
 import { isPro, countSentThisMonth, FREE_QUOTE_LIMIT, PRICING } from '../lib/billing';
-import { currency } from '../lib/format';
+import { currency as fmtCurrency } from '../lib/format';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 
@@ -14,6 +14,7 @@ export default function BillingPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ quotes: 0, sent: 0, won: 0, wonRevenue: 0 });
+  const currency = (n, c) => fmtCurrency(n, c ?? profile?.country);
   const [sentThisMonth, setSentThisMonth] = useState(0);
   const [checkingOut, setCheckingOut] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);

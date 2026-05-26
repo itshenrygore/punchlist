@@ -26,7 +26,7 @@ import { haptic, usePullToRefresh } from '../hooks/use-mobile-ux';
 import { listQuotes, getProfile, expireStaleDrafts, friendly, listInvoices, updateQuoteStatus } from '../lib/api';
 import { listCustomers } from '../lib/api/customers';
 import { isPro, countSentThisMonth, FREE_QUOTE_LIMIT } from '../lib/billing';
-import { currency } from '../lib/format';
+import { currency as fmtCurrency } from '../lib/format';
 import { normalizeStatus, chipForStatus } from '../lib/workflow';
 // Monthly payment estimates removed from contractor screens — that
 // number is only meaningful on the customer-facing public quote.
@@ -72,6 +72,7 @@ function quickActionFor(reason) {
 
 function ActionRow({ quote: q, status, customer, quickAction, onQuickAction, busy, style }) {
   const navigate = useNavigate();
+  const currency = (n) => fmtCurrency(n, q?.country);
   function rowClick() { navigate(`/app/quotes/${q.id}`); }
   function rowKey(e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rowClick(); }
@@ -124,6 +125,7 @@ export default function DashboardPage() {
   const [sentThisMonth, setSentThisMonth] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const currency = (n, c) => fmtCurrency(n, c ?? userProfile?.country);
   const [jobInput, setJobInput] = useState('');
   const [installLeaving, setInstallLeaving] = useState(false);
   const [quickActionBusy, setQuickActionBusy] = useState(null);
