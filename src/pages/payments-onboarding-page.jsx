@@ -855,6 +855,17 @@ export default function PaymentsOnboardingPage() {
     }
   }, [user, connectParam, checkStatus, returnTo]);
 
+  // ── Auto-advance out of the "being reviewed" state ──
+  // Stripe verification is async — it can clear in seconds or minutes.
+  // Rather than make the contractor reload to find out, quietly re-poll
+  // while they're on the pending screen. The moment Stripe enables
+  // charges, checkStatus() flips them to the success screen on its own.
+  useEffect(() => {
+    if (screen !== 'pending') return;
+    const id = setInterval(() => { checkStatus(); }, 8000);
+    return () => clearInterval(id);
+  }, [screen, checkStatus]);
+
   // ── Create / refresh Stripe account link and redirect ──
   // isRefresh: force action='refresh' (used when we know account exists)
   async function doStripeRedirect(isRefresh = false) {

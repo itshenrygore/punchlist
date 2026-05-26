@@ -1587,23 +1587,12 @@ export default function QuoteBuilderPage() {
                     <Stat label={`Tax (${province})`} value={Math.round(Math.max(0, totals.subtotal - (draft.discount || 0)) * totals.rate)} prefix="$" countUp={true} align="end" />
                     <Stat label="Total" value={Math.round(grandTotal)} prefix="$" countUp={true} align="end" tone="brand" />
                   </div>
-                  {showFinancing(grandTotal) && (() => {
-                    const mo = estimateMonthly(grandTotal);
-                    return (
-                    <div className="rq-financing-card rq-financing-prominent">
-                      <div className="rq-monthly-label">PAYMENT OPTIONS</div>
-                      <div className="rq-monthly-value tabular">as low as {currency(mo, country)}<span>/mo</span></div>
-                      <div className="rq-monthly-hint">Shown to your customer · Final rate set by Klarna/Affirm at checkout</div>
-                    </div>
-                    );
-                  })()}
                 </Card>}
                 {/* Close helper tips */}
                 {lineItems.length > 0 && grandTotal > 0 && (
                   <div className="rq-close-tips">
                     <div className="rq-close-tips-title">How this helps you close</div>
                     <div className="rq-close-tip">✓ Customer can approve and sign from their phone</div>
-                    {showFinancing(grandTotal) && <div className="rq-close-tip">✓ Monthly payment option removes price hesitation</div>}
                     {draft.deposit_required && <div className="rq-close-tip">✓ Deposit locks in the job before you start</div>}
                     {draft.scope_summary && <div className="rq-close-tip">✓ Scope summary sets clear expectations</div>}
                     {!draft.deposit_required && <div className="rq-close-tip qb-deposit-tip">○ Add a deposit to lock in the job</div>}
@@ -1648,7 +1637,6 @@ export default function QuoteBuilderPage() {
               <div id="qb-send-btn" className="rq-footer-right">
                 <div className="rq-footer-total num-stable tabular" style={{ '--min-ch': '8ch' }} aria-live="polite">
                   {currency(grandTotal, country)}
-                  {showFinancing(grandTotal) && <span className="rq-footer-monthly">or from {currency(estimateMonthly(grandTotal), country)}/mo</span>}
                 </div>
                 {itemCount === 0 ? (
                   <button className="btn btn-primary btn-lg qb-disabled-btn" type="button" disabled>Add items to continue</button>
@@ -1693,14 +1681,7 @@ export default function QuoteBuilderPage() {
                       )}
                       <div className="rq-send-total">
                         <span>Total</span>
-                        <span>
-                          {currency(grandTotal, country)}
-                          {showFinancing(grandTotal) && (
-                            <span className="qb-send-hint">
-                              or from {currency(estimateMonthly(grandTotal), country)}/mo
-                            </span>
-                          )}
-                        </span>
+                        <span>{currency(grandTotal, country)}</span>
                       </div>
                     </div>
 
@@ -1834,7 +1815,7 @@ export default function QuoteBuilderPage() {
                 </div>
               )}
               {isFirst ? (
-                <div className="qb-success-wrap"><div className="rq-sent-emoji qb-success-emoji">🎉</div><div className="qb-success-headline">Quote sent — {currency(grandTotal, country)}</div>{mo && <div className="qb-success-sub">{firstName} will see {currency(grandTotal, country)} or as low as {currency(mo, country)}/mo</div>}<div className="qb-success-tracking"><div className="qb-success-dot" /><span className="qb-success-track-label">You'll get notified the moment {firstName} opens it</span></div>
+                <div className="qb-success-wrap"><div className="rq-sent-emoji qb-success-emoji">🎉</div><div className="qb-success-headline">Quote sent — {currency(grandTotal, country)}</div>{mo && <div className="qb-success-sub">{firstName} can pay in full or choose monthly at checkout</div>}<div className="qb-success-tracking"><div className="qb-success-dot" /><span className="qb-success-track-label">You'll get notified the moment {firstName} opens it</span></div>
                 <div className="rq-sent-steps">
                   <div className="rq-sent-step"><span className="rq-sent-step-num">1</span><span>{firstName} gets your quote via text</span></div>
                   <div className="rq-sent-step"><span className="rq-sent-step-num">2</span><span>You see when they open it</span></div>
@@ -1842,7 +1823,7 @@ export default function QuoteBuilderPage() {
                 </div>
                 </div>
               ) : (
-                <div className="qb-success-compact"><div className="qb-success-compact-title">✓ Quote sent to {firstName}</div><div className="qb-success-compact-sub">{currency(grandTotal, country)}{mo ? ` · ${firstName} sees options from ${currency(mo, country)}/mo` : ''}</div></div>
+                <div className="qb-success-compact"><div className="qb-success-compact-title">✓ Quote sent to {firstName}</div><div className="qb-success-compact-sub">{currency(grandTotal, country)}{mo ? ' · monthly option available at checkout' : ''}</div></div>
               )}
               <div className={`qb-success-actions ${isFirst ? "qb-success-actions--first" : "qb-success-actions--repeat"}`}>
                 {quoteId && <button className="btn btn-primary btn-sm" type="button" onClick={() => nav(`/app/quotes/${quoteId}`)}>View quote →</button>}
