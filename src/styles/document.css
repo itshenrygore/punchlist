@@ -928,6 +928,31 @@
 .pq-success-banner--amber { background: var(--amber-bg); color: var(--amber-text); border-color: rgba(245,158,11,.15); }
 .pq-success-banner--muted { background: var(--doc-line-soft, #f4f4f5); color: var(--doc-muted, #52525b); border-color: var(--doc-line, #e4e4e7); }
 
+/* Persistent job-progress strip (approved → deposit → invoice → paid). */
+.pq-journey {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--doc-line, #e4e4e7);
+}
+.pq-journey-item { display: flex; align-items: center; flex: 1; min-width: 0; }
+.pq-journey-item:last-child { flex: 0 0 auto; }
+.pq-journey-step { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+.pq-journey-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  background: var(--doc-line-soft, #f4f4f5); color: var(--doc-muted, #71717a);
+  border: 1.5px solid var(--doc-line, #e4e4e7);
+}
+.pq-journey-label { font-size: var(--text-2xs); font-weight: 600; color: var(--doc-muted, #71717a); white-space: nowrap; }
+.pq-journey-line { flex: 1; height: 2px; background: var(--doc-line, #e4e4e7); margin: 0 6px; align-self: flex-start; margin-top: 11px; }
+.pq-journey-line--done { background: var(--doc-green, #15803d); }
+.pq-journey-step--done .pq-journey-dot { background: var(--doc-green, #15803d); border-color: var(--doc-green, #15803d); color: #fff; }
+.pq-journey-step--done .pq-journey-label { color: var(--doc-text, #18181b); }
+.pq-journey-step--current .pq-journey-dot { background: var(--doc-accent-bg, rgba(27,125,72,.1)); border-color: var(--doc-accent, #1b7d48); color: var(--doc-accent, #1b7d48); }
+.pq-journey-step--current .pq-journey-label { color: var(--doc-accent, #1b7d48); }
+
 .pq-success-check {
   width: 36px;
   height: 36px;
