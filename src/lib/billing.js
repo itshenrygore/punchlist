@@ -30,20 +30,20 @@ export const PLANS = {
     tagline: 'Try it out',
     features: [
       'Up to 5 quotes per month',
-      'Scope builder — 1,000+ trade items',
+      '1,300-item scope builder',
+      'Foreman — catches missed items + underpricing',
       'Professional customer-facing quotes',
       'Customer approval + e-signature',
+      'Customer pay-over-time (you get paid in full)',
+      'Quote activity tracking',
+      'Deposit & invoice collection',
+      'Scheduling + analytics',
       'Works from your phone',
     ],
     excluded: [
       'Unlimited quotes',
-      'Quote activity tracking',
-      'Follow-up reminders',
-      'Deposit collection',
-      'Scheduling & booking',
-      'Invoicing & payments',
-      'Additional work requests',
-      'Analytics dashboard',
+      'Custom saved templates',
+      'Priority support',
     ],
   },
   pro_monthly: {
@@ -56,19 +56,11 @@ export const PLANS = {
     tagline: 'Most popular',
     badge: 'Most Popular',
     features: [
-      'Unlimited quotes',
-      'Foreman — catches missed items + underpricing',
-      'Scope builder — 1,000+ trade items',
-      'Professional customer-facing quotes',
-      'Customer pay-over-time (you get paid in full)',
-      'Quote activity tracking',
-      'Follow-up reminders',
-      'Deposit collection',
-      'Scheduling & booking',
-      'Invoicing & payments',
-      'Additional work requests',
-      'Analytics dashboard',
-      'Works from your phone',
+      'Everything in Free — no limits',
+      'Unlimited quotes per month',
+      'Custom saved quote + message templates',
+      'Priority support',
+      'Early access to new features',
     ],
     excluded: [],
   },
@@ -93,21 +85,25 @@ export const PLANS = {
   },
 };
 
-// Feature comparison for pricing page
+// Feature comparison for pricing page.
+// Reality check: only quote VOLUME, custom templates, and support are
+// gated. Foreman, pay-over-time, tracking, deposits, invoicing,
+// scheduling, and analytics are all available on Free (capped at 5
+// quotes/mo) — so they show as included on both tiers.
 export const FEATURE_COMPARISON = [
   { feature: 'Quotes per month',              free: '5',    pro: 'Unlimited' },
-  { feature: 'Scope builder (1,000+ items)',   free: true,   pro: true },
-  { feature: 'Foreman scope checker',          free: false,  pro: true },
+  { feature: 'Scope builder (1,300 items)',    free: true,   pro: true },
+  { feature: 'Foreman scope checker',          free: true,   pro: true },
   { feature: 'Customer-facing quotes',         free: true,   pro: true },
   { feature: 'Customer approval + e-sign',     free: true,   pro: true },
-  { feature: 'Customer pay-over-time',         free: false,  pro: true },
-  { feature: 'Quote activity tracking',        free: false,  pro: true },
-  { feature: 'Follow-up reminders',            free: false,  pro: true },
-  { feature: 'Deposit collection',             free: false,  pro: true },
-  { feature: 'Scheduling & booking',           free: false,  pro: true },
-  { feature: 'Invoicing & payments',           free: false,  pro: true },
-  { feature: 'Additional work requests',       free: false,  pro: true },
-  { feature: 'Analytics dashboard',            free: false,  pro: true },
+  { feature: 'Customer pay-over-time',         free: true,   pro: true },
+  { feature: 'Quote activity tracking',        free: true,   pro: true },
+  { feature: 'Deposit collection',             free: true,   pro: true },
+  { feature: 'Invoicing & payments',           free: true,   pro: true },
+  { feature: 'Scheduling & booking',           free: true,   pro: true },
+  { feature: 'Analytics dashboard',            free: true,   pro: true },
+  { feature: 'Custom saved templates',         free: false,  pro: true },
+  { feature: 'Priority support',               free: false,  pro: true },
 ];
 
 // FAQ entries
@@ -189,14 +185,4 @@ export function getUsageInfo(profile, sentThisMonth) {
     atLimit: !pro && sentThisMonth >= FREE_QUOTE_LIMIT,
     nearLimit: !pro && sentThisMonth >= (FREE_QUOTE_LIMIT - 2) && sentThisMonth < FREE_QUOTE_LIMIT,
   };
-}
-
-// ── Pro-only feature gate ──
-export const PRO_FEATURES = new Set([
-  'deposits', 'scheduling', 'invoicing', 'additional_work',
-  'analytics', 'follow_ups', 'activity_tracking',
-]);
-
-export function isProFeature(featureKey) {
-  return PRO_FEATURES.has(featureKey);
 }

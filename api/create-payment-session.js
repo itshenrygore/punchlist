@@ -165,13 +165,11 @@ export default async function handler(req, res) {
         .eq('invoice_id', invoiceId);
       const totalPaid = (payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
 
-      // Also credit deposit if applicable + get quote share_token for redirect
+      // Also credit deposit if applicable
       let depositCredit = 0;
-      let quoteShareToken = null;
       if (invoice.quote_id) {
-        const { data: q } = await supabase.from('quotes').select('deposit_amount, deposit_status, share_token').eq('id', invoice.quote_id).maybeSingle();
+        const { data: q } = await supabase.from('quotes').select('deposit_amount, deposit_status').eq('id', invoice.quote_id).maybeSingle();
         if (q?.deposit_status === 'paid') depositCredit = Number(q.deposit_amount || 0);
-        quoteShareToken = q?.share_token || null;
       }
 
       const balance = Math.max(0, Number(invoice.total || 0) - totalPaid - depositCredit);
@@ -213,12 +211,12 @@ export default async function handler(req, res) {
         'metadata[payment_type]': 'invoice_payment',
         'metadata[invoice_id]': invoiceId,
         'metadata[contractor_id]': contractor.id,
-        success_url: quoteShareToken
-          ? `${appUrl}/public/${quoteShareToken}?tab=payments&payment=success`
-          : `${appUrl}/public/invoice/${invoice.share_token}?payment=success`,
-        cancel_url: quoteShareToken
-          ? `${appUrl}/public/${quoteShareToken}?tab=payments`
-          : `${appUrl}/public/invoice/${invoice.share_token}`,
+        // Always return to the public invoice page, which handles
+        // ?payment=success (polls Stripe + shows a paid confirmation).
+        // A linked quote does NOT have a payments view, so redirecting
+        // there would drop the customer on the quote with no receipt.
+        success_url: `${appUrl}/public/invoice/${invoice.share_token}?payment=success`,
+        cancel_url: `${appUrl}/public/invoice/${invoice.share_token}`,
       });
 
       if (customer?.email) params.append('customer_email', customer.email);

@@ -5,6 +5,10 @@
       "memory": 1024
     }
   },
+  "crons": [
+    { "path": "/api/process-recurring", "schedule": "0 8 * * *" },
+    { "path": "/api/send-followup", "schedule": "0 16 * * *" }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

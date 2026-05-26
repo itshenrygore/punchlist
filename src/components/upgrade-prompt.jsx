@@ -256,11 +256,10 @@ export default function UpgradePrompt({ trigger = 'quote_limit', context = {}, o
 
         <div className="upgrade-modal-features">
           <div>✓ Unlimited quotes</div>
-          <div>✓ Quote view tracking</div>
-          <div>✓ Customer pay-over-time</div>
-          <div>✓ Deposits & payments</div>
-          <div>✓ Scheduling</div>
-          <div>✓ Invoicing & analytics</div>
+          <div>✓ Everything in Free, uncapped</div>
+          <div>✓ Custom saved templates</div>
+          <div>✓ Priority support</div>
+          <div>✓ Early access to new features</div>
         </div>
         <button className="upgrade-modal-dismiss" type="button" onClick={handleDismiss}>Maybe later</button>
       </div>

@@ -16,6 +16,15 @@ const PRICES = {
   yearly:  process.env.STRIPE_PRICE_YEARLY,
 };
 
+// Optional USD-denominated Price IDs for US contractors. If these env
+// vars aren't set, US accounts fall back to the default (CAD) price —
+// harmless (it's cheaper for them), but the pricing page's "USD for US
+// accounts" line only holds true once these are created in Stripe.
+const PRICES_USD = {
+  monthly: process.env.STRIPE_PRICE_MONTHLY_USD,
+  yearly:  process.env.STRIPE_PRICE_YEARLY_USD,
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: 'Missing STRIPE_SECRET_KEY' });
@@ -85,21 +94,29 @@ export default async function handler(req, res) {
 
   // ── SUBSCRIPTION CHECKOUT ──
   const { priceKey } = body;
-  const price = PRICES[priceKey];
-  if (!price) return res.status(400).json({ error: `Unknown price key: ${priceKey}. Must be 'monthly' or 'yearly'.` });
+  if (!PRICES[priceKey]) return res.status(400).json({ error: `Unknown price key: ${priceKey}. Must be 'monthly' or 'yearly'.` });
 
   // Get user identity for checkout binding
   const supabase = getSupabase();
   let userEmail = null;
   let userId = null;
+  let userCountry = null;
   if (supabase) {
     const authHeader = req.headers['authorization'] || '';
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
     if (token) {
       const { data: { user } } = await supabase.auth.getUser(token);
-      if (user) { userEmail = user.email; userId = user.id; }
+      if (user) {
+        userEmail = user.email; userId = user.id;
+        const { data: profile } = await supabase.from('profiles').select('country').eq('id', user.id).maybeSingle();
+        userCountry = profile?.country || null;
+      }
     }
   }
+
+  // US contractors get the USD price when one is configured; everyone
+  // else (and US accounts without a USD price) use the default CAD price.
+  const price = (userCountry === 'US' && PRICES_USD[priceKey]) ? PRICES_USD[priceKey] : PRICES[priceKey];
 
   try {
     const params = new URLSearchParams({

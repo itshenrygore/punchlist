@@ -147,11 +147,11 @@ export default function PricingPage() {
           <div className="pr-why-grid">
             {[
               { icon: 'send', text: "You're sending more than 5 quotes per month and need unlimited" },
-              { icon: 'eye', text: 'Track every view — see the moment customers open your quote' },
-              { icon: 'bell', text: 'Follow-up prompts so quotes don\'t go cold' },
-              { icon: 'dollar', text: 'Collect deposits upfront before you start work' },
-              { icon: 'calendar', text: 'Schedule jobs from the same app you quoted in' },
-              { icon: 'receipt', text: 'Invoice customers and collect payment online — they can pay monthly' },
+              { icon: 'receipt', text: 'You want to save your winning quotes as reusable templates' },
+              { icon: 'bell', text: 'You want priority support when you need an answer fast' },
+              { icon: 'dollar', text: "Punchlist is closing jobs and the free cap is getting in the way" },
+              { icon: 'calendar', text: 'You want early access to new features as they ship' },
+              { icon: 'eye', text: 'Quoting has become a weekly habit, not a one-off' },
             ].map(({ icon, text }) => (
               <div key={text} className="pr-why-item">
                 <span className="pr-why-icon">
