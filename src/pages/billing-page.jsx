@@ -64,11 +64,10 @@ export default function BillingPage() {
             <div className="bp-pro-features">
               {[
                 '✓ Unlimited quotes',
-                '✓ Seen receipts (know when customers open)',
-                '✓ Collect deposits online',
-                '✓ Convert quotes → invoices',
-                '✓ Customize message templates',
-                '✓ Full customer & analytics history',
+                '✓ Everything in Free, uncapped',
+                '✓ Custom saved quote + message templates',
+                '✓ Priority support',
+                '✓ Early access to new features',
               ].map(f => (
                 <div key={f} className="bp-pro-feature-row">{f}</div>
               ))}
@@ -93,7 +92,7 @@ export default function BillingPage() {
           <div className="bp-upgrade-card">
             <div className="bp-plan-eyebrow">Upgrade to Pro</div>
             <p className="bp-upgrade-desc">
-              Send unlimited quotes. See when customers open them. Let them pay monthly. Collect deposits, schedule jobs, and invoice — all in one place.
+              Lift the 5-quote cap and send as many as you want. Save your best quotes as reusable templates, get priority support, and early access to new features. Everything else is already included free.
             </p>
             <div className="bp-pricing-grid">
               <div className="bp-price-panel">

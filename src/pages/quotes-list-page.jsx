@@ -226,6 +226,7 @@ export default function QuotesListPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selected, setSelected] = useState(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const fetchQuotes = useCallback(() => {
     if (!user) return;
@@ -235,15 +236,22 @@ export default function QuotesListPage() {
       .then(q => {
         const active = (q || []).filter(qt => !qt.archived_at);
         setQuotes(active);
+        setLoadError(false);
         cacheQuotes(active).catch(() => {});
       })
       .catch(e => {
         console.warn('[PL]', e);
+        // Fall back to cache; only flag an error if we have nothing to
+        // show, so a failed load doesn't masquerade as "no quotes yet".
         getCachedQuotes(user.id).then(cached => {
-          if (cached.length > 0) {
-            setQuotes(prev => prev.length === 0 ? cached.filter(qt => !qt.archived_at) : prev);
+          const usable = (cached || []).filter(qt => !qt.archived_at);
+          if (usable.length > 0) {
+            setQuotes(prev => prev.length === 0 ? usable : prev);
+            setLoadError(false);
+          } else {
+            setLoadError(true);
           }
-        }).catch(() => {});
+        }).catch(() => setLoadError(true));
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -501,6 +509,15 @@ export default function QuotesListPage() {
           <div className="pl-skel-list">
             {[...Array(5)].map((_, i) => <div key={i} className="pl-skel-row" />)}
           </div>
+        ) : loadError && quotes.length === 0 ? (
+          <Card padding="loose" minH="260px" className="pl-empty-card">
+            <div className="pl-empty-glyph" aria-hidden="true">⚠️</div>
+            <h2 className="pl-empty-title font-display">Couldn’t load your quotes</h2>
+            <p className="pl-empty-body">Something went wrong reaching the server. Check your connection and try again.</p>
+            <div className="pl-empty-actions">
+              <button type="button" className="btn btn-primary" onClick={fetchQuotes}>Retry</button>
+            </div>
+          </Card>
         ) : quotes.length === 0 ? (
           <Card padding="loose" minH="260px" className="pl-empty-card">
             <div className="pl-empty-glyph" aria-hidden="true">

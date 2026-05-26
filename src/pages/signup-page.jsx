@@ -375,7 +375,7 @@ export default function SignupPage() {
         <button className="btn btn-primary full-width" type="submit" disabled={loading || !termsAccepted}>
           {loading ? 'Creating account…' : 'Continue →'}
         </button>
-        <div className="auth-social-proof">Used by plumbers, electricians, HVAC techs, and contractors across Canada</div>
+        <div className="auth-social-proof">Used by plumbers, electricians, HVAC techs, and contractors across Canada and the US</div>
         <div className="auth-switch">
           Already have an account?{' '}
           <Link to="/login">Log in</Link>

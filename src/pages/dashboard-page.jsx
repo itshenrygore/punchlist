@@ -117,6 +117,7 @@ export default function DashboardPage() {
   const { show: toast } = useToast();
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [quotes, setQuotes] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
@@ -197,21 +198,23 @@ export default function DashboardPage() {
         setSentThisMonth(countSentThisMonth(active));
         if (profile) setUserProfile(profile);
         setCustomerCount((customers || []).length);
+        setLoadError(false);
 
         // Show onboarding if first visit OR if the user landed here
         // via the email-confirmation path that skipped signup step 2.
-        // Signal: profile.trade is missing/Other AND no quotes yet —
-        // we'd otherwise sabotage their first AI scope with wrong
-        // trade/region defaults.
+        // Signal: trade OR region is missing AND no quotes yet — region
+        // (province/state) drives tax, so a missing province would
+        // otherwise default to ON/13% and produce wrong totals.
         try {
           const tradeMissing = !profile?.trade || profile.trade === 'Other';
+          const regionMissing = !profile?.province;
           const firstVisit = !localStorage.getItem('pl_onboarded');
-          if ((firstVisit && active.length === 0) || (tradeMissing && active.length === 0)) {
+          if (active.length === 0 && (firstVisit || tradeMissing || regionMissing)) {
             setShowOnboarding(true);
           }
         } catch { /* no-op */ }
       })
-      .catch(e => console.warn('[PL]', e))
+      .catch(e => { console.warn('[PL]', e); setLoadError(true); })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -613,8 +616,25 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* ═══ LOAD ERROR ═══ */}
+        {/* A failed fetch used to fall through to the empty state, so a
+            network/RLS error looked identical to a brand-new account.
+            Surface it explicitly with a retry instead. */}
+        {!loading && loadError && !hasAnyData && (
+          <div className="dv2-empty-state dv2-enter" style={{ '--i': 2 }}>
+            <div className="dv2-empty-icon">⚠️</div>
+            <div className="dv2-empty-headline">Couldn’t load your dashboard</div>
+            <p className="dv2-empty-sub">
+              Something went wrong reaching the server. Check your connection and try again.
+            </p>
+            <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* ═══ EMPTY STATE ═══ */}
-        {!loading && !hasAnyData && (
+        {!loading && !loadError && !hasAnyData && (
           <div className="dv2-empty-state dv2-enter" style={{ '--i': 2 }}>
             <div className="dv2-empty-icon">📋</div>
             <div className="dv2-empty-headline">Your first quote takes 3 minutes</div>

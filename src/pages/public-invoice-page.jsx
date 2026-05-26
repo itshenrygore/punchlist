@@ -51,12 +51,21 @@ export default function PublicInvoicePage() {
   useEffect(() => {
     fetch(`/api/public-invoice?token=${shareToken}`)
       .then(async r => {
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error || 'Could not load invoice');
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          // Distinguish a dead/invalid link (refreshing won't help) from a
+          // transient server blip (refreshing might). Carry the friendly
+          // copy on the error so a raw network rejection below can't leak.
+          const e = new Error('http_error');
+          e.friendly = r.status === 404
+            ? 'This invoice link is invalid or has been removed. Check the link, or ask your contractor to resend it.'
+            : 'This invoice couldn’t be loaded right now. Try refreshing in a moment.';
+          throw e;
+        }
         return j.invoice;
       })
       .then(setInvoice)
-      .catch(e => setError('This invoice could not be loaded. Try refreshing the page.'))
+      .catch(e => setError(e.friendly || 'This invoice couldn’t be loaded. Check your connection and try refreshing.'))
       .finally(() => setLoading(false));
   }, [shareToken]);
 

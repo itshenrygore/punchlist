@@ -947,7 +947,7 @@ export default function SettingsPage() {
           <div className="eyebrow">Subscription</div>
           <div className="stack sp-sub-stack">
             <p className="muted small sp-sub-desc">
-              Upgrade to Pro for unlimited quotes, Foreman scope checking, deposits, scheduling, invoicing, and customer pay-over-time.
+              Upgrade to Pro to lift the 5-quote cap — plus custom saved quote &amp; message templates, priority support, and early access to new features. Everything else is already included free.
             </p>
             <div className="settings-pricing-grid sp-pricing-grid">
               <div className="sp-pricing-card">

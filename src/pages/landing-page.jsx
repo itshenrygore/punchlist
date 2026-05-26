@@ -367,7 +367,7 @@ export default function LandingPage() {
             <div className="wf-step rv rv--d2">
               <div className="wf-step-num">03</div>
               <h3 className="wf-step-head">Track it, follow up, get paid.</h3>
-              <p className="wf-step-desc">You get a text the moment they open the quote. Punchlist auto-follows-up if they go quiet. Deposit hits your bank — done.</p>
+              <p className="wf-step-desc">You get a text the moment they open the quote. Punchlist prompts you to follow up if they go quiet — one tap to send. Deposit hits your bank — done.</p>
               <div className="wf-vis wf-vis--notif">
                 <div className="wf-notif rv">
                   <div className="wf-notif-icon">📋</div>
@@ -421,7 +421,7 @@ export default function LandingPage() {
           <div className="feat-plus-row rv rv--d2">
             <span className="feat-plus-label">Also included</span>
             <ul className="feat-plus-list">
-              <li><Eye size={14} strokeWidth={2} /><strong>Open tracking + auto follow-ups</strong> — text when they view, nudge if they go cold.</li>
+              <li><Eye size={14} strokeWidth={2} /><strong>Open tracking + follow-up prompts</strong> — get a text when they view, one tap to nudge if they go cold.</li>
               <li><Smartphone size={14} strokeWidth={2} /><strong>Built for the job site</strong> — works offline, fully thumb-driven, first quote in ~3 minutes.</li>
               <li><PenLine size={14} strokeWidth={2} /><strong>E-signature + messaging</strong> — customer signs on the link, asks questions in the same thread.</li>
             </ul>
@@ -603,7 +603,7 @@ export default function LandingPage() {
               },
               {
                 q: 'What does it cost me?',
-                a: 'Free for 5 quotes/month — no card required, no time limit. Pro is $29/month: unlimited quotes, activity tracking, Foreman, invoicing, and deposit collection. One extra closed job covers a full year. A 2.5% platform fee applies to deposits and invoice payments collected through Punchlist — there are no other hidden charges.',
+                a: 'Free for 5 quotes/month — no card required, no time limit, and you get the full toolkit: Foreman, the monthly-pay display, e-signature, deposits, and invoicing. Pro is $29/month for unlimited quotes, custom saved templates, and priority support. One extra closed job covers a full year. A 2.5% platform fee applies to deposits and invoice payments collected through Punchlist — there are no other hidden charges.',
               },
             ].map((item, i) => (
               <div key={i} className={`catch-card rv rv--d${Math.min(i, 2)}`}>
@@ -635,10 +635,11 @@ export default function LandingPage() {
               <ul className="pr-feats">
                 {[
                   '5 quotes per month',
-                  'Scope builder — 1,300 trade items',
-                  'Provincial pricing built in',
-                  'Customer monthly-payment display',
-                  'Customer e-signature',
+                  '1,300-item scope builder',
+                  'Regional tax + pricing built in',
+                  'Foreman — photo + field assistant',
+                  'Customer financing + monthly-pay display',
+                  'E-signature, deposits & invoicing',
                   'Works from your phone',
                 ].map((f, i) => <li key={i} className="pr-f"><Check size={14} strokeWidth={2.5} />{f}</li>)}
               </ul>
@@ -656,13 +657,11 @@ export default function LandingPage() {
               </div>
               <ul className="pr-feats">
                 {[
-                  'Everything in Free',
+                  'Everything in Free — no limits',
                   'Unlimited quotes',
-                  'Foreman — photo + field assistant',
-                  'Customer financing at checkout',
-                  'Activity tracking + auto follow-ups',
-                  'Deposit collection',
-                  'Invoicing + payment tracking',
+                  'Custom saved quote templates',
+                  'Priority support',
+                  'Early access to new features',
                 ].map((f, i) => <li key={i} className="pr-f"><Check size={14} strokeWidth={2.5} />{f}</li>)}
               </ul>
               <Link to="/signup" className="ln-btn ln-btn--full">Start free — upgrade anytime <ArrowRight size={14} /></Link>
@@ -707,7 +706,7 @@ export default function LandingPage() {
               <span aria-hidden="true">·</span>
               <span>Affirm / Klarna at checkout</span>
               <span aria-hidden="true">·</span>
-              <span>CSV export for QuickBooks &amp; Xero</span>
+              <span>CSV export for your books</span>
             </div>
           </div>
         </div>
