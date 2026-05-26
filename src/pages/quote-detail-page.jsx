@@ -9,7 +9,7 @@ import ConvertInvoiceSheet from '../components/convert-invoice-sheet';
 import '../styles/convert-invoice-sheet.css';
 import { sendInvoiceEmail } from '../lib/api/invoices';
 import { calculateTotals } from '../lib/pricing';
-import { currency, formatDate, formatQuoteNumber, friendly } from '../lib/format';
+import { currency as fmtCurrency, formatDate, formatQuoteNumber, friendly } from '../lib/format';
 import { deleteQuote, duplicateQuote, getQuote, getProfile, updateQuoteStatus, markFollowedUp, createInvoiceFromQuoteWithAdditionalWork, uploadQuotePhoto, listQuotePhotos, deleteQuotePhoto, replyToCustomer } from '../lib/api';
 import { listTemplates, renderTemplate, getSystemDefaults } from '../lib/api/templates';
 import { saveJobTemplate } from '../lib/api/job-templates';
@@ -83,6 +83,7 @@ function buildTimeline(quote) {
 }
 
 function FollowupModal({ quote, userProfile, templates, onClose, onSent }) {
+  const currency = (n) => fmtCurrency(n, quote?.country);
   const firstName = quote.customer?.name?.split(' ')[0] || 'there';
   const senderName = userProfile?.company_name || userProfile?.full_name || '';
   const shareUrl = quote.share_token ? `${window.location.origin}/q/${quote.share_token}` : '';
@@ -156,6 +157,7 @@ export default function QuoteDetailPage() {
   const { show: showToast } = useToast();
 
   const [quote, setQuote] = useState(null);
+  const currency = (n, c) => fmtCurrency(n, c ?? quote?.country);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);

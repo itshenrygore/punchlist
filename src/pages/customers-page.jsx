@@ -9,7 +9,7 @@ import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { usePullToRefresh } from '../hooks/use-mobile-ux';
 import { listCustomers, createCustomer, updateCustomer, listQuotes, exportCustomersCSV, uploadCustomersCsvDedup, findCustomerByContact } from '../lib/api';
-import { currency, formatDate } from '../lib/format';
+import { currency as fmtCurrency, formatDate } from '../lib/format';
 import { normalizeStatus } from '../lib/workflow';
 
 const WON_STATUSES = ['approved','approved_pending_deposit','deposit_paid','converted_to_invoice','paid'];
@@ -43,6 +43,7 @@ function TagChips({ tags, small }) {
 
 function CustomerRow({ customer, quotes, onClick }) {
   const cQuotes = quotes.filter(q => q.customer_id === customer.id);
+  const currency = (n) => fmtCurrency(n, cQuotes[0]?.country);
   const wonQuotes = cQuotes.filter(q => WON_STATUSES.includes(normalizeStatus(q.status)));
   const activeQuotes = cQuotes.filter(q => ACTIVE_STATUSES.includes(normalizeStatus(q.status)));
   const totalWon = wonQuotes.reduce((s, q) => s + (q.total || q.subtotal || 0), 0);
@@ -86,6 +87,7 @@ function CustomerRow({ customer, quotes, onClick }) {
 
 function CustomerDrawer({ customer, quotes, onClose, onEdit, onNewQuote }) {
   const cQuotes = quotes.filter(q => q.customer_id === customer.id);
+  const currency = (n) => fmtCurrency(n, cQuotes[0]?.country);
   const wonQuotes = cQuotes.filter(q => WON_STATUSES.includes(normalizeStatus(q.status)));
   const sent = cQuotes.filter(q => q.status !== 'draft');
   const totalWon = wonQuotes.reduce((s, q) => s + (q.total || q.subtotal || 0), 0);
@@ -273,6 +275,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [quotes, setQuotes] = useState([]);
+  const currency = (n, c) => fmtCurrency(n, c ?? quotes[0]?.country);
   const [search, setSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);

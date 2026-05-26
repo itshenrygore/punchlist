@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import AppShell from '../components/app-shell';
 import { Card, PageHeader } from '../components/ui';
 import { listQuotes, updateQuoteStatus } from '../lib/api';
-import { currency, formatDate } from '../lib/format';
+import { currency as fmtCurrency, formatDate } from '../lib/format';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { openMaps } from '../lib/utils';
@@ -81,7 +81,7 @@ function buildIcs(jobs, contractorName) {
       `DTEND:${dt(end.toISOString())}`,
       `SUMMARY:${esc(q.title || 'Job')}${q.customer?.name ? ` — ${esc(q.customer.name)}` : ''}`,
       ...(q.customer?.address ? [`LOCATION:${esc(q.customer.address)}`] : []),
-      `DESCRIPTION:${esc(`Customer: ${q.customer?.name || 'TBD'}\\nTotal: ${currency(q.total || 0)}\\nQuote: https://punchlist.ca/app/quotes/${q.id}`)}`,
+      `DESCRIPTION:${esc(`Customer: ${q.customer?.name || 'TBD'}\\nTotal: ${fmtCurrency(q.total || 0, q.country)}\\nQuote: https://punchlist.ca/app/quotes/${q.id}`)}`,
       'END:VEVENT'
     );
   }
@@ -94,6 +94,7 @@ export default function SchedulePage() {
   const { show: toast } = useToast();
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const currency = (n, c) => fmtCurrency(n, c ?? quotes[0]?.country);
   const [weekOffset, setWeekOffset] = useState(0);
 
   useEffect(() => {

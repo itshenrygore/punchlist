@@ -4,7 +4,7 @@ import AppShell from '../components/app-shell';
 import EmptyState from '../components/empty-state';
 import SwipeableRow from '../components/swipeable-row';
 import { listQuotes, expireStaleDrafts, updateQuote, updateQuoteStatus, deleteQuote, getQuote, duplicateQuote, sendQuoteEmail } from '../lib/api';
-import { currency, formatDate, formatQuoteNumber } from '../lib/format';
+import { currency as fmtCurrency, formatDate, formatQuoteNumber } from '../lib/format';
 import { chipForStatus } from '../lib/workflow';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
@@ -93,6 +93,7 @@ const AVATAR_COLOR = {
 
 /* ─── Desktop row — premium card style ─── */
 function QuoteRow({ quote, onDuplicate, isSelected, onToggleSelect }) {
+  const currency = (n) => fmtCurrency(n, quote?.country);
   const num = quote.quote_number ? formatQuoteNumber(quote.quote_number) : '—';
   const status = quote.status;
   const viewBadge = quote.view_count > 0 && ['sent','viewed','revision_requested'].includes(status);
@@ -146,6 +147,7 @@ function QuoteRow({ quote, onDuplicate, isSelected, onToggleSelect }) {
 
 /* ─── Mobile card — premium card style ─── */
 function QuoteCard({ quote, onDuplicate }) {
+  const currency = (n) => fmtCurrency(n, quote?.country);
   const num = quote.quote_number ? formatQuoteNumber(quote.quote_number) : null;
   const status = quote.status;
   const viewBadge = quote.view_count > 0 && ['sent','viewed','revision_requested'].includes(status);

@@ -9,7 +9,7 @@ import PaidCelebrationCard from '../components/paid-celebration-card';
 import '../styles/paid-celebration.css';
 import ConfirmModal from '../components/confirm-modal';
 import { getInvoice, getProfile, friendly, updateInvoiceStatus, updateInvoice, listPayments, recordPayment, deletePayment, getInvoiceBalance, updateInvoiceReminders, checkAndSendReminder, sendInvoiceEmail, setRecurringInterval, createNextRecurring, calculateLateFee } from '../lib/api';
-import { currency, formatDate, relativeTime as formatRelative } from '../lib/format';
+import { currency as fmtCurrency, formatDate, relativeTime as formatRelative } from '../lib/format';
 import { calculateTotals } from '../lib/pricing';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
@@ -42,6 +42,8 @@ export default function InvoiceDetailPage() {
   const [monthToDate, setMonthToDate] = useState(null);
   const [country, setCountry] = useState('CA');
   const [profile, setProfile] = useState(null);
+  // Bind money formatting to this invoice's country (USD vs CAD).
+  const currency = (n, c) => fmtCurrency(n, c ?? country);
 
   // 5A: Edit mode
   const [editing, setEditing] = useState(false);

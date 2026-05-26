@@ -4,7 +4,7 @@ import AppShell from '../components/app-shell';
 import EmptyState from '../components/empty-state';
 import { InvoicesListSkeleton } from '../components/skeletons';
 import { listInvoices } from '../lib/api';
-import { currency, formatDate, friendly } from '../lib/format';
+import { currency as fmtCurrency, formatDate, friendly } from '../lib/format';
 import { useToast } from '../components/toast';
 import { chipForStatus } from '../lib/workflow';
 
@@ -81,6 +81,7 @@ function sortInvoices(invoices) {
 
 export default function InvoicesListPage() {
   const [invoices, setInvoices] = useState([]);
+  const currency = (n, c) => fmtCurrency(n, c ?? invoices[0]?.country);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState(null);
   const { show: toast } = useToast();
@@ -201,6 +202,7 @@ export default function InvoicesListPage() {
 }
 
 function InvoiceRow({ invoice }) {
+  const currency = (n) => fmtCurrency(n, invoice?.country);
   const now = new Date();
   const isOverdue = invoice.due_at && new Date(invoice.due_at) < now && invoice.status !== 'paid';
   const displayStatus = isOverdue ? 'overdue' : invoice.status;
