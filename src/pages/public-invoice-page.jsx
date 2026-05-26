@@ -417,17 +417,23 @@ export default function PublicInvoicePage() {
                     {invoice.stripe_connect_enabled ? (
                       <div className="pi-pay-col">
                         <button type="button" className="doc-cta-primary pi-pay-btn" onClick={handleConnectPay} disabled={payLoading} >
-                          {payLoading ? 'Loading…' : `Pay ${currency(invoiceBalance)}`}
+                          {payLoading ? 'Loading…' : `Pay ${currency(invoiceBalance)} now`}
                         </button>
                         {showFinancing(invoiceBalance) ? (
-                          <div className="pi-financing-hint">
-                            <div className="pi-financing-rate">
-                              or from {currency(estimateMonthly(invoiceBalance))}/mo for 12 months
-                            </div>
-                            <div className="pi-financing-sub">
-                              Choose "Pay monthly" at checkout · Powered by Punchlist
-                            </div>
-                          </div>
+                          <>
+                            {/* Present financing as a real, tappable choice — not
+                                buried small-print. Same Stripe checkout (Affirm/
+                                Klarna sit at the top of the method list), so this
+                                just surfaces the option the customer would
+                                otherwise have to discover mid-checkout. */}
+                            <div className="pi-pay-or"><span>or</span></div>
+                            <button type="button" className="pi-pay-monthly" onClick={handleConnectPay} disabled={payLoading}>
+                              <span className="pi-pay-monthly-lead">Pay monthly</span>
+                              <span className="pi-pay-monthly-amt">from {currency(estimateMonthly(invoiceBalance))}/mo</span>
+                              <span className="pi-pay-monthly-sub">with Affirm or Klarna · checking your rate won't affect your credit</span>
+                            </button>
+                            <span className="pi-powered">Secure checkout via Stripe · Powered by Punchlist</span>
+                          </>
                         ) : (
                           <span className="pi-powered">Powered by Punchlist · Secure checkout via Stripe</span>
                         )}

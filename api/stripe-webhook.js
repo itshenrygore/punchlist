@@ -160,7 +160,7 @@ async function markInvoicePaidViaStripe(session) {
   // Get invoice to check idempotency
   const { data: invoice } = await supabase
     .from('invoices')
-    .select('id,status,total,quote_id,customer_id,user_id,invoice_number,title,payment_method,country,stripe_session_id')
+    .select('id,status,total,quote_id,customer_id,user_id,invoice_number,title,payment_method,country,stripe_session_id,share_token')
     .eq('id', invoiceId)
     .maybeSingle();
 
@@ -290,6 +290,10 @@ async function markInvoicePaidViaStripe(session) {
                     <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Invoice</div><div style="font-size:14px;font-weight:600">${invoice.invoice_number || ''}</div></div>
                   </div>
                 </div>
+                ${invoice.share_token ? `
+                <a href="${appUrl}/i/${invoice.share_token}" style="display:block;text-align:center;background:#14161a;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:13px 20px;border-radius:10px;margin:0 0 24px">View invoice &amp; receipt</a>
+                <p style="color:#aaa;font-size:11px;text-align:center;margin:-16px 0 24px">Bookmark this link to check your invoice or balance anytime.</p>
+                ` : ''}
                 <hr style="border:none;border-top:1px solid #e8e6e1;margin:0 0 20px"/>
                 <div style="font-size:13px;color:#667085">
                   <strong style="color:#14161a">${contractorName}</strong><br/>

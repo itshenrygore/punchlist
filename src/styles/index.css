@@ -5544,7 +5544,12 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
 .qd-mobile-tabs{display:none;gap:0;border-bottom:2px solid var(--line);margin-bottom:12px}
 .qd-mobile-tab{flex:1;padding:10px 0;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:var(--text-sm);font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
 .qd-mobile-tab--active{color:var(--brand);border-bottom-color:var(--brand)}
-.qd-mobile-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--brand);color:var(--always-white, #fff);font-size:11px;font-weight:700}
+.qd-mobile-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--panel-3,var(--panel-2));color:var(--text-2);font-size:11px;font-weight:700}
+/* Unread (new customer messages) reads as a live alert, not a neutral
+   count — red dot with a one-shot pulse so the contractor's eye catches it. */
+.qd-mobile-tab-badge--unread{background:var(--red,#ef4444);color:var(--always-white,#fff);animation:qd-badge-pop .32s cubic-bezier(.22,1,.36,1)}
+@keyframes qd-badge-pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.qd-mobile-tab-badge--unread{animation:none}}
 @media(max-width:768px){
   .qd-mobile-tabs{display:flex}
   .qd-zone-messages{display:none!important}
@@ -9539,6 +9544,24 @@ kbd.pl-kbd {
 .pi-financing-rate { font-size: var(--text-sm); color: var(--doc-accent); font-weight: 700; }
 .pi-financing-sub { font-size: var(--text-2xs); color: var(--doc-muted); margin-top: 4px; }
 .pi-powered { font-size: var(--text-xs); color: var(--doc-muted); text-align: center; }
+/* "or" divider between pay-in-full and pay-monthly */
+.pi-pay-or { display: flex; align-items: center; gap: 10px; color: var(--doc-muted); font-size: var(--text-xs); margin: 2px 0; }
+.pi-pay-or::before, .pi-pay-or::after { content: ''; flex: 1; height: 1px; background: var(--doc-line, var(--line)); }
+/* Pay-monthly as a first-class outlined option — same visual weight family
+   as the primary, accent-bordered so financing reads as a real choice. */
+.pi-pay-monthly {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  width: 100%; padding: 12px 16px; cursor: pointer; font-family: inherit;
+  background: var(--doc-accent-bg, rgba(27,125,72,.05));
+  border: 1.5px solid var(--doc-accent, #1b7d48); border-radius: var(--r, 12px);
+  transition: background .15s ease, transform .08s ease;
+}
+.pi-pay-monthly:hover { background: var(--doc-accent-bg, rgba(27,125,72,.1)); }
+.pi-pay-monthly:active { transform: scale(.99); }
+.pi-pay-monthly:disabled { opacity: .6; cursor: default; }
+.pi-pay-monthly-lead { font-size: var(--text-base); font-weight: 700; color: var(--doc-accent, #1b7d48); }
+.pi-pay-monthly-amt { font-size: var(--text-md); font-weight: 800; color: var(--doc-text, var(--text)); letter-spacing: -.02em; }
+.pi-pay-monthly-sub { font-size: var(--text-2xs); color: var(--doc-muted); text-align: center; }
 .pi-pay-fallback { margin: 0; font-size: var(--text-xs); color: var(--doc-muted); }
 
 /* Payment options */

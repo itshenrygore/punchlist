@@ -717,7 +717,7 @@ export default function SettingsPage() {
                   You get paid in full. Customers pay monthly.
                 </div>
                 <p className="muted small sp-pay-desc">
-                  When a customer chooses monthly payments, Affirm pays you the full amount upfront within 2 business days. The customer repays Affirm over 3–12 months. You don't wait.
+                  One setup turns on three ways to pay on every quote and invoice: <strong>card</strong>, <strong>deposit</strong>, and <strong>monthly financing</strong>. When a customer chooses monthly, Affirm pays you the full amount upfront within 2 business days — they repay Affirm over 3–12 months. You don't wait.
                 </p>
                 <div className="sp-pay-stat-grid">
                   <div className="panel-card">
@@ -734,7 +734,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <Link className="btn btn-primary sp-pay-cta-full" to="/app/payments/setup" >
-                  {connectStatus?.connected ? 'Finish setup — takes 2 minutes →' : 'Turn on customer financing →'}
+                  {connectStatus?.connected ? 'Finish setup — takes 2 minutes →' : 'Set up payments — takes 2 minutes →'}
                 </Link>
                 <div className="sp-pay-fine-print">
                   No monthly fee · No setup fee · Small processing fee per transaction

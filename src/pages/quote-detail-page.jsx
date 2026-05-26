@@ -189,6 +189,13 @@ export default function QuoteDetailPage() {
   const [sendingRevision, setSendingRevision] = useState(false);
   const [showChangeOrderModal, setShowChangeOrderModal] = useState(false);
   const [changeOrderDesc, setChangeOrderDesc] = useState('');
+  // Contractor-side "seen" marker for customer messages. Stored per-quote
+  // in localStorage (per-device is fine — a solo contractor works from one
+  // phone) so the Messages tab can show UNREAD count, not a running total.
+  const [msgSeenAt, setMsgSeenAt] = useState(() => {
+    try { return Number(localStorage.getItem(`pl_qd_msgseen:${quoteId}`)) || 0; }
+    catch { return 0; }
+  });
 
   useEffect(() => {
     if (!quoteId) return;
@@ -649,6 +656,47 @@ export default function QuoteDetailPage() {
   const timeline = useMemo(() => quote ? buildTimeline(quote) : [], [quote]);
   const groupedItems = useMemo(() => { if(!quote)return {}; return (quote.line_items||[]).reduce((a,i)=>{const k=i.category||(i.item_type==='optional'?'Options':'Scope');a[k]||=[];a[k].push(i);return a;},{}); }, [quote]);
 
+  // Unread = customer messages newer than the contractor's last "seen"
+  // marker for this quote. Drives the Messages-tab badge.
+  const unreadMsgCount = useMemo(() => {
+    if (!quote) return 0;
+    const convo = Array.isArray(quote.conversation) ? quote.conversation : [];
+    return convo.filter(m => m.role === 'customer' && m.text?.trim() &&
+      new Date(m.timestamp || m.created_at || 0).getTime() > msgSeenAt).length;
+  }, [quote, msgSeenAt]);
+
+  // Re-hydrate the seen-marker when navigating between quotes (the SPA
+  // keeps this component mounted, so the useState initializer won't re-run).
+  useEffect(() => {
+    try { setMsgSeenAt(Number(localStorage.getItem(`pl_qd_msgseen:${quoteId}`)) || 0); }
+    catch { setMsgSeenAt(0); }
+  }, [quoteId]);
+
+  // Mark messages seen the moment the contractor lands on the thread:
+  // on mobile that's tapping the Messages tab; on desktop the thread is
+  // always visible, so seeing the quote counts. Advance the marker to the
+  // newest message so only genuinely-new replies light up next time.
+  useEffect(() => {
+    if (!quote || unreadMsgCount === 0) return;
+    const onMessages = mobileTab === 'messages';
+    const isDesktop = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 769px)').matches;
+    if (!onMessages && !isDesktop) return;
+    const convo = Array.isArray(quote.conversation) ? quote.conversation : [];
+    const newest = convo.reduce((max, m) => {
+      const t = new Date(m.timestamp || m.created_at || 0).getTime();
+      return t > max ? t : max;
+    }, 0);
+    if (newest > msgSeenAt) {
+      // Small delay so the badge is visible for a beat before clearing —
+      // confirms to the contractor "yes, there was something new here".
+      const id = setTimeout(() => {
+        setMsgSeenAt(newest);
+        try { localStorage.setItem(`pl_qd_msgseen:${quoteId}`, String(newest)); } catch { /* private mode */ }
+      }, onMessages ? 600 : 1500);
+      return () => clearTimeout(id);
+    }
+  }, [quote, mobileTab, unreadMsgCount, msgSeenAt, quoteId]);
+
   // Loading/error
   if (loading) return <QuoteDetailSkeleton />;
   if (!quote) return <AppShell title="Quote"><div className="empty-state qd-not-found"><div className="qd-not-found-icon"><FileText size={36}/></div><h3 className="qd-not-found-title">Quote not found</h3><Link className="btn btn-secondary" to="/app">Back to dashboard</Link></div></AppShell>;
@@ -709,7 +757,9 @@ export default function QuoteDetailPage() {
             <button type="button" className={`qd-mobile-tab${mobileTab === 'details' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('details')}>Details</button>
             <button type="button" className={`qd-mobile-tab${mobileTab === 'messages' ? ' qd-mobile-tab--active' : ''}`} onClick={() => { setMobileTab('messages'); requestAnimationFrame(() => { mobileTabBarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); }}>
               Messages
-              {(() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? <span className="qd-mobile-tab-badge">{mc}</span> : null; })()}
+              {unreadMsgCount > 0
+                ? <span className="qd-mobile-tab-badge qd-mobile-tab-badge--unread" aria-label={`${unreadMsgCount} new`}>{unreadMsgCount}</span>
+                : (() => { const mc = timeline.filter(e=>e.type==='customer_message'||e.type==='contractor_message').length; return mc > 0 ? <span className="qd-mobile-tab-badge">{mc}</span> : null; })()}
             </button>
             <button type="button" className={`qd-mobile-tab qd-mobile-tab--more${mobileTab === 'more' ? ' qd-mobile-tab--active' : ''}`} onClick={() => setMobileTab('more')}>
               {photos.length > 0 ? `Photos (${photos.length})` : (<><MoreHorizontal size={14} style={{ verticalAlign: 'middle', marginRight: 3 }} />More</>)}
