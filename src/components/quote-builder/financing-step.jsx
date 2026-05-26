@@ -1,10 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════
-   FinancingStep — The centerpiece of Punchlist 2.0
-   
-   This is the "money moment." The contractor sees exactly what
-   their customer will see: monthly payment displayed LARGER than
-   the total. Term selector updates the number live.
-   
+   FinancingStep — final "review & send" step.
+
+   Shows the contractor a faithful preview of what the customer will
+   see (total as the headline, with the monthly option beneath it),
+   then collects the two things that still need setting before send:
+   quote expiry and an optional personal note. We deliberately do NOT
+   expose a term picker or financing toggle — the real term, rate, and
+   eligibility are decided by Affirm/Klarna at checkout, so any control
+   here would misrepresent what the contractor actually governs.
+
    Props:
      grandTotal     — computed total including tax
      country        — 'CA' | 'US'
@@ -17,11 +21,9 @@
      expiryDays     — quote expiry
      onExpiryChange — setter for expiry
    ═══════════════════════════════════════════════════════════════ */
-import { useState } from 'react';
-import { estimateMonthly, showFinancing, getFinancingCopy } from '../../lib/financing';
+import { estimateMonthly, showFinancing } from '../../lib/financing';
 import { currency } from '../../lib/format';
 
-const TERMS = [6, 12, 18, 24];
 const EXPIRY_OPTIONS = [
   { value: 7,  label: '7 days' },
   { value: 14, label: '14 days' },
@@ -41,13 +43,9 @@ export default function FinancingStep({
   expiryDays = 14,
   onExpiryChange,
 }) {
-  const [termMonths, setTermMonths] = useState(12);
-  const [financingEnabled, setFinancingEnabled] = useState(true);
-  
-  const monthly = estimateMonthly(grandTotal, termMonths);
+  const monthly = estimateMonthly(grandTotal);
   const canFinance = showFinancing(grandTotal);
   const firstName = customerName?.split(' ')[0] || 'your customer';
-  const copy = getFinancingCopy('review');
 
   return (
     <div className="financing-step">
@@ -74,115 +72,19 @@ export default function FinancingStep({
           box-shadow: 0 2px 6px rgba(28,20,12,0.06), 0 8px 24px rgba(28,20,12,0.10);
           border: 1px solid var(--line, rgba(17,24,39,0.06));
         }
-        .fs-monthly {
-          font-size: 48px;
-          font-weight: 800;
-          color: var(--brand, #B85128);
-          font-family: var(--font-display, 'Clash Display', system-ui, sans-serif);
-          letter-spacing: -0.04em;
-          line-height: 1;
-        }
-        .fs-monthly-suffix {
-          font-size: 20px;
-          font-weight: 600;
-          color: var(--text-2, #344054);
-        }
         .fs-total-alt {
           font-size: 14px;
           color: var(--muted, #667085);
           margin-top: 6px;
           font-weight: 500;
         }
+        .fs-total-alt strong { color: var(--text, #161616); font-weight: 700; }
         .fs-total-only {
           font-size: 42px;
           font-weight: 800;
           color: var(--text, #161616);
           font-family: var(--font-display, 'Clash Display', system-ui, sans-serif);
           letter-spacing: -0.03em;
-        }
-        .fs-terms {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 6px;
-        }
-        .fs-term-btn {
-          padding: 10px 0;
-          border-radius: 10px;
-          border: 1.5px solid var(--line-2, rgba(17,24,39,0.12));
-          background: var(--panel, #fff);
-          color: var(--text-2, #344054);
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          font-family: inherit;
-          transition: all 0.15s;
-          text-align: center;
-        }
-        .fs-term-btn:hover {
-          border-color: var(--brand-line, rgba(184,81,40,0.15));
-        }
-        .fs-term-btn.active {
-          border-color: var(--brand, #B85128);
-          background: var(--brand-bg, rgba(184,81,40,0.06));
-          color: var(--brand, #B85128);
-        }
-        .fs-toggle-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 14px;
-          border-radius: 10px;
-          background: var(--panel, #fff);
-          border: 1px solid var(--line, rgba(17,24,39,0.06));
-        }
-        .fs-toggle-track {
-          width: 44px;
-          height: 26px;
-          border-radius: 13px;
-          border: none;
-          cursor: pointer;
-          position: relative;
-          transition: background 0.2s;
-          flex-shrink: 0;
-        }
-        .fs-toggle-thumb {
-          width: 20px;
-          height: 20px;
-          border-radius: 10px;
-          background: var(--panel, #fff);
-          position: absolute;
-          top: 3px;
-          transition: left 0.2s;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .fs-panel {
-          padding: 12px 14px;
-          border-radius: 10px;
-          background: var(--panel, #fff);
-          border: 1px solid var(--line, rgba(17,24,39,0.06));
-        }
-        .fs-label {
-          font-size: 11px;
-          font-weight: 700;
-          color: var(--muted, #667085);
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          margin-bottom: 8px;
-        }
-        .fs-scope-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 5px 0;
-          font-size: 13px;
-        }
-        .fs-total-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 8px 0 0;
-          margin-top: 6px;
-          border-top: 1px solid var(--line, rgba(17,24,39,0.06));
-          font-size: 14px;
-          font-weight: 700;
         }
         .fs-note {
           width: 100%;
@@ -210,12 +112,6 @@ export default function FinancingStep({
           color: var(--text, #161616);
           cursor: pointer;
         }
-        .fs-hint {
-          font-size: 11px;
-          color: var(--muted, #667085);
-          text-align: center;
-          line-height: 1.4;
-        }
       `}</style>
 
       {/* Eyebrow */}
@@ -223,74 +119,25 @@ export default function FinancingStep({
         {firstName} will see
       </div>
 
-      {/* The money card — the centerpiece */}
+      {/* The money card — mirrors the customer's view: total is the
+          headline, the monthly option sits beneath it as "or from $X/mo".
+          We don't let the contractor tweak the term — the real term and
+          rate are set by Affirm/Klarna at checkout, so showing a picker
+          here would imply a control the contractor doesn't have. */}
       <div className="fs-money-card">
-        {canFinance && financingEnabled && monthly ? (
-          <>
-            <div className="fs-monthly">
-              {currency(monthly, country)}
-              <span className="fs-monthly-suffix">/mo</span>
-            </div>
-            <div className="fs-total-alt">
-              for {termMonths} months · or {currency(grandTotal, country)} total
-            </div>
-          </>
+        <div className="fs-total-only">
+          {currency(grandTotal, country)}
+        </div>
+        {canFinance && monthly ? (
+          <div className="fs-total-alt">
+            or from <strong>{currency(monthly, country)}/mo</strong> · monthly option shown at checkout
+          </div>
         ) : (
-          <>
-            <div className="fs-total-only">
-              {currency(grandTotal, country)}
-            </div>
-            <div className="fs-total-alt">
-              {itemCount} item{itemCount !== 1 ? 's' : ''} · tax included
-            </div>
-          </>
+          <div className="fs-total-alt">
+            {itemCount} item{itemCount !== 1 ? 's' : ''} · tax included
+          </div>
         )}
       </div>
-
-      {/* Term selector */}
-      {canFinance && financingEnabled && (
-        <div>
-          <div className="fs-label">Payment term</div>
-          <div className="fs-terms">
-            {TERMS.map(t => (
-              <button
-                key={t}
-                type="button"
-                className={`fs-term-btn ${termMonths === t ? 'active' : ''}`}
-                onClick={() => setTermMonths(t)}
-              >
-                {t}mo
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Financing toggle */}
-      {canFinance && (
-        <div className="fs-toggle-row">
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
-              Show monthly payments
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>
-              {copy.hint}
-            </div>
-          </div>
-          <button
-            type="button"
-            className="fs-toggle-track"
-            style={{ background: financingEnabled ? 'var(--brand, #B85128)' : 'var(--line-2, rgba(17,24,39,0.12))' }}
-            onClick={() => setFinancingEnabled(!financingEnabled)}
-            aria-label="Toggle monthly payments"
-          >
-            <div
-              className="fs-toggle-thumb"
-              style={{ left: financingEnabled ? 21 : 3 }}
-            />
-          </button>
-        </div>
-      )}
 
       {/* Expiry */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -316,13 +163,6 @@ export default function FinancingStep({
         placeholder={`Add a personal note for ${firstName} (optional)…`}
         rows={2}
       />
-
-      {/* Financing hint */}
-      {canFinance && financingEnabled && (
-        <div className="fs-hint">
-          {copy.badge} · {copy.label} {currency(monthly, country)}/mo
-        </div>
-      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@
    - Affirm: 0–36% APR (commonly 9.99–29.99% for home improvement)
    - Klarna: 0–29.99% APR
    - PayBright (CA): 9.99–29.99% APR
-   We use 19.99% APR / 24-month as a realistic mid-range estimate.
+   We use 19.99% APR / 12-month as a realistic mid-range estimate.
    ═══════════════════════════════════════════════════════════ */
 
 /** Minimum quote value to show financing options */
@@ -42,7 +42,7 @@ export const REPRESENTATIVE_APR = 0.1999;
  * Always prefix with "as low as" since actual rate is set at checkout.
  *
  * @param {number} total - Quote total in dollars
- * @param {number} termMonths - Loan term in months (default 24)
+ * @param {number} termMonths - Loan term in months (default 12)
  * @param {number} apr - Annual percentage rate as decimal (default 19.99%)
  */
 export function estimateMonthly(total, termMonths = DEFAULT_TERM_MONTHS, apr = REPRESENTATIVE_APR) {
@@ -85,25 +85,25 @@ export function getFinancingCopy(context = 'builder') {
       label: 'as low as',
       hint: 'Shown to your customer · Final rate set at checkout',
       badge: 'Pay-over-time available',
-      disclaimer: 'Est. 19.99% APR, 24 mo. Subject to approval.',
+      disclaimer: 'Est. 19.99% APR, 12 mo. Subject to approval.',
     },
     review: {
       label: 'as low as',
       hint: 'Customers choose monthly payments · Rate set by lender at checkout',
       badge: 'Monthly payment option shown',
-      disclaimer: 'Est. 19.99% APR, 24 mo. Subject to approval.',
+      disclaimer: 'Est. 19.99% APR, 12 mo. Subject to approval.',
     },
     public: {
       label: 'from',
       hint: 'Subject to credit approval · Rate set at checkout',
       badge: 'Monthly payments available',
       cta: 'Flexible payment options available at checkout',
-      disclaimer: 'Est. 19.99% APR, 24 mo. OAC. Rate determined at checkout.',
+      disclaimer: 'Est. 19.99% APR, 12 mo. OAC. Rate determined at checkout.',
     },
     sticky: {
       label: 'from',
       suffix: '/mo',
-      disclaimer: 'Est. 19.99% APR, 24 mo. OAC.',
+      disclaimer: 'Est. 19.99% APR, 12 mo. OAC.',
     },
   };
   return copy[context] || copy.builder;

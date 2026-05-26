@@ -429,10 +429,10 @@ export default function PublicInvoicePage() {
                             <div className="pi-pay-or"><span>or</span></div>
                             <button type="button" className="pi-pay-monthly" onClick={handleConnectPay} disabled={payLoading}>
                               <span className="pi-pay-monthly-lead">Pay monthly</span>
-                              <span className="pi-pay-monthly-amt">from {currency(estimateMonthly(invoiceBalance))}/mo</span>
+                              <span className="pi-pay-monthly-amt">from {currency(estimateMonthly(invoiceBalance))}/mo*</span>
                               <span className="pi-pay-monthly-sub">with Affirm or Klarna · checking your rate won't affect your credit</span>
                             </button>
-                            <span className="pi-powered">Secure checkout via Stripe · Powered by Punchlist</span>
+                            <span className="pi-powered">*Estimate. Your actual rate, term, and eligibility are set by the provider at checkout. Secure checkout via Stripe.</span>
                           </>
                         ) : (
                           <span className="pi-powered">Powered by Punchlist · Secure checkout via Stripe</span>
