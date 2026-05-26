@@ -176,6 +176,8 @@ export default function SettingsPage() {
   const [templatesLoaded, setTemplatesLoaded] = useState(false);
   const [cadence, setCadence] = useState({ nudge_1: 2, nudge_2: 4, nudge_3: 7 });
   const [cadenceDirty, setCadenceDirty] = useState(false);
+  const [autoFollowup, setAutoFollowup] = useState(false);
+  const [autoFollowupSaving, setAutoFollowupSaving] = useState(false);
   const [templateBusyKey, setTemplateBusyKey] = useState(null); // key currently saving/resetting
   // v100 M5 §5.5 — Preferences tab state
   const [autoSendInvoice, setAutoSendInvoice] = useState(true);
@@ -253,6 +255,7 @@ export default function SettingsPage() {
           nudge_3: Number(cd.nudge_3 ?? 7),
         });
         setAutoSendInvoice(p.auto_send_invoice_on_complete !== false);
+        setAutoFollowup(p.auto_followup_enabled === true);
         const loaded = {
           full_name: p.full_name || '',
           company_name: p.company_name || '',
@@ -395,6 +398,23 @@ export default function SettingsPage() {
       showToast('Nudge schedule saved', 'success');
     } catch (e) {
       showToast(friendly(e), 'error');
+    }
+  }
+
+  // Saved on its own (not via the autosaved `form`) so a missing
+  // auto_followup_enabled column only breaks this toggle, not all of Settings.
+  async function toggleAutoFollowup(next) {
+    if (!user) return;
+    setAutoFollowup(next);
+    setAutoFollowupSaving(true);
+    try {
+      await updateProfile(user.id, { auto_followup_enabled: next });
+      showToast(next ? 'Auto follow-ups on — nudges will send automatically' : 'Auto follow-ups off', 'success');
+    } catch (e) {
+      setAutoFollowup(!next); // revert on failure
+      showToast(friendly(e), 'error');
+    } finally {
+      setAutoFollowupSaving(false);
     }
   }
 
@@ -975,6 +995,21 @@ export default function SettingsPage() {
           <p className="muted small settings-hint">
             How many days after sending a quote should each nudge go out?
           </p>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '4px 0 16px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={autoFollowup}
+              disabled={autoFollowupSaving}
+              onChange={e => toggleAutoFollowup(e.target.checked)}
+              style={{ marginTop: 3 }}
+            />
+            <span>
+              <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>Send these nudges automatically</span>
+              <span className="muted small" style={{ display: 'block' }}>
+                Texts customers on the schedule below until they respond or approve (max 3). Off by default — when off, you'll just be prompted to follow up.
+              </span>
+            </span>
+          </label>
           <div className="stack" style={{ gap: 10 }}>
             {[
               { slot: 'nudge_1', label: 'First nudge' },
