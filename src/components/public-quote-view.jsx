@@ -550,6 +550,33 @@ export default function PublicQuoteView({
             </div>
           )}
 
+          {/* Persistent job-progress strip — on a return visit, gives the
+              customer an at-a-glance view of where their job stands across
+              the whole lifecycle (approved → deposit → invoice → paid)
+              instead of a single static status line. */}
+          {!actionDone && (isApproved || isSigned || isConvertedOrPaid || (quote.linked_invoice && quote.linked_invoice.status !== 'draft')) && (() => {
+            const inv = quote.linked_invoice && quote.linked_invoice.status !== 'draft' ? quote.linked_invoice : null;
+            const invPaid = inv?.status === 'paid' || quote.status === 'paid';
+            const steps = [{ key: 'approved', label: 'Approved', done: true }];
+            if (quote.deposit_required) steps.push({ key: 'deposit', label: 'Deposit', done: quote.deposit_status === 'paid' });
+            steps.push({ key: 'invoice', label: 'Invoice', done: Boolean(inv) || invPaid });
+            steps.push({ key: 'paid', label: 'Paid', done: invPaid });
+            const currentIdx = steps.findIndex(s => !s.done);
+            return (
+              <div className="pq-journey" role="list" aria-label="Job progress">
+                {steps.map((s, i) => (
+                  <div key={s.key} className="pq-journey-item" role="listitem">
+                    <div className={`pq-journey-step${s.done ? ' pq-journey-step--done' : i === currentIdx ? ' pq-journey-step--current' : ''}`}>
+                      <span className="pq-journey-dot">{s.done ? '✓' : i + 1}</span>
+                      <span className="pq-journey-label">{s.label}</span>
+                    </div>
+                    {i < steps.length - 1 && <span className={`pq-journey-line${s.done ? ' pq-journey-line--done' : ''}`} aria-hidden="true" />}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
           {actionDone === 'approved' && (
             <div className="pq-success-banner">
               <div className="pq-success-check">✓</div>
@@ -649,9 +676,7 @@ export default function PublicQuoteView({
             </div>
           )}
 
-          {!actionDone && isSigned && <div className="doc-status doc-status--approved"><span className="doc-status-icon">✓</span><span>Signed and approved{quote.signer_name ? ` by ${quote.signer_name}` : ''}{quote.signed_at ? ` · ${formatDate(quote.signed_at)}` : ''}</span></div>}
-          {!actionDone && isApproved && !isSigned && <div className="doc-status doc-status--approved"><span className="doc-status-icon">✓</span><span>Quote approved{waitingOnDeposit ? ' — deposit required to proceed' : ''}</span></div>}
-          {!actionDone && isRevisionRequested && <div className="doc-status doc-status--info"><span className="doc-status-icon" style={{display:"inline-flex"}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span><span>Changes requested — {contractorDisplayName} will send an update</span></div>}
+          {!actionDone && isRevisionRequested &&<div className="doc-status doc-status--info"><span className="doc-status-icon" style={{display:"inline-flex"}}><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span><span>Changes requested — {contractorDisplayName} will send an update</span></div>}
           {!actionDone && isDeclined && <div className="doc-status doc-status--warning"><span className="doc-status-icon">✗</span><span>Quote declined</span></div>}
           {!actionDone && isDeclined && !isPreview && canUndoDecline && (
             <div style={{ padding: '0 28px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -670,7 +695,6 @@ export default function PublicQuoteView({
               </button>
             </div>
           )}
-          {!actionDone && isConvertedOrPaid && !isSigned && !quote.linked_invoice && <div className="doc-status doc-status--approved"><span className="doc-status-icon">✓</span><span>This job has been completed.</span></div>}
           {/* Linked-invoice banner — when this quote has been converted
               to a non-draft invoice, surface a way for a returning
               customer to find the invoice instead of staring at the

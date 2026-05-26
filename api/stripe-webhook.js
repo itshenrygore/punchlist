@@ -258,6 +258,13 @@ async function markInvoicePaidViaStripe(session) {
     try {
       const { data: customer } = await supabase.from('customers').select('name,email,phone').eq('id', invoice.customer_id).maybeSingle();
       const { data: profile } = await supabase.from('profiles').select('full_name,company_name,phone,email,country').eq('id', invoice.user_id).maybeSingle();
+      // review_link is a newer column — fetch it in isolation so a not-yet-applied
+      // migration can never break the receipt send.
+      let reviewLink = null;
+      try {
+        const { data: rl } = await supabase.from('profiles').select('review_link').eq('id', invoice.user_id).maybeSingle();
+        reviewLink = (rl?.review_link || '').trim() || null;
+      } catch { /* column absent — skip review CTA */ }
       if (customer?.email && process.env.RESEND_API_KEY) {
         const appUrl = process.env.APP_URL || process.env.VITE_APP_URL || 'https://punchlist.ca';
         const country = profile?.country || invoice.country || 'CA';
@@ -267,6 +274,14 @@ async function markInvoicePaidViaStripe(session) {
           return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(num);
         };
         const contractorName = profile?.company_name || profile?.full_name || 'Your contractor';
+        // Partial vs full shapes the whole receipt: subject, headline, and
+        // whether we show a remaining balance or ask for a review.
+        const isFullyPaid = newStatus === 'paid';
+        const subject = isFullyPaid
+          ? `Payment received — ${invoice.invoice_number || 'Invoice'}`
+          : `Partial payment received — ${fmt(remainingBalance)} still due`;
+        const headline = isFullyPaid ? 'Thank you for your payment!' : 'Thanks — partial payment received';
+        const safeReview = reviewLink && /^https?:\/\//i.test(reviewLink) ? reviewLink : null;
 
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -274,13 +289,13 @@ async function markInvoicePaidViaStripe(session) {
           body: JSON.stringify({
             from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
             to: [customer.email],
-            subject: `Payment received — ${invoice.invoice_number || 'Invoice'}`,
+            subject,
             html: `
               <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:32px 24px;color:#14161a">
                 <p style="color:#22C55E;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Payment Receipt</p>
-                <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">Thank you for your payment!</h1>
+                <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">${headline}</h1>
                 <p style="color:#667085;margin-bottom:24px;line-height:1.6">
-                  <strong style="color:#14161a">${contractorName}</strong> has received your payment for <strong>${invoice.title || invoice.invoice_number || 'services rendered'}</strong>.
+                  <strong style="color:#14161a">${contractorName}</strong> has received ${isFullyPaid ? 'your payment' : 'a payment'} for <strong>${invoice.title || invoice.invoice_number || 'services rendered'}</strong>.
                 </p>
                 <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin-bottom:24px">
                   <div style="display:grid;gap:12px">
@@ -288,11 +303,20 @@ async function markInvoicePaidViaStripe(session) {
                     <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Payment method</div><div style="font-size:14px;font-weight:600">${methodLabel}</div></div>
                     <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Date</div><div style="font-size:14px;font-weight:600">${new Date(paidAt).toLocaleDateString(country === 'US' ? 'en-US' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</div></div>
                     <div><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Invoice</div><div style="font-size:14px;font-weight:600">${invoice.invoice_number || ''}</div></div>
+                    ${!isFullyPaid ? `<div style="border-top:1px solid #bbf7d0;padding-top:12px"><div style="font-size:12px;color:#667085;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Remaining balance</div><div style="font-size:18px;font-weight:800;color:#b45309">${fmt(remainingBalance)} still due</div></div>` : ''}
                   </div>
                 </div>
                 ${invoice.share_token ? `
-                <a href="${appUrl}/i/${invoice.share_token}" style="display:block;text-align:center;background:#14161a;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:13px 20px;border-radius:10px;margin:0 0 24px">View invoice &amp; receipt</a>
+                <a href="${appUrl}/i/${invoice.share_token}" style="display:block;text-align:center;background:#14161a;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:13px 20px;border-radius:10px;margin:0 0 24px">${isFullyPaid ? 'View invoice &amp; receipt' : `View invoice &amp; pay remaining ${fmt(remainingBalance)}`}</a>
                 <p style="color:#aaa;font-size:11px;text-align:center;margin:-16px 0 24px">Bookmark this link to check your invoice or balance anytime.</p>
+                ` : ''}
+                ${isFullyPaid && safeReview ? `
+                <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:18px 20px;margin:0 0 24px;text-align:center">
+                  <div style="font-size:20px;letter-spacing:2px;margin-bottom:6px">★★★★★</div>
+                  <div style="font-size:15px;font-weight:700;margin-bottom:4px">How did ${contractorName} do?</div>
+                  <p style="color:#92740a;font-size:13px;line-height:1.5;margin:0 0 14px">A quick review means the world to a local business — it takes 30 seconds.</p>
+                  <a href="${safeReview}" style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:9px">Leave a review</a>
+                </div>
                 ` : ''}
                 <hr style="border:none;border-top:1px solid #e8e6e1;margin:0 0 20px"/>
                 <div style="font-size:13px;color:#667085">
@@ -318,9 +342,13 @@ async function markInvoicePaidViaStripe(session) {
         const { data: profForSms } = await supabase.from('profiles').select('company_name,full_name,country').eq('id', invoice.user_id).maybeSingle();
         const cName = profForSms?.company_name || profForSms?.full_name || 'Your contractor';
         const cCountry = profForSms?.country || invoice.country || 'CA';
-        const fmtAmt = cCountry === 'US'
-          ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amountPaid)
-          : new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(amountPaid);
+        const fmtSms = (n) => cCountry === 'US'
+          ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+          : new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+        const fmtAmt = fmtSms(amountPaid);
+        const smsBody = newStatus === 'paid'
+          ? `Payment received! ${cName} confirmed your payment of ${fmtAmt}. Thank you.`
+          : `Partial payment of ${fmtAmt} received by ${cName}. ${fmtSms(remainingBalance)} still due. Thank you.`;
         // Use the same Twilio helper as public-quote-action.js
         const sid = process.env.TWILIO_ACCOUNT_SID;
         const token = process.env.TWILIO_AUTH_TOKEN;
@@ -339,7 +367,7 @@ async function markInvoicePaidViaStripe(session) {
               },
               body: new URLSearchParams({
                 To: normalized, From: from,
-                Body: `Payment received! ${cName} confirmed your payment of ${fmtAmt}. Thank you.`,
+                Body: smsBody,
               }).toString(),
             }).catch(() => {});
           }

@@ -9,6 +9,7 @@ import { useToast } from '../components/toast';
 import { useUnsavedChanges } from '../hooks/use-unsaved-changes';
 import { supabase } from '../lib/supabase';
 import { useScrollFade } from '../hooks/use-scroll-fade';
+import { currency } from '../lib/format';
 
 import { TRADES, normalizeTrade } from '../../shared/tradeBrain';
 import { CA_PROVINCES, US_STATES, REGION_LABELS } from '../lib/pricing';
@@ -148,11 +149,13 @@ export default function SettingsPage() {
     terms_conditions: '',
     email_notifications: true,
     sms_notifications_enabled: true,
+    review_link: '',
   });
   const [saving, setSaving] = useState(false);
   const [savePending, setSavePending] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [connectStatus, setConnectStatus] = useState(null);
+  const [payouts, setPayouts] = useState(null);
   const [connectLoading, setConnectLoading] = useState(false);
   const [pw, setPw] = useState({ next: '', confirm: '' });
   const [pwSaving, setPwSaving] = useState(false);
@@ -276,6 +279,7 @@ export default function SettingsPage() {
           terms_conditions: p.terms_conditions || '',
           email_notifications: p.email_notifications !== false,
           sms_notifications_enabled: p.sms_notifications_enabled !== false,
+          review_link: p.review_link || '',
         };
         lastSavedJson.current = JSON.stringify(loaded);
         setForm(loaded);
@@ -407,6 +411,13 @@ export default function SettingsPage() {
     connectFetch({ action: 'status', userId: user.id })
       .then(r => r.json()).then(setConnectStatus).catch(e => console.warn('[PL]', e));
   }, [user]);
+
+  // ── Payout summary — only once we know payments are live ──
+  useEffect(() => {
+    if (!user || !connectStatus?.onboarded || payouts !== null) return;
+    connectFetch({ action: 'payouts', userId: user.id })
+      .then(r => r.json()).then(setPayouts).catch(e => console.warn('[PL]', e));
+  }, [user, connectStatus?.onboarded]);
 
   // Handle return from Stripe Connect onboarding
   useEffect(() => {
@@ -745,6 +756,26 @@ export default function SettingsPage() {
                 <p className="muted small sp-pay-onboarded-desc">
                   Customers can pay by card or choose monthly payments on jobs over $500. You get the full amount within 2 business days.
                 </p>
+                {payouts?.connected && !payouts.error && (payouts.available > 0 || payouts.pending > 0 || payouts.nextPayout) && (
+                  <div className="sp-payout-summary">
+                    <div className="sp-payout-row">
+                      <div className="sp-payout-stat">
+                        <span className="sp-payout-val">{currency(payouts.available || 0)}</span>
+                        <span className="sp-payout-lbl">Available</span>
+                      </div>
+                      <div className="sp-payout-stat">
+                        <span className="sp-payout-val">{currency(payouts.pending || 0)}</span>
+                        <span className="sp-payout-lbl">Pending</span>
+                      </div>
+                    </div>
+                    {payouts.nextPayout?.amount > 0 && (
+                      <div className="sp-payout-next">
+                        Next payout: <strong>{currency(payouts.nextPayout.amount)}</strong>
+                        {payouts.nextPayout.arrivalDate ? ` · arrives ${new Date(payouts.nextPayout.arrivalDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="sp-pay-actions">
                   <button type="button" className="btn btn-secondary sp-pay-btn-sm" onClick={openStripeDashboard} disabled={stripeDashLoading} >
                     {stripeDashLoading ? 'Opening…' : 'View Stripe Dashboard →'}
@@ -1086,6 +1117,34 @@ export default function SettingsPage() {
                 onChange={e => setForm(p => ({ ...p, email_notifications: e.target.checked }))}
               />
             </label>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="eyebrow">After a customer pays</div>
+          <p className="muted small settings-hint">
+            Paste your review link (Google Business, etc.). When a customer pays an invoice in full, their receipt includes a one-tap "Leave a review" button — the easiest way to turn a finished job into a 5-star review.
+          </p>
+          <div className="stack">
+            <label className="field">
+              <span className="field-label">Review link</span>
+              <input
+                type="url"
+                className="jd-input"
+                inputMode="url"
+                placeholder="https://g.page/r/…  ·  paste your Google review link"
+                value={form.review_link || ''}
+                onChange={e => setForm(p => ({ ...p, review_link: e.target.value }))}
+              />
+            </label>
+            {form.review_link?.trim() && !/^https?:\/\//i.test(form.review_link.trim()) && (
+              <span className="muted small" style={{ color: 'var(--amber-text, #b45309)' }}>
+                Add the full link starting with https:// so the button works.
+              </span>
+            )}
+            <span className="muted small">
+              Find it in your Google Business profile → "Ask for reviews" → copy link. Leave blank to skip the review ask.
+            </span>
           </div>
         </div>
 

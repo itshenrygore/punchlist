@@ -24,10 +24,12 @@ async function stripePost(endpoint, params) {
   return data;
 }
 
-async function stripeGet(endpoint) {
-  const res = await fetch(`https://api.stripe.com/v1/${endpoint}`, {
-    headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` },
-  });
+async function stripeGet(endpoint, connectedAccountId = null) {
+  const headers = { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` };
+  // Connect balance/payout reads operate on the connected account, which
+  // Stripe scopes via the Stripe-Account header (not a query param).
+  if (connectedAccountId) headers['Stripe-Account'] = connectedAccountId;
+  const res = await fetch(`https://api.stripe.com/v1/${endpoint}`, { headers });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || `Stripe error ${res.status}`);
   return data;
@@ -173,6 +175,41 @@ export default async function handler(req, res) {
         requirements: account.requirements?.currently_due || [],
         pastDue: account.requirements?.past_due || [],
       });
+    }
+
+    // ── PAYOUTS: balance + next payout summary for the contractor ──
+    // Read-only money-side visibility so the contractor can see what's
+    // landing in their bank without opening the Stripe dashboard.
+    if (action === 'payouts') {
+      if (!profile.stripe_connect_account_id) {
+        return res.status(200).json({ connected: false });
+      }
+      const acct = profile.stripe_connect_account_id;
+      try {
+        const [balance, payouts] = await Promise.all([
+          stripeGet('balance', acct),
+          stripeGet('payouts?limit=1', acct),
+        ]);
+        const sum = (arr) => (arr || []).reduce((s, b) => s + (b.amount || 0), 0);
+        const available = sum(balance.available) / 100;
+        const pending = sum(balance.pending) / 100;
+        const currency = (balance.available?.[0]?.currency || balance.pending?.[0]?.currency || 'cad').toUpperCase();
+        const next = payouts.data?.[0] || null;
+        return res.status(200).json({
+          connected: true,
+          available,
+          pending,
+          currency,
+          nextPayout: next ? {
+            amount: (next.amount || 0) / 100,
+            arrivalDate: next.arrival_date ? next.arrival_date * 1000 : null,
+            status: next.status,
+          } : null,
+        });
+      } catch (e) {
+        // Non-fatal — payout visibility is a nicety, never block the page.
+        return res.status(200).json({ connected: true, error: 'unavailable' });
+      }
     }
 
     // ── DASHBOARD: Get Express Dashboard login link ──
