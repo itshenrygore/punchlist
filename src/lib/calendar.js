@@ -46,9 +46,12 @@ export function addToCalendar(quote) {
   ].filter(Boolean).join('\n');
 
   const location = quote.customer?.address || '';
+  // No scheduled window yet → default to a clean 9:00 AM a week out (a
+  // sensible placeholder the contractor edits in their calendar app)
+  // rather than an arbitrary "now + 7 days" time-of-day.
   const startDate = quote.schedule_window
     ? new Date(quote.schedule_window)
-    : new Date(Date.now() + 7 * 86400000);
+    : (() => { const d = new Date(Date.now() + 7 * 86400000); d.setHours(9, 0, 0, 0); return d; })();
 
   const ics = generateICS({ title, description, location, startDate });
   downloadICS(ics, `punchlist-${quote.quote_number || 'job'}.ics`);

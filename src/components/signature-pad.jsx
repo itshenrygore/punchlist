@@ -116,6 +116,11 @@ export default function SignaturePad({
     out.width = Math.round(srcCanvas.width * ratio);
     out.height = Math.round(srcCanvas.height * ratio);
     const c = out.getContext('2d');
+    // The signature canvas is transparent with a dark stroke. JPEG has no
+    // alpha, so transparent pixels would render BLACK — turning the saved
+    // signature into a black box. Fill white first so the stroke shows.
+    c.fillStyle = '#ffffff';
+    c.fillRect(0, 0, out.width, out.height);
     c.drawImage(srcCanvas, 0, 0, out.width, out.height);
     let quality = 0.92;
     let url = out.toDataURL('image/jpeg', quality);

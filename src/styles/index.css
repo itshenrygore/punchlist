@@ -1172,6 +1172,9 @@ select.input{cursor:pointer}
 /* Phone: banner wraps, button goes full-width */
 @media(max-width:640px){
   .qd-phase-banner{flex-wrap:wrap;gap:8px;padding:12px 14px}
+  /* Actions must fill the banner width and be allowed to shrink, otherwise
+     the fixed-size buttons overflow the card to the right on phones. */
+  .qd-phase-actions{width:100%;flex-shrink:1;gap:8px}
   .qd-phase-banner .btn{width:100%;text-align:center;justify-content:center;min-height:40px;font-size:13px;border-radius:10px}
   .qd-phase-banner .btn.btn-sm{width:100%;min-height:36px;font-size:12px}
   .qd-phase-icon{font-size:18px}
