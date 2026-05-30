@@ -90,7 +90,7 @@ async function sendSignedConfirmationToCustomer({ customerEmail, customerName, c
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
+      from: `${(contractorName || 'Confirmation').replace(/[<>\r\n"]/g, '').slice(0, 60)} via Punchlist <${(process.env.EMAIL_FROM || 'notifications@punchlist.ca').replace(/^.*<|>$/g, '')}>`,
       reply_to: cEmail || undefined,
       to: [customerEmail],
       subject: safeHeader(`Your signed quote — ${quoteTitle}`),
@@ -710,7 +710,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
+            from: `${(contractor?.company_name || contractor?.full_name || 'Reply').replace(/[<>\r\n"]/g, '').slice(0, 60)} via Punchlist <${(process.env.EMAIL_FROM || 'notifications@punchlist.ca').replace(/^.*<|>$/g, '')}>`,
             reply_to: contractor?.email || undefined,
             to: [customerEmail],
             subject: safeHeader(`Reply to your question — ${quote.title || 'your quote'}`),

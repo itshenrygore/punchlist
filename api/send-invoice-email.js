@@ -76,7 +76,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
+        from: `${(contractorName || 'Invoice').replace(/[<>\r\n"]/g, '').slice(0, 60)} via Punchlist <${(process.env.EMAIL_FROM || 'notifications@punchlist.ca').replace(/^.*<|>$/g, '')}>`,
         reply_to: profile?.email || undefined,
         to: [customer.email],
         subject: safeHeader(`Invoice from ${contractorName}: ${invoice.title || invoice.invoice_number}`),
