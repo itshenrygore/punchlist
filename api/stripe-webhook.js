@@ -323,13 +323,18 @@ async function markInvoicePaidViaStripe(session) {
           method: 'POST',
           headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            from: process.env.EMAIL_FROM || 'notifications@punchlist.ca',
+            // Brand the sender as the contractor (display name only — the
+            // verified Resend address is unchanged). Sanitize to keep the
+            // email header well-formed.
+            from: `${(contractorName || 'Receipt').replace(/[<>\r\n"]/g, '').slice(0, 60)} via Punchlist <${(process.env.EMAIL_FROM || 'notifications@punchlist.ca').replace(/^.*<|>$/g, '')}>`,
             to: [customer.email],
             subject,
             html: `
-              <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:32px 24px;color:#14161a">
-                <p style="color:#22C55E;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0 0 8px">Payment Receipt</p>
-                <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em">${headline}</h1>
+              <div style="font-family:Inter,-apple-system,Arial,sans-serif;max-width:540px;margin:0 auto;padding:0;color:#14161a">
+                <div style="background:#161616;color:#fff;padding:22px 24px;border-radius:14px 14px 0 0;font-weight:800;font-size:17px;letter-spacing:-.02em">${contractorName}</div>
+                <div style="padding:28px 24px 32px;border:1px solid #e8e6e1;border-top:none;border-radius:0 0 14px 14px">
+                <div style="width:56px;height:56px;border-radius:50%;background:rgba(15,122,80,.1);color:#0F7A50;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px">✓</div>
+                <h1 style="font-size:22px;margin:0 0 12px;letter-spacing:-.03em;text-align:center">${headline}</h1>
                 <p style="color:#667085;margin-bottom:24px;line-height:1.6">
                   <strong style="color:#14161a">${contractorName}</strong> has received ${isFullyPaid ? 'your payment' : 'a payment'} for <strong>${invoice.title || invoice.invoice_number || 'services rendered'}</strong>.
                 </p>
@@ -361,6 +366,7 @@ async function markInvoicePaidViaStripe(session) {
                   ${profile?.email ? `${profile.email}<br/>` : ''}
                 </div>
                 <p style="color:#aaa;font-size:11px;margin:20px 0 0">Powered by Punchlist · Keep this email as your receipt.</p>
+                </div>
               </div>
             `,
           }),
