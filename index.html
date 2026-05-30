@@ -25,8 +25,11 @@
     <!-- CRITICAL: Apply theme BEFORE any CSS renders to prevent flash -->
     <script>
       (function(){
+        // Light-only for now: the dark theme is unfinished and its toggle is
+        // hidden (see app-shell). Previously this read prefers-color-scheme,
+        // so dark-OS users got a flash of the half-baked dark theme on load.
+        // Force light until dark mode is properly built.
         var t='light';
-        try{var s=localStorage.getItem('pl_theme');if(s==='dark'||s==='light')t=s;else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark'}catch(e){}
         document.documentElement.setAttribute('data-theme',t);
         var m=document.getElementById('meta-theme-color');
         if(m)m.content=t==='dark'?'#0F0F10':'#F6F5F2';
