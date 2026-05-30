@@ -3542,6 +3542,17 @@ input[type="checkbox"] {
   transform: translateY(0) !important;
   box-shadow: var(--elev-1) !important;
 }
+/* Mobile: reflow the row into a card — title gets the full first line
+   (2-line clamp instead of harsh truncation), chip + amount drop to a
+   second line. Invoices-list uses these rows directly on mobile (quotes
+   swap to .ql-cards), so this gives invoices a proper mobile card. */
+@media (max-width: 560px) {
+  .ql-row-premium { flex-wrap: wrap !important; align-items: flex-start !important; row-gap: 10px !important; }
+  .ql-row-premium .ql-row-info { flex-basis: 100% !important; }
+  .ql-row-premium .ql-row-title { white-space: normal !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ql-row-premium .chip { order: 2; }
+  .ql-row-premium .ql-row-right { order: 3; margin-left: auto; flex-direction: row; align-items: baseline; }
+}
 
 /* ── STATUS CHIPS — global refinement ───────────────────────── */
 .chip {
