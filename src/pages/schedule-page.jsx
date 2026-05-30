@@ -94,22 +94,22 @@ export default function SchedulePage() {
   const { show: toast } = useToast();
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const currency = (n, c) => fmtCurrency(n, c ?? quotes[0]?.country);
   const [weekOffset, setWeekOffset] = useState(0);
 
-  useEffect(() => {
+  function loadSchedule() {
     if (!user) return;
-    let cancelled = false;
     setLoading(true);
     listQuotes(user.id)
       .then(q => {
-        if (cancelled) return;
         setQuotes(q.filter(qt => SCHEDULED_STATUSES.includes(qt.status) && !qt.archived_at));
+        setLoadError(false);
       })
-      .catch(() => { /* keep prior list */ })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [user]);
+      .catch(e => { console.warn('[PL]', e); setLoadError(true); })
+      .finally(() => setLoading(false));
+  }
+  useEffect(() => { loadSchedule(); /* eslint-disable-next-line */ }, [user]);
 
   const start = weekStart(addDays(new Date(), weekOffset * 7));
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -213,6 +213,13 @@ export default function SchedulePage() {
 
       {loading ? (
         <div className="pl-skel-list">{[...Array(4)].map((_, i) => <div key={i} className="pl-skel-row" />)}</div>
+      ) : loadError ? (
+        <div className="sch-load-error" role="alert" style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg, 14px)' }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>⚠️</div>
+          <h2 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 6px' }}>Couldn’t load your schedule</h2>
+          <p className="muted" style={{ fontSize: 14, margin: '0 0 16px' }}>Something went wrong reaching the server. Check your connection and try again.</p>
+          <button type="button" className="btn btn-primary" onClick={loadSchedule}>Retry</button>
+        </div>
       ) : (
         <>
           <div className="sch-week">

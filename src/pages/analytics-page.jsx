@@ -62,6 +62,7 @@ const RANGE_OPTIONS = [
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [allQuotes, setAllQuotes] = useState([]);
   const [range, setRange] = useState('6m');
 
@@ -69,8 +70,8 @@ export default function AnalyticsPage() {
     if (!user) return;
     setLoading(true);
     listQuotes(user.id)
-      .then(q => setAllQuotes((q || []).filter(x => !x.archived_at)))
-      .catch(e => console.warn('[PL]', e))
+      .then(q => { setAllQuotes((q || []).filter(x => !x.archived_at)); setLoadError(false); })
+      .catch(e => { console.warn('[PL]', e); setLoadError(true); })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -257,6 +258,13 @@ export default function AnalyticsPage() {
 
         {loading ? (
           <div className="an-skel-grid">{[...Array(4)].map((_, i) => <div key={i} className="an-skel-card" />)}</div>
+        ) : loadError ? (
+          <div className="an-empty">
+            <div className="an-empty-ic">⚠️</div>
+            <h2 className="an-empty-title font-display">Couldn’t load analytics</h2>
+            <p className="an-empty-body">Something went wrong reaching the server. Check your connection and try again.</p>
+            <button type="button" className="btn btn-primary" onClick={load}>Retry</button>
+          </div>
         ) : !hasData ? (
           <div className="an-empty">
             <div className="an-empty-ic">📊</div>

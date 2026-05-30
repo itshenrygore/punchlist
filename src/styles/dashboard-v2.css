@@ -1980,8 +1980,10 @@
 @media (max-width: 600px) {
   .an-stats-grid { grid-template-columns: 1fr 1fr; }
   .an-bar-row { grid-template-columns: 36px 1fr 56px; }
-  .an-job-val { display: none; }
-  .an-job-winrate { display: none; }
+  /* Keep win-rate + revenue visible on mobile (the whole point of the
+     top jobs/customers list) — shrink instead of display:none. */
+  .an-job-val { font-size: 12px; }
+  .an-job-winrate { font-size: 11px; }
   .an-action-card { flex-direction: column; align-items: flex-start; }
 }
 
@@ -3543,11 +3545,11 @@ input[type="checkbox"] {
 
 /* ── STATUS CHIPS — global refinement ───────────────────────── */
 .chip {
-  border-radius: 8px !important;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em !important;
-  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  padding: 4px 10px !important;
   white-space: nowrap !important;
   flex-shrink: 0 !important;
 }
