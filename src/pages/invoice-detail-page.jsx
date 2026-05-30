@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import AppShell from '../components/app-shell';
+import { PageHeader } from '../components/ui';
 import EmptyState from '../components/empty-state';
 import { InvoiceDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
@@ -483,9 +484,13 @@ export default function InvoiceDetailPage() {
   const depositCredited = Number(invoice.deposit_credited || 0);
 
   return (
-    <AppShell title={`Invoice ${invoice.invoice_number || ''}`} actions={
-      invoice.quote_id ? <Link className="btn btn-secondary btn-sm" to={`/app/quotes/${invoice.quote_id}`}>View quote</Link> : null
-    }>
+    <AppShell>
+      <PageHeader
+        align="between"
+        kicker={invoice.customer?.name || undefined}
+        title={`Invoice ${invoice.invoice_number || ''}`}
+        actions={invoice.quote_id ? <Link className="btn btn-secondary btn-sm" to={`/app/quotes/${invoice.quote_id}`}>View quote</Link> : undefined}
+      />
       {/* Just-sent confirmation banner — only fires when the invoice
           was created by the convert sheet's send-on-create path. Carries
           forward the momentum: contractor sees green proof that the
