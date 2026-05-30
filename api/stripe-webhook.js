@@ -8,6 +8,29 @@ function getSupabase() {
   return createClient(url, key);
 }
 
+// Shared server-side SMS send (fire-and-forget). Never throws.
+async function sendSMS(to, body) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_PHONE_NUMBER;
+  if (!sid || !token || !from || !to) return;
+  let n = String(to).replace(/[\s\-().]/g, '');
+  if (n.startsWith('1') && n.length === 11) n = '+' + n;
+  else if (n.length === 10) n = '+1' + n;
+  else if (!n.startsWith('+')) n = '+1' + n;
+  if (!/^\+1\d{10}$/.test(n)) return;
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ To: n, From: from, Body: String(body).slice(0, 320) }).toString(),
+    });
+  } catch { /* fire-and-forget */ }
+}
+
 async function markDepositPaid(session) {
   const quoteId = session?.metadata?.quote_id;
   if (!quoteId) return;
@@ -87,7 +110,7 @@ async function markDepositPaid(session) {
   // Notify contractor that deposit was received
   try {
     const { data: fullQuote } = await supabase.from('quotes')
-      .select('title, total, user_id, deposit_amount, customer_id, customer:customers(name,phone)')
+      .select('title, total, user_id, deposit_amount, customer_id, share_token, customer:customers(name,phone)')
       .eq('id', quoteId).maybeSingle();
     if (fullQuote?.user_id) {
       const appUrl = process.env.APP_URL || process.env.VITE_APP_URL || 'https://punchlist.ca';
@@ -137,6 +160,19 @@ async function markDepositPaid(session) {
             }
           }
         }
+      }
+
+      // Receipt to the CUSTOMER who just paid — previously they got
+      // nothing on a deposit (invoice payments send a receipt; deposits
+      // didn't). A confirmation text closes that trust gap.
+      const contractorLabel = session?.metadata?.contractor_name
+        || (await supabase.from('profiles').select('company_name,full_name').eq('id', fullQuote.user_id).maybeSingle()).data?.company_name
+        || 'your contractor';
+      if (fullQuote.customer?.phone) {
+        await sendSMS(
+          fullQuote.customer.phone,
+          `Payment received — thanks ${custName.split(' ')[0]}! ${contractorLabel} confirmed your ${fmtDep} deposit. They'll be in touch to schedule. View: ${appUrl}/public/${fullQuote.share_token || ''}`
+        );
       }
     }
   } catch {}
@@ -376,16 +412,32 @@ async function markInvoicePaidViaStripe(session) {
     } catch {}
   }
 
-  // Create in-app notification for contractor
+  // Notify the contractor they got paid — in-app + SMS (was in-app only,
+  // so a contractor with the app closed had no idea an invoice was paid).
   try {
+    const ctryC = invoice.country || 'CA';
+    const fmtC = (n) => ctryC === 'US'
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+      : new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+    const amtC = fmtC(amountPaid);
     await supabase.from('notifications').insert({
       user_id: invoice.user_id,
       type: 'payment_received',
       title: 'Payment received',
-      body: `${invoice.invoice_number || 'Invoice'} — ${methodLabel} payment of $${amountPaid.toFixed(0)} received`,
+      body: `${invoice.invoice_number || 'Invoice'} — ${methodLabel} payment of ${amtC} received`,
       link: `/app/invoices/${invoiceId}`,
       read: false,
     });
+
+    const { data: payeeProfile } = await supabase.from('profiles')
+      .select('phone, sms_notifications_enabled').eq('id', invoice.user_id).maybeSingle();
+    if (payeeProfile?.sms_notifications_enabled && payeeProfile?.phone) {
+      const appUrlC = process.env.APP_URL || process.env.VITE_APP_URL || 'https://punchlist.ca';
+      const label = newStatus === 'paid'
+        ? `💰 You got paid! ${amtC} received on ${invoice.invoice_number || 'your invoice'}.`
+        : `💰 Partial payment: ${amtC} received on ${invoice.invoice_number || 'your invoice'} (${fmtC(remainingBalance)} still due).`;
+      await sendSMS(payeeProfile.phone, `${label} ${appUrlC}/app/invoices/${invoiceId}`);
+    }
   } catch {}
 }
 

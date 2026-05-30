@@ -199,7 +199,13 @@ export default async function handler(req, res) {
         link: `${appUrl}/q/${q.share_token}`,
       });
 
-      const ok = await sendSMS(cust.phone, body);
+      // Disclose opt-out on automated nudges (CTIA best practice; Twilio
+      // also honors STOP at the carrier level). Only the LAST nudge needs
+      // it to avoid cluttering every message, but include it on each since
+      // a customer may not receive earlier ones.
+      const msg = `${body}\n\nReply STOP to opt out.`;
+
+      const ok = await sendSMS(cust.phone, msg);
       if (ok) {
         sent++;
         // Best-effort contractor notification — never blocks the loop.
