@@ -595,6 +595,19 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Loading skeleton for the content area — the greeting + job form
+            paint instantly (no data needed), but the metrics + lists used
+            to flash blank until the fetch resolved. Show placeholder rows. */}
+        {loading && (
+          <div className="dv2-load-skel" aria-hidden="true" style={{ display: 'grid', gap: 10, marginTop: 18 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="pl-skel-row" style={{ flex: 1, height: 64 }} />
+              <div className="pl-skel-row" style={{ flex: 1, height: 64 }} />
+            </div>
+            {[...Array(3)].map((_, i) => <div key={i} className="pl-skel-row" style={{ height: 60 }} />)}
+          </div>
+        )}
+
         {/* ═══ PWA INSTALL PROMPT ═══ */}
         {canInstall && sentThisMonth > 0 && (
           <div
