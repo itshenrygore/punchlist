@@ -17,6 +17,7 @@
 
 import { createClient } from './_supabase.js';
 import { blocked, getClientIp } from './_rate-limit.js';
+import { h } from './_escape.js';
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -69,16 +70,16 @@ body {
 }
 .brand { display: flex; flex-direction: column; gap: 3px; }
 .logo { max-height: 56px; max-width: 200px; object-fit: contain; margin-bottom: 10px; }
-.company { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; color: #18181b; }
+.company { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; color: #18181b; overflow-wrap: anywhere; }
 .contractor-name { font-size: 12px; color: #71717a; margin-top: 3px; }
-.contact { font-size: 11.5px; color: #71717a; margin-top: 8px; line-height: 1.6; }
-.contact a { color: #ea580c; text-decoration: none; }
+.contact { font-size: 11.5px; color: #71717a; margin-top: 8px; line-height: 1.6; overflow-wrap: anywhere; }
+.contact a { color: #B85128; text-decoration: none; }
 
 .doc-meta { text-align: right; min-width: 140px; }
 .doc-type {
   font-size: 11px; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 0.14em; color: #ea580c; margin-bottom: 6px;
-  background: #fff7ed; padding: 3px 10px; border-radius: 4px;
+  letter-spacing: 0.14em; color: #B85128; margin-bottom: 6px;
+  background: #FBF0EA; padding: 3px 10px; border-radius: 4px;
   display: inline-block;
 }
 .doc-date { font-size: 11.5px; color: #52525b; margin-top: 4px; }
@@ -86,7 +87,7 @@ body {
 
 /* ─── Hero ─── */
 .hero { padding: 24px 0; border-bottom: 1px solid #e4e4e7; margin-bottom: 24px; }
-.title { font-size: 26px; font-weight: 800; letter-spacing: -0.035em; color: #18181b; margin-bottom: 8px; line-height: 1.2; }
+.title { font-size: 26px; font-weight: 800; letter-spacing: -0.035em; color: #18181b; margin-bottom: 8px; line-height: 1.2; overflow-wrap: anywhere; }
 .customer { font-size: 14px; color: #52525b; }
 .customer strong { color: #18181b; font-weight: 700; }
 .address { font-size: 12px; color: #71717a; margin-top: 4px; }
@@ -103,8 +104,8 @@ body {
 
 /* ─── Revision ─── */
 .revision {
-  background: #fff7ed; border-left: 3px solid #ea580c; border-radius: 0 8px 8px 0;
-  padding: 12px 16px; margin-bottom: 24px; font-size: 12px; color: #c2410c;
+  background: #FBF0EA; border-left: 3px solid #B85128; border-radius: 0 8px 8px 0;
+  padding: 12px 16px; margin-bottom: 24px; font-size: 12px; color: #A84A24;
 }
 .revision strong { font-weight: 700; }
 
@@ -124,18 +125,19 @@ body {
   padding: 14px 0 8px; border-top: 1px solid #f0f0f0; margin-top: 8px;
 }
 .group-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
-.group-label.optional { color: #ea580c; }
+.group-label.optional { color: #B85128; }
 
 .item {
   display: flex; justify-content: space-between; align-items: flex-start;
   gap: 24px; padding: 11px 0; border-bottom: 1px solid #f4f4f5;
+  break-inside: avoid;
 }
 .item:last-child { border-bottom: none; }
 .item.optional { opacity: 0.7; }
 .item.optional .item-name { font-style: italic; }
 
 .item-left { flex: 1; min-width: 0; }
-.item-name { font-size: 13px; font-weight: 600; color: #18181b; line-height: 1.4; }
+.item-name { font-size: 13px; font-weight: 600; color: #18181b; line-height: 1.4; overflow-wrap: anywhere; }
 .item-note { font-size: 10.5px; color: #71717a; margin-top: 3px; line-height: 1.5; }
 .item-qty { font-size: 10.5px; color: #71717a; margin-top: 3px; }
 .item-price { font-size: 13.5px; font-weight: 800; color: #18181b; white-space: nowrap; }
@@ -144,6 +146,7 @@ body {
 .totals {
   padding: 24px 28px; background: #fafaf9; border: 1px solid #e4e4e7;
   border-radius: 10px; margin: 24px 0;
+  break-inside: avoid;
 }
 .totals-inner { max-width: 300px; margin-left: auto; }
 .total-row {
@@ -161,11 +164,11 @@ body {
 .total-row.grand span:first-child { color: #18181b; }
 .total-row.grand strong { color: #18181b; }
 .total-row.deposit {
-  font-size: 12.5px; color: #ea580c;
+  font-size: 12.5px; color: #B85128;
   border-top: 1px dashed #e4e4e7; margin-top: 8px; padding-top: 10px;
 }
-.total-row.deposit span:first-child { color: #ea580c; }
-.total-row.deposit strong { color: #ea580c; font-weight: 700; }
+.total-row.deposit span:first-child { color: #B85128; }
+.total-row.deposit strong { color: #B85128; font-weight: 700; }
 .total-row.balance-due {
   font-size: 18px; font-weight: 900; padding-top: 14px; margin-top: 10px;
   border-top: 2.5px solid #18181b; letter-spacing: -0.02em;
@@ -177,6 +180,7 @@ body {
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
 .info-block {
   padding: 16px 18px; background: #fafaf9; border: 1px solid #e4e4e7; border-radius: 8px;
+  break-inside: avoid;
 }
 .info-label {
   font-size: 9px; font-weight: 800; text-transform: uppercase;
@@ -191,7 +195,7 @@ body {
 }
 
 /* ─── Signature ─── */
-.signature { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 36px 0 28px; }
+.signature { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 36px 0 28px; break-inside: avoid; }
 .sig-box { display: flex; flex-direction: column; gap: 6px; }
 .sig-line { border-bottom: 1px solid #d4d4d8; height: 52px; }
 .sig-label {
@@ -206,7 +210,7 @@ body {
   font-size: 10px; color: #a1a1aa;
 }
 .punchlist-brand { display: flex; align-items: center; gap: 6px; }
-.brand-bar { width: 4px; height: 18px; background: #ea580c; border-radius: 2px; }
+.brand-bar { width: 4px; height: 18px; background: #B85128; border-radius: 2px; }
 .brand-text { font-weight: 800; color: #18181b; letter-spacing: -0.5px; font-size: 11px; }
 
 /* ─── Paid stamp ─── */
@@ -260,7 +264,7 @@ function buildHTML(q, amendments = []) {
   const hasDiscount = discount > 0;
 
   const itemRows = sortedGroups.map(([group, items]) => `
-    ${showGroupHeaders ? `<div class="group-label">${group}</div>` : ''}
+    ${showGroupHeaders ? `<div class="group-label">${h(group)}</div>` : ''}
     ${items.map(i => `
       <div class="item">
         <div class="item-left">
@@ -314,7 +318,7 @@ function buildHTML(q, amendments = []) {
 <div class="header">
   <div class="brand">
     ${q.contractor_logo ? `<img src="${h(q.contractor_logo)}" alt="" class="logo">` : ''}
-    <div class="company">${q.contractor_company || q.contractor_name || 'Your Contractor'}</div>
+    <div class="company">${h(q.contractor_company || q.contractor_name || 'Your Contractor')}</div>
     ${q.contractor_name && q.contractor_name !== q.contractor_company ? `<div class="contractor-name">${h(q.contractor_name)}</div>` : ''}
     <div class="contact">
       ${q.contractor_phone ? `<span>${h(q.contractor_phone)}</span>` : ''}
@@ -451,7 +455,7 @@ function buildInvoiceHTML(inv, contractor, payments) {
   const itemRows = sortedGroupKeys.map(group => {
     const groupItems = grouped[group];
     return `
-      ${showGroupHeaders ? `<div class="group-label">${group}</div>` : ''}
+      ${showGroupHeaders ? `<div class="group-label">${h(group)}</div>` : ''}
       ${groupItems.map(i => `
         <div class="item">
           <div class="item-left">
@@ -532,9 +536,9 @@ body { padding: 32px 40px 24px; font-size: 11.5px; line-height: 1.45; }
 </div>
 
 <div class="hero">
-  <div class="title">${inv.title || inv.invoice_number || 'Invoice'}</div>
-  <div class="customer">Bill to <strong>${inv.customer?.name || 'Customer'}</strong></div>
-  ${inv.customer?.address ? `<div class="address">${inv.customer.address}</div>` : ''}
+  <div class="title">${h(inv.title || inv.invoice_number || 'Invoice')}</div>
+  <div class="customer">Bill to <strong>${h(inv.customer?.name || 'Customer')}</strong></div>
+  ${inv.customer?.address ? `<div class="address">${h(inv.customer.address)}</div>` : ''}
 
   <div class="meta-grid">
     <div class="meta-item">

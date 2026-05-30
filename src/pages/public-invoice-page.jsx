@@ -528,12 +528,12 @@ export default function PublicInvoicePage() {
                     {(invoice.contractor_phone || invoice.contractor_email) && (
                       <div className="pi-contact-actions" style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                         {invoice.contractor_phone && (
-                          <a className="btn btn-secondary" href={`tel:${invoice.contractor_phone.replace(/\s/g, '')}`}>
+                          <a className="doc-cta-secondary" href={`tel:${invoice.contractor_phone.replace(/\s/g, '')}`}>
                             Call {invoice.contractor_phone}
                           </a>
                         )}
                         {invoice.contractor_email && (
-                          <a className="btn btn-secondary" href={`mailto:${invoice.contractor_email}?subject=${encodeURIComponent('Payment for ' + (invoice.title || invoice.invoice_number || 'invoice'))}`}>
+                          <a className="doc-cta-secondary" href={`mailto:${invoice.contractor_email}?subject=${encodeURIComponent('Payment for ' + (invoice.title || invoice.invoice_number || 'invoice'))}`}>
                             Email
                           </a>
                         )}
