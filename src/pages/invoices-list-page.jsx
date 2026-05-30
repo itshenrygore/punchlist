@@ -83,15 +83,18 @@ export default function InvoicesListPage() {
   const [invoices, setInvoices] = useState([]);
   const currency = (n, c) => fmtCurrency(n, c ?? invoices[0]?.country);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [filter, setFilter] = useState(null);
   const { show: toast } = useToast();
 
-  useEffect(() => {
+  const fetchInvoices = () => {
+    setLoading(true);
     listInvoices()
-      .then(data => setInvoices(sortInvoices(data || [])))
-      .catch(e => toast(friendly(e), 'error'))
+      .then(data => { setInvoices(sortInvoices(data || [])); setLoadError(false); })
+      .catch(e => { console.warn('[PL]', e); setLoadError(true); })
       .finally(() => setLoading(false));
-  }, []);
+  };
+  useEffect(() => { fetchInvoices(); }, []);
 
   // Pre-compute counts per filter so the chips can show "Overdue 3"
   // without a separate scan per render.
@@ -123,7 +126,17 @@ export default function InvoicesListPage() {
 
   return (
     <AppShell title="Invoices">
-      {invoices.length === 0 ? (
+      {loadError && invoices.length === 0 ? (
+        <EmptyState
+          icon={<span aria-hidden="true">⚠️</span>}
+          title="Couldn’t load your invoices"
+          description="Something went wrong reaching the server. Check your connection and try again."
+        >
+          <div className="es-actions">
+            <button type="button" className="btn btn-primary" onClick={fetchInvoices}>Retry</button>
+          </div>
+        </EmptyState>
+      ) : invoices.length === 0 ? (
         // Use the shared EmptyState (rise + icon pop animation lives
         // there). The secondary action ("View quotes") sits in
         // .es-actions next to the primary so contractors get a way
