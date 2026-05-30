@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/app-shell';
+import { PageHeader } from '../components/ui';
 import { useAuth } from '../hooks/use-auth';
 import { usePullToRefresh } from '../hooks/use-mobile-ux';
 import { listQuotes } from '../lib/api';
@@ -240,21 +241,18 @@ export default function AnalyticsPage() {
   return (
     <AppShell>
       <div className="an-root">
-        <div className="an-page-hd">
-          <div>
-            <h1 className="an-page-title font-display">Analytics</h1>
-            {!loading && hasData && (
-              <p className="an-page-sub">{stats.totalQuotes} quote{stats.totalQuotes !== 1 ? 's' : ''}{range !== 'all' ? ` · ${RANGE_OPTIONS.find(r => r.key === range)?.label}` : ''}</p>
-            )}
-          </div>
-          {!loading && hasData && (
+        <PageHeader
+          align="between"
+          title="Analytics"
+          subtitle={!loading && hasData ? `${stats.totalQuotes} quote${stats.totalQuotes !== 1 ? 's' : ''}${range !== 'all' ? ` · ${RANGE_OPTIONS.find(r => r.key === range)?.label}` : ''}` : undefined}
+          actions={!loading && hasData ? (
             <div className="an-range-tabs">
               {RANGE_OPTIONS.map(opt => (
                 <button key={opt.key} type="button" className={`an-range-tab${range === opt.key ? ' an-range-tab--on' : ''}`} onClick={() => setRange(opt.key)}>{opt.label}</button>
               ))}
             </div>
-          )}
-        </div>
+          ) : undefined}
+        />
 
         {loading ? (
           <div className="an-skel-grid">{[...Array(4)].map((_, i) => <div key={i} className="an-skel-card" />)}</div>

@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AppShell from '../components/app-shell';
+import { PageHeader } from '../components/ui';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../components/toast';
 import { usePullToRefresh } from '../hooks/use-mobile-ux';
@@ -413,34 +414,28 @@ export default function CustomersPage() {
   return (
     <AppShell>
       <div className="cust-root">
-        <div className="cust-page-hd">
-          <div>
-            <h1 className="cust-page-title font-display">Customers</h1>
-            {!loading && (
-              <p className="cust-page-sub">
-                {stats.total} customer{stats.total !== 1 ? 's' : ''}
-                {stats.total > 0 && stats.wonRevenue > 0 && ` · ${currency(stats.wonRevenue)} revenue tracked`}
-              </p>
-            )}
-          </div>
-          <div className="cust-page-hd-actions">
+        <PageHeader
+          align="between"
+          title="Customers"
+          subtitle={!loading ? `${stats.total} customer${stats.total !== 1 ? 's' : ''}${stats.total > 0 && stats.wonRevenue > 0 ? ` · ${currency(stats.wonRevenue)} revenue tracked` : ''}` : undefined}
+          actions={<>
             <button
               type="button"
-              className="btn btn-ghost"
+              className="btn btn-ghost btn-sm"
               onClick={() => exportCustomersCSV(customers)}
               disabled={customers.length === 0}
             >
               Export
             </button>
-            <label className="btn btn-ghost cust-import-label" title="Import customers from CSV (name, phone, email, address columns)">
+            <label className="btn btn-ghost btn-sm cust-import-label" title="Import customers from CSV (name, phone, email, address columns)">
               {importing ? 'Importing…' : 'Import CSV'}
               <input hidden type="file" accept=".csv,text/csv" onChange={handleImportCSV} disabled={importing} />
             </label>
-            <button type="button" className="btn btn-primary" onClick={() => { setEditingCustomer(null); setShowModal(true); }}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => { setEditingCustomer(null); setShowModal(true); }}>
               + Add
             </button>
-          </div>
-        </div>
+          </>}
+        />
 
         <div className="cust-search-row">
           <div className="cust-search-wrap">

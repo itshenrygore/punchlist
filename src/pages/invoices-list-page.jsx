@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/app-shell';
+import { PageHeader } from '../components/ui';
 import EmptyState from '../components/empty-state';
 import { InvoicesListSkeleton } from '../components/skeletons';
 import { listInvoices } from '../lib/api';
@@ -125,7 +126,18 @@ export default function InvoicesListPage() {
   const paid = filtered.filter(i => i.status === 'paid');
 
   return (
-    <AppShell title="Invoices">
+    <AppShell>
+      <PageHeader
+        align="between"
+        title="Invoices"
+        subtitle={outstanding > 0 ? `${currency(outstanding)} outstanding` : undefined}
+        actions={<>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => exportInvoicesCSV(invoices)} disabled={invoices.length === 0} title="Export all invoices to a CSV file you can upload to QuickBooks, Xero, or your accountant">
+            Export CSV
+          </button>
+          <Link className="btn btn-primary btn-sm" to="/app/invoices/new">New invoice</Link>
+        </>}
+      />
       {loadError && invoices.length === 0 ? (
         <EmptyState
           icon={<span aria-hidden="true">⚠️</span>}
@@ -153,20 +165,6 @@ export default function InvoicesListPage() {
         </EmptyState>
       ) : (
         <div className="quotes-list-wrap" style={{ position: 'relative' }}>
-          {/* Outstanding summary + actions */}
-          <div className="inv-list-header">
-            <div className="inv-list-outstanding">
-              <span className="inv-list-outstanding-label">Outstanding</span>
-              <span className="inv-list-outstanding-amount">{currency(outstanding)}</span>
-            </div>
-            <div className="inv-list-actions">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => exportInvoicesCSV(invoices)} disabled={invoices.length === 0} title="Export all invoices to a CSV file you can upload to QuickBooks, Xero, or your accountant">
-                Export CSV
-              </button>
-              <Link className="btn btn-primary btn-sm" to="/app/invoices/new">New invoice</Link>
-            </div>
-          </div>
-
           {/* Status filter chips */}
           <div className="pl-tabstrip" role="tablist" aria-label="Filter invoices by status">
             {STATUS_PILLS.map(p => {
