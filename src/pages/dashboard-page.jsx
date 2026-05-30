@@ -14,7 +14,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ChevronRight, DollarSign } from 'lucide-react';
+import { ArrowRight, ChevronRight, DollarSign, FileText, AlertTriangle, Users, MessageSquare, Receipt } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import OnboardingWizard from '../components/onboarding-wizard';
 import TodaySection from '../components/dashboard/today-section';
@@ -624,7 +624,7 @@ export default function DashboardPage() {
             Surface it explicitly with a retry instead. */}
         {!loading && loadError && !hasAnyData && (
           <div className="dv2-empty-state dv2-enter" style={{ '--i': 2 }}>
-            <div className="dv2-empty-icon">⚠️</div>
+            <div className="dv2-empty-icon" aria-hidden="true"><AlertTriangle size={26} strokeWidth={1.75} /></div>
             <div className="dv2-empty-headline">Couldn’t load your dashboard</div>
             <p className="dv2-empty-sub">
               Something went wrong reaching the server. Check your connection and try again.
@@ -638,7 +638,7 @@ export default function DashboardPage() {
         {/* ═══ EMPTY STATE ═══ */}
         {!loading && !loadError && !hasAnyData && (
           <div className="dv2-empty-state dv2-enter" style={{ '--i': 2 }}>
-            <div className="dv2-empty-icon">📋</div>
+            <div className="dv2-empty-icon" aria-hidden="true"><FileText size={26} strokeWidth={1.75} /></div>
             <div className="dv2-empty-headline">Your first quote takes 3 minutes</div>
             <p className="dv2-empty-sub">
               Type the job above — Punchlist builds a full line-item quote with trade-accurate pricing.
@@ -841,7 +841,7 @@ export default function DashboardPage() {
         {!loading && hasAnyData && (
           <div className="dv2-quicknav dv2-enter" style={{ '--i': 3 }}>
             <Link to="/app/customers" className="dv2-qnav-tile">
-              <span className="dv2-qnav-icon">👥</span>
+              <span className="dv2-qnav-icon" aria-hidden="true"><Users size={18} strokeWidth={1.75} /></span>
               <div className="dv2-qnav-content">
                 <span className="dv2-qnav-label">Customers</span>
                 {customerCount > 0 && <span className="dv2-qnav-count">{customerCount}</span>}
@@ -849,7 +849,7 @@ export default function DashboardPage() {
               <ChevronRight size={13} className="dv2-qnav-arrow" />
             </Link>
             <Link to="/app/templates" className="dv2-qnav-tile">
-              <span className="dv2-qnav-icon">💬</span>
+              <span className="dv2-qnav-icon" aria-hidden="true"><MessageSquare size={18} strokeWidth={1.75} /></span>
               <div className="dv2-qnav-content">
                 <span className="dv2-qnav-label">Follow-up messages</span>
                 <span className="dv2-qnav-count">Customize templates</span>
@@ -858,7 +858,7 @@ export default function DashboardPage() {
             </Link>
             {userProfile && isPro(userProfile) && (
               <Link to="/app/invoices" className="dv2-qnav-tile">
-                <span className="dv2-qnav-icon">🧾</span>
+                <span className="dv2-qnav-icon" aria-hidden="true"><Receipt size={18} strokeWidth={1.75} /></span>
                 <div className="dv2-qnav-content">
                   <span className="dv2-qnav-label">Invoices</span>
                 </div>
