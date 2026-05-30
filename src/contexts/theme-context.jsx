@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 const ThemeContext = createContext(null);
 const STORAGE_KEY = 'pl_theme';
@@ -40,23 +40,10 @@ export function ThemeProvider({ children }) {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   }, [theme, setTheme]);
 
-  // Listen for system theme changes — only follow if user hasn't manually chosen
-  useEffect(() => {
-    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
-    if (!mq) return;
-    function handleChange(e) {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        // If user has explicitly picked a theme, don't override
-        if (stored === 'dark' || stored === 'light') return;
-      } catch { /* noop */ }
-      const next = e.matches ? 'dark' : 'light';
-      setThemeState(next);
-      applyTheme(next);
-    }
-    mq.addEventListener('change', handleChange);
-    return () => mq.removeEventListener('change', handleChange);
-  }, []);
+  // Light-only for now: the dark theme is unfinished and its toggle is
+  // hidden. We intentionally do NOT follow the OS prefers-color-scheme —
+  // doing so flipped sessions into the half-baked dark theme mid-use.
+  // Re-enable this listener when dark mode is finished + the toggle returns.
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggle }}>
