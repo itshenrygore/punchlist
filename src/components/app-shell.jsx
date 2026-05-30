@@ -2,7 +2,7 @@
    Punchlist 2.0 App Shell
    
    Sidebar: Home, Quotes, Settings (+ divider)
-   Topbar: Logo, notifications, theme toggle, + New Quote button
+   Topbar: Logo, notifications, search, Foreman, + New Quote button
    
    Removed: Foreman chat widget, global search (⌘K), classic view
    toggle, booking drawer, offline indicator, 4 nav items
@@ -11,7 +11,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
-import { useTheme } from '../contexts/theme-context';
 import NotificationCenter from './notification-center';
 import CommandPalette from './command-palette';
 import MobileNav from './mobile-nav';
@@ -32,7 +31,6 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { quoteContext, addItemHandler } = useForeman();
-  const { theme, toggle: toggleTheme } = useTheme();
   const { show: showToast } = useToast();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [foremanOpen, setForemanOpen] = useState(false);
@@ -139,7 +137,6 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
               <span className="topbar-foreman-label">Foreman</span>
               <kbd className="topbar-foreman-kbd">⌘⇧K</kbd>
             </button>
-            {/* Dark mode toggle hidden — light mode only for now */}
             <Link className="btn btn-primary btn-sm topbar-new-quote" to="/app/quotes/new">New quote</Link>
             <button className="btn btn-secondary btn-sm mobile-menu-btn" type="button" aria-label="Open menu" onClick={() => setMobileOpen(!mobileOpen)}>&#9776;</button>
           </div>
@@ -165,7 +162,6 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
               <ForemanLogo size={18} stroke />
               Foreman
             </button>
-            {/* Dark mode toggle hidden — light mode only for now */}
             <button className="mobile-menu-item danger" type="button" onClick={handleSignOut}>Sign out</button>
           </div>
         </div>
