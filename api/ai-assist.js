@@ -90,7 +90,7 @@ const TOOL_DEFS = [
   },
 ];
 
-async function executeTool(name, args, userId, supabase) {
+export async function executeTool(name, args, userId, supabase) {
   try {
     if (name === 'read_quotes') {
       let q = supabase.from('quotes').select('id, title, status, total, trade, updated_at, customer:customers(name)').eq('user_id', userId).order('updated_at', { ascending: false }).limit(10);
