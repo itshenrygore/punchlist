@@ -1176,7 +1176,7 @@ export default function QuoteBuilderPage() {
 
   // Shared post-send bookkeeping (called by all paths that definitively sent)
   function _markSent(customerFirstName) {
-    setSentSuccess(true); setPhase('sent');
+    sentRef.current = true; // mark before any nav so pagehide won't log abandonment
     try { localStorage.setItem('pl_has_sent_quote', '1'); } catch (e) { console.warn('[PL]', e); }
     const isFirst = !localStorage.getItem('pl_first_send_at');
     trackQuoteSent(grandTotal, trade, isFirst);
@@ -1197,6 +1197,18 @@ export default function QuoteBuilderPage() {
       toast(`${fn}'s phone just buzzed — your first quote is on its way`, 'success');
     }
     // (non-first toasts are shown at the call site with the specific send path context)
+
+    // Land on the quote's live detail page — a stable, returnable
+    // "Sent ✓ — waiting on {customer}" confirmation. The old in-builder
+    // success screen rendered blank when the builder unmounted mid-transition
+    // (it depended on transient builder state being torn down). Navigating to
+    // a real, persistent page is both reliable and the better pattern.
+    if (quoteId) {
+      nav(`/app/quotes/${quoteId}?sent=1`, { replace: true });
+    } else {
+      // No id yet (shouldn't happen post-send) — fall back to the in-builder screen.
+      setSentSuccess(true); setPhase('sent');
+    }
   }
 
   // C3: user confirmed they tapped Send in the native SMS app
