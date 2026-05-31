@@ -5,6 +5,8 @@ import { getProfile, updateProfile } from '../lib/api';
 import { useAuth } from '../hooks/use-auth';
 import { CA_PROVINCES, US_STATES } from '../lib/pricing';
 import { TRADES } from '../../shared/tradeBrain';
+import { getSmartSuggestions } from '../../shared/smartCatalog';
+import { currency } from '../lib/format';
 
 const DEMO_JOBS = [
   { label:'Water heater replacement', description:'Replace 50 gallon gas water heater. Drain, disconnect, and haul away old tank. Reconnect gas and venting.', trade:'Plumber' },
@@ -34,6 +36,7 @@ export default function OnboardingWizard({ onDismiss }) {
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [previewJob, setPreviewJob] = useState(null);
 
   const phoneDigits = phone.replace(/\D/g, '');
   const phoneValid = phoneDigits.length === 10 || (phoneDigits.length === 11 && phoneDigits[0] === '1');
@@ -74,7 +77,21 @@ export default function OnboardingWizard({ onDismiss }) {
     navigate('/app/quotes/new');
   }
 
-  function tryDemo(job) {
+  // Samples are now a READ-ONLY PREVIEW — they never create a draft (that
+  // was the source of phantom/duplicate "sample" quotes on new accounts).
+  function openPreview(job) {
+    try {
+      const s = getSmartSuggestions({ description: job.description, title: job.label, trade: job.trade, province });
+      const items = [...(s.core || []), ...(s.related || [])].slice(0, 6);
+      const lo = items.reduce((a, i) => a + (Number(i.lo) || 0), 0);
+      const hi = items.reduce((a, i) => a + (Number(i.hi) || 0), 0);
+      setPreviewJob({ ...job, items, lo, hi });
+    } catch {
+      setPreviewJob({ ...job, items: [], lo: 0, hi: 0 });
+    }
+  }
+
+  function buildFromPreview(job) {
     markOnboarded();
     onDismiss?.();
     navigate(`/app/quotes/new?demo=${encodeURIComponent(job.description)}&trade=${job.trade}`);
@@ -160,11 +177,11 @@ export default function OnboardingWizard({ onDismiss }) {
               Build your first quote →
             </button>
             <div style={{ fontSize: 'var(--text-2xs)', fontWeight: 600, color: 'var(--subtle)', textAlign: 'center', margin: '12px 0 6px' }}>
-              or try a sample job
+              or preview a sample quote
             </div>
             <div className="ob-path-grid">
               {demoList.map(job => (
-                <button key={job.label} className="ob-demo-card" type="button" onClick={() => tryDemo(job)}>
+                <button key={job.label} className="ob-demo-card" type="button" onClick={() => openPreview(job)}>
                   <span className="ob-demo-label">{job.label}</span>
                   <span className="ob-demo-trade">{job.trade}</span>
                 </button>
@@ -179,6 +196,39 @@ export default function OnboardingWizard({ onDismiss }) {
           {[0,1].map(i => <div key={i} className={`ob-dot ${i===step?'active':i<step?'done':''}`} />)}
         </div>
       </div>
+
+      {/* Read-only sample preview — shows what a finished quote looks like
+          WITHOUT creating a draft (the old behavior dropped users into the
+          builder and left phantom "sample" quotes behind). */}
+      {previewJob && (
+        <div className="ob-backdrop" style={{ zIndex: 60 }} onClick={() => setPreviewJob(null)}>
+          <div className="ob-card" style={{ position: 'relative', maxHeight: '86vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <button type="button" className="ob-close qb-modal-close" onClick={() => setPreviewJob(null)} aria-label="Close" style={{ position: 'absolute', top: 8, right: 8, width: 36, height: 36, display: 'grid', placeItems: 'center', zIndex: 1 }}>
+              <X size={18} strokeWidth={2} aria-hidden="true" />
+            </button>
+            <div style={{ display: 'inline-block', fontSize: 'var(--text-2xs)', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--brand)', background: 'var(--brand-bg)', border: '1px solid var(--brand-line)', borderRadius: 999, padding: '4px 10px', marginBottom: 10 }}>Sample preview · nothing is saved</div>
+            <h2 className="ob-title" style={{ marginBottom: 2 }}>{previewJob.label}</h2>
+            <p className="ob-body" style={{ marginTop: 0 }}>This is an example of what Punchlist builds for you. Your own quote is fully editable.</p>
+            <div style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', margin: '14px 0' }}>
+              {previewJob.items.length === 0 ? (
+                <div style={{ padding: 16, fontSize: 'var(--text-sm)', color: 'var(--muted)', textAlign: 'center' }}>Describe a job and Punchlist suggests the line items instantly.</div>
+              ) : previewJob.items.map((it, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '11px 14px', borderTop: idx ? '1px solid var(--line)' : 'none', fontSize: 'var(--text-sm)' }}>
+                  <span style={{ color: 'var(--text)', minWidth: 0 }}>{it.name}</span>
+                  <span style={{ fontWeight: 700, whiteSpace: 'nowrap', color: 'var(--text-2)' }}>{currency(it.lo, country)}–{currency(it.hi, country)}</span>
+                </div>
+              ))}
+              {previewJob.items.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', borderTop: '2px solid var(--line)', background: 'var(--panel-2)', fontWeight: 800 }}>
+                  <span>Estimated</span><span style={{ color: 'var(--brand)' }}>{currency(previewJob.lo, country)}–{currency(previewJob.hi, country)}</span>
+                </div>
+              )}
+            </div>
+            <button className="btn btn-primary full-width" type="button" onClick={() => buildFromPreview(previewJob)}>Build my own version →</button>
+            <button className="ob-skip" type="button" onClick={() => setPreviewJob(null)}>Back to samples</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
