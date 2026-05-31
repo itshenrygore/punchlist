@@ -379,7 +379,12 @@ export function getSmartSuggestions({ description, title, trade, province }) {
   // any object in the taxonomy (e.g. "Replace P-trap", "Combustion analysis").
   if (core.length < 3 && nTrade && nTrade !== 'Other' && ctx.keywords.length > 0) {
     const existingNames = new Set([...core, ...related, ...optional].map(i => i.name.toLowerCase()));
-    const STOP = new Set(['install','replace','repair','fix','new','old','need','remove','add','the','for','and','with']);
+    // Generic descriptors must never be match anchors — words like "full",
+    // "upgrade", "home" matched fixtures (e.g. urinal flush valve) onto a
+    // whole-home repipe and presented them as confident "core" items.
+    const STOP = new Set(['install','replace','repair','fix','new','old','need','remove','add','the','for','and','with',
+      'full','upgrade','home','house','whole','entire','complete','job','work','project','quote','estimate',
+      'year','years','yr','this','that','from','out','all','existing','current','total','unit','units']);
     const sigWords = ctx.keywords.filter(w => w.length > 2 && !STOP.has(w));
 
     if (sigWords.length > 0) {
@@ -394,15 +399,17 @@ export function getSmartSuggestions({ description, title, trade, province }) {
         for (const w of sigWords) {
           if (hay.includes(w)) { kwScore += 25; matchedWords++; }
         }
-        // Require at least 1 significant word match
-        if (matchedWords === 0) continue;
-        // Bonus for matching multiple words
-        if (matchedWords >= 2) kwScore += 20;
-        // Bonus for name match (stronger than description match)
+        // Bonus + count for name matches (stronger than description match)
         const nameLower = item.n.toLowerCase();
+        let nameMatches = 0;
         for (const w of sigWords) {
-          if (nameLower.includes(w)) kwScore += 15;
+          if (nameLower.includes(w)) { kwScore += 15; nameMatches++; }
         }
+        // Credibility gate: a single description-only hit on one significant
+        // word is too weak (that's how irrelevant fixtures leaked in). Require
+        // either 2+ matched words, or a direct match in the item NAME.
+        if (matchedWords < 2 && nameMatches === 0) continue;
+        if (matchedWords >= 2) kwScore += 20;
         kwScore += (item.p || 50) * 0.1;
 
         // ── Verb-context adjustment in keyword fallback ──
@@ -417,28 +424,32 @@ export function getSmartSuggestions({ description, title, trade, province }) {
           kwScore -= 40;
         }
 
-        if (kwScore >= 30) {
+        if (kwScore >= 45) {
           const adj = regionalize(item, province);
           const kwAnchored = anchorPrice(adj.lo || item.lo || 0, adj.hi || item.hi || 0, nTrade, item.c);
-          const kwReason = `keyword: ${sigWords.slice(0, 3).join(', ')}`;
+          // Honest, customer-safe reason — never expose the raw "keyword:" terms.
+          const kwReason = 'related to your description';
           kwResults.push({
             id: `kw_${item.n.replace(/\s+/g, '_').toLowerCase().slice(0, 30)}_${Math.random().toString(36).slice(2, 6)}`,
             name: item.n, desc: item.d || '', category: item.c || '',
             lo: kwAnchored.lo, hi: kwAnchored.hi,
             mid: kwAnchored.mid,
-            score: kwScore, tier: 'core',
+            // Keyword-fallback matches are SUGGESTIONS, not confident core
+            // items — they live in "related" so they read as optional adds,
+            // not as a definitive scope the contractor would trust blindly.
+            score: kwScore, tier: 'related',
             reason: kwReason,
-            // ── Prompt 7A: enrich keyword fallback items ──
             why: kwReason,
             pricing_basis: `${item.t || ''} · ${item.c || 'General'} · ${province || 'CA'} market range`,
           });
         }
       }
-      // Sort keyword results by score, take top items to fill gaps
+      // Sort keyword results by score; use them only to fill the RELATED tier
+      // (never core). Cap tightly so a low-confidence job shows a few honest
+      // "related" adds rather than a long list of confident-looking guesses.
       kwResults.sort((a, b) => b.score - a.score);
-      const needed = Math.max(0, 3 - core.length);
-      const kwCore = kwResults.slice(0, Math.min(needed, 3));
-      const kwRelated = kwResults.slice(kwCore.length, kwCore.length + 2);
+      const kwRelated = kwResults.slice(0, Math.max(0, 3 - related.length));
+      const kwCore = [];
       core = [...core, ...kwCore];
       related = [...related, ...kwRelated];
     }
