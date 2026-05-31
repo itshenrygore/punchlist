@@ -11,6 +11,7 @@ export async function saveProfile(user, updates = {}) {
   if ('full_name' in updates)        payload.full_name = updates.full_name || user.user_metadata?.full_name || '';
   if ('company_name' in updates)     payload.company_name = updates.company_name || '';
   if ('trade' in updates)            payload.trade = updates.trade || 'Other';
+  if ('trades' in updates)           payload.trades = Array.isArray(updates.trades) ? updates.trades : [];
   if ('province' in updates)         payload.province = updates.province || 'ON';
   if ('country' in updates)          payload.country = updates.country || 'CA';
   if ('phone' in updates)            payload.phone = updates.phone || '';
