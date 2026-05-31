@@ -1,4 +1,5 @@
 import { StepDots } from '../components/ui';
+import { Banknote, Clock, CheckCircle2, RefreshCw, Search, AlertTriangle, Ban } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
@@ -357,8 +358,8 @@ function IntroScreen({ onNext }) {
       <StepDots current={0} total={4} />
 
       <div className="po-screen-center" style={{ marginBottom: 32 }}>
-        <div className="po-screen-icon po-screen-icon--lg" style={{ background: 'var(--brand-bg)', border: '1px solid var(--brand-line)' }}>
-          
+        <div className="po-screen-icon po-screen-icon--lg" style={{ background: 'var(--brand-bg)', border: '1px solid var(--brand-line)', color: 'var(--brand)' }}>
+          <Banknote size={30} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1 className="po-screen-heading po-screen-heading--lg">
           Get paid faster
@@ -412,8 +413,8 @@ function ExpectScreen({ onNext, onBack }) {
       <StepDots current={1} total={4} />
 
       <div className="po-screen-center">
-        <div className="po-screen-icon" style={{ background: 'var(--blue-bg)', border: '1px solid rgba(96,165,250,.2)', width: 56, height: 56, borderRadius: 14, margin: '0 auto 18px' }}>
-          
+        <div className="po-screen-icon" style={{ background: 'var(--blue-bg)', border: '1px solid rgba(96,165,250,.2)', width: 56, height: 56, borderRadius: 14, margin: '0 auto 18px', color: 'var(--blue)' }}>
+          <Clock size={26} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1 className="po-screen-heading">
           This only takes about 2 minutes
@@ -585,8 +586,8 @@ function SuccessScreen({ returnTo }) {
   return (
     <FlowFrame>
       <div className="po-screen-text-center">
-        <div className="po-screen-icon" style={{ width: 72, height: 72, borderRadius: 18, background: 'var(--green-bg)', border: '1px solid var(--green-line)', margin: '0 auto 24px', fontSize: 'var(--text-5xl)', animation: 'onb-check-pop .4s var(--ease) .2s both' }}>
-          ✅
+        <div className="po-screen-icon" style={{ width: 72, height: 72, borderRadius: 18, background: 'var(--green-bg)', border: '1px solid var(--green-line)', margin: '0 auto 24px', color: 'var(--green)', animation: 'onb-check-pop .4s var(--ease) .2s both' }}>
+          <CheckCircle2 size={34} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1 className="po-screen-heading po-screen-heading--lg" style={{ margin: '0 0 10px' }}>
           You're ready to get paid
@@ -618,8 +619,8 @@ function ResumeScreen({ onResume, loading }) {
   return (
     <FlowFrame>
       <div className="po-screen-center">
-        <div className="po-screen-icon" style={{ background: 'var(--amber-bg)', border: '1px solid rgba(245,158,11,.2)' }}>
-          🔄
+        <div className="po-screen-icon" style={{ background: 'var(--amber-bg)', border: '1px solid rgba(245,158,11,.2)', color: 'var(--amber)' }}>
+          <RefreshCw size={26} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1 className="po-screen-heading">
           Finish setting up payments
@@ -651,8 +652,8 @@ function PendingScreen() {
   return (
     <FlowFrame>
       <div className="po-screen-center">
-        <div className="po-screen-icon" style={{ background: 'var(--blue-bg)', border: '1px solid rgba(96,165,250,.2)' }}>
-          🔍
+        <div className="po-screen-icon" style={{ background: 'var(--blue-bg)', border: '1px solid rgba(96,165,250,.2)', color: 'var(--blue)' }}>
+          <Search size={26} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1 className="po-screen-heading">
           Your account is being reviewed
@@ -680,8 +681,8 @@ function ActionRequiredScreen({ requirements, onFix, loading }) {
   return (
     <FlowFrame>
       <div className="po-screen-center" style={{ marginBottom: 24 }}>
-        <div className="po-screen-icon" style={{ background: 'var(--amber-bg)', border: '1px solid rgba(245,158,11,.2)' }}>
-          ⚠
+        <div className="po-screen-icon" style={{ background: 'var(--amber-bg)', border: '1px solid rgba(245,158,11,.2)', color: 'var(--amber)' }}>
+          <AlertTriangle size={26} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1 className="po-screen-heading">
           Stripe needs a few more details
@@ -730,8 +731,8 @@ function RestrictedScreen({ onFix, loading }) {
   return (
     <FlowFrame>
       <div className="po-screen-center" style={{ marginBottom: 24 }}>
-        <div className="po-screen-icon" style={{ background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,.2)' }}>
-          🚫
+        <div className="po-screen-icon" style={{ background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,.2)', color: 'var(--red)' }}>
+          <Ban size={26} strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h1 className="po-screen-heading">
           Your payment setup needs attention
