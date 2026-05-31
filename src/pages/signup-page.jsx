@@ -24,20 +24,22 @@ const TRADE_TILES = [
   { value: 'Painter',            Icon: PaintBucket },
 ];
 
-function TradePicker({ value, onChange }) {
+// Multi-select: a contractor can run more than one trade (e.g. plumbing +
+// HVAC). `values` is an array; `onToggle(trade)` adds/removes one.
+function TradePicker({ values, onToggle }) {
   const tileValues = new Set(TRADE_TILES.map(t => t.value));
-  const showDropdown = value && !tileValues.has(value);
+  const otherSelected = values.filter(v => !tileValues.has(v));
+  const [showOther, setShowOther] = useState(otherSelected.length > 0);
   return (
     <div className="trade-picker">
-      <div className="trade-tiles" role="radiogroup" aria-label="Select your trade">
+      <div className="trade-tiles" role="group" aria-label="Select your trade or trades">
         {TRADE_TILES.map(({ value: v, Icon }) => (
           <button
             key={v}
             type="button"
-            className={`trade-tile${value === v ? ' is-selected' : ''}`}
-            onClick={() => onChange(v)}
-            role="radio"
-            aria-checked={value === v}
+            className={`trade-tile${values.includes(v) ? ' is-selected' : ''}`}
+            onClick={() => onToggle(v)}
+            aria-pressed={values.includes(v)}
           >
             <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
             <span>{v}</span>
@@ -45,26 +47,35 @@ function TradePicker({ value, onChange }) {
         ))}
         <button
           type="button"
-          className={`trade-tile${showDropdown ? ' is-selected' : ''}`}
-          onClick={() => onChange(showDropdown ? value : 'Other')}
-          role="radio"
-          aria-checked={showDropdown}
+          className={`trade-tile${showOther || otherSelected.length > 0 ? ' is-selected' : ''}`}
+          onClick={() => setShowOther(s => !s)}
+          aria-pressed={showOther}
         >
           <MoreHorizontal size={20} strokeWidth={1.75} aria-hidden="true" />
           <span>Other</span>
         </button>
       </div>
-      {showDropdown && (
+      {showOther && (
         <select
           className="input trade-picker-fallback"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          aria-label="Choose trade"
+          value=""
+          onChange={e => { if (e.target.value) onToggle(e.target.value); }}
+          aria-label="Add another trade"
         >
-          {TRADES.filter(t => !tileValues.has(t)).map(t => (
+          <option value="">Add a trade…</option>
+          {TRADES.filter(t => !tileValues.has(t) && !values.includes(t)).map(t => (
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
+      )}
+      {otherSelected.length > 0 && (
+        <div className="trade-picker-extra" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {otherSelected.map(t => (
+            <button key={t} type="button" className="trade-tile is-selected" style={{ flex: '0 0 auto', padding: '6px 12px' }} onClick={() => onToggle(t)} title="Remove">
+              {t} ✕
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -79,6 +90,7 @@ export default function SignupPage() {
 
   const [password, setPassword] = useState('');
   const [trade, setTrade] = useState('');
+  const [trades, setTrades] = useState([]); // multi-trade companies pick more than one
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState('CA');
   const [province, setProvince] = useState('AB');
@@ -144,7 +156,7 @@ export default function SignupPage() {
           // Save profile with demo trade data and go straight to quote builder
           setTrade(demoTrade);
           try {
-            await saveProfile(data.user, { full_name: fullName, trade: demoTrade, province, country, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
+            await saveProfile(data.user, { full_name: fullName, trade: demoTrade, trades: demoTrade ? [demoTrade] : [], province, country, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
           } catch (e) { console.warn("[PL]", e); }
           try { localStorage.setItem('pl_first_run', '1'); localStorage.setItem('pl_onboarded', '1'); } catch (e) { console.warn("[PL]", e); }
           navigate('/app/quotes/new', { replace: true });
@@ -173,7 +185,7 @@ export default function SignupPage() {
       // Save the phone + turn SMS alerts on (they gave us the number for
       // exactly this — viewing/approval/signature/payment texts).
       if (userId) {
-        await saveProfile({ id: userId }, { full_name: fullName, trade, province, country, phone: phone.trim(), sms_notifications_enabled: true, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
+        await saveProfile({ id: userId }, { full_name: fullName, trade: trades[0] || 'Other', trades, province, country, phone: phone.trim(), sms_notifications_enabled: true, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
       }
     } catch (e) {
       // Non-blocking: profile was already partially created by the handle_new_user trigger,
@@ -186,7 +198,7 @@ export default function SignupPage() {
     setLoading(false);
     try { localStorage.setItem('pl_first_run', '1'); } catch (e) { console.warn("[PL]", e); }
     try { localStorage.setItem('pl_onboarded', '1'); } catch (e) { console.warn("[PL]", e); }
-    if (userId) trackSignup(userId, trade);
+    if (userId) trackSignup(userId, trades[0] || 'Other');
     if (saveFailed) {
       try { sessionStorage.setItem('pl_profile_save_failed', '1'); } catch { /* ignore */ }
     }
@@ -262,11 +274,12 @@ export default function SignupPage() {
           </div>
           <div className="auth-field">
             <span className="field-label">Trade</span>
-            <TradePicker value={trade} onChange={setTrade} />
+            <TradePicker values={trades} onToggle={t => setTrades(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])} />
+            <div className="muted small" style={{ marginTop: 6 }}>Pick all that apply — multi-trade shops welcome.</div>
           </div>
-          {trade && (
+          {trades.length > 0 && (
             <div className="auth-trade-hint">
-              Your scope, catalog, and pricing will be calibrated for <strong>{trade}</strong> work.
+              Your scope, catalog, and pricing will be calibrated for <strong>{trades.join(' + ')}</strong> work.
             </div>
           )}
           <div className="auth-field">
@@ -285,7 +298,7 @@ export default function SignupPage() {
               We text you the moment a customer views, approves, signs, or pays — so you never miss a job. Required.
             </div>
           </div>
-          <button className="btn btn-primary full-width" type="button" disabled={loading || !trade || !phoneValid} onClick={handleStep2}>
+          <button className="btn btn-primary full-width" type="button" disabled={loading || trades.length === 0 || !phoneValid} onClick={handleStep2}>
             {loading ? 'Saving…' : 'Create my first quote →'}
           </button>
         </div>
