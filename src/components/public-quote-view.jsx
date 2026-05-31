@@ -345,6 +345,10 @@ export default function PublicQuoteView({
   const optionalsTaxed = selectedOptionalsTotal * (1 + effectiveTaxRate);
   const adjustedTotal = (Number(quote?.total) || 0) + optionalsTaxed;
   const displayTotal = selectedOptionalsTotal > 0 ? adjustedTotal : Number(quote?.total || 0);
+  // Only surface "pay monthly / financing" when the contractor can actually
+  // offer it — BNPL (Affirm/Klarna) runs through their Stripe Connect
+  // checkout. Without it, "pay monthly at checkout" is a dead promise.
+  const canFinance = Boolean(quote?.stripe_connect_enabled) && showFinancing(displayTotal);
 
   // FIX #6, #16: Scroll to signature pad when it opens
   function openSignature() {
@@ -761,7 +765,7 @@ export default function PublicQuoteView({
                 align="center"
                 decimals={Number.isInteger(Number(displayTotal)) ? 0 : 2}
               />
-              {showFinancing(displayTotal) && (() => {
+              {canFinance && (() => {
                 const mo = estimateMonthly(displayTotal);
                 return (
                   <>
@@ -780,7 +784,7 @@ export default function PublicQuoteView({
                 );
               })()}
             </div>
-            {showFinancing(displayTotal) && (
+            {canFinance && (
               <>
                 <div className="pl-affirm-line">
                   Pay over time with Affirm or Klarna — choose at checkout.
@@ -912,7 +916,7 @@ export default function PublicQuoteView({
           {/* §6.2 — Mobile: financing tile above the fold, before line items.
               On desktop this block is hidden via CSS (.pq-financing-above-fold display:none
               at ≥641px). The in-hero monthly stat already covers desktop. */}
-          {showFinancing(displayTotal) && (() => {
+          {canFinance && (() => {
             const mo = estimateMonthly(displayTotal);
             return (
               <div className="pq-financing-above-fold" aria-hidden="false">
@@ -1000,7 +1004,7 @@ export default function PublicQuoteView({
             {selectedOptionalsTotal > 0 && <div className="doc-total-row" style={{ color: 'var(--doc-accent, var(--brand))' }}><span>Selected add-ons</span><strong className="tabular">+{currency(selectedOptionalsTotal)}</strong></div>}
             {Number(quote.tax) > 0 && <div className="doc-total-row"><span>Tax</span><strong className="tabular">{currency(Number(quote.tax) + (selectedOptionalsTotal * effectiveTaxRate))}</strong></div>}
             <div className="doc-total-row doc-total-row--grand" aria-live="polite"><span>Total</span><strong className="tabular pl-totals-grand-num">{currency(displayTotal)}</strong></div>
-            {showFinancing(displayTotal) && (
+            {canFinance && (
               <div className="doc-total-row doc-total-row--monthly-highlight">
                 <span>or from {currency(estimateMonthly(displayTotal))}/mo*</span>
                 <strong>Pay monthly at checkout →</strong>
@@ -1048,7 +1052,7 @@ export default function PublicQuoteView({
               </button>
               <div style={{ textAlign: 'center', marginTop: 8 }}>
                 <div style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-muted)' }}>No payment required now · Price locked in · Cancel anytime before work starts</div>
-                {showFinancing(displayTotal) && (
+                {canFinance && (
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--doc-accent)', fontWeight: 600, marginTop: 6 }}>Monthly payment option available* — choose at checkout</div>
                 )}
               </div>
@@ -1297,7 +1301,7 @@ export default function PublicQuoteView({
       {canAct && !isApproved && !isRevisionRequested && !isExpired && (
         <div className="doc-sticky-cta">
           <div className="doc-sticky-total">
-            {showFinancing(displayTotal) ? (
+            {canFinance ? (
               <>from {currency(estimateMonthly(displayTotal))}<span className="doc-sticky-per">/mo*</span><span className="doc-sticky-full">or {currency(displayTotal)}</span></>
             ) : (
               currency(displayTotal)
