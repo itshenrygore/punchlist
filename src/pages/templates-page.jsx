@@ -374,21 +374,29 @@ export default function TemplatesPage() {
   async function handleUseTemplate(tmpl) {
     setUsingTmplId(tmpl.id);
     try {
+      // Create a COMPLETE quote from the template (line items included), then
+      // open it in the BUILDER to adjust. Previously this created an empty
+      // quote and stashed items in sessionStorage for a route the navigation
+      // never went to (it went to the read-only detail page) — so "Use
+      // template" produced a blank quote.
       const newQuote = await createQuote(user.id, {
-        title: '',
+        title: tmpl.name || tmpl.description?.slice(0, 64) || 'Quote',
         status: 'draft',
         trade: tmpl.trade || null,
         description: tmpl.description || null,
         scope_summary: tmpl.scope_summary || null,
         province: tmpl.province || null,
+        line_items: (tmpl.line_items || []).map(li => ({
+          name: li.name || '',
+          quantity: Number(li.quantity) || 1,
+          unit_price: Number(li.unit_price) || 0,
+          notes: li.notes || '',
+          category: li.category || '',
+          included: true,
+        })),
       });
-      // Store template line items to pre-fill in the builder
-      if (tmpl.line_items?.length > 0) {
-        sessionStorage.setItem(`pl_template_items_${newQuote.id}`, JSON.stringify(tmpl.line_items));
-      }
-      sessionStorage.setItem(`pl_template_id_${newQuote.id}`, tmpl.id);
       incrementTemplateUseCount(tmpl.id);
-      navigate(`/app/quotes/${newQuote.id}?from_template=1`);
+      navigate(`/app/quotes/${newQuote.id}/edit?from_template=1`);
     } catch (e) {
       toast(e?.message || 'Could not create quote from template', 'error');
     } finally { setUsingTmplId(null); }
