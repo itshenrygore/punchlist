@@ -7,7 +7,11 @@
 .ln {
   --bg: #FCFCFA; --bg2: #F4F3EF; --bg3: #EBEAE6;
   --dark: #131312; --dark2: #1B1B19;
-  --tx: #1A1A18; --t2: #50504C; --t3: #88857F; --t4: #B8B5B0;
+  /* --t3 was #88857F (~3.9:1 on white — just below WCAG AA for small
+     text). Bumped to #6E6B65 (~5.4:1) so every "muted" label across
+     the quote card and feature copy clears AA. Visually only a touch
+     darker; reads more authoritative. */
+  --tx: #1A1A18; --t2: #50504C; --t3: #6E6B65; --t4: #B8B5B0;
   --ac: #C4622A; --ac-h: #B3571F; --ac-bg: rgba(196,98,42,0.07);
   --gn: #1B7D48; --gn-bg: rgba(27,125,72,0.07);
   --ln: rgba(26,26,24,0.06); --ln2: rgba(26,26,24,0.11);
@@ -385,7 +389,9 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
   font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
   letter-spacing: 0.04em;
 }
-.qc-biz { font-size: 11px; color: var(--t3); font-weight: 500; }
+/* --t3 on white was just below WCAG AA for small text. Bumped to --t2
+   for these labels — darker reads as more authoritative anyway. */
+.qc-biz { font-size: 11px; color: var(--t2); font-weight: 500; }
 .qc-job { font-size: 13px; font-weight: 700; color: var(--tx); line-height: 1.3; }
 .qc-status-dot {
   width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
@@ -400,7 +406,7 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
 }
 .qc-price-label {
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--t3); margin-bottom: 6px;
+  text-transform: uppercase; color: var(--t2); margin-bottom: 6px;
 }
 .qc-monthly { line-height: 1; }
 .qc-mo-n {
@@ -409,9 +415,9 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
   transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
   display: inline-block;
 }
-.qc-mo-u { font-size: 15px; font-weight: 500; color: var(--t3); }
+.qc-mo-u { font-size: 15px; font-weight: 500; color: var(--t2); }
 .qc-total-line {
-  font-size: 11px; color: var(--t3); margin-top: 6px; line-height: 1.4;
+  font-size: 11px; color: var(--t2); margin-top: 6px; line-height: 1.4;
 }
 
 .qc-terms {
@@ -479,7 +485,8 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
 .qc-ok-sub { font-size: 12px; color: var(--t2); margin-top: 1px; }
 
 .qc-hint {
-  text-align: center; font-size: 10px; color: var(--t4); margin-top: 8px; line-height: 1.4;
+  /* 10px text on white needs strong contrast — t4 was way too light. */
+  text-align: center; font-size: 10px; color: var(--t3); margin-top: 8px; line-height: 1.4;
 }
 
 @keyframes pop { 0%{transform:scale(0.9);opacity:0} 100%{transform:scale(1);opacity:1} }
@@ -814,7 +821,10 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
   text-align: center;
   font-size: 11px;
   font-weight: 500;
-  color: rgba(255,255,255,0.28);
+  /* On the dark hero background, 0.28 alpha was a ~2.5:1 contrast ratio —
+     well below AA. Bumped to 0.62 (~5.5:1) which still reads as a quiet
+     subtitle but is actually readable. */
+  color: rgba(255,255,255,0.62);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 10px 0 0;
@@ -843,8 +853,10 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
 .marquee-check  { color: var(--gn); font-size: 12px; font-weight: 700; }
 .marquee-amount { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
 .marquee-sep    { color: rgba(255,255,255,0.18); font-size: 12px; }
-.marquee-job    { font-size: 13px; color: rgba(255,255,255,0.45); }
-.marquee-city   { font-size: 12px; color: rgba(255,255,255,0.25); }
+/* Marquee data on the dark hero band — bumped alpha so the example job
+   list is actually readable (was 0.45/0.25, well below AA on dark). */
+.marquee-job    { font-size: 13px; color: rgba(255,255,255,0.78); }
+.marquee-city   { font-size: 12px; color: rgba(255,255,255,0.58); }
 
 /* ════════════════════════════════════════════
    WORKFLOW
@@ -1351,8 +1363,11 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
 .ln-foot-left {
   display: flex; flex-direction: column; gap: 4px;
 }
-.ln-foot-tag { font-size: 11px; color: var(--t4); margin-top: 2px; }
-.ln-foot-copy { font-size: 11px; color: var(--t4); margin-top: 2px; }
+/* Footer tagline + copyright — t4 on the off-white footer bg was 1.98:1,
+   nearly invisible. Bumped to t3 (now ~5.4:1) — still feels like a quiet
+   footer, finally readable. */
+.ln-foot-tag { font-size: 11px; color: var(--t3); margin-top: 2px; }
+.ln-foot-copy { font-size: 11px; color: var(--t3); margin-top: 2px; }
 .ln-foot-links { display: flex; gap: 16px; flex-wrap: wrap; }
 .ln-foot-links a {
   font-size: 13px; color: var(--t2); text-decoration: none; transition: color 0.15s;
@@ -1395,11 +1410,11 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
   margin-bottom: 10px;
 }
 .qc-anchor-label {
-  font-size: 11px; font-weight: 600; color: var(--t3);
+  font-size: 11px; font-weight: 600; color: var(--t2);
   text-transform: uppercase; letter-spacing: 0.08em;
 }
 .qc-anchor-total {
-  font-size: 15px; font-weight: 700; color: var(--t3);
+  font-size: 15px; font-weight: 700; color: var(--t2);
   font-variant-numeric: tabular-nums;
 }
 .qc-divider {
@@ -1485,10 +1500,44 @@ html.js-reveal .rv.vis { opacity: 1; transform: none; }
    MOBILE OPTIMISATIONS
    ════════════════════════════════════════════ */
 @media (max-width: 639px) {
-  /* Section breathing room */
-  .ln-sec  { padding: 52px 0; }
-  .ln-dark { padding: 52px 0; }
-  .ln-final { padding: 60px 0 72px; }
+  /* Section breathing room — tightened from 52→40 after the walkthrough
+     showed mobile landing at 11,263px (~13 phone screens). Going below
+     40 starts to feel cramped; the savings compound across ~9 sections
+     for ~250px less scroll without losing the airy premium feel. */
+  .ln-sec  { padding: 40px 0; }
+  .ln-dark { padding: 40px 0; }
+  .ln-final { padding: 48px 0 56px; }
+  .ln-foreman { padding: 44px 0; }
+  /* Hero: still needs presence but the dark space below the card was
+     dead. Was 108/64 by default, then 140/80 on desktop. Trim mobile. */
+  .ln-hero { padding: 80px 0 48px; }
+  /* Marquee block: had ~30px chrome top/bottom; tighten to read as part
+     of the hero transition rather than a separate band. */
+  .marquee-section { padding-top: 18px; padding-bottom: 18px; }
+  /* Section header (eyebrow + h2 + subtitle): was generous on desktop,
+     keep tight on mobile so the first item card lands above the fold. */
+  .ln-sh { margin-bottom: 28px; }
+  /* Testimonial grid: gap was 24px which compounds when there are 4
+     stacked cards. */
+  .testi-grid { gap: 16px; }
+  /* Catch-grid / FAQ-style cards. */
+  .catch-grid { gap: 14px; }
+  /* Pricing card stack. */
+  .pr-grid { gap: 16px; }
+  /* Foreman spotlight grid: gap on mobile was inherited from desktop. */
+  .ln-foreman-grid { gap: 28px; }
+  /* Testimonials were the biggest vertical chunk on mobile (1929px).
+     Tighten the featured card's padding (40 → 26) and the supporting
+     cards (26/22 → 18/16) — same content, less chrome. */
+  .testi-feature { padding: 26px 22px 22px; margin-bottom: 12px; }
+  .testi-feature-quote { margin-bottom: 16px; }
+  .testi-card { padding: 18px 16px; gap: 10px; }
+  /* Catch / FAQ cards. */
+  .catch-card { padding: 18px 16px; }
+  /* Hero text + card stack: cut the gap between them so the quote card
+     lands above the fold for more users. */
+  .ln-hero-inner { gap: 24px; }
+  .ln-hero-card { margin-top: 0; }
 
   /* Hero: keep the first two line items visible on phones so the
      auto-generated scope is still readable proof. Hiding all of them

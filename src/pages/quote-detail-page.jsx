@@ -817,7 +817,7 @@ export default function QuoteDetailPage() {
            {mobileTab === 'details' ? (<>
             <div className="qd-hero-top">
               <div className="qd-hero-top-info">
-                <h1 className="qd-hero-title">{quote.title||'Untitled'}</h1>
+                <h2 className="qd-hero-title">{quote.title||'Untitled'}</h2>
                 <div className="qd-hero-meta">
                   {quote.quote_number && <span className="qd-hero-qnum">{formatQuoteNumber(quote.quote_number)}</span>}
                   <span>{quote.customer?.name||'No customer'}</span>

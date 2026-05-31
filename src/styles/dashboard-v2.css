@@ -4304,6 +4304,36 @@ a.dv2-headline-metric:hover {
   cursor: pointer;
 }
 .sch-empty-day--clickable:hover { color: var(--brand); }
+
+/* Empty schedule days were taking a full ~70px row each on mobile —
+   in a typical week 4-5 days are empty, so the screen was dominated by
+   "Add a job" cards instead of the actual scheduled work. Collapse to
+   a single compact row that still surfaces the day label and the
+   "add" affordance, but uses ~20px instead of ~70px. Desktop stays
+   roomy because there's no scarcity of vertical space. */
+@media (max-width: 639px) {
+  .sch-day--empty {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sch-day--empty .sch-day-header { margin-bottom: 0; }
+  .sch-day--empty .sch-day-count { display: none; }
+  .sch-day--empty .sch-empty-day {
+    margin-top: 0;
+    padding: 2px 0;
+    border: none;
+    background: transparent;
+    color: var(--subtle, var(--muted));
+    font-size: 12px;
+    opacity: 0.65;
+  }
+  .sch-day--empty .sch-empty-day-icon { width: 16px; height: 16px; }
+  .sch-day--empty .sch-empty-day:hover {
+    background: transparent;
+    border-color: transparent;
+    opacity: 1;
+  }
+}
 .sch-empty-day-icon {
   display: inline-grid; place-items: center;
   width: 18px; height: 18px;

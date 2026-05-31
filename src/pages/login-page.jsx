@@ -68,7 +68,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <form className="panel auth-card stack" data-testid="login-form" onSubmit={handleSubmit}>
         <div className="auth-logo-row">
           <Link to="/"><Logo size="md" /></Link>
@@ -134,6 +134,6 @@ export default function LoginPage() {
           <Link to="/signup">Start free</Link>
         </div>
       </form>
-    </div>
+    </main>
   );
 }

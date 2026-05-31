@@ -229,7 +229,7 @@ export default function SignupPage() {
   // ── Email confirmation pending ──
   if (confirmationSent) {
     return (
-      <div className="auth-page">
+      <main className="auth-page">
         <div className="panel auth-card stack auth-confirm-card">
           <div className="auth-confirm-icon">📬</div>
           <div>
@@ -258,14 +258,14 @@ export default function SignupPage() {
           </div>
           <Link className="btn btn-secondary" to="/login">Back to log in</Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   // ── Step 2: Trade + Region ──
   if (step === 2) {
     return (
-      <div className="auth-page">
+      <main className="auth-page">
         <div className="panel auth-card stack">
           <div className="auth-step-dots-wrap"><StepDots current={1} total={2} variant="bar" /></div>
           <div className="auth-header">
@@ -322,13 +322,13 @@ export default function SignupPage() {
             {loading ? 'Saving…' : 'Create my first quote →'}
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   // ── Step 1: Account creation ──
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <form className="panel auth-card stack" onSubmit={handleStep1}>
         <div className="auth-logo-row">
           <Link to="/"><Logo size="md" /></Link>
@@ -432,6 +432,6 @@ export default function SignupPage() {
           <Link to="/login">Log in</Link>
         </div>
       </form>
-    </div>
+    </main>
   );
 }

@@ -633,20 +633,20 @@ export default function SettingsPage() {
             <div className="form-row">
               <div>
                 <span className="field-label">Trade</span>
-                <select className="input" value={form.trade} onChange={e => setForm(p => ({ ...p, trade: e.target.value }))}>
+                <select aria-label="Trade" className="input" value={form.trade} onChange={e => setForm(p => ({ ...p, trade: e.target.value }))}>
                   {TRADES.map(t => <option key={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <span className="field-label">Country</span>
-                <select className="input" value={form.country} onChange={e => { const c = e.target.value; setForm(p => ({ ...p, country: c, province: c === 'US' ? 'CA' : 'ON' })); }}>
+                <select aria-label="Country" className="input" value={form.country} onChange={e => { const c = e.target.value; setForm(p => ({ ...p, country: c, province: c === 'US' ? 'CA' : 'ON' })); }}>
                   <option value="CA">Canada</option>
                   <option value="US">United States</option>
                 </select>
               </div>
               <div>
                 <span className="field-label">{form.country === 'US' ? 'State' : 'Province'} (sets tax rate)</span>
-                <select className="input" value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value }))}>
+                <select aria-label={form.country === 'US' ? 'State' : 'Province'} className="input" value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value }))}>
                   {(form.country === 'US' ? US_STATES : CA_PROVINCES).map(p => <option key={p}>{p}</option>)}
                 </select>
               </div>
@@ -681,7 +681,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <span className="field-label">Account email (where approval notifications are sent)</span>
-              <input className="input sp-readonly-input" value={user?.email || ''} readOnly  />
+              <input aria-label="Account email" className="input sp-readonly-input" value={user?.email || ''} readOnly  />
               <div className="muted small sp-hint">This is your login email. Change it through your account provider.</div>
             </div>
           </div>
@@ -699,6 +699,7 @@ export default function SettingsPage() {
             <div>
               <span className="field-label">Default quote expiry</span>
               <select
+                aria-label="Default quote expiry"
                 className="input"
                 value={form.default_expiry_days}
                 onChange={e => setForm(p => ({ ...p, default_expiry_days: Number(e.target.value) }))}
@@ -829,7 +830,7 @@ export default function SettingsPage() {
             <div className="stack">
               <div>
                 <span className="field-label">Default deposit on new quotes</span>
-                <select className="input" value={form.default_deposit_mode} onChange={e => setForm(p => ({ ...p, default_deposit_mode: e.target.value }))}>
+                <select aria-label="Default deposit on new quotes" className="input" value={form.default_deposit_mode} onChange={e => setForm(p => ({ ...p, default_deposit_mode: e.target.value }))}>
                   <option value="none">No deposit required</option>
                   <option value="percent">Percentage of total</option>
                   <option value="fixed">Fixed amount</option>
@@ -850,7 +851,7 @@ export default function SettingsPage() {
             <div className="stack">
               <div>
                 <span className="field-label">Due date</span>
-                <select className="input" value={form.invoice_due_days} onChange={e => setForm(p => ({ ...p, invoice_due_days: Number(e.target.value) }))}>
+                <select aria-label="Invoice due date" className="input" value={form.invoice_due_days} onChange={e => setForm(p => ({ ...p, invoice_due_days: Number(e.target.value) }))}>
                   <option value={0}>Due on receipt</option>
                   <option value={7}>Net 7</option>
                   <option value={14}>Net 14</option>
@@ -868,7 +869,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <span className="field-label">Applied after (days overdue)</span>
-                  <select className="input" value={form.late_fee_days || 0} onChange={e => setForm(p => ({ ...p, late_fee_days: Number(e.target.value) }))}>
+                  <select aria-label="Late fee applied after (days overdue)" className="input" value={form.late_fee_days || 0} onChange={e => setForm(p => ({ ...p, late_fee_days: Number(e.target.value) }))}>
                     <option value={0}>Off</option>
                     <option value={15}>15 days</option>
                     <option value={30}>30 days</option>

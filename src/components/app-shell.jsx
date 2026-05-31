@@ -125,7 +125,11 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
               <Logo size="sm" />
             </Link>
             <div className="app-topbar-titleblock">
-              {!hideTitle && title && <div className="page-kicker">{title}</div>}
+              {/* page-kicker is the page's h1 by default. Pages that want
+                  their own bigger inline heading set hideTitle and render
+                  their own. axe-core flagged settings + quote-builder as
+                  having no h1 — this fixes that without changing visuals. */}
+              {!hideTitle && title && <h1 className="page-kicker">{title}</h1>}
               {!hideTitle && subtitle && <div className="app-topbar-subtitle">{subtitle}</div>}
             </div>
           </div>

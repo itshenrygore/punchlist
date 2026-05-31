@@ -256,6 +256,9 @@ export default function LandingPage() {
   return (
     <div className="ln">
       <Nav />
+      {/* All page sections live inside <main> so the landmark structure is
+          nav / main / footer — needed for AT users to skip to content. */}
+      <main id="main-content">
 
       {/* ═══ 1. HERO — dark ═══ */}
       <section className="ln-hero">
@@ -734,6 +737,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* ═══ FOOTER ═══ */}
       <footer className="ln-foot">

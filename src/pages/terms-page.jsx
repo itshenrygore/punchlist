@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 export default function TermsPage() {
   return (
-    <div className="auth-page" style={{ alignItems: 'flex-start', paddingTop: 40, paddingBottom: 60 }}>
+    <main className="auth-page" style={{ alignItems: 'flex-start', paddingTop: 40, paddingBottom: 60 }}>
       <div className="panel auth-card terms-card">
         <Link className="brand" to="/" style={{ fontSize: '1rem', marginBottom: 16, display: 'inline-block' }}>Punchlist</Link>
         <h1 className="terms-page-title">Terms of Service</h1>
@@ -11,16 +11,16 @@ export default function TermsPage() {
         <div className="terms-body">
           <p>By using Punchlist to create, send, or accept quotes and payments, you ("Contractor") acknowledge and agree to the following:</p>
 
-          <h3 className="terms-heading">1. Independent Transaction Relationship</h3>
+          <h2 className="terms-heading">1. Independent Transaction Relationship</h2>
           <p>Punchlist acts solely as a technology platform facilitating quoting, invoicing, and payment enablement. Punchlist is not a party to any agreement between Contractor and Customer.</p>
 
-          <h3 className="terms-heading">2. Payment Processing Providers</h3>
+          <h2 className="terms-heading">2. Payment Processing Providers</h2>
           <p>Payments made through Punchlist may be processed via third-party providers, including but not limited to Stripe, and may offer financing options through providers such as Klarna or Afterpay. These services are subject to their own terms and approval processes.</p>
 
-          <h3 className="terms-heading">3. Full Payment Responsibility</h3>
+          <h2 className="terms-heading">3. Full Payment Responsibility</h2>
           <p>The Contractor is the merchant of record and is solely responsible for all services provided, pricing, scope, and fulfillment of work associated with any transaction.</p>
 
-          <h3 className="terms-heading">4. Disputes & Chargebacks</h3>
+          <h2 className="terms-heading">4. Disputes & Chargebacks</h2>
           <p>The Contractor assumes full responsibility for:</p>
           <ul className="terms-list">
             <li>Customer disputes, complaints, or dissatisfaction</li>
@@ -29,10 +29,10 @@ export default function TermsPage() {
           </ul>
           <p>Punchlist does not mediate, resolve, or assume liability for such disputes.</p>
 
-          <h3 className="terms-heading">5. Refunds & Adjustments</h3>
+          <h2 className="terms-heading">5. Refunds & Adjustments</h2>
           <p>Any refunds, partial refunds, or pricing adjustments are the sole responsibility of the Contractor and must be handled in accordance with the terms agreed upon with the Customer and the policies of the applicable payment provider.</p>
 
-          <h3 className="terms-heading">6. Financing & Installment Payments</h3>
+          <h2 className="terms-heading">6. Financing & Installment Payments</h2>
           <p>Where a Customer elects to use installment or financing options (e.g., Klarna, Afterpay), the Contractor acknowledges:</p>
           <ul className="terms-list">
             <li>They will receive payment in accordance with the payment processor's settlement terms</li>
@@ -40,7 +40,7 @@ export default function TermsPage() {
             <li>Any disputes related to the underlying service remain the Contractor's responsibility</li>
           </ul>
 
-          <h3 className="terms-heading">7. Limitation of Liability</h3>
+          <h2 className="terms-heading">7. Limitation of Liability</h2>
           <p>To the fullest extent permitted by law, Punchlist shall not be liable for:</p>
           <ul className="terms-list">
             <li>Any payment disputes, chargebacks, or financing-related claims</li>
@@ -53,6 +53,6 @@ export default function TermsPage() {
           <Link to="/signup" className="btn btn-secondary">&larr; Back to sign up</Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

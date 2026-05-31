@@ -881,7 +881,16 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           <div className="fm-context-bar">
             <span className="fm-context-dot" />
             <span className="fm-context-text">
-              {quoteContext.title || quoteContext.trade || 'Quote'} · {quoteContext.items?.length || 0} items · {currency(quoteContext.total || 0)}
+              {(() => {
+                const label = quoteContext.title || quoteContext.trade || 'Quote';
+                const itemCount = quoteContext.items?.length || 0;
+                const total = Number(quoteContext.total || 0);
+                // While the contractor is still describing the job (no items
+                // yet, no total), surface that state instead of an empty
+                // "0 items · $0" line — that reads as a broken counter.
+                if (itemCount === 0 && total === 0) return `${label} · drafting scope`;
+                return `${label} · ${itemCount} item${itemCount === 1 ? '' : 's'} · ${currency(total)}`;
+              })()}
             </span>
           </div>
         )}
