@@ -276,6 +276,86 @@ function freshSupabase() {
     `trace: ${JSON.stringify(sb._trace)}`);
 }
 
+// 14a. update_quote returns reverts so the model can offer undo
+{
+  const sb = freshSupabase();
+  const out = await executeTool('update_quote', {
+    quote_search: 'Smith',
+    edits: [
+      { action: 'set_price', item_name: 'Vanity', unit_price: 480 },
+      { action: 'add', item_name: 'Building permit', unit_price: 180 },
+      { action: 'remove', item_name: 'Demo old bathroom' },
+    ],
+  }, USER_ID, sb);
+  check('update_quote returns a Reverts payload for undo', out.includes('Reverts'));
+  // The reverts should be the inverse of each edit
+  check('reverts inverse set_price (restore old price)', /set_price.*Vanity.*"unit_price":350/.test(out),
+    `out: ${out.slice(0, 400)}`);
+  check('reverts inverse add (remove)', /"action":"remove".*Building permit/.test(out));
+  check('reverts inverse remove (re-add with old price)', /"action":"add".*Demo old bathroom.*"unit_price":600/.test(out));
+}
+
+// 15. update_quote_status — kitchen-table close
+{
+  const sb = freshSupabase();
+  const out = await executeTool('update_quote_status', { quote_search: 'Kevin', action: 'mark_approved' }, USER_ID, sb);
+  check('mark_approved on a viewed quote works', out.includes('approved'));
+  // Verify the patch actually hit the mock state
+  const k = sb._state.quotes.find(q => q.id === 'q-kevin-hwt');
+  check('mark_approved persists status', k.status === 'approved');
+  check('mark_approved stamps approved_at', !!k.approved_at);
+}
+
+// 16. update_quote_status — guards
+{
+  const sb = freshSupabase();
+  const draftOut = await executeTool('update_quote_status', { quote_search: 'Smith', action: 'mark_approved' }, USER_ID, sb);
+  check('mark_approved refuses a draft (send first)', /draft/i.test(draftOut) && /send/i.test(draftOut));
+
+  const sb2 = freshSupabase();
+  const depOut = await executeTool('update_quote_status', { quote_search: 'Kevin', action: 'mark_deposit_paid' }, USER_ID, sb2);
+  check('mark_deposit_paid refuses a non-approved quote', /approved/i.test(depOut) && /must/i.test(depOut));
+
+  const sb3 = freshSupabase();
+  // Simulate a declined quote
+  sb3._state.quotes[0].status = 'declined';
+  const declOut = await executeTool('update_quote_status', { quote_search: 'Smith', action: 'mark_approved' }, USER_ID, sb3);
+  check('mark_approved refuses terminal states (declined)', /terminal|declined/i.test(declOut));
+}
+
+// 17. start_revision — on a sent quote
+{
+  const sb = freshSupabase();
+  const out = await executeTool('start_revision', {
+    quote_search: 'Kevin', // status: viewed
+    edits: [{ action: 'add', item_name: 'Code-required mixing valve', unit_price: 145 }],
+    reason: 'Customer asked for code-compliant mixing valve',
+  }, USER_ID, sb);
+  check('start_revision applies on a non-draft quote', out.toLowerCase().includes('staged revision'));
+  check('start_revision returns deep link to edit page', out.includes('[LINK:/app/quotes/'));
+  check('start_revision mentions the review-and-ship step', out.toLowerCase().includes('send revised'));
+  // It should write a revision_summary on the quote
+  const k = sb._state.quotes.find(q => q.id === 'q-kevin-hwt');
+  check('start_revision stages revision_summary', !!k.revision_summary && k.revision_summary.toLowerCase().includes('mixing valve'));
+}
+
+// 18. start_revision — refuses drafts (use update_quote)
+{
+  const sb = freshSupabase();
+  const out = await executeTool('start_revision', {
+    quote_search: 'Smith', // draft
+    edits: [{ action: 'set_price', item_name: 'Vanity', unit_price: 480 }],
+  }, USER_ID, sb);
+  check('start_revision refuses draft (steers to update_quote)', /draft/i.test(out) && /update_quote/i.test(out));
+}
+
+// 19. start_revision — empty edits opens the edit page anyway
+{
+  const sb = freshSupabase();
+  const out = await executeTool('start_revision', { quote_search: 'Kevin', edits: [] }, USER_ID, sb);
+  check('start_revision with no edits still surfaces the deep link', out.includes('[LINK:/app/quotes/'));
+}
+
 // 14. lookup_pricing — wire to the offline catalog
 {
   const sb = freshSupabase();

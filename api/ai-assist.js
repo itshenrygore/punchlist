@@ -57,6 +57,44 @@ const TOOL_DEFS = [
     },
   },
   {
+    name: 'update_quote_status',
+    description: 'Move a quote forward through its lifecycle from chat — the kitchen-table close moment. Use when the contractor explicitly says the customer accepted ("Smith said yes — mark it approved"), or after a deposit was paid in person ("Kevin paid the deposit"), or to mark a sent quote as followed-up. NEVER guesses a status change without a clear instruction; the tool reply always summarises what changed.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name.' },
+        action: { type: 'string', enum: ['mark_approved', 'mark_deposit_paid', 'mark_followed_up'], description: 'Allowed transitions only — never silent rewrites of declined/archived/converted quotes.' },
+      },
+      required: ['quote_search', 'action'],
+    },
+  },
+  {
+    name: 'start_revision',
+    description: 'Begin a revision on a SENT / VIEWED / APPROVED quote — the in-field "while you\'re here, can you also do X" moment. Stages the requested edits onto the existing line items (without changing customer-visible status yet) and returns a link to the edit page so the contractor reviews and ships the revision. Refuses to touch a draft (use update_quote for those), a declined quote, or one already archived.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name.' },
+        edits: {
+          type: 'array',
+          description: 'Same shape as update_quote.edits: set_price / add / remove on existing line items.',
+          items: {
+            type: 'object',
+            properties: {
+              action: { type: 'string', enum: ['set_price', 'add', 'remove'] },
+              item_name: { type: 'string' },
+              unit_price: { type: 'number' },
+              quantity: { type: 'number' },
+            },
+            required: ['action', 'item_name'],
+          },
+        },
+        reason: { type: 'string', description: 'One-line note for the revision summary (e.g. "Added bathroom fan at customer request").' },
+      },
+      required: ['quote_search', 'edits'],
+    },
+  },
+  {
     name: 'draft_followup',
     description: 'Compose a short, ready-to-send follow-up text for ONE specific quote based on its status, age, and view count. Returns the draft text — does NOT auto-send. The frontend renders it with a one-tap Send button. Use when the contractor asks "draft a follow-up for X" or "what should I send the Smith customer".',
     input_schema: {
@@ -222,6 +260,10 @@ export async function executeTool(name, args, userId, supabase) {
 
       const applied = [];
       const skipped = [];
+      // Capture the inverse of each edit so the model can offer "reply
+      // 'undo' to revert" and a follow-up update_quote call has the
+      // exact original prices to restore.
+      const reverts = [];
       const clampNum = (v, lo, hi, dflt) => {
         const n = Number(v);
         return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
@@ -241,6 +283,7 @@ export async function executeTool(name, args, userId, supabase) {
           target.unit_price = newPrice;
           await supabase.from('line_items').update({ unit_price: newPrice }).eq('id', target.id);
           applied.push(`${target.name}: $${oldPrice} → $${newPrice}`);
+          reverts.push({ action: 'set_price', item_name: target.name, unit_price: oldPrice });
         } else if (action === 'add') {
           const newPrice = clampNum(ed.unit_price, 0, 1_000_000, 0);
           const qty = clampNum(ed.quantity, 0.01, 10_000, 1);
@@ -249,6 +292,7 @@ export async function executeTool(name, args, userId, supabase) {
           if (inserted) {
             items.push(inserted);
             applied.push(`+ ${itemName} (${qty}× $${newPrice})`);
+            reverts.push({ action: 'remove', item_name: itemName });
           } else { skipped.push(`could not add "${itemName}"`); }
         } else if (action === 'remove') {
           const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
@@ -256,6 +300,12 @@ export async function executeTool(name, args, userId, supabase) {
           await supabase.from('line_items').delete().eq('id', target.id);
           items.splice(items.indexOf(target), 1);
           applied.push(`− ${target.name}`);
+          reverts.push({
+            action: 'add',
+            item_name: target.name,
+            unit_price: Number(target.unit_price || 0),
+            quantity: Number(target.quantity || 1),
+          });
         } else {
           skipped.push(`unknown action "${action}"`);
         }
@@ -269,9 +319,134 @@ export async function executeTool(name, args, userId, supabase) {
         `Updated "${q.title}". New total: $${newTotal}.`,
         applied.length ? `Applied:\n  ${applied.join('\n  ')}` : null,
         skipped.length ? `Skipped:\n  ${skipped.join('\n  ')}` : null,
+        // Inverse-edit hint for the model — if the contractor says "undo",
+        // it can call update_quote with these exact reverts to restore the
+        // prior state. The model is told to offer this in its reply.
+        reverts.length
+          ? `Reverts (apply via update_quote if user says "undo"): ${JSON.stringify(reverts)}`
+          : null,
         `[LINK:/app/quotes/${q.id}/edit]`,
       ].filter(Boolean).join('\n');
       return out;
+    }
+
+    if (name === 'update_quote_status') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      const action = String(args.action || '');
+      // Guard: declined / archived / converted quotes are terminal. Don't
+      // resurrect them from chat; that's a contractor-deliberate action.
+      if (['declined','archived','converted_to_invoice'].includes(q.status)) {
+        return `Can't change status on "${q.title}" — currently ${q.status}, which is a terminal state.`;
+      }
+      const patches = {
+        mark_approved: () => {
+          if (q.status === 'draft') return { error: 'Quote is still a draft — send it to the customer first.' };
+          return { patch: { status: 'approved', approved_at: new Date().toISOString() }, label: 'approved' };
+        },
+        mark_deposit_paid: () => {
+          if (!['approved','approved_pending_deposit'].includes(q.status)) {
+            return { error: `Can't mark deposit paid — quote is ${q.status}, must be approved first.` };
+          }
+          return {
+            patch: { deposit_status: 'paid', status: 'deposit_paid', deposit_paid_at: new Date().toISOString() },
+            label: 'deposit paid',
+          };
+        },
+        mark_followed_up: () => {
+          return { patch: { followed_up_at: new Date().toISOString() }, label: 'followed up' };
+        },
+      };
+      const op = patches[action];
+      if (!op) return `Unknown action "${action}". Allowed: mark_approved, mark_deposit_paid, mark_followed_up.`;
+      const result = op();
+      if (result.error) return result.error;
+      const { error } = await supabase.from('quotes').update(result.patch).eq('id', q.id);
+      if (error) return `Update failed: ${error.message || 'unknown error'}.`;
+      return `Marked "${q.title}" as ${result.label}. [LINK:/app/quotes/${q.id}]`;
+    }
+
+    if (name === 'start_revision') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      // Drafts go through update_quote, not start_revision — keeps the
+      // mental model clean: drafts edit in place, sent quotes go through
+      // a tracked revision. Declined/archived/converted are terminal.
+      if (q.status === 'draft') {
+        return `"${q.title}" is still a draft — use update_quote instead, no revision needed.`;
+      }
+      if (['declined','archived','converted_to_invoice'].includes(q.status)) {
+        return `Can't revise "${q.title}" — currently ${q.status}, which is a terminal state.`;
+      }
+      const rawEdits = Array.isArray(args.edits) ? args.edits.slice(0, 10) : [];
+      if (!rawEdits.length) {
+        // Empty edits is still useful — just opens the edit page so the
+        // contractor can make changes themselves, with the right summary.
+        return `Opening "${q.title}" for revision. Edit the line items, then send the revised quote. [LINK:/app/quotes/${q.id}/edit]`;
+      }
+      const { data: dbItems } = await supabase
+        .from('line_items').select('id, name, quantity, unit_price, notes, included, category')
+        .eq('quote_id', q.id);
+      const items = (dbItems || []).map(li => ({ ...li }));
+      const applied = [];
+      const skipped = [];
+      const clampNum = (v, lo, hi, dflt) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+      };
+      const clampStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+      for (const ed of rawEdits) {
+        const action = String(ed?.action || '').toLowerCase();
+        const itemName = clampStr(ed?.item_name, 220).trim();
+        if (!itemName) { skipped.push('blank item_name'); continue; }
+        if (action === 'set_price') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, null);
+          if (newPrice === null) { skipped.push(`bad price on "${itemName}"`); continue; }
+          await supabase.from('line_items').update({ unit_price: newPrice }).eq('id', target.id);
+          target.unit_price = newPrice;
+          applied.push(`${target.name}: → $${newPrice}`);
+        } else if (action === 'add') {
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, 0);
+          const qty = clampNum(ed.quantity, 0.01, 10_000, 1);
+          const ins = { quote_id: q.id, name: itemName, quantity: qty, unit_price: newPrice, included: true, category: '', notes: '' };
+          const { data: inserted } = await supabase.from('line_items').insert(ins).select().single();
+          if (inserted) { items.push(inserted); applied.push(`+ ${itemName} (${qty}× $${newPrice})`); }
+          else { skipped.push(`could not add "${itemName}"`); }
+        } else if (action === 'remove') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          await supabase.from('line_items').delete().eq('id', target.id);
+          items.splice(items.indexOf(target), 1);
+          applied.push(`− ${target.name}`);
+        } else { skipped.push(`unknown action "${action}"`); }
+      }
+      const newTotal = items.reduce((s, li) => s + Number(li.quantity || 1) * Number(li.unit_price || 0), 0);
+      // Stage the revision_summary so when the contractor hits "Send revised
+      // quote" the customer-visible note explains what changed.
+      const reason = clampStr(args.reason, 220);
+      await supabase.from('quotes').update({
+        total: newTotal,
+        revision_summary: reason || (applied.length ? `Updates: ${applied.join('; ').slice(0, 200)}` : ''),
+        updated_at: new Date().toISOString(),
+      }).eq('id', q.id);
+      return [
+        `Staged revision on "${q.title}". New total: $${newTotal}.`,
+        applied.length ? `Applied:\n  ${applied.join('\n  ')}` : null,
+        skipped.length ? `Skipped:\n  ${skipped.join('\n  ')}` : null,
+        `Open the quote, review, then tap "Send revised quote" to ship it to the customer. [LINK:/app/quotes/${q.id}/edit]`,
+      ].filter(Boolean).join('\n');
     }
 
     if (name === 'draft_followup') {
@@ -450,7 +625,9 @@ CRITICAL RESPONSE RULES:
 
 TOOLS AVAILABLE — reach for them aggressively:
 - read_quote_detail when asked about a specific named quote and there's no ACTIVE QUOTE above.
-- update_quote when the contractor tells you to change a price, add a line, or remove a line on a DRAFT quote ("raise the faucet to 280", "add a permit line at 180"). After the tool runs, confirm the new total in one short line.
+- update_quote when the contractor tells you to change a price, add a line, or remove a line on a DRAFT quote ("raise the faucet to 280", "add a permit line at 180"). After the tool runs, confirm the new total in one short line AND end with "Reply 'undo' to revert" if the tool result included a Reverts payload. If the contractor's next message is "undo", call update_quote again with the exact Reverts you were given.
+- update_quote_status when the contractor says the customer accepted / paid the deposit / has been followed up ("Smith said yes — mark it approved", "Kevin paid the deposit"). Confirm with the new status in one line. Never guess; only fire on a clear instruction.
+- start_revision when the contractor wants to add to or change a quote that is ALREADY SENT / VIEWED / APPROVED ("while we're there, also fix the bathroom fan — add it to the Smith quote"). Stages the edits but does NOT send; the contractor reviews and sends the revision from the quote page.
 - draft_followup when asked to draft / write / send a follow-up for a specific quote.
 - lookup_pricing for any "how much" or "what should I charge" question — use it before guessing.
 - start_new_quote when the contractor wants to begin a brand-new job.

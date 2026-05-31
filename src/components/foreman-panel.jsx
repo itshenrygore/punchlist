@@ -199,6 +199,25 @@ function parseAddToQuote(text) {
   return items;
 }
 
+/* ─── Speak text via the Web Speech API (browser TTS).
+ * Hands-on-tools moments — reading a 4-line answer while holding a wrench
+ * is friction. One tap reads it. Tap again to stop. Falls back silently
+ * on browsers without speechSynthesis support. */
+function speak(text, voice) {
+  if (typeof window === 'undefined' || !window.speechSynthesis || !text) return false;
+  // Cancel anything already speaking — second tap on the same bubble stops,
+  // and a new bubble doesn't talk over the old one.
+  window.speechSynthesis.cancel();
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.05;   // slight speed-up reads more naturally for short answers
+    u.pitch = 1.0;
+    if (voice) u.voice = voice;
+    window.speechSynthesis.speak(u);
+    return true;
+  } catch { return false; }
+}
+
 /* ─── Detect a quoted draft message — the model emits draft texts in
  * quotes when draft_followup runs, but it also quotes example responses
  * in normal answers. So we only treat it as a sendable draft when (a)
@@ -218,12 +237,28 @@ function extractDraftReply(text) {
 }
 
 /* ─── Message bubble ─── */
-function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, onSendSms, sentDrafts }) {
+function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, onSendSms, sentDrafts, onSavePhoto, photoSaved, onCreateQuoteFromItems, quoteCreatedKey }) {
   const isUser = msg.role === 'user';
   const items = !isUser ? parseAddToQuote(msg.content || '') : [];
   const draft = !isUser ? extractDraftReply(msg.content || '') : null;
   const draftKey = draft ? draft.slice(0, 60) : null;
   const draftSent = draftKey ? sentDrafts?.has(draftKey) : false;
+  const [speaking, setSpeaking] = useState(false);
+  const canSpeak = !isUser && typeof window !== 'undefined' && !!window.speechSynthesis && (msg.content || '').trim().length > 0;
+  function handleSpeak() {
+    // Tap again to stop, first tap starts. Poll speaking state so the
+    // play icon flips back when the utterance finishes naturally.
+    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return; }
+    if (!speak(msg.content)) return;
+    setSpeaking(true);
+    const tick = setInterval(() => {
+      if (!window.speechSynthesis.speaking) { setSpeaking(false); clearInterval(tick); }
+    }, 250);
+  }
+  // Items + no active-quote handler = offer "Create a quote with these"
+  // instead of per-item Add. Common after a photo-diagnosis turn.
+  const offerCreateQuote = !isUser && items.length > 0 && !onAddItem && onCreateQuoteFromItems;
+  const itemsKey = items.map(i => i.name).join('|').slice(0, 80);
 
   return (
     <div className={`fm-msg ${isUser ? 'fm-msg--user' : 'fm-msg--ai'}`}>
@@ -232,12 +267,40 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, 
         {msg.photo && (
           <div className="fm-msg-photo">
             <img src={msg.photo} alt="Uploaded" />
+            {/* Save diagnostic photo to the active quote — only when the
+                contractor has a live quote to attach to. Otherwise no-op. */}
+            {isUser && onSavePhoto && (
+              <button
+                type="button"
+                className={`fm-photo-save${photoSaved ? ' fm-photo-save--done' : ''}`}
+                onClick={() => !photoSaved && onSavePhoto(msg.photo)}
+                disabled={photoSaved}
+                title="Save this photo to the active quote"
+              >
+                {photoSaved ? '✓ Saved to quote' : 'Save to quote'}
+              </button>
+            )}
           </div>
         )}
         <div className="fm-msg-text">
           {(msg.content || '').split('\n').map((line, i) => (
             <p key={i}>{line || ' '}</p>
           ))}
+          {canSpeak && (
+            <button
+              type="button"
+              className={`fm-speak-btn${speaking ? ' fm-speak-btn--active' : ''}`}
+              onClick={handleSpeak}
+              title={speaking ? 'Stop' : 'Read aloud'}
+              aria-label={speaking ? 'Stop reading' : 'Read aloud'}
+            >
+              {speaking ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              )}
+            </button>
+          )}
         </div>
         {msg.appLinks?.length > 0 && (
           <div className="fm-msg-links">
@@ -265,6 +328,24 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, 
                 </button>
               );
             })}
+          </div>
+        )}
+        {/* When Foreman diagnoses items but there's no active quote (typical
+            after a photo turn from the dashboard), offer to scope them into
+            a brand-new draft instead of forcing the contractor to navigate
+            to the builder and re-explain. */}
+        {offerCreateQuote && (
+          <div className="fm-msg-actions">
+            <button
+              type="button"
+              className={`fm-add-item-btn${quoteCreatedKey === itemsKey ? ' fm-add-item-btn--added' : ''}`}
+              onClick={() => quoteCreatedKey !== itemsKey && onCreateQuoteFromItems(items)}
+              disabled={quoteCreatedKey === itemsKey}
+            >
+              {quoteCreatedKey === itemsKey
+                ? <><span className="fm-check">✓</span> Quote opened</>
+                : <><span className="fm-plus">↗</span> Scope these into a new quote</>}
+            </button>
           </div>
         )}
         {/* Foreman-drafted follow-up text → one-tap send via SMS when the
@@ -364,6 +445,14 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   // Track drafts already sent in this session so the Send button locks
   // out a duplicate tap if the contractor accidentally hits it twice.
   const [sentDrafts, setSentDrafts] = useState(() => new Set());
+  // Photos that have been successfully attached to the active quote, keyed
+  // by the photo data-URL itself so the "Save to quote" button locks out
+  // a double-tap.
+  const [savedPhotos, setSavedPhotos] = useState(() => new Set());
+  // Items list (by hash) that the contractor has already promoted into a
+  // new quote — prevents accidentally creating two drafts from the same
+  // diagnosis turn.
+  const [quoteCreatedKey, setQuoteCreatedKey] = useState(null);
   const [listening, setListening] = useState(false);
   // First-time intro card. Persists dismissal in localStorage so it
   // doesn't reappear after the user has seen it, even if they never
@@ -653,6 +742,59 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
 
   function handleNavigate(path) { navigate(path); onClose(); }
 
+  // Save a photo bubble's image to the active quote so the contractor
+  // doesn't have to take it again to attach evidence. Uses the existing
+  // uploadQuotePhoto pipeline. Locks the button after success.
+  async function handleSavePhotoToQuote(photoDataUrl) {
+    if (!quoteContext?.id || !photoDataUrl) return;
+    try {
+      // photo is a data URL like "data:image/jpeg;base64,...". Convert to
+      // a Blob for uploadQuotePhoto, which expects a File-ish input.
+      const res = await fetch(photoDataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `foreman-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
+      const { uploadQuotePhoto } = await import('../lib/api');
+      await uploadQuotePhoto(quoteContext.id, file);
+      setSavedPhotos(prev => new Set(prev).add(photoDataUrl));
+      toast('Photo saved to quote', 'success');
+    } catch (e) {
+      toast(e?.message || 'Could not save the photo', 'error');
+    }
+  }
+
+  // Promote a list of Foreman-extracted items into a new draft quote.
+  // Used when there's no active quote (typical after a dashboard-level
+  // photo diagnosis). Navigates the contractor into the builder with the
+  // items pre-staged in sessionStorage so the build page can read them.
+  async function handleCreateQuoteFromItems(items) {
+    if (!items?.length || !user?.id) return;
+    try {
+      const { createQuote } = await import('../lib/api');
+      const p = profile.current || {};
+      const draft = await createQuote(user.id, {
+        title: 'From Foreman',
+        description: items.map(i => i.name).join('; ').slice(0, 220),
+        trade: p.trade || 'Other',
+        province: p.province || 'AB',
+        country: p.country || 'CA',
+        status: 'draft',
+        line_items: items.map(i => ({
+          name: i.name,
+          quantity: 1,
+          unit_price: i.unit_price || 0,
+          included: true,
+        })),
+      });
+      const itemsKey = items.map(i => i.name).join('|').slice(0, 80);
+      setQuoteCreatedKey(itemsKey);
+      toast('Quote opened', 'success');
+      navigate(`/app/quotes/${draft.id}/edit`);
+      onClose();
+    } catch (e) {
+      toast(e?.message || 'Could not open the quote', 'error');
+    }
+  }
+
   async function handleSendDraftSms(draftText) {
     const phone = quoteContext?.customerPhone;
     if (!phone || !draftText) return;
@@ -817,6 +959,10 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
                   customerPhone={quoteContext?.customerPhone}
                   onSendSms={quoteContext?.customerPhone ? handleSendDraftSms : null}
                   sentDrafts={sentDrafts}
+                  onSavePhoto={quoteContext?.id ? handleSavePhotoToQuote : null}
+                  photoSaved={savedPhotos.has(msg.photo)}
+                  onCreateQuoteFromItems={!onAddItemToQuote ? handleCreateQuoteFromItems : null}
+                  quoteCreatedKey={quoteCreatedKey}
                 />
               </div>
             );
