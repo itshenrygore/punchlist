@@ -34,6 +34,44 @@ function hayMatch(hay, term) {
 // Generic terms that match too broadly in related-term checks
 const GENERIC_TERMS = new Set(['drain','pipe','valve','supply','hose','wire','box','duct','filter','gas','vent']);
 
+// ── PER-UNIT PRICE DETECTION ──
+// Some catalog items are priced PER UNIT (per sq ft, per linear ft, per
+// sheet, etc.). Their lo/hi is a rate, not a line total — so surfacing them
+// raw makes a 1,000 sq ft sod job read as "$2" or a siding job as "$4".
+// We tag these so the UI shows the rate honestly ("$2–$5 /sq ft") instead of
+// a misleading line total.
+const AREA_UNIT_TRADES = new Set(['Flooring', 'Siding', 'Concrete', 'Landscaping', 'Roofing', 'Drywall']);
+function detectUnit(item) {
+  const hay = `${item.n || ''} ${item.d || ''}`.toLowerCase();
+  if (/per\s*sq\.?\s*ft|per\s*sqft|\/\s*sq\.?\s*ft|\bsq\s*ft\b|per\s*square\s*f(oo|ee)?t/.test(hay)) return 'sq ft';
+  if (/per\s*lin(ear)?\.?\s*ft|\/\s*lin(ear)?\.?\s*ft|linear\s*f(oo|ee)?t/.test(hay)) return 'linear ft';
+  if (/per\s*sheet/.test(hay)) return 'sheet';
+  if (/per\s*(cu\.?\s*)?yard/.test(hay)) return 'yard';
+  if (/per\s*day/.test(hay)) return 'day';
+  if (/per\s*(visit|each|door|window|wall)/.test(hay)) return (hay.match(/per\s*(visit|each|door|window|wall)/)[1]);
+  // Heuristic: a Labour line in an area-priced trade with a tiny ceiling is a
+  // rate even when the catalog forgot the "(per sqft)" marker (e.g. "Sod
+  // installation $2–$5", "Concrete curb $10–$25").
+  if (item.c === 'Labour' && AREA_UNIT_TRADES.has(item.t) && (item.hi || 0) <= 30) return 'unit';
+  return null;
+}
+// Apply unit honesty to an outgoing suggestion in place: tag it + make the
+// displayed name self-explanatory so the rate never reads as a total.
+function applyUnit(sug, item) {
+  const unit = detectUnit(item);
+  if (!unit) return sug;
+  sug.unit = unit;
+  if (!/\bper\b|\/\s*(sq|lin|sheet|yard)/i.test(sug.name)) {
+    sug.name = unit === 'unit'
+      ? `${sug.name} (unit price — set qty)`
+      : `${sug.name} (per ${unit})`;
+  }
+  const note = `Priced per ${unit === 'unit' ? 'unit' : unit} — set quantity to the job size`;
+  sug.when_needed = note;
+  sug.when = note; // builder's normSuggestion reads `when`; keep the guidance visible
+  return sug;
+}
+
 /**
  * Pre-compute negative-object synonyms for a given trade/context.
  * Called once per query, passed to all scoreItem calls.
@@ -44,6 +82,10 @@ function buildNegativeObjects(ctx, normalizedTrade) {
   for (const [otherKey, otherDef] of Object.entries(OBJECTS)) {
     if (ctx.objects.includes(otherKey)) continue;
     if (otherDef.trade !== normalizedTrade) continue;
+    // Skip objects that overlap a chosen object by key (e.g. generic "pipe"
+    // was deduped out in favour of "poly b repipe" — it must not then dock
+    // the exact-match item as a "different object").
+    if (ctx.objects.some(o => o.includes(otherKey) || otherKey.includes(o))) continue;
     const longSyns = otherDef.syn.filter(s => s.length > 4);
     if (longSyns.length) negSyns.push(longSyns);
   }
@@ -65,6 +107,7 @@ function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, no
   let score = normalizedTrade && normalizedTrade !== 'Other' ? 50 : 0;
   let hasContextSignal = false;
   const hay = _itemHay.get(item);
+  const nameHay = (item.n || '').toLowerCase();
 
   // ── OBJECT MATCH (strongest signal) ──
   let objectMatch = false;
@@ -76,6 +119,10 @@ function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, no
     const directMatch = objDef.syn.some(s => hayMatch(hay, s));
     if (directMatch) {
       score += 120; // direct object match is the #1 signal
+      // Name-exact bonus: when the object synonym appears in the item NAME
+      // (not just its description), this IS the item the contractor means —
+      // e.g. "Bathroom renovation" for a bathroom reno. Nudge it into core.
+      if (objDef.syn.some(s => hayMatch(nameHay, s))) score += 35;
       objectMatch = true;
       hasContextSignal = true;
       break;
@@ -231,6 +278,10 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
     'panel', 'water heater', 'furnace', 'boiler', 'air conditioner', 'condenser',
     'mini split', 'heat pump', 'sewer line', 'main line', 'hot tub', 'ev charger',
     'deck', 'fence', 'roof', 'bathroom', 'kitchen', 'basement',
+    // Big-ticket whole-job objects — legitimately $1k–$15k+, so the simple-job
+    // price ceiling must not demote their exact-match core items.
+    'poly b repipe', 'whole home rewire', 'bathroom reno', 'water damage',
+    'concrete work', 'siding', 'window replacement', 'tenant space',
   ]);
   const COMPONENT_KEYWORDS = new Set([
     'ignitor', 'igniter', 'sensor', 'thermocouple', 'valve', 'capacitor',
@@ -342,7 +393,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
     // Use anchor-based compression for realistic market pricing
     const anchored = anchorPrice(rawLo, rawHi, nTrade, item.c);
     const itemReason = computeReason(item, ctx);
-    scored.push({
+    scored.push(applyUnit({
       id: `smart_${item.n.replace(/\s+/g, '_').toLowerCase().slice(0, 30)}_${Math.random().toString(36).slice(2, 6)}`,
       name: item.n,
       desc: item.d || '',
@@ -361,7 +412,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
         when_needed: 'Include if scope requires it',
         when_not_needed: 'Skip if not part of the current scope',
       } : {}),
-    });
+    }, item));
   }
 
   // Sort by score within tiers
@@ -429,7 +480,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
           const kwAnchored = anchorPrice(adj.lo || item.lo || 0, adj.hi || item.hi || 0, nTrade, item.c);
           // Honest, customer-safe reason — never expose the raw "keyword:" terms.
           const kwReason = 'related to your description';
-          kwResults.push({
+          kwResults.push(applyUnit({
             id: `kw_${item.n.replace(/\s+/g, '_').toLowerCase().slice(0, 30)}_${Math.random().toString(36).slice(2, 6)}`,
             name: item.n, desc: item.d || '', category: item.c || '',
             lo: kwAnchored.lo, hi: kwAnchored.hi,
@@ -441,7 +492,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
             reason: kwReason,
             why: kwReason,
             pricing_basis: `${item.t || ''} · ${item.c || 'General'} · ${province || 'CA'} market range`,
-          });
+          }, item));
         }
       }
       // Sort keyword results by score; use them only to fill the RELATED tier
@@ -490,13 +541,28 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       Roofing:     { simple: 500, medium: 1500, complex: 5000 },
       Painter:     { simple: 250, medium: 700, complex: 2000 },
       Landscaping: { simple: 250, medium: 700, complex: 2000 },
+      // Secondary trades — without these, each fell through to Plumber's
+      // $300 ceiling and got its line items scaled down (e.g. a $180–400
+      // garage spring clamped to ~$85).
+      Drywall:     { simple: 400, medium: 1200, complex: 3000 },
+      Flooring:    { simple: 550, medium: 1800, complex: 6000 },
+      Concrete:    { simple: 550, medium: 1800, complex: 8000 },
+      Fencing:     { simple: 400, medium: 1500, complex: 5000 },
+      'Windows & Doors': { simple: 550, medium: 1800, complex: 6000 },
+      Siding:      { simple: 650, medium: 2400, complex: 9000 },
+      'Garage Doors': { simple: 400, medium: 950, complex: 2600 },
+      'Appliance Install': { simple: 220, medium: 450, complex: 1000 },
+      Restoration: { simple: 1000, medium: 3000, complex: 12000 },
+      Handyman:    { simple: 200, medium: 525, complex: 1500 },
     };
     const tradeRange = ranges[nTrade] || ranges['Plumber'];
 
     // Detect job complexity from objects and keywords
     const COMPLEX_OBJECTS = new Set(['panel', 'water heater', 'furnace', 'boiler', 'condenser',
       'mini split', 'heat pump', 'sewer line', 'main line', 'hot tub', 'ev charger',
-      'deck', 'roof', 'bathroom', 'kitchen', 'basement']);
+      'deck', 'roof', 'bathroom', 'kitchen', 'basement',
+      'poly b repipe', 'whole home rewire', 'bathroom reno', 'water damage',
+      'concrete work', 'siding', 'window replacement', 'tenant space']);
     const COMPONENT_KW = new Set(['ignitor', 'igniter', 'sensor', 'valve', 'capacitor',
       'contactor', 'relay', 'board', 'motor', 'blower', 'fan', 'filter',
       'element', 'anode', 'flapper', 'fill', 'gasket', 'seal', 'switch',

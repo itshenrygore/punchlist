@@ -8,7 +8,7 @@
 // What the contractor is doing (verb intent)
 const JOB_TYPE_PATTERNS = {
   install:   /\b(install|add|mount|hang|set up|setup|hook ?up|connect|wire|run|put in|new)\b/i,
-  replace:   /\b(replace|swap|change out|upgrade|switch out|new .{0,20}(for|replacing|instead))\b/i,
+  replace:   /\b(replace|swap|change out|upgrade|switch out|re-?pipe|re-?wire|new .{0,20}(for|replacing|instead))\b/i,
   repair:    /\b(repair|fix|patch|seal|stop leak|troubleshoot|diagnose|not working|not heating|not cooling|no heat|no cool|broken|leak|clog|clogged|stuck|crack|damage|faulty|backed up|running|dripping|tripping|flickering|squeaky|noisy|loud)\b/i,
   remove:    /\b(remove|demo|demolish|tear out|rip out|gut|strip|take out|disconnect|cap off)\b/i,
   maintain:  /\b(maintain|service|tune.?up|clean|inspect|test|check|annual|seasonal|flush|blowout)\b/i,
@@ -44,7 +44,7 @@ const OBJECTS = {
   'water softener': { syn: ['water softener','softener install','hard water','water treatment','water conditioner'], related: ['bypass valve','drain line','salt','plumbing'], trade: 'Plumber' },
   'backflow':       { syn: ['backflow preventer','backflow test','rpz test','backflow device','annual backflow'], related: ['test','certification','permit'], trade: 'Plumber' },
   'hose bib':       { syn: ['hose bib','outdoor faucet','exterior faucet','garden faucet','frost free','hose spigot'], related: ['pipe','insulation','shutoff valve','frost protection'], trade: 'Plumber' },
-  dishwasher:       { syn: ['dishwasher hookup','dishwasher connection','dishwasher install','dishwasher plumbing'], related: ['supply line','drain hose','air gap','shutoff valve'], trade: 'Plumber' },
+  dishwasher:       { syn: ['dishwasher hookup','dishwasher connection','dishwasher install','install dishwasher','dishwasher','dishwasher plumbing'], related: ['supply line','drain hose','air gap','shutoff valve'], trade: 'Plumber' },
   'laundry plumbing':{ syn: ['laundry hookup','washing machine hookup','washer hookup','laundry connection','washer box'], related: ['supply valve','drain','laundry box','hoses'], trade: 'Plumber' },
   bidet:            { syn: ['bidet','bidet seat','bidet install','washlet','bidet attachment'], related: ['supply line','t-valve','mounting'], trade: 'Plumber' },
   'tub spout':      { syn: ['tub spout','diverter','tub faucet spout','spout diverter','tub diverter'], related: ['shower valve','cartridge','trim kit','caulk'], trade: 'Plumber' },
@@ -121,18 +121,18 @@ const OBJECTS = {
   soffit:           { syn: ['soffit','fascia','soffit panel','fascia board','soffit repair'], related: ['ventilation','nails','j-channel','aluminum'], trade: 'Roofing' },
   skylight:         { syn: ['skylight','roof window','velux','sun tunnel','skylight leak'], related: ['flashing','frame','caulk'], trade: 'Roofing' },
   chimney:          { syn: ['chimney','chimney cap','chimney flashing','chimney leak','chimney repair'], related: ['flashing','cap','sealant','mortar'], trade: 'Roofing' },
-  'vent boot':      { syn: ['vent boot','pipe boot','roof vent boot','pipe collar','plumbing vent boot'], related: ['sealant','caulk','nails'], trade: 'Roofing' },
+  'vent boot':      { syn: ['vent boot','pipe boot','roof vent boot','pipe collar','plumbing vent boot','vent stack','replace boot','roof boot','vent flashing'], related: ['sealant','caulk','nails'], trade: 'Roofing' },
 
   // ── PAINTER OBJECTS ──
-  'room paint':     { syn: ['paint room','paint walls','wall paint','interior paint','repaint room','paint ceiling','paint bedroom','paint living room'], related: ['primer','caulk','filler','tape','drop cloth','roller','brush','sandpaper'], trade: 'Painter' },
+  'room paint':     { syn: ['paint room','paint walls','wall paint','interior paint','repaint','repaint room','repaint bedroom','paint bedrooms','paint ceiling','paint bedroom','paint living room'], related: ['primer','caulk','filler','tape','drop cloth','roller','brush','sandpaper'], trade: 'Painter' },
   'trim paint':     { syn: ['paint trim','paint baseboard','paint casing','paint moulding','trim paint','paint doors'], related: ['primer','sandpaper','caulk','brush','wood filler'], trade: 'Painter' },
   cabinet:          { syn: ['cabinet paint','cabinet refinish','cabinet spray','paint cabinets','kitchen cabinet paint'], related: ['primer','paint','sandpaper','hardware','bonding primer'], trade: 'Painter' },
-  'exterior paint': { syn: ['exterior paint','house paint','paint outside','siding paint','paint house','exterior repaint'], related: ['primer','caulk','scraper','power wash','drop cloth'], trade: 'Painter' },
+  'exterior paint': { syn: ['exterior paint','house paint','paint outside','siding paint','paint house','exterior repaint','house repaint','exterior house','paint exterior'], related: ['primer','caulk','scraper','power wash','drop cloth'], trade: 'Painter' },
   'deck stain':     { syn: ['deck stain','stain deck','deck seal','deck refinish','fence stain','stain fence'], related: ['stain','sealer','cleaner','brush','roller'], trade: 'Painter' },
   wallpaper:        { syn: ['wallpaper removal','strip wallpaper','remove wallpaper','wallpaper strip'], related: ['scraper','steamer','adhesive','primer'], trade: 'Painter' },
 
   // ── LANDSCAPING OBJECTS ──
-  lawn:             { syn: ['lawn care','lawn mowing','grass cutting','lawn repair','sod install','lawn maintenance'], related: ['mowing','fertilizer','seed','aeration','sod'], trade: 'Landscaping' },
+  lawn:             { syn: ['lawn care','lawn mowing','grass cutting','lawn repair','sod install','sod','lawn','new lawn','new sod','lay sod','lawn maintenance'], related: ['mowing','fertilizer','seed','aeration','sod'], trade: 'Landscaping' },
   patio:            { syn: ['patio','paver patio','interlock patio','stone patio','patio install'], related: ['pavers','sand','gravel','edging','base'], trade: 'Landscaping' },
   'garden bed':     { syn: ['garden bed','flower bed','garden install','planting bed','mulch bed'], related: ['mulch','edging','soil','plants','fabric'], trade: 'Landscaping' },
   tree:             { syn: ['tree pruning','tree removal','tree planting','tree trim','tree service'], related: ['pruning','stump','mulch','stakes'], trade: 'Landscaping' },
@@ -156,6 +156,22 @@ const OBJECTS = {
   storefront:          { syn: ['storefront','storefront glass','glass door','aluminum storefront','commercial entry','shop front'], related: ['glass','frame','door','closer','hardware'], trade: 'General Contractor' },
   'parking lot':       { syn: ['parking lot','parking lot lights','lot lighting','wall pack','pole light','exterior commercial'], related: ['pole','fixture','wire','conduit','photocell'], trade: 'Electrician' },
   'data cable':        { syn: ['data cabling','cat6','cat 6','ethernet','network cable','data drop','network drop','structured cabling'], related: ['patch panel','keystone','faceplate','cable','conduit'], trade: 'Electrician' },
+
+  // ── SECONDARY-TRADE OBJECTS ──
+  // These give Garage Doors / Appliances / Concrete / Siding / Windows /
+  // Restoration / Handyman / Flooring-tile / GC-reno jobs a real "core"
+  // suggestion offline instead of dropping to the low-confidence keyword
+  // tier. scoreItem trade-gates downstream, so each object's synonyms only
+  // ever match its own trade's catalog items.
+  'garage door':       { syn: ['garage door','overhead door','garage door spring','garage spring','broken spring','garage door opener','garage opener','garage door panel','garage door cable','garage door roller','garage door track','garage door repair','garage door replace','garage door seal','garage door off track'], related: ['spring','opener','cable','roller','track','weather seal','keypad'], trade: 'Garage Doors' },
+  'appliance install': { syn: ['install appliance','appliance install','install washer','install dryer','washer and dryer','install range','install oven','install microwave','install fridge','install refrigerator','refrigerator install','install range hood','install hood fan','dryer vent','hook up appliance','hook up washer','hook up dryer'], related: ['water line','drain hose','gas line connection','dryer vent','disposal'], trade: 'Appliance Install' },
+  'concrete work':     { syn: ['concrete','pour concrete','concrete driveway','concrete patio','patio slab','garage pad','concrete slab','concrete sidewalk','concrete steps','concrete pad','cement pad','foundation crack','parging','mudjacking','concrete curb','stamped concrete','driveway pour','pour driveway'], related: ['rebar','wire mesh','excavation','grading','ready-mix','forms','concrete sealing'], trade: 'Concrete' },
+  'siding':            { syn: ['siding','vinyl siding','fiber cement siding','hardie','hardie board','board and batten','siding repair','siding install','replace siding','lap siding','cladding','stucco repair'], related: ['house wrap','soffit','fascia','exterior trim','caulk'], trade: 'Siding' },
+  'window replacement':{ syn: ['replace window','replace windows','window replacement','vinyl window','vinyl windows','double hung','casement window','awning window','new window','install window','egress window','window install','basement window'], related: ['casing','trim','caulk','weatherstrip','glass','window unit'], trade: 'Windows & Doors' },
+  'water damage':      { syn: ['water damage','flood damage','flooded','water extraction','sewage cleanup','sewage backup','mold remediation','mould remediation','mold','mould','smoke damage','fire damage','water restoration','restoration','remediation','dry out','water cleanup','flooded basement','storm damage'], related: ['extraction','drying equipment','dehumidifier','antimicrobial','moisture testing','demo'], trade: 'Restoration' },
+  'tv mount':          { syn: ['mount tv','tv mount','wall mount tv','mount television','hang tv','tv on wall','mount the tv','tv wall mount'], related: ['bracket','cord conceal','drywall anchor'], trade: 'Handyman' },
+  'tile work':         { syn: ['tile backsplash','backsplash tile','subway tile','tile install','install tile','wall tile','ceramic tile','porcelain tile','shower tile','tile floor','floor tile','tile job','retile','tile work'], related: ['thinset','grout','tile','underlayment','backsplash'], trade: 'Flooring' },
+  'bathroom reno':     { syn: ['bathroom renovation','bathroom reno','gut bathroom','rebuild bathroom','bathroom remodel','redo bathroom','full bathroom reno','gut and rebuild bathroom'], related: ['tile','vanity','toilet','shower','drywall','flooring','fixtures'], trade: 'General Contractor' },
 };
 
 // ── LOCATIONS ──
