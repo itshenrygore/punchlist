@@ -104,6 +104,96 @@ const CASES = [
   { trade: 'Other', desc: 'Replace kitchen faucet and shutoff valves', expect: ['faucet'] },
   { trade: 'Other', desc: 'Install pot lights and a dimmer in the kitchen', expect: ['pot light','recessed'] },
   { trade: 'Other', desc: 'Furnace making a loud noise and short cycling', expect: ['furnace'] },
+
+  // ── PLUMBING (depth) ──
+  { trade: 'Plumber', desc: 'Low water pressure throughout the house, suspect PRV', expect: ['pressure'] },
+  { trade: 'Plumber', desc: 'Install water softener for hard water', expect: ['softener','water treatment'] },
+  { trade: 'Plumber', desc: 'Annual backflow preventer test and certification', expect: ['backflow'] },
+  { trade: 'Plumber', desc: 'Replace frost-free hose bib on exterior wall', expect: ['hose bib','outdoor faucet'] },
+  { trade: 'Plumber', desc: 'Install floor drain in basement laundry area', expect: ['floor drain','drain'] },
+  { trade: 'Plumber', desc: 'Run a water line to the fridge for the ice maker', expect: ['fridge','ice maker','water line'] },
+  { trade: 'Plumber', desc: 'Washing machine hookup, new washer box and valves', expect: ['laundry','washer','box'] },
+  { trade: 'Plumber', desc: 'Install bidet seat on existing toilet', expect: ['bidet'] },
+  { trade: 'Plumber', desc: 'Replace bathroom vanity sink and faucet', expect: ['sink','faucet','vanity'] },
+
+  // ── ELECTRICAL (depth) ──
+  { trade: 'Electrician', desc: 'Install GFCI outlets in kitchen and bathrooms', expect: ['gfci'] },
+  { trade: 'Electrician', desc: 'Replace three-way light switch in hallway', expect: ['switch'] },
+  { trade: 'Electrician', desc: 'Install video doorbell, needs transformer', expect: ['doorbell'] },
+  { trade: 'Electrician', desc: 'Run cat6 ethernet drops to three rooms', expect: ['data','cat6','ethernet','cable'] },
+  { trade: 'Electrician', desc: 'Install motion flood lights on the garage exterior', expect: ['outdoor light','flood','light'] },
+  { trade: 'Electrician', desc: 'Add under cabinet LED lighting in kitchen', expect: ['cabinet'] },
+  { trade: 'Electrician', desc: 'Wire a detached garage with outlets and lights', expect: ['garage','outlet','light'] },
+  { trade: 'Electrician', desc: 'Install hardwired security cameras around the house', expect: ['camera','security'] },
+  { trade: 'Electrician', desc: 'Add a dedicated 20A circuit for a new fridge', expect: ['circuit','dedicated'] },
+
+  // ── HVAC (depth) ──
+  { trade: 'HVAC', desc: 'Install HRV air exchanger, ducted to existing system', expect: ['hrv','air exchanger'] },
+  { trade: 'HVAC', desc: 'Gas fireplace pilot light wont stay lit, service it', expect: ['fireplace'] },
+  { trade: 'HVAC', desc: 'Uneven heating, one room always cold, balance airflow', expect: ['airflow','damper','duct','balanc'] },
+  { trade: 'HVAC', desc: 'Modify ductwork and add a return air duct', expect: ['duct'] },
+  { trade: 'HVAC', desc: 'AC compressor frozen, ice on the coil', expect: ['refrigerant','coil','ac'] },
+  { trade: 'HVAC', desc: 'Replace the AC contactor, it burned out', expect: ['contactor'] },
+
+  // ── CARPENTER (depth) ──
+  { trade: 'Carpenter', desc: 'Install a new exterior steel entry door with deadbolt', expect: ['exterior door','door'] },
+  { trade: 'Carpenter', desc: 'Build custom closet shelving and rods', expect: ['shelving','shelf'] },
+  { trade: 'Carpenter', desc: 'Replace rotten deck boards and re-stain', expect: ['deck'] },
+
+  // ── ROOFING (depth) ──
+  { trade: 'Roofing', desc: 'Skylight leaking, reflash and reseal', expect: ['skylight'] },
+  { trade: 'Roofing', desc: 'Install gutter guards on existing eavestrough', expect: ['gutter','guard'] },
+
+  // ── PAINTER / LANDSCAPING / DRYWALL / FLOORING (depth) ──
+  { trade: 'Painter', desc: 'Remove old wallpaper and prep walls for paint', expect: ['wallpaper'] },
+  { trade: 'Painter', desc: 'Paint interior trim and doors throughout', expect: ['trim','paint'] },
+  { trade: 'Landscaping', desc: 'Build raised garden beds with mulch', expect: ['garden bed','mulch','bed'] },
+  { trade: 'Landscaping', desc: 'Prune and remove a large tree in the backyard', expect: ['tree'] },
+  { trade: 'Drywall', desc: 'Remove popcorn ceiling and skim coat smooth', expect: ['popcorn','ceiling','skim'] },
+  { trade: 'Drywall', desc: 'Hang and finish drywall in a new basement', expect: ['drywall','hang','basement'] },
+  { trade: 'Flooring', desc: 'Refinish existing hardwood floors, 800 sq ft', expect: ['hardwood','refinish'] },
+  { trade: 'Flooring', desc: 'Install laminate flooring in two bedrooms', expect: ['laminate','floor'] },
+
+  // ── COMMERCIAL ──
+  { trade: 'Plumber', desc: 'Install grease trap for restaurant kitchen', expect: ['grease trap','trap'] },
+  { trade: 'Plumber', desc: 'Replace commercial urinal flush valve', expect: ['urinal','flush valve'] },
+  { trade: 'Plumber', desc: 'Install emergency eye wash station in the shop', expect: ['eye wash'] },
+  { trade: 'Electrician', desc: 'Wire three phase power for a new commercial compressor', expect: ['three phase','phase'] },
+  { trade: 'Electrician', desc: 'Replace emergency exit signs and egress lighting', expect: ['exit sign','emergency'] },
+  { trade: 'Electrician', desc: 'Install parking lot pole lights with photocells', expect: ['parking lot','pole'] },
+  { trade: 'General Contractor', desc: 'Install suspended drop ceiling grid and tiles in office', expect: ['drop ceiling','ceiling'] },
+  { trade: 'General Contractor', desc: 'Frame demising partition wall between two units', expect: ['partition','wall'] },
+  { trade: 'General Contractor', desc: 'Pour an equipment concrete pad for rooftop unit', expect: ['concrete pad','pad'] },
+
+  // ── SECONDARY-TRADE depth ──
+  { trade: 'Garage Doors', desc: 'Garage door off track and a bent panel', expect: ['garage','track','panel'] },
+  { trade: 'Garage Doors', desc: 'Install a new smart garage door opener', expect: ['opener','garage'] },
+  { trade: 'Appliance Install', desc: 'Install over the range microwave and vent it outside', expect: ['microwave','range'] },
+  { trade: 'Appliance Install', desc: 'Hook up gas range, new gas connection', expect: ['range','gas'] },
+  { trade: 'Fencing', desc: 'Replace broken fence posts and a few boards', expect: ['fence','post','board'] },
+  { trade: 'Fencing', desc: 'Stain and seal existing cedar fence', expect: ['fence','stain'] },
+  { trade: 'Concrete', desc: 'Repair a cracked foundation wall', expect: ['foundation','crack'] },
+  { trade: 'Concrete', desc: 'Mudjack a settled garage slab', expect: ['mudjack','level'] },
+  { trade: 'Restoration', desc: 'Mold remediation in the bathroom, large area', expect: ['mold','remediation'] },
+  { trade: 'Restoration', desc: 'Sewage backup cleanup in the basement', expect: ['sewage','cleanup'] },
+  { trade: 'Handyman', desc: 'Install grab bars and a towel bar in the bathroom', expect: ['grab bar','towel'] },
+  { trade: 'Handyman', desc: 'Assemble flat pack furniture and hang shelves', expect: ['assemble','shelv'] },
+  { trade: 'Handyman', desc: 'Gutter cleaning and minor downspout repair', expect: ['gutter'] },
+  { trade: 'Windows & Doors', desc: 'Install an egress window in the basement bedroom', expect: ['egress','window'] },
+  { trade: 'Windows & Doors', desc: 'Replace a foggy sealed glass unit in a window', expect: ['glass','window'] },
+  { trade: 'Siding', desc: 'Install fiber cement Hardie board siding on front', expect: ['fiber cement','siding','hardie'] },
+
+  // ── US-region (pricing multiplier path) ──
+  { trade: 'Plumber', desc: 'Replace 40 gallon electric water heater', expect: ['water heater'], province: 'TX' },
+  { trade: 'Electrician', desc: 'Panel upgrade to 200 amp service', expect: ['panel','200'], province: 'CA' },
+  { trade: 'HVAC', desc: 'Install central AC condenser, 4 ton', expect: ['condenser','ac'], province: 'FL' },
+
+  // ── AMBIGUOUS / MULTI-OBJECT / LOW-SIGNAL ──
+  { trade: 'Plumber', desc: 'Replace kitchen sink, faucet, and garburator all at once', expect: ['sink','faucet','garburator'] },
+  { trade: 'HVAC', desc: 'Replace furnace and add a smart thermostat', expect: ['furnace','thermostat'] },
+  { trade: 'Other', desc: 'Bathroom is leaking somewhere, not sure where', expect: [] },
+  { trade: 'Other', desc: 'Install a new hot water tank and expansion tank', expect: ['water heater','expansion'] },
+  { trade: 'Electrician', desc: 'Outlets in half the house stopped working', expect: ['outlet','power','breaker'] },
 ];
 
 function fmt$(n) { return '$' + Math.round(n).toLocaleString(); }
@@ -113,7 +203,7 @@ let totalCore = 0, zeroCore = 0, zeroAll = 0, expectMiss = 0, avoidHit = 0;
 const problems = [];
 
 for (const c of CASES) {
-  const r = getSmartSuggestions({ description: c.desc, trade: c.trade, province: 'AB' });
+  const r = getSmartSuggestions({ description: c.desc, trade: c.trade, province: c.province || 'AB' });
   const ctx = r.context;
   const allItems = [...r.core, ...r.related, ...r.optional];
   const allNames = allItems.map(i => lc(i.name));

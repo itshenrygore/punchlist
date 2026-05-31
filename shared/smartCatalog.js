@@ -6,7 +6,7 @@
 
 import C from './systemCatalog.js';
 import { extractJobContext, getRelatedObjects, getLocationObjects, OBJECTS } from './jobContext.js';
-import { normalizeTrade, regionalize, roundPrice, anchorPrice } from './tradeBrain.js';
+import { normalizeTrade, regionalize, roundPrice, anchorPrice, inferTrade } from './tradeBrain.js';
 
 // ═══════════════════════════════════════════════════════════════
 // ITEM SCORING — how relevant is this catalog item to the job?
@@ -40,7 +40,7 @@ const GENERIC_TERMS = new Set(['drain','pipe','valve','supply','hose','wire','bo
 // raw makes a 1,000 sq ft sod job read as "$2" or a siding job as "$4".
 // We tag these so the UI shows the rate honestly ("$2–$5 /sq ft") instead of
 // a misleading line total.
-const AREA_UNIT_TRADES = new Set(['Flooring', 'Siding', 'Concrete', 'Landscaping', 'Roofing', 'Drywall']);
+const AREA_UNIT_TRADES = new Set(['Flooring', 'Siding', 'Concrete', 'Landscaping', 'Roofing', 'Drywall', 'Painter', 'Fencing']);
 function detectUnit(item) {
   const hay = `${item.n || ''} ${item.d || ''}`.toLowerCase();
   if (/per\s*sq\.?\s*ft|per\s*sqft|\/\s*sq\.?\s*ft|\bsq\s*ft\b|per\s*square\s*f(oo|ee)?t/.test(hay)) return 'sq ft';
@@ -282,6 +282,9 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
     // price ceiling must not demote their exact-match core items.
     'poly b repipe', 'whole home rewire', 'bathroom reno', 'water damage',
     'concrete work', 'siding', 'window replacement', 'tenant space',
+    // Commercial line items that legitimately clear the simple-job ceiling.
+    'eye wash', 'three phase', 'grease trap', 'booster pump', 'generator',
+    'subpanel', 'storefront', 'egress window',
   ]);
   const COMPONENT_KEYWORDS = new Set([
     'ignitor', 'igniter', 'sensor', 'thermocouple', 'valve', 'capacitor',
@@ -291,7 +294,7 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
     'cleaning', 'flush', 'diagnostic', 'diagnosis', 'inspection', 'repair',
     'not heating', 'not cooling', 'not working', 'analysis', 'service',
     'recharge', 'charge', 'coil', 'clean',
-    'circuit', 'pump', 'fluorescent', 'led', 'wiring', 'wire',,
+    'circuit', 'pump', 'fluorescent', 'led',
   ]);
   const hasMajorObject = ctx.objects.some(o => MAJOR_OBJECTS.has(o));
   const hasComponent = ctx.keywords.some(k => COMPONENT_KEYWORDS.has(k));
@@ -518,6 +521,34 @@ export function getSmartSuggestions({ description, title, trade, province }) {
   sortWithinTier(related);
   sortWithinTier(optional);
 
+  // ── DIAGNOSTIC FALLBACK ──
+  // A low-signal job ("bathroom is leaking somewhere, not sure where") can
+  // match no object and no keyword. Rather than show an empty panel, surface
+  // the trade's diagnostic/service-call item — which is exactly what a
+  // contractor books first for an unknown problem. Infer the trade from the
+  // text when none was selected so even "Other" jobs get a confident start.
+  if (core.length + related.length + optional.length === 0) {
+    const fallbackTrade = (nTrade && nTrade !== 'Other')
+      ? nTrade
+      : normalizeTrade(inferTrade(fullText, 'Other'));
+    if (fallbackTrade && fallbackTrade !== 'Other') {
+      const diag = C.find(it => it.t === fallbackTrade && it.c === 'Services'
+        && /diagnostic|service call|assessment|inspection|trip/i.test(it.n));
+      if (diag) {
+        const dAnchored = anchorPrice(diag.lo || 0, diag.hi || 0, fallbackTrade, diag.c);
+        core = [{
+          id: `diag_${Math.random().toString(36).slice(2, 8)}`,
+          name: diag.n, desc: diag.d || '', category: diag.c || 'Services',
+          lo: dAnchored.lo, hi: dAnchored.hi, mid: dAnchored.mid,
+          score: 100, tier: 'core',
+          reason: `${fallbackTrade} · start with a diagnosis`,
+          why: 'Book the visit and confirm scope on site — items get added once you know what you\'re dealing with.',
+          pricing_basis: `${fallbackTrade} · Services · ${province || 'CA'} market range`,
+        }];
+      }
+    }
+  }
+
   // Build reason string for the header
   const parts = [];
   if (ctx.objects.length) parts.push(ctx.objects.join(' + '));
@@ -570,7 +601,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       'cleaning', 'flush', 'diagnostic', 'diagnosis', 'inspection', 'repair',
       'not heating', 'not cooling', 'not working', 'analysis', 'service',
       'recharge', 'charge', 'coil', 'clean',
-    'circuit', 'pump', 'fluorescent', 'led', 'wiring', 'wire',]);
+    'circuit', 'pump', 'fluorescent', 'led']);
     const hasMajor = ctx.objects.some(o => COMPLEX_OBJECTS.has(o));
     const hasComp = ctx.keywords.some(k => COMPONENT_KW.has(k));
     // No objects = always simple (keyword-only matches are inherently imprecise)
