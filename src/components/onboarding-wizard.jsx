@@ -31,27 +31,38 @@ export default function OnboardingWizard({ onDismiss }) {
   const [trade, setTrade] = useState('Plumber');
   const [country, setCountry] = useState('CA');
   const [province, setProvince] = useState('AB');
+  const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+
+  const phoneDigits = phone.replace(/\D/g, '');
+  const phoneValid = phoneDigits.length === 10 || (phoneDigits.length === 11 && phoneDigits[0] === '1');
 
   useEffect(() => {
     if (!user) return;
     getProfile(user.id).then(p => {
-      if (p?.trade && p.trade !== 'Other') {
+      if (p?.phone) setPhone(p.phone);
+      // Only skip the setup step if BOTH trade and phone are already on
+      // file — phone is required so the contractor gets job-activity texts.
+      if (p?.trade && p.trade !== 'Other' && p?.phone) {
         setTrade(p.trade);
         setProvince(p.province || 'AB');
         setCountry(p.country || 'CA');
-        // If trade is already set, skip to step 1 (the launch step)
         setStep(1);
+      } else {
+        if (p?.trade && p.trade !== 'Other') setTrade(p.trade);
+        if (p?.province) setProvince(p.province);
+        if (p?.country) setCountry(p.country);
       }
       setProfileLoaded(true);
     }).catch(() => setProfileLoaded(true));
   }, [user]);
 
   async function saveTrade() {
+    if (!phoneValid) return;
     setSaving(true);
     try {
-      if (user) await updateProfile(user.id, { trade, province, country });
+      if (user) await updateProfile(user.id, { trade, province, country, phone: phone.trim(), sms_notifications_enabled: true });
     } catch (e) { console.warn("[PL]", e); }
     setSaving(false);
     setStep(1);
@@ -110,8 +121,13 @@ export default function OnboardingWizard({ onDismiss }) {
                   {(country === 'US' ? US_STATES : CA_PROVINCES).map(p => <option key={p}>{p}</option>)}
                 </select>
               </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label className="ob-label">Your mobile number</label>
+                <input className="ob-select" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(403) 555-0188" />
+                <div className="ob-body" style={{ margin: '6px 0 0', fontSize: 'var(--text-2xs)' }}>We text you when a customer views, approves, signs, or pays — so you never miss a job.</div>
+              </div>
             </div>
-            <button className="btn btn-primary full-width" type="button" disabled={saving} onClick={saveTrade}>
+            <button className="btn btn-primary full-width" type="button" disabled={saving || !phoneValid} onClick={saveTrade}>
               {saving ? 'Saving…' : 'Continue →'}
             </button>
           </>

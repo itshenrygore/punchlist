@@ -606,24 +606,36 @@ export default function QuoteDetailPage() {
     try {
       const convo = Array.isArray(quote.conversation) ? quote.conversation : [];
       const lastMsg = [...convo].reverse().find(m => m.role === 'customer')?.text || '';
-      const context = `Quote: "${quote.title || 'Untitled'}" — ${currency(quote.total)}\nCustomer question: "${lastMsg}"`;
+      const firstName = quote.customer?.name?.split(' ')[0] || 'there';
+      // ai-assist is the Foreman chat endpoint: it needs an auth token and a
+      // `messages` array, and returns { content }. (The old call sent an
+      // unsupported {type:'reply_draft'} shape with no auth, so it silently
+      // 400'd and the button did nothing.)
+      const prompt = `A customer, ${firstName}, sent a question about my quote "${quote.title || 'Untitled'}" (total ${currency(quote.total)}).\nTheir message: "${lastMsg || '(no message text)'}"\n\nDraft a short, warm, professional reply I can send as the contractor. 2–3 sentences, ready to send as-is. Reply with ONLY the message text — no preamble, no quotation marks.`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const hdrs = { 'Content-Type': 'application/json' };
+      if (session?.access_token) hdrs['Authorization'] = `Bearer ${session.access_token}`;
       const r = await fetch('/api/ai-assist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: hdrs,
         body: JSON.stringify({
-          type: 'reply_draft',
-          context,
-          quoteTitle: quote.title,
-          customerName: quote.customer?.name?.split(' ')[0] || 'there',
-          contractorName: cName,
+          messages: [{ role: 'user', content: prompt }],
+          userId: user?.id,
+          trade: quote.trade || 'Other',
+          province: quote.province || 'AB',
+          country: quote.country || 'CA',
         }),
       });
-      if (r.ok) {
-        const d = await r.json();
-        if (d.text) setReplyText(d.text);
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.content) {
+        setReplyText(d.content.trim());
+      } else {
+        showToast('Couldn’t draft a reply — type one below.', 'info');
       }
-    } catch (e) { console.warn('[PL] AI draft failed:', e); }
-    finally { setAiDraftLoading(false); }
+    } catch (e) {
+      console.warn('[PL] AI draft failed:', e);
+      showToast('Couldn’t draft a reply — type one below.', 'info');
+    } finally { setAiDraftLoading(false); }
   }
 
   async function handleDuplicate() { try{const n=await duplicateQuote(user.id,quote);showToast('Draft created','success');navigate(`/app/quotes/${n.id}/edit`);}catch(e){showToast(friendly(e),'error');} }

@@ -14,6 +14,7 @@ export async function saveProfile(user, updates = {}) {
   if ('province' in updates)         payload.province = updates.province || 'ON';
   if ('country' in updates)          payload.country = updates.country || 'CA';
   if ('phone' in updates)            payload.phone = updates.phone || '';
+  if ('sms_notifications_enabled' in updates) payload.sms_notifications_enabled = Boolean(updates.sms_notifications_enabled);
   if ('default_expiry_days' in updates) payload.default_expiry_days = Number(updates.default_expiry_days ?? 14);
   const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
   if (error) throw new Error(friendly(error));
