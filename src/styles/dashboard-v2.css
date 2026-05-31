@@ -6293,17 +6293,21 @@ a.dv2-headline-metric:hover {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   FOREMAN PANEL — single authoritative layout (#6 redesign)
-   Supersedes the conflicting .fm-panel rules spread across index.css,
-   mobile-redesign.css and premium-ui.css that produced the awkward
-   "floating ¾-page" sheet. Loaded last → wins deterministically.
-   The panel is a flex child of .fm-overlay (which pins bottom on mobile,
-   right-centre on desktop), so we keep it relative and let the overlay
-   place it.
+   FOREMAN PANEL — single authoritative layout
+   The panel and the overlay are SIBLINGS in JSX (not nested), so we
+   can't rely on the overlay's flex layout to position the panel. The
+   earlier "position: relative" attempt assumed nesting — when it
+   didn't exist, the panel rendered at the end of normal flow,
+   producing the sliver-from-the-bottom Foreman bug the user
+   screenshotted. Use position: fixed with explicit bottom/inset so
+   the panel always covers the right region.
    ════════════════════════════════════════════════════════════════ */
 .fm-panel {
-  position: relative !important;
-  inset: auto !important;
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  top: auto !important;
   width: 100% !important;
   max-width: 100% !important;
   height: 92dvh !important;
@@ -6311,13 +6315,19 @@ a.dv2-headline-metric:hover {
   border-radius: 22px 22px 0 0 !important;
   border: 1px solid var(--line) !important;
   border-bottom: none !important;
+  z-index: 901 !important;
 }
 @media (min-width: 641px) {
   .fm-panel {
+    /* Desktop: dock to the right with breathing room top + bottom. */
+    left: auto !important;
+    right: 24px !important;
+    top: 24px !important;
+    bottom: 24px !important;
     width: 420px !important;
     max-width: 420px !important;
-    height: calc(100dvh - 48px) !important;
-    max-height: calc(100dvh - 48px) !important;
+    height: auto !important;
+    max-height: none !important;
     border-radius: 18px !important;
     border-bottom: 1px solid var(--line) !important;
   }

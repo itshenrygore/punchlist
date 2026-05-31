@@ -102,9 +102,10 @@ export default function SwipeableRow({ children, onSwipe, label = 'Archive', col
     <div
       ref={rowRef}
       className="swipeable-row"
-      style={{ position: 'relative', overflow: 'hidden' }}
     >
-      {/* Background action */}
+      {/* Background action — clipped by the parent's border-radius so the
+          red Delete bar shares the card silhouette instead of rendering as
+          a square block bleeding into the next row. */}
       <div
         className="swipeable-action"
         style={{

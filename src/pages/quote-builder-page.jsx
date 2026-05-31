@@ -475,7 +475,7 @@ export default function QuoteBuilderPage() {
       if (!draftId) {
         if (!isOnline()) {
           const offId = `offline-${Date.now()}`;
-          await saveOfflineDraft({ id: offId, title: title || description.slice(0, 64), description, trade: inferred, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
+          await saveOfflineDraft({ id: offId, _ownerUserId: user?.id || null, title: title || description.slice(0, 64), description, trade: inferred, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
           setOfflineDraft(true);
           toast('Saved offline — will sync when connected', 'info');
           setPhase('describe'); setScopeLoading(false);
@@ -785,7 +785,20 @@ export default function QuoteBuilderPage() {
   }, [trade, lineItems]);
 
   // ── Confidence ──
-  const confidence = useMemo(() => buildConfidence(lineItems, [], { hasCustomer: !!draft.customer_id, hasScope: !!draft.scope_summary, hasDeposit: !draft.deposit_required || draft.deposit_status === 'paid', revisionSummary: draft.revision_summary }), [lineItems, draft]);
+  const confidence = useMemo(() => buildConfidence(lineItems, [], {
+    hasCustomer: !!draft.customer_id,
+    hasScope: !!draft.scope_summary,
+    hasDeposit: !draft.deposit_required || draft.deposit_status === 'paid',
+    revisionSummary: draft.revision_summary,
+    // Wired to the new context-aware missed-items engine — the same
+    // OBJECTS taxonomy the suggestion engine uses, so 'Cleanup not
+    // listed' on every job becomes 'Expansion tank not listed' /
+    // 'Permit not listed' / 'AFCI breaker not listed' — items
+    // actually relevant to what's already in the quote.
+    description,
+    trade,
+    province,
+  }), [lineItems, draft, description, trade, province]);
 
   // ── Foreman context: tell the AI about the active quote ──
   useEffect(() => {
@@ -856,7 +869,7 @@ export default function QuoteBuilderPage() {
         return q;
       } catch (e) {
         if (isNetworkError(e) && quoteId) {
-          try { await saveOfflineDraft({ ...draft, title, description, line_items: lineItems, trade, province, country, id: quoteId, savedAt: new Date().toISOString() }); setOfflineDraft(true); setSaveState(''); if (!silent) toast("Saved offline — will sync when online", 'info'); return null; } catch (e) { console.warn("[PL]", e); }
+          try { await saveOfflineDraft({ ...draft, _ownerUserId: user?.id || null, title, description, line_items: lineItems, trade, province, country, id: quoteId, savedAt: new Date().toISOString() }); setOfflineDraft(true); setSaveState(''); if (!silent) toast("Saved offline — will sync when online", 'info'); return null; } catch (e) { console.warn("[PL]", e); }
         }
         setError(friendly(e)); setSaveState(''); if (!silent) toast(friendly(e), 'error'); return null;
       } finally { setSaving(false); savingRef.current = false; }

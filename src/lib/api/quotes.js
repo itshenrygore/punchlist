@@ -323,8 +323,21 @@ export async function getQuote(quoteId) {
 }
 
 export async function deleteQuote(quoteId) {
-  const { error } = await supabase.from('quotes').delete().eq('id', quoteId);
+  // The .select() forces PostgREST to return the deleted rows. When RLS
+  // silently blocks the delete (the row belongs to another user, or a
+  // policy doesn't match), PostgREST returns 0 rows AND no error — which
+  // looked successful client-side but the row stayed in the DB, so the
+  // contractor saw the quote come back on refresh. Now we detect the
+  // empty result and throw so the caller can show an honest error.
+  const { data, error } = await supabase
+    .from('quotes')
+    .delete()
+    .eq('id', quoteId)
+    .select('id');
   if (error) throw new Error(friendly(error));
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('Couldn’t delete that quote — try again, or check your connection.');
+  }
 }
 
 export async function duplicateQuote(userId, quote) {

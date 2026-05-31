@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { clearAllOfflineDrafts } from '../lib/offline';
 
 export const AuthContext = createContext(null);
 
@@ -22,6 +23,12 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession ?? null);
       setLoading(false);
+      // When a user signs out, wipe IndexedDB drafts so the next account
+      // that signs in on this device doesn't see phantom quotes from the
+      // previous account.
+      if (event === 'SIGNED_OUT') {
+        clearAllOfflineDrafts().catch(e => console.warn('[Punchlist] offline draft cleanup', e?.message));
+      }
     });
 
     return () => subscription.unsubscribe();
