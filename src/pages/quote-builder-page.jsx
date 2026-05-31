@@ -512,6 +512,24 @@ export default function QuoteBuilderPage() {
         toast(`${catalogSuggestions.length} suggested item${catalogSuggestions.length === 1 ? '' : 's'} ready — review and add what you want`, 'success');
       }
 
+      // ── Trade-mismatch hint ──
+      // The engine flags when the selected trade clearly doesn't match what
+      // the description describes (e.g. Electrician selected, "water heater
+      // replacement" written). Offer a one-tap fix instead of letting the
+      // contractor wonder why the suggestions look thin.
+      if (cat.tradeMismatch && cat.tradeMismatch.suggested !== inferred) {
+        const { selected, suggested } = cat.tradeMismatch;
+        toast(`Looks like a ${suggested} job, not ${selected} — switch trade?`, 'info', {
+          label: 'Switch',
+          onClick: () => {
+            setTrade(suggested);
+            // Persist the corrected trade so when the contractor scrolls
+            // back or re-opens this draft the suggestions stay aligned.
+            if (draftId) updateQuote(draftId, { trade: suggested }).catch(e => console.warn('[PL]', e));
+          },
+        });
+      }
+
       // ── Photo upload (background) ──
       if (photo) {
         uploadQuotePhoto(draftId, photo).then(({ url }) => {

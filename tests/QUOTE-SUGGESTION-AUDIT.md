@@ -70,17 +70,80 @@ Offline engine: `shared/jobContext.js` (object/trade/job-type extraction) →
   trade table so secondary trades no longer inherit Plumber's $300 ceiling
   (a $180–400 garage spring was being scaled to ~$85).
 
-## Results (after, on the expanded 287-job set)
+## Results (after final pass, on the 364-job stress set)
 
 ```
-287 jobs   (140 original + 147 added for commercial / depth coverage)
-  avg core items/job : 2.58
-  jobs with 0 core   : 14
+364 jobs   (140 original + 147 commercial/depth + 77 stress/customer-speak)
+  avg core items/job : 2.56
+  jobs with 0 core   : 2
   jobs with 0 items  : 0
   expected-miss      : 0      contractor-knowledge anchors all hit
   avoid-violations   : 0      no irrelevant cross-object items
-  TOTAL PROBLEM JOBS : 14 / 287   (4.9%)
+  trade-mismatch     : 20     engine flagged wrong-trade selections
+  TOTAL PROBLEM JOBS : 2 / 364   (0.55%)
 ```
+
+The two remaining "problems" are niche Painter jobs (spray-painting a metal barn
+roof; refinishing wood beams with stain) where the catalog has no perfectly-named
+item — but the engine correctly surfaces 3 relevant Painter items in the related
+tier so the contractor sees them and picks what fits. Engine behavior is correct;
+filling the last two would mean catalog additions.
+
+## What this final pass added
+
+### Catalog (29 new items)
+Cedar shake roof, snow guards, hurricane-rated roof system, radiant heat tile
+system, epoxy floor coating, commercial vinyl tile, self-leveling underlayment,
+Schluter waterproofing membrane, asbestos abatement (small + large), HVAC whip
+and disconnect, pool pump electrical hookup, conduit + feeder for outdoor
+equipment, VRF multi-zone indoor head, VRF base setup, zone damper system, RTU
+economizer, return air duct, AC capacitor + hard start, commercial kitchen hood
+balancing, wall oven install, cooktop install, restaurant build-out, commercial
+bathroom partitions, basement development package, garage conversion to living
+space, battery storage interconnect (Powerwall / ESS), linoleum sheet flooring.
+
+### Cross-trade mismatch detection
+When the contractor selects the wrong trade — e.g. Electrician + "Replace the
+water heater" — the engine returns a `tradeMismatch` payload (`{ selected,
+suggested, reason }`) instead of silently under-suggesting. The quote builder
+surfaces this as a one-tap toast: "Looks like a Plumber job — switch?" → tap
+Switch and the trade flips + suggestions refresh.
+
+20 of the 364 test jobs are now correctly handled this way — including
+deliberately adversarial cases like Roofing + "Replace bathroom faucet" and
+Painter + "Furnace repair". Without this, those would have been silent failures.
+
+### Hyphen normalisation
+`hayMatch` + `wordMatch` both treat hyphens as spaces so "open-concept" matches
+"open concept" and "low-voltage" matches "low voltage" (contractors hyphenate
+inconsistently).
+
+### Direct-object price-ceiling bypass
+When an item directly names the chosen object, trust its catalog price even
+if it exceeds the simple-job ceiling. A $950 "Install shower tile" no longer
+gets demoted on a shower-waterproofing job.
+
+### Single-item promotion
+When no item hits the core threshold but exactly one related item directly
+matches the object, promote it to core. Catches one-item-in-catalog cases
+(TV mount, caulking, asbestos testing) that used to show as tentative.
+
+### 70+ new taxonomy objects
+Pot filler, hydro jet, RO water filter, smart switch, pool pump, HVAC whip,
+LED retrofit (with fluorescent ballast synonyms), Tesla Powerwall, motion-sensor
+switch, AC capacitor, blower motor, evaporator coil, heat exchanger, return air,
+zone damper, rooftop unit, economizer, commercial hood, oil-to-gas conversion,
+condensate pump, VRF/VRV/Daikin, ice shield (with snow-and-ice belt synonyms),
+ridge vent, drip edge, flat TPO/EPDM roof, cedar shake (with hurricane-rated
+synonyms), snow guard, standing seam metal, slate roof, roof leak (with
+water-marks/ceiling-stain synonyms), roof inspection, hardwood floor (with
+polyurethane finish synonyms), radiant heat tile, epoxy floor (with epoxy
+quartz / commercial kitchen floor synonyms), VCT, self-leveling underlayment,
+Schluter waterproofing, linoleum / sheet vinyl, kitchen reno, basement reno,
+garage conversion, restaurant build-out (with yoga studio / fitness buildout
+synonyms), commercial washroom, ensuite reno, full home reno, fire damage,
+asbestos, door hardware, caulking, plumbing rough-in, electrical rough-in,
+HVAC rough-in, electrical inspection.
 
 The expanded set adds depth across every trade — pressure-reducing valves,
 hydro-jet drain cleaning, AC capacitor swaps, RTU economizers, snow guards,
@@ -159,33 +222,21 @@ edits up — and the online AI path returns sharper job-specific pricing when
 available. Recalibrating the top-end anchors is a separate, broader pricing
 exercise.
 
-## Remaining gaps (caught by the 140-job audit, worth knowing about)
+## Remaining honest gaps (after the 364-job pass)
 
-These didn't break confidence (every job hits its anchor and surfaces real
-items) but they are honest limitations:
-
-1. **Synonym matching is purely literal substring.** Natural word order
-   misses ("remove old wallpaper" doesn't match "remove wallpaper",
-   "tree removal" doesn't match "remove a tree", "frozen compressor" needs
-   its own synonym separately from "compressor frozen"). I added synonyms
-   for every miss the harness found; future ones will appear as
-   `expected-miss` failures and need a synonym added too. A proper fix
-   would be a token-bag matcher with stemming, but it's a much bigger
-   refactor with its own false-positive risk — kept for a follow-up.
-2. **The diagnostic fallback returns one item.** When a job has *no*
-   detectable object or keyword ("Bathroom is leaking somewhere, not sure
-   where") the engine now surfaces the trade's diagnostic/service-call as a
-   confident starting point. It does NOT then suggest plausible companions
-   without more signal, by design — guessing on no signal is how irrelevant
-   items leak into quotes.
-3. **Trade inference for `Other` jobs is alias-based.** Strong descriptions
-   ("furnace ignitor not working") infer correctly; thin ones ("furnace
-   ignitor replacement" while Plumber is selected) keep the contractor's
-   selected trade and demote the wrong-trade items to related. That's
-   safer than silently switching trade out from under the contractor,
-   but it does mean a contractor who picked the wrong trade gets fewer
-   core items.
-4. **Per-unit items still need a sane default quantity.** The name now
-   reads "Install sod lawn (per sq ft)" with a clear "set quantity to the
-   job size" note, but the quote builder still defaults qty to 1. A
-   follow-up could prompt for the area when a unit-tagged item is added.
+1. **Synonym matching is still literal substring** (with hyphen normalisation).
+   Natural word order misses are caught by harness `expected-miss` failures
+   and need a synonym added. A token-bag matcher with stemming would replace
+   this but with its own false-positive risk — kept for a future refactor.
+2. **The diagnostic fallback returns one item, by design.** "Bathroom is
+   leaking somewhere" surfaces the trade's diagnostic/service-call line as
+   a confident starting point. Guessing companions on no signal is how
+   irrelevant items leak into quotes.
+3. **Trade-mismatch is now flagged via the `tradeMismatch` payload + a
+   builder toast** (gap closed) — the contractor sees "Looks like a Plumber
+   job — switch?" instead of getting baseboard heaters for a water heater
+   replacement. Previously this was a silent failure.
+4. **Per-unit items still default qty to 1.** The displayed name reads
+   "Install sod lawn (per sq ft)" and the `when_needed` note says "set
+   quantity to the job size", but a future improvement could prompt for
+   the area when a unit-tagged item is added to the quote.

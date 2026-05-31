@@ -302,7 +302,8 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx, hasDire
     'kitchen reno', 'addition', 'load bearing', 'flat roof', 'tpo membrane',
     'cedar shake', 'hardwood floor', 'solar interconnect', 'rooftop unit',
     'oil to gas', 'basement reno', 'garage conversion', 'restaurant buildout',
-    'commercial washroom', 'fire damage',
+    'commercial washroom', 'fire damage', 'full home reno',
+    'plumbing rough-in', 'electrical rough-in', 'hvac rough-in',
   ]);
   const COMPONENT_KEYWORDS = new Set([
     'ignitor', 'igniter', 'sensor', 'thermocouple', 'valve', 'capacitor',
@@ -602,6 +603,35 @@ export function getSmartSuggestions({ description, title, trade, province }) {
   if (ctx.locations.length) parts.push(ctx.locations.join(', '));
   const reason = parts.length ? `Based on: ${parts.join(' · ')}` : `Based on ${ctx.trade} trade`;
 
+  // ── TRADE MISMATCH HINT ──
+  // When the contractor selected a trade but the detected objects all
+  // belong to a DIFFERENT trade, the result will be sparse and wrong
+  // (e.g. "Replace the water heater" with Electrician selected returns
+  // baseboard heater — the only Electrician heater item). Detect the
+  // mismatch and emit a tradeMismatch payload the UI can surface as
+  // "Looks like a Plumber job — switch?" rather than silently
+  // under-suggesting.
+  let tradeMismatch = null;
+  if (nTrade && nTrade !== 'Other' && ctx.objects.length > 0) {
+    const objectTrades = ctx.objects
+      .map(o => OBJECTS[o]?.trade)
+      .filter(Boolean);
+    // Count which trade the detected objects come from.
+    const counts = {};
+    for (const t of objectTrades) counts[t] = (counts[t] || 0) + 1;
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    // Mismatch when EVERY detected object belongs to one OTHER trade,
+    // and the resulting core tier is empty or single-item — i.e. the
+    // selected trade simply doesn't have anything for this work.
+    if (top && top[0] !== nTrade && top[1] === objectTrades.length && core.length <= 1) {
+      tradeMismatch = {
+        selected: nTrade,
+        suggested: top[0],
+        reason: `The job description mentions ${ctx.objects.join(' + ')} — typically ${top[0]} work, not ${nTrade}.`,
+      };
+    }
+  }
+
   // ── JOB-LEVEL PRICE CLAMP ──
   // After scoring and tier assignment, check if the core total is wildly
   // outside the realistic range for this trade. If so, proportionally scale
@@ -642,7 +672,8 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       'concrete work', 'siding', 'window replacement', 'tenant space',
       'kitchen reno', 'addition', 'load bearing', 'flat roof', 'cedar shake',
       'hardwood floor', 'solar interconnect', 'rooftop unit', 'oil to gas',
-      'basement reno', 'garage conversion', 'restaurant buildout', 'commercial washroom', 'fire damage']);
+      'basement reno', 'garage conversion', 'restaurant buildout', 'commercial washroom', 'fire damage',
+      'full home reno', 'plumbing rough-in', 'electrical rough-in', 'hvac rough-in']);
     const COMPONENT_KW = new Set(['ignitor', 'igniter', 'sensor', 'valve', 'capacitor',
       'contactor', 'relay', 'board', 'motor', 'blower', 'fan', 'filter',
       'element', 'anode', 'flapper', 'fill', 'gasket', 'seal', 'switch',
@@ -676,6 +707,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
     related,
     optional,
     reason,
+    tradeMismatch,
     totalCount: core.length + related.length + optional.length,
   };
 }

@@ -1534,6 +1534,59 @@ const C = [
 {t:'Landscaping',c:'Labour',n:'Plant trees and shrubs',d:'Dig, plant, mulch, and stake trees or shrubs',lo:50,hi:150,p:75,syn:['plant','tree','shrub','planting','garden']},
 {t:'Landscaping',c:'Materials',n:'Mulch (per yard)',d:'Decorative or organic garden mulch',lo:40,hi:80,p:60,syn:['mulch','bark','wood chips','garden mulch']},
 {t:'Landscaping',c:'Materials',n:'Paver stones (per sqft)',d:'Interlocking concrete pavers',lo:4,hi:12,p:65,syn:['paver','interlock','stone','patio stone']},
+
+// ═══════════════════════════════════════════════════════════════
+// EXPANSION ITEMS — surfaced by the 287-job audit
+// Each item closes a real gap where the engine identified the
+// trade/object correctly but the catalog had no matching item.
+// ═══════════════════════════════════════════════════════════════
+
+// Roofing — specialty roof types
+{t:'Roofing',c:'Labour',n:'Cedar shake roof — full replacement',d:'Tear-off and install premium cedar shake roof with underlayment',lo:1200,hi:2200,p:60,syn:['cedar shake','shake roof','wood shake','cedar shingle']},
+{t:'Roofing',c:'Labour',n:'Cedar shake roof — partial replacement',d:'Replace damaged section of cedar shake roof',lo:600,hi:1400,p:60,syn:['cedar shake repair','shake partial','wood shake partial']},
+{t:'Roofing',c:'Labour',n:'Install snow guards on metal roof',d:'Mount snow retention guards along metal roof eaves',lo:280,hi:520,p:55,syn:['snow guard','snow stop','snow rail','snow retention','metal roof snow']},
+{t:'Roofing',c:'Labour',n:'Hurricane-rated roof system',d:'High-wind shingle install with sealed deck and strapping',lo:1400,hi:2600,p:50,syn:['hurricane','hurricane-rated','high-wind','wind-rated','coastal roof','impact-rated']},
+
+// Flooring — specialty floors
+{t:'Flooring',c:'Labour',n:'Install radiant heat tile system',d:'Lay electric radiant mat and tile bathroom or kitchen floor',lo:850,hi:1800,p:70,syn:['radiant heat tile','radiant mat','heated floor','schluter ditra','electric radiant','floor heat']},
+{t:'Flooring',c:'Labour',n:'Install epoxy floor coating',d:'Grind, prep, and apply two-coat epoxy floor coating',lo:700,hi:1600,p:75,syn:['epoxy floor','epoxy coating','garage floor coat','garage epoxy','floor coating','polyaspartic','shop floor coating']},
+{t:'Flooring',c:'Labour',n:'Install commercial vinyl tile (VCT)',d:'Install commercial-grade vinyl composition tile in retail or office',lo:380,hi:900,p:65,syn:['commercial vinyl','vct','vinyl composition','commercial-grade vinyl','vinyl composite']},
+{t:'Flooring',c:'Labour',n:'Self-leveling underlayment',d:'Pour and trowel self-leveling cement over uneven subfloor',lo:450,hi:1100,p:70,syn:['self-leveling','self leveling','levelling','self-levelling','leveling underlayment','subfloor prep','floor leveling']},
+{t:'Flooring',c:'Labour',n:'Install Schluter waterproofing membrane',d:'Install Kerdi or DITRA waterproof membrane in shower or wet area',lo:480,hi:1100,p:65,syn:['schluter','kerdi','schluter membrane','waterproofing membrane','shower waterproof','redgard']},
+
+// Restoration — specialty work
+{t:'Restoration',c:'Labour',n:'Asbestos abatement — small area',d:'Licensed removal of asbestos pipe insulation or floor tile',lo:1200,hi:3000,p:70,syn:['asbestos','asbestos abatement','asbestos removal','asbestos remediation','vermiculite']},
+{t:'Restoration',c:'Labour',n:'Asbestos abatement — large area',d:'Full-room or attic asbestos removal with containment',lo:3500,hi:9000,p:60,syn:['asbestos','asbestos abatement','asbestos removal','asbestos remediation']},
+
+// Electrician — HVAC tie-in + pool
+{t:'Electrician',c:'Labour',n:'Install HVAC whip and disconnect',d:'Wire flex whip and 60A fused disconnect for rooftop or condenser unit',lo:280,hi:520,p:70,syn:['hvac whip','whip and disconnect','condenser disconnect','rooftop disconnect','rtu power','condenser whip']},
+{t:'Electrician',c:'Labour',n:'Pool pump electrical hookup',d:'Run dedicated circuit, GFCI, and bonding to pool pump',lo:480,hi:1100,p:75,syn:['pool pump','pool electrical','pool wiring','spa pump','bonding pool','pool circuit','pool hookup']},
+{t:'Electrician',c:'Labour',n:'Run conduit and feeder for outdoor equipment',d:'Trench, lay conduit, and pull feeder for pump, spa, or sub equipment',lo:520,hi:1200,p:70,syn:['run conduit','pull wire','feeder run','underground conduit','conduit and wire','outdoor feeder']},
+
+// HVAC — VRF / commercial
+{t:'HVAC',c:'Labour',n:'Install VRF multi-zone indoor head',d:'Mount, connect line set, and commission one VRF indoor head',lo:450,hi:950,p:55,syn:['vrf head','vrf indoor','variable refrigerant','vrf install','multi-zone head']},
+{t:'HVAC',c:'Labour',n:'Install VRF system — base setup',d:'Outdoor VRF condensing unit and main refrigerant trunk install',lo:2800,hi:6500,p:50,syn:['vrf system','vrf base','variable refrigerant flow','vrf condenser']},
+{t:'HVAC',c:'Labour',n:'Install zone damper system',d:'Add motorized dampers and zone controller to existing ductwork',lo:850,hi:1800,p:65,syn:['zone damper','dual zone','zoning system','damper control','multi-zone','zoning damper']},
+{t:'HVAC',c:'Labour',n:'Install RTU economizer',d:'Add outdoor air economizer with controls to rooftop unit',lo:1100,hi:2400,p:55,syn:['economizer','outdoor air damper','free cooling','rtu economizer','economizer control']},
+{t:'HVAC',c:'Labour',n:'Add return air duct',d:'Cut, run, and connect a new return air duct to undersized room',lo:380,hi:780,p:70,syn:['return air','return duct','add return','return air drop','cold air return']},
+{t:'HVAC',c:'Labour',n:'AC capacitor + hard start kit',d:'Replace dual-run capacitor and install hard start booster',lo:280,hi:480,p:80,syn:['hard start','hard start kit','capacitor swap','dual run capacitor','start capacitor']},
+{t:'HVAC',c:'Labour',n:'Commercial kitchen hood balancing',d:'Balance commercial hood exhaust + makeup air with damper adjustment',lo:520,hi:1100,p:60,syn:['hood balancing','makeup air','kitchen hood','restaurant hood','grease hood','exhaust balance']},
+
+// Appliance Install — split installs
+{t:'Appliance Install',c:'Labour',n:'Install built-in wall oven',d:'Mount, level, and connect built-in single or double wall oven',lo:220,hi:420,p:70,syn:['wall oven','built-in oven','built in oven','install wall oven']},
+{t:'Appliance Install',c:'Labour',n:'Install cooktop',d:'Cut counter, drop in, and connect electric or gas cooktop',lo:180,hi:380,p:70,syn:['cooktop','install cooktop','stovetop','cooktop install']},
+
+// Electrician — battery storage
+{t:'Electrician',c:'Labour',n:'Battery storage interconnect (Powerwall / ESS)',d:'Install transfer interlock and tie battery storage system to main panel',lo:850,hi:2200,p:60,syn:['powerwall','tesla powerwall','battery backup','battery storage','ess interconnect','enphase battery','solar battery']},
+
+// Flooring — sheet vinyl / linoleum
+{t:'Flooring',c:'Labour',n:'Install linoleum sheet flooring',d:'Lay and heat-weld sheet vinyl or linoleum in commercial or healthcare room',lo:480,hi:1300,p:60,syn:['linoleum','lino','marmoleum','sheet vinyl','sheet flooring','commercial sheet vinyl','healthcare floor']},
+
+// General Contractor — package items
+{t:'General Contractor',c:'Labour',n:'Restaurant build-out package',d:'Full dining + bar tenant fit-out: framing, electrical, plumbing rough-in',lo:35,hi:95,p:55,syn:['restaurant build','restaurant build-out','restaurant buildout','restaurant fit-out','dining room build','bar build']},
+{t:'General Contractor',c:'Labour',n:'Commercial bathroom partitions',d:'Install metal or solid-plastic toilet partitions and door hardware',lo:480,hi:1200,p:70,syn:['toilet partition','bathroom partition','washroom partition','stall partition','partition install']},
+{t:'General Contractor',c:'Labour',n:'Basement development — package',d:'Frame, insulate, drywall, and finish a basement development to lockup',lo:80,hi:160,p:60,syn:['basement development','develop basement','finish basement','basement reno','basement package','basement build-out']},
+{t:'General Contractor',c:'Labour',n:'Garage conversion to living space',d:'Insulate, frame interior, finish walls/ceiling, add flooring and HVAC',lo:8500,hi:22000,p:50,syn:['garage conversion','convert garage','garage to suite','garage to living','garage suite']},
 ];
 
 // ═══════════════════════════════════════════════════════════════
