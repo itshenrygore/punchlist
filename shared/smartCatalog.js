@@ -16,19 +16,22 @@ import { normalizeTrade, regionalize, roundPrice, anchorPrice, inferTrade } from
  * Score a single catalog item against job context.
  * Returns 0 (irrelevant) to 300+ (perfect match).
  */
-// Word-boundary match for short terms to prevent false positives
+// Word-boundary match for short terms to prevent false positives. Hyphens
+// normalise to spaces so "open-concept" matches "open concept" and vice
+// versa — same change as jobContext.wordMatch, kept here in sync.
 const _shortTermCache = new Map();
 function hayMatch(hay, term) {
-  const t = term.toLowerCase();
+  const normHay = hay.replace(/-/g, ' ');
+  const t = term.toLowerCase().replace(/-/g, ' ');
   if (t.length <= 2) {
     let re = _shortTermCache.get(t);
     if (!re) {
       re = new RegExp(`(?:^|[\\s,/|(])${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[\\s,/|)]|$)`, 'i');
       _shortTermCache.set(t, re);
     }
-    return re.test(hay);
+    return re.test(normHay);
   }
-  return hay.includes(t);
+  return normHay.includes(t);
 }
 
 // Generic terms that match too broadly in related-term checks
@@ -101,7 +104,7 @@ for (const item of C) {
 function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, normalizedTrade) {
   // ── FAST TRADE GATE — skip before any string work ──
   if (normalizedTrade && normalizedTrade !== 'Other' && item.t !== normalizedTrade) {
-    return { score: 0, hasContextSignal: false, hasObjectSignal: false };
+    return { score: 0, hasContextSignal: false, hasObjectSignal: false, hasDirectObjectMatch: false };
   }
 
   let score = normalizedTrade && normalizedTrade !== 'Other' ? 50 : 0;
@@ -254,7 +257,17 @@ function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, no
   // ── POPULARITY BONUS — small, only for tiebreaking ──
   score += Math.round((item.p || 50) * 0.08); // reduced from 0.15
 
-  return { score, hasContextSignal, hasObjectSignal: objectMatch || hasRelatedSignal };
+  return {
+    score,
+    hasContextSignal,
+    hasObjectSignal: objectMatch || hasRelatedSignal,
+    // Distinct from hasObjectSignal — true ONLY when the item directly
+    // names the chosen object (vs being a related/companion item). The
+    // tier function uses this to bypass the simple-job price ceiling:
+    // if the contractor explicitly described the work AND the catalog
+    // item matches by name, the item's price is trustworthy.
+    hasDirectObjectMatch: objectMatch,
+  };
 }
 
 
@@ -262,7 +275,7 @@ function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, no
 // TIER ASSIGNMENT — Core / Related / Optional
 // ═══════════════════════════════════════════════════════════════
 
-function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
+function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx, hasDirectObjectMatch) {
   // ALL tiers require object or related-object signal
   if (!hasObjectSignal) return null;
 
@@ -285,6 +298,11 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
     // Commercial line items that legitimately clear the simple-job ceiling.
     'eye wash', 'three phase', 'grease trap', 'booster pump', 'generator',
     'subpanel', 'storefront', 'egress window',
+    // Expansion: full-job objects from the 287-job audit.
+    'kitchen reno', 'addition', 'load bearing', 'flat roof', 'tpo membrane',
+    'cedar shake', 'hardwood floor', 'solar interconnect', 'rooftop unit',
+    'oil to gas', 'basement reno', 'garage conversion', 'restaurant buildout',
+    'commercial washroom', 'fire damage',
   ]);
   const COMPONENT_KEYWORDS = new Set([
     'ignitor', 'igniter', 'sensor', 'thermocouple', 'valve', 'capacitor',
@@ -298,7 +316,12 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
   ]);
   const hasMajorObject = ctx.objects.some(o => MAJOR_OBJECTS.has(o));
   const hasComponent = ctx.keywords.some(k => COMPONENT_KEYWORDS.has(k));
-  const applyGate = !hasMajorObject || hasComponent;
+  // Bypass the price ceiling when the item directly matches the named
+  // object — the contractor explicitly described THIS work, so trust
+  // the catalog price. Without this, a shower waterproofing job sees
+  // "Install shower tile $800-$1,100" demoted to related because $1,100
+  // exceeds the simple-job ceiling.
+  const applyGate = (!hasMajorObject || hasComponent) && !hasDirectObjectMatch;
 
   if (applyGate && score >= 180) {
     const itemMid = ((item.lo || 0) + (item.hi || 0)) / 2;
@@ -384,10 +407,10 @@ export function getSmartSuggestions({ description, title, trade, province }) {
   // Score every catalog item
   const scored = [];
   for (const item of C) {
-    const { score, hasContextSignal, hasObjectSignal } = scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, nTrade);
+    const { score, hasContextSignal, hasObjectSignal, hasDirectObjectMatch } = scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, nTrade);
     if (score <= 0) continue;
 
-    const tier = assignTier(score, hasContextSignal, hasObjectSignal, item, ctx);
+    const tier = assignTier(score, hasContextSignal, hasObjectSignal, item, ctx, hasDirectObjectMatch);
     if (!tier) continue;
 
     const adj = regionalize(item, province);
@@ -407,6 +430,9 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       score,
       tier,
       reason: itemReason,
+      // Stash so the promote-step below can find the best direct-object
+      // match if the core tier ends up empty.
+      _directObject: hasDirectObjectMatch,
       // ── Prompt 7A: contextual enrichment for catalog fallback display ──
       why: itemReason,
       pricing_basis: `${item.t || ''} · ${item.c || 'General'} · ${province || 'CA'} market range`,
@@ -521,6 +547,26 @@ export function getSmartSuggestions({ description, title, trade, province }) {
   sortWithinTier(related);
   sortWithinTier(optional);
 
+  // ── DIRECT-OBJECT PROMOTION ──
+  // If core ended up empty but related contains an item that DIRECTLY
+  // matched the named object (not a keyword/companion match), promote the
+  // strongest such item to core. Catches cases where the catalog only has
+  // ONE matching item — e.g. "Mount TV on wall" for a TV mount job, or
+  // "Caulking — kitchen or bath" for a caulking job. Without this, a
+  // perfectly-priced exact-match item shows as a tentative "related"
+  // suggestion instead of a confident core item.
+  if (core.length === 0 && related.length > 0) {
+    const idx = related.findIndex(r => r._directObject);
+    if (idx >= 0) {
+      const item = related.splice(idx, 1)[0];
+      item.tier = 'core';
+      item.reason = item.reason || `${nTrade} · ${ctx.jobType || 'core item'}`;
+      core.push(item);
+    }
+  }
+  // Drop the internal marker so it never reaches the UI.
+  [...core, ...related, ...optional].forEach(i => { delete i._directObject; });
+
   // ── DIAGNOSTIC FALLBACK ──
   // A low-signal job ("bathroom is leaking somewhere, not sure where") can
   // match no object and no keyword. Rather than show an empty panel, surface
@@ -593,7 +639,10 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       'mini split', 'heat pump', 'sewer line', 'main line', 'hot tub', 'ev charger',
       'deck', 'roof', 'bathroom', 'kitchen', 'basement',
       'poly b repipe', 'whole home rewire', 'bathroom reno', 'water damage',
-      'concrete work', 'siding', 'window replacement', 'tenant space']);
+      'concrete work', 'siding', 'window replacement', 'tenant space',
+      'kitchen reno', 'addition', 'load bearing', 'flat roof', 'cedar shake',
+      'hardwood floor', 'solar interconnect', 'rooftop unit', 'oil to gas',
+      'basement reno', 'garage conversion', 'restaurant buildout', 'commercial washroom', 'fire damage']);
     const COMPONENT_KW = new Set(['ignitor', 'igniter', 'sensor', 'valve', 'capacitor',
       'contactor', 'relay', 'board', 'motor', 'blower', 'fan', 'filter',
       'element', 'anode', 'flapper', 'fill', 'gasket', 'seal', 'switch',

@@ -4,6 +4,7 @@ import CustomerPicker from './customer-picker';
 import { currency } from '../../lib/format';
 import { showFinancing, estimateMonthly } from '../../lib/financing';
 import { genLineItemId } from '../../lib/utils';
+import { useForeman } from '../../contexts/foreman-context';
 
 /**
  * ReviewStep — Customer + Items + Scope + Total
@@ -66,8 +67,22 @@ export default function ReviewStep({
 }) {
   const [leavingItemIds, setLeavingItemIds] = useState(() => new Set());
   const [showFrequent, setShowFrequent] = useState(false);
+  const { requestOpen: requestOpenForeman } = useForeman();
 
   const itemCount = lineItems.filter(i => i.name?.trim()).length;
+
+  // Open Foreman with a starter question about a specific line item.
+  // ForemanContext already has the live quote context (set by quote-builder
+  // page), so Foreman sees both the item AND its surrounding scope when it
+  // answers — that's why the prompt doesn't need to repeat the trade.
+  function handleAskForeman(item) {
+    const qty = Number(item.quantity || 1);
+    const price = Number(item.unit_price || 0);
+    const priceStr = price > 0 ? `\$${price}${qty > 1 ? ` × ${qty}` : ''}` : 'no price set';
+    requestOpenForeman({
+      prefill: `About this line item: "${item.name}" (${priceStr}). Is this priced right for my province, is anything typically bundled with it that I'm missing, and would you change it?`,
+    });
+  }
 
   function updateItem(itemId, updates) {
     onLineItemsChange(prev => prev.map(i => i.id === itemId ? { ...i, ...updates } : i));
@@ -156,6 +171,7 @@ export default function ReviewStep({
               onReorder={reorderItems}
               isLast={idx === lineItems.length - 1}
               onAddNew={addBlankItem}
+              onAskForeman={handleAskForeman}
               country={country}
               isLeaving={leavingItemIds.has(item.id)}
             />

@@ -360,7 +360,7 @@ async function executeTool(name, args, userId, supabase) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (blocked(res, `ai-assist:${getClientIp(req)}`, 20, 60_000)) return;
-  let { messages = [], userId, trade = 'Other', province = 'AB', country = 'CA', labourRate = 0, quoteContext = null } = req.body || {};
+  let { messages = [], userId, trade = 'Other', province = 'AB', country = 'CA', defaultCity = '', labourRate = 0, quoteContext = null } = req.body || {};
   if (!messages.length) return res.status(400).json({ error: 'No messages' });
 
   // Auth: ALWAYS require a verified JWT. The previous version only ran
@@ -386,6 +386,7 @@ export default async function handler(req, res) {
   const curr = country === 'US' ? 'USD' : 'CAD';
   const region = country === 'US' ? 'American' : 'Canadian';
   const labCtx = labourRate > 0 ? ` The contractor charges $${labourRate}/hr.` : '';
+  const cityCtx = defaultCity ? ` Primary city: ${defaultCity.slice(0, 80)}.` : '';
 
   // Build active quote context if provided
   let activeQuoteCtx = '';
@@ -430,7 +431,7 @@ export default async function handler(req, res) {
     } catch {}
   }
 
-  const systemPrompt = `You are Foreman — a senior trades pro built into the Punchlist app.${trade !== 'Other' ? ` This contractor is a ${trade.toLowerCase()}.` : ''} ${region}, ${curr} pricing.${labCtx}${bizContext}${activeQuoteCtx}
+  const systemPrompt = `You are Foreman — a senior trades pro built into the Punchlist app.${trade !== 'Other' ? ` This contractor is a ${trade.toLowerCase()}.` : ''} ${region}, ${curr} pricing.${cityCtx}${labCtx}${bizContext}${activeQuoteCtx}
 
 CRITICAL RESPONSE RULES:
 1. Lead with the answer. First sentence = what to do or what it costs.
@@ -445,7 +446,7 @@ CRITICAL RESPONSE RULES:
 10. If you use a tool, summarize the result in 1-2 lines. Don't narrate what you did.
 11. If the contractor asks about their day, status, or what to focus on, reference the business context above — mention quotes needing follow-up and close rate if relevant. Don't lecture, just surface the data.
 12. If there is an ACTIVE QUOTE above, you can see its line items, description, and total. Reference this directly when the contractor asks about "this quote", "the current job", "what else to include", etc. Suggest specific missing items with prices. Don't say you can't see the quote — you can.
-13. PERMITS / CODE / INSPECTIONS — permit rules and amendments often differ by municipality, not just province. When the question is permit, inspection, code amendment, or local approval, ALWAYS ask for the job city / town / municipality first if it has not been mentioned in this turn. Give the answer in the SAME reply: state the provincial baseline you know, then say one short line like "Which city is the job in? Some permits are municipal" and stop. Don't ask if the answer is obviously province-wide (e.g., national electrical code minimums). Once they tell you the city, give the city-specific answer if you know it; if not, name the AHJ (Authority Having Jurisdiction) they should call and say what to ask for.
+13. PERMITS / CODE / INSPECTIONS — permit rules and inspection authorities often differ by municipality, not just province. ${defaultCity ? `The contractor's primary city is ${defaultCity}; answer for ${defaultCity} by default, but ask which city if THIS job is somewhere else.` : 'When the question is permit, inspection, code amendment, or local approval, give the provincial baseline you know, then ask one short line like "Which city is the job in? Some permits are municipal." Don\'t ask if the answer is obviously province-wide (e.g. national electrical code minimums).'} When you don't know the city-specific rule, name the AHJ (Authority Having Jurisdiction) and say what to ask for.
 
 TOOLS AVAILABLE — reach for them aggressively:
 - read_quote_detail when asked about a specific named quote and there's no ACTIVE QUOTE above.
@@ -485,81 +486,185 @@ Knowledge: ${country === 'CA' ? 'CEC, CPC, NBC' : 'NEC, IPC, IBC'} for ${provinc
     }
   }
 
-  try {
-    const hasPhoto = messages.some(m => m.photo);
-    const model = hasPhoto ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5-20251001';
+  // ── Stream-aware Claude caller ──
+  // Calls Anthropic with stream:true and reconstructs the full content[]
+  // array client-side. On each text_delta, invokes onText so the handler
+  // can forward tokens through the SSE pipe. Tool_use blocks come down as
+  // partial input_json_delta events — buffered and parsed at content_block_stop.
+  // Returns { content, stop_reason } in the same shape as a non-streaming call.
+  async function callClaudeStream({ model, system, messages: msgs, max_tokens, tools, onText }) {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify({ model, system, messages: msgs, max_tokens, tools, stream: true }),
+    });
+    if (!r.ok) {
+      const errText = await r.text().catch(() => '');
+      throw new Error(`Claude ${r.status}: ${errText.slice(0, 160)}`);
+    }
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const blocks = [];   // accumulated content blocks
+    let cur = null;      // currently-building block
+    let toolJsonBuf = '';
+    let stopReason = null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (!payload || payload === '[DONE]') continue;
+        let ev;
+        try { ev = JSON.parse(payload); } catch { continue; }
+        if (ev.type === 'content_block_start') {
+          cur = { ...ev.content_block };
+          if (cur.type === 'text') cur.text = '';
+          if (cur.type === 'tool_use') { cur.input = {}; toolJsonBuf = ''; }
+        } else if (ev.type === 'content_block_delta') {
+          if (ev.delta?.type === 'text_delta' && cur?.type === 'text') {
+            cur.text += ev.delta.text || '';
+            onText?.(ev.delta.text || '');
+          } else if (ev.delta?.type === 'input_json_delta' && cur?.type === 'tool_use') {
+            toolJsonBuf += ev.delta.partial_json || '';
+          }
+        } else if (ev.type === 'content_block_stop') {
+          if (cur?.type === 'tool_use') {
+            try { cur.input = JSON.parse(toolJsonBuf || '{}'); } catch { cur.input = {}; }
+          }
+          if (cur) blocks.push(cur);
+          cur = null;
+        } else if (ev.type === 'message_delta') {
+          if (ev.delta?.stop_reason) stopReason = ev.delta.stop_reason;
+        }
+      }
+    }
+    return { content: blocks, stop_reason: stopReason };
+  }
 
-    let resp = await fetch('https://api.anthropic.com/v1/messages', {
+  // Non-streaming caller — kept for the no-stream code path.
+  async function callClaudeOnce({ model, system, messages: msgs, max_tokens, tools }) {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1200,
-        system: systemPrompt,
-        messages: claudeMessages,
-        tools: userId ? TOOL_DEFS : undefined,
-      }),
+      body: JSON.stringify({ model, max_tokens, system, messages: msgs, tools }),
     });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error?.message || `Claude ${r.status}`);
+    return j;
+  }
 
-    let data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || `Claude ${resp.status}`);
-
-    // Tool-use loop. Cap at 3 iterations so a misbehaving model can't
-    // spin Anthropic calls indefinitely and so multi-step conversational
-    // flows ("find the customer, then create a quote") work — the
-    // previous one-shot handling silently dropped the second tool call.
+  try {
+    const hasPhoto = messages.some(m => m.photo);
+    const model = hasPhoto ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5-20251001';
+    const wantStream = req.body?.stream === true;
     const MAX_TOOL_TURNS = 3;
-    let turn = 0;
     const supabase = getSupabase();
+
+    // SSE setup if streaming. Tokens flow as `{"token":"..."}`; appLinks
+    // and the [DONE] sentinel come at the end. Frontend already understands
+    // this shape (foreman-panel.jsx parses both token and appLinks events).
+    if (wantStream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      // Vercel/Cloudflare proxies sometimes hold SSE without this hint.
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders?.();
+    }
+
+    let turn = 0;
     let conversation = [...claudeMessages];
-    while (turn < MAX_TOOL_TURNS) {
-      const toolUseBlock = data.content?.find(b => b.type === 'tool_use');
-      if (!toolUseBlock || !userId) break;
-      if (!supabase) {
-        console.error('[ai-assist] Cannot execute tool - Supabase not configured');
-        return res.status(200).json({ role: 'assistant', content: 'I can not access your data right now. The database connection is not configured.' });
+    let fullText = '';
+
+    while (turn <= MAX_TOOL_TURNS) {
+      const callOpts = {
+        model,
+        system: systemPrompt,
+        messages: conversation,
+        max_tokens: turn === 0 ? 1200 : 800,
+        tools: userId ? TOOL_DEFS : undefined,
+      };
+
+      let resp;
+      if (wantStream) {
+        resp = await callClaudeStream({
+          ...callOpts,
+          onText: (chunk) => {
+            fullText += chunk;
+            // Hold back [LINK:...] markers from the wire — they're internal
+            // routing, not user-visible content. Send everything else as
+            // tokens. Imperfect mid-marker boundary handling: a [LINK that
+            // arrives split across two deltas may flash briefly. Fine for
+            // a perceived-speed win; the cleanup at end normalises.
+            const clean = chunk.replace(/\[LINK:[^\]]+\]/g, '');
+            if (clean) res.write(`data: ${JSON.stringify({ token: clean })}\n\n`);
+          },
+        });
+      } else {
+        resp = await callClaudeOnce(callOpts);
       }
+
+      const toolUseBlock = resp.content?.find(b => b.type === 'tool_use');
+      if (!toolUseBlock || !userId || turn === MAX_TOOL_TURNS) {
+        // No more tools to run — extract final text and emit appLinks.
+        const finalText = (resp.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+        const usedText = wantStream ? fullText : finalText;
+        const appLinks = [...(usedText.match(/\[LINK:(\/app\/[^\]]+)\]/g) || [])].map(l => l.match(/\[LINK:(.*?)\]/)[1]);
+        const cleanContent = usedText.replace(/\[LINK:[^\]]+\]/g, '').trim() || 'No response.';
+
+        if (wantStream) {
+          if (appLinks.length) res.write(`data: ${JSON.stringify({ appLinks })}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
+        }
+        return res.status(200).json({ role: 'assistant', content: cleanContent, appLinks });
+      }
+
+      if (!supabase) {
+        const msg = 'I can not access your data right now. The database connection is not configured.';
+        if (wantStream) {
+          res.write(`data: ${JSON.stringify({ token: msg })}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
+        }
+        return res.status(200).json({ role: 'assistant', content: msg });
+      }
+
       const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input || {}, userId, supabase);
       conversation = [
         ...conversation,
-        { role: 'assistant', content: data.content },
+        { role: 'assistant', content: resp.content },
         { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUseBlock.id, content: toolResult }] },
       ];
-      const resp2 = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 800,
-          system: systemPrompt,
-          messages: conversation,
-          tools: TOOL_DEFS,
-        }),
-      });
-      const data2 = await resp2.json();
-      if (!resp2.ok) break;
-      data = data2;
       turn++;
     }
-
-    // Extract text from response
-    const textBlocks = (data.content || []).filter(b => b.type === 'text');
-    const content = textBlocks.map(b => b.text).join('\n') || 'No response.';
-
-    const appLinks = [...(content.match(/\[LINK:(\/app\/[^\]]+)\]/g) || [])].map(l => l.match(/\[LINK:(.*?)\]/)[1]);
-    const cleanContent = content.replace(/\[LINK:[^\]]+\]/g, '').trim();
-
-    return res.status(200).json({ role: 'assistant', content: cleanContent, appLinks });
   } catch (e) {
     console.error('[ai-assist] Foreman error:', e.message);
+    if (req.body?.stream === true && !res.writableEnded) {
+      try {
+        res.setHeader('Content-Type', 'text/event-stream');
+      } catch { /* headers already sent */ }
+      res.write(`data: ${JSON.stringify({ token: 'Having trouble connecting. Try again in a moment.' })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+      return;
+    }
     return res.status(200).json({ role: 'assistant', content: 'Having trouble connecting. Try again in a moment.' });
   }
 }

@@ -194,6 +194,200 @@ const CASES = [
   { trade: 'Other', desc: 'Bathroom is leaking somewhere, not sure where', expect: [] },
   { trade: 'Other', desc: 'Install a new hot water tank and expansion tank', expect: ['water heater','expansion'] },
   { trade: 'Electrician', desc: 'Outlets in half the house stopped working', expect: ['outlet','power','breaker'] },
+
+  // ═══════════════════════════════════════════════════════════════
+  // EXPANSION SET — residential + commercial, broader trade coverage
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── PLUMBING (residential + commercial + edge cases) ──
+  { trade: 'Plumber', desc: 'Replace cartridge in single-handle shower valve, no hot water', expect: ['cartridge','shower'] },
+  { trade: 'Plumber', desc: 'Toilet flange broken, toilet rocks on the floor', expect: ['flange','toilet'] },
+  { trade: 'Plumber', desc: 'Replace wax ring and re-set the toilet', expect: ['wax ring','toilet'] },
+  { trade: 'Plumber', desc: 'Sewage ejector pump replacement in basement bathroom', expect: ['ejector','pump'] },
+  { trade: 'Plumber', desc: 'Pressure reducing valve replacement, water pressure too high', expect: ['pressure','prv','reduc'] },
+  { trade: 'Plumber', desc: 'Install pot filler over kitchen stove', expect: ['pot filler','filler'] },
+  { trade: 'Plumber', desc: 'Replace galvanized supply lines with PEX, partial repipe', expect: ['pex','pipe','supply'] },
+  { trade: 'Plumber', desc: 'Camera inspection of main sewer line, suspected roots', expect: ['camera','sewer'] },
+  { trade: 'Plumber', desc: 'Hydro jet cleaning of clogged main drain', expect: ['hydro','jet','drain'] },
+  { trade: 'Plumber', desc: 'Install double laundry sink in basement', expect: ['laundry','sink'] },
+  { trade: 'Plumber', desc: 'Replace shower drain assembly and reseal', expect: ['drain','shower'] },
+  { trade: 'Plumber', desc: 'Thaw frozen pipe in garage wall', expect: ['frozen','pipe'] },
+  { trade: 'Plumber', desc: 'Anode rod replacement on hot water tank', expect: ['anode','water heater'] },
+  { trade: 'Plumber', desc: 'Install reverse osmosis under-sink water filter', expect: ['water filter','filter','treatment'] },
+  { trade: 'Plumber', desc: 'Replace mixing valve at water heater for tempered water', expect: ['mixing','valve','water heater'] },
+  { trade: 'Plumber', desc: 'Restaurant commercial dishwasher hookup with backflow', expect: ['dishwasher','backflow'] },
+  { trade: 'Plumber', desc: 'Mop sink install in commercial janitor room', expect: ['sink','drain'] },
+  { trade: 'Plumber', desc: 'Install hands-free sensor faucet for office bathroom', expect: ['faucet'] },
+  { trade: 'Plumber', desc: 'Commercial water softener install for restaurant', expect: ['softener','treatment'] },
+
+  // ── ELECTRICAL (residential + commercial + edge cases) ──
+  { trade: 'Electrician', desc: 'Replace knob and tube wiring in attic to bedroom circuit', expect: ['rewire','wire','knob','tube'] },
+  { trade: 'Electrician', desc: 'Install arc fault breakers in bedroom panel', expect: ['afci','breaker'] },
+  { trade: 'Electrician', desc: 'Replace double-tapped breakers with tandem or new circuits', expect: ['breaker'] },
+  { trade: 'Electrician', desc: 'Install 240V outlet for electric dryer', expect: ['outlet','240','dryer'] },
+  { trade: 'Electrician', desc: 'Wire a 100A subpanel in detached workshop', expect: ['subpanel','panel'] },
+  { trade: 'Electrician', desc: 'Replace aluminum wiring pigtails with copper', expect: ['wire','aluminum','copper'] },
+  { trade: 'Electrician', desc: 'Install smart switches in kitchen and living room', expect: ['switch','smart','dimmer'] },
+  { trade: 'Electrician', desc: 'Run conduit and pull wire for new pool pump', expect: ['conduit','wire','pump'] },
+  { trade: 'Electrician', desc: 'Replace 60A panel with 200A service upgrade', expect: ['panel','200','upgrade'] },
+  { trade: 'Electrician', desc: 'Install bathroom fan with timer switch and ducting', expect: ['bathroom fan','fan','exhaust'] },
+  { trade: 'Electrician', desc: 'Install whip and disconnect for new rooftop HVAC unit', expect: ['disconnect','whip','wire'] },
+  { trade: 'Electrician', desc: 'Wire low voltage landscape lighting transformer', expect: ['light','outdoor','low voltage','landscape'] },
+  { trade: 'Electrician', desc: 'Install solar panel inverter interconnect to main panel', expect: ['panel','inverter','solar','interconnect'] },
+  { trade: 'Electrician', desc: 'Replace old fluorescent fixtures with LED in office ceiling', expect: ['light','fixture','dimmer'] },
+  { trade: 'Electrician', desc: 'Install commercial walk-in cooler dedicated circuit', expect: ['dedicated','circuit','cooler'] },
+  { trade: 'Electrician', desc: 'Wire restaurant hood fan and makeup air interlock', expect: ['hood','fan','wire'] },
+  { trade: 'Electrician', desc: 'Trench and conduit for service to detached garage', expect: ['conduit','trench','subpanel','service'] },
+  { trade: 'Electrician', desc: 'Install Tesla wall connector in garage with load monitor', expect: ['ev','charger','tesla'] },
+
+  // ── HVAC (residential + commercial + edge cases) ──
+  { trade: 'HVAC', desc: 'Replace blower motor on furnace, not blowing air', expect: ['blower','motor','furnace'] },
+  { trade: 'HVAC', desc: 'Furnace flame sensor cleaning and gas valve check', expect: ['flame sensor','furnace','gas valve'] },
+  { trade: 'HVAC', desc: 'AC capacitor swap, hard start kit install', expect: ['capacitor'] },
+  { trade: 'HVAC', desc: 'Replace evaporator coil on central AC', expect: ['coil','evaporator','ac'] },
+  { trade: 'HVAC', desc: 'Add return air drop to a hot upstairs bedroom', expect: ['duct','return','airflow'] },
+  { trade: 'HVAC', desc: 'Install dual-zone damper system on existing ducts', expect: ['zone','damper','duct'] },
+  { trade: 'HVAC', desc: 'Annual maintenance — furnace and AC tune-up', expect: ['furnace','ac','tune','maintenance'] },
+  { trade: 'HVAC', desc: 'Replace 3-zone hydronic boiler zone valve', expect: ['boiler','zone valve','valve'] },
+  { trade: 'HVAC', desc: 'Convert oil furnace to gas furnace, full conversion', expect: ['furnace','gas'] },
+  { trade: 'HVAC', desc: 'Mitsubishi multi-zone mini split, 3 heads', expect: ['mini split','line set'] },
+  { trade: 'HVAC', desc: 'Install electric baseboard heater in basement', expect: ['heater','baseboard','electric'] },
+  { trade: 'HVAC', desc: 'Replace cracked heat exchanger on furnace', expect: ['furnace','heat exchanger'] },
+  { trade: 'HVAC', desc: 'Commercial rooftop unit RTU service call', expect: ['rooftop','rtu','service','diagnostic'] },
+  { trade: 'HVAC', desc: 'Install economizer on commercial RTU', expect: ['economizer','rooftop','rtu'] },
+  { trade: 'HVAC', desc: 'Refrigerant leak repair on commercial walk-in cooler', expect: ['refrigerant','leak','cooler'] },
+  { trade: 'HVAC', desc: 'Commercial kitchen exhaust hood balancing and makeup air', expect: ['hood','exhaust','airflow','makeup'] },
+  { trade: 'HVAC', desc: 'Install VRF system in tenant office space, 4 indoor units', expect: ['indoor unit','mini split','head unit','air handler'] },
+
+  // ── ROOFING (residential + commercial + edge cases) ──
+  { trade: 'Roofing', desc: 'Full asphalt shingle roof replacement, 25 squares', expect: ['shingle','asphalt'] },
+  { trade: 'Roofing', desc: 'Install ice and water shield at eaves and valleys', expect: ['ice','shield','underlayment'] },
+  { trade: 'Roofing', desc: 'Replace metal flashing on chimney and chimney crown', expect: ['chimney','flashing'] },
+  { trade: 'Roofing', desc: 'Replace ridge vent on entire roof', expect: ['ridge vent','vent'] },
+  { trade: 'Roofing', desc: 'Repair leaking flat TPO roof on commercial building', expect: ['flat','tpo','leak','roof','membrane'] },
+  { trade: 'Roofing', desc: 'Install drip edge metal along eaves', expect: ['drip edge','edge'] },
+  { trade: 'Roofing', desc: 'Replace torch-down membrane on garage roof', expect: ['torch','membrane','flat','roof'] },
+  { trade: 'Roofing', desc: 'Cedar shake roof partial replacement', expect: ['shingle','shake','roof'] },
+  { trade: 'Roofing', desc: 'Install snow guards on metal roof', expect: ['snow','roof','metal'] },
+  { trade: 'Roofing', desc: 'EPDM rubber roof patch on commercial flat roof', expect: ['epdm','rubber','flat','roof','membrane'] },
+  { trade: 'Roofing', desc: 'Install gable end vent and bathroom roof vent cap', expect: ['vent','gable','cap'] },
+
+  // ── FLOORING (residential + commercial + edge cases) ──
+  { trade: 'Flooring', desc: 'Sand and refinish oak hardwood, 1200 sq ft, water-based finish', expect: ['hardwood','refinish'] },
+  { trade: 'Flooring', desc: 'Install engineered hardwood in living room and hallway', expect: ['hardwood','floor'] },
+  { trade: 'Flooring', desc: 'Tile heated bathroom floor over radiant mat', expect: ['tile','floor','heat'] },
+  { trade: 'Flooring', desc: 'Install commercial-grade vinyl tile in retail showroom', expect: ['vinyl','tile','floor'] },
+  { trade: 'Flooring', desc: 'Carpet tile install in office, 2000 sq ft', expect: ['carpet','floor','tile'] },
+  { trade: 'Flooring', desc: 'Stair tread and riser install with oak nosing', expect: ['stair','tread','riser'] },
+  { trade: 'Flooring', desc: 'Repair water-damaged hardwood section in kitchen', expect: ['hardwood','floor','repair','damage'] },
+  { trade: 'Flooring', desc: 'Self-leveling concrete underlayment over uneven subfloor', expect: ['floor','prep','level','underlayment'] },
+  { trade: 'Flooring', desc: 'Install epoxy floor coating in garage, 600 sq ft', expect: ['floor','epoxy','garage','coat'] },
+  { trade: 'Flooring', desc: 'Install schluter waterproofing membrane in shower', expect: ['shower','tile','waterproof','membrane'] },
+
+  // ── PAINTER (residential + commercial + edge cases) ──
+  { trade: 'Painter', desc: 'Paint open-concept main floor, walls and ceiling, 2 coats', expect: ['paint','room','wall','ceiling'] },
+  { trade: 'Painter', desc: 'Spray paint MDF closet built-ins', expect: ['paint','spray','cabinet'] },
+  { trade: 'Painter', desc: 'Repaint commercial office, 4000 sq ft, low-VOC paint', expect: ['paint','room','interior','office'] },
+  { trade: 'Painter', desc: 'Paint metal handrails and stair stringers', expect: ['paint','trim','stair'] },
+  { trade: 'Painter', desc: 'Apply elastomeric paint on stucco exterior', expect: ['paint','exterior','stucco'] },
+  { trade: 'Painter', desc: 'Repaint storefront awning and trim', expect: ['paint','trim','exterior'] },
+  { trade: 'Painter', desc: 'Stain new cedar deck and pressure wash first', expect: ['stain','deck','wash'] },
+  { trade: 'Painter', desc: 'Paint over water-stained drywall ceiling with stain blocker', expect: ['paint','primer','ceiling','stain'] },
+  { trade: 'Painter', desc: 'Repaint kitchen cabinets in semi-gloss with bonding primer', expect: ['cabinet','paint','primer'] },
+  { trade: 'Painter', desc: 'Faux finish accent wall in entryway', expect: ['paint','wall','room'] },
+
+  // ── GENERAL CONTRACTOR (residential + commercial + edge cases) ──
+  { trade: 'General Contractor', desc: 'Kitchen renovation, gut and rebuild, 200 sq ft, mid-range finishes', expect: ['kitchen','renovation','remodel','reno'] },
+  { trade: 'General Contractor', desc: 'Basement development with bedroom, bathroom, and rec room', expect: ['basement','framing','drywall'] },
+  { trade: 'General Contractor', desc: 'Build a 200 sq ft mudroom addition with foundation', expect: ['framing','addition','foundation'] },
+  { trade: 'General Contractor', desc: 'Demolish interior load-bearing wall and install beam', expect: ['demo','beam','framing'] },
+  { trade: 'General Contractor', desc: 'Garage conversion to rental suite, includes plumbing rough-in', expect: ['framing','drywall','garage'] },
+  { trade: 'General Contractor', desc: 'Tenant improvement: convert warehouse to office, 1200 sq ft', expect: ['tenant','partition','wall','ceiling'] },
+  { trade: 'General Contractor', desc: 'Install commercial accessible washroom with grab bars and partitions', expect: ['washroom','partition','renovation','grab bar','accessor'] },
+  { trade: 'General Contractor', desc: 'Restaurant build-out, dining room and bar area', expect: ['tenant','partition','framing','renovation'] },
+  { trade: 'General Contractor', desc: 'Storefront window and door replacement on retail unit', expect: ['storefront','glass','door'] },
+  { trade: 'General Contractor', desc: 'Build a 300 sq ft second-storey addition', expect: ['framing','addition'] },
+
+  // ── DRYWALL ──
+  { trade: 'Drywall', desc: 'Drywall a whole basement and tape and mud, 700 sq ft', expect: ['drywall','hang','tape','mud','basement'] },
+  { trade: 'Drywall', desc: 'Patch large 24 inch hole in hallway drywall', expect: ['drywall','patch','hole'] },
+  { trade: 'Drywall', desc: 'Skim coat textured walls smooth in two bedrooms', expect: ['skim coat','wall','drywall'] },
+  { trade: 'Drywall', desc: 'Install corner bead on new framed walls', expect: ['corner bead','drywall'] },
+  { trade: 'Drywall', desc: 'Knockdown texture finish on living room ceiling', expect: ['texture','ceiling'] },
+
+  // ── FENCING ──
+  { trade: 'Fencing', desc: 'Install 80 feet of 6 foot pressure-treated wood privacy fence', expect: ['fence','wood','privacy'] },
+  { trade: 'Fencing', desc: 'Replace 4 leaning fence posts and re-set in concrete', expect: ['fence','post'] },
+  { trade: 'Fencing', desc: 'Install 100 feet of black aluminum ornamental fence', expect: ['fence','iron','ornamental'] },
+  { trade: 'Fencing', desc: 'Install 60 feet of vinyl PVC fence with two gates', expect: ['fence','vinyl','pvc','gate'] },
+
+  // ── CONCRETE ──
+  { trade: 'Concrete', desc: 'Pour 40 foot concrete sidewalk with broom finish', expect: ['sidewalk','concrete'] },
+  { trade: 'Concrete', desc: 'Stamped concrete patio, 250 sq ft', expect: ['stamped','concrete','patio'] },
+  { trade: 'Concrete', desc: 'Seal driveway and crack-fill', expect: ['concrete','seal','crack'] },
+  { trade: 'Concrete', desc: 'Pour footings for new deck, 6 piers', expect: ['concrete','pour'] },
+  { trade: 'Concrete', desc: 'Commercial dumpster pad with rebar, 12x12', expect: ['concrete','pad','slab'] },
+
+  // ── WINDOWS & DOORS ──
+  { trade: 'Windows & Doors', desc: 'Install storm door over front entry door', expect: ['storm door','door'] },
+  { trade: 'Windows & Doors', desc: 'Replace patio sliding door with French doors', expect: ['patio door','door'] },
+  { trade: 'Windows & Doors', desc: 'Install three new casement windows in living room', expect: ['casement','window','replace'] },
+  { trade: 'Windows & Doors', desc: 'Weatherstrip and adjust all exterior doors', expect: ['weatherstrip','door'] },
+
+  // ── SIDING ──
+  { trade: 'Siding', desc: 'Full house re-side with vinyl siding and house wrap', expect: ['siding','vinyl','wrap'] },
+  { trade: 'Siding', desc: 'Repair storm-damaged section of cedar siding', expect: ['siding','repair'] },
+  { trade: 'Siding', desc: 'Replace 30 feet of rotten soffit and fascia', expect: ['soffit','fascia'] },
+
+  // ── GARAGE DOORS ──
+  { trade: 'Garage Doors', desc: 'Replace bent garage door panel and rollers', expect: ['garage','panel','roller'] },
+  { trade: 'Garage Doors', desc: 'Install new insulated double garage door with opener', expect: ['garage door','opener','double'] },
+  { trade: 'Garage Doors', desc: 'Replace weather seal at bottom of garage door', expect: ['garage','weather','seal'] },
+
+  // ── APPLIANCE INSTALL ──
+  { trade: 'Appliance Install', desc: 'Install built-in wall oven and cooktop', expect: ['oven','range'] },
+  { trade: 'Appliance Install', desc: 'Install gas dryer with new gas connection and vent', expect: ['dryer','gas','vent'] },
+  { trade: 'Appliance Install', desc: 'Install washer-dryer stacking kit', expect: ['washer','dryer'] },
+  { trade: 'Appliance Install', desc: 'Install French door refrigerator with ice maker line', expect: ['fridge','refrigerator'] },
+
+  // ── RESTORATION ──
+  { trade: 'Restoration', desc: 'Burst pipe water damage in finished basement, three rooms affected', expect: ['water','extract','dry','damage'] },
+  { trade: 'Restoration', desc: 'Mold remediation in attic from roof leak, 200 sq ft', expect: ['mold','remediation'] },
+  { trade: 'Restoration', desc: 'Smoke damage cleanup after small kitchen fire', expect: ['smoke','cleaning'] },
+  { trade: 'Restoration', desc: 'Asbestos abatement on old basement pipe insulation', expect: ['asbestos'] },
+
+  // ── HANDYMAN (small jobs) ──
+  { trade: 'Handyman', desc: 'Mount three TVs in different rooms and conceal cords', expect: ['tv','mount'] },
+  { trade: 'Handyman', desc: 'Install closet organizer kit in master bedroom', expect: ['closet','organizer','shelv'] },
+  { trade: 'Handyman', desc: 'Replace 5 interior door knobs and deadbolt on front door', expect: ['door','hardware','deadbolt'] },
+  { trade: 'Handyman', desc: 'Fix three running toilets and replace flapper assemblies', expect: ['toilet','flapper','fill'] },
+  { trade: 'Handyman', desc: 'Caulk around kitchen and bathroom counters and tubs', expect: ['caulk'] },
+  { trade: 'Handyman', desc: 'Re-hang sagging interior door', expect: ['door','hang'] },
+  { trade: 'Handyman', desc: 'Pressure wash driveway and patio', expect: ['pressure','wash'] },
+
+  // ── MULTI-TRADE / AMBIGUOUS / NATURAL-LANGUAGE ──
+  { trade: 'Other', desc: 'Customer wants a new bathroom in their basement, includes plumbing rough-in and tile', expect: ['bathroom','plumbing','rough','tile'] },
+  { trade: 'Other', desc: 'Outdoor kitchen with gas line, electrical, and concrete pad', expect: ['gas','outlet','concrete','pad'] },
+  { trade: 'Other', desc: 'EV charger install with panel upgrade to 200A', expect: ['panel','ev','charger','200'] },
+  { trade: 'Other', desc: 'New basement laundry — drain rough-in, supply, and electrical for washer dryer', expect: ['laundry','drain','rough','outlet','circuit','plumbing','diagnostic'] },
+
+  // ── US-region pricing path ──
+  { trade: 'HVAC', desc: 'Install heat pump system in Phoenix, 4 ton package unit', expect: ['heat pump','condenser','indoor'], province: 'AZ' },
+  { trade: 'Plumber', desc: 'Tankless water heater install in California single-family home', expect: ['tankless','water heater'], province: 'CA' },
+  { trade: 'Electrician', desc: 'Pool pump electrical hookup in Florida backyard', expect: ['pump','wire','outlet','ground','permit'], province: 'FL' },
+  { trade: 'Roofing', desc: 'Hurricane-rated roof replacement on coastal home', expect: ['shingle','roof','ice','underlayment'], province: 'FL' },
+
+  // ── ADVERSARIAL — vague or trick descriptions ──
+  { trade: 'Other', desc: 'I need help', expect: [] },
+  { trade: 'Other', desc: 'My wife wants something fixed in the house', expect: [] },
+  { trade: 'Plumber', desc: 'It leaks somewhere', expect: [] },
+
+  // ── DEFINITIONAL CROSS-TRADE — sanity checks for trade gating ──
+  // A plumber selected, but the description is electrical — engine should
+  // not surface electrical items as "core" when the user explicitly chose
+  // plumbing (safer to under-suggest than to hand a plumber an outlet line).
+  { trade: 'Plumber', desc: 'Add a few new outlets in the kitchen', avoid: ['Install panel'] },
+  { trade: 'Electrician', desc: 'Replace the water heater', avoid: ['Install kitchen faucet'] },
 ];
 
 function fmt$(n) { return '$' + Math.round(n).toLocaleString(); }
@@ -210,9 +404,14 @@ for (const c of CASES) {
   const coreTotal = r.core.reduce((s, i) => s + (i.mid || 0), 0);
   const grandTotal = allItems.reduce((s, i) => s + (i.mid || 0), 0);
 
+  // Cases with an explicit empty expect[] are intentionally vague ("I need
+  // help") — returning zero is the correct answer, so they don't count as
+  // problems. Without this, the harness would penalise the engine for
+  // doing the right thing on garbage input.
+  const expectsNothing = Array.isArray(c.expect) && c.expect.length === 0;
   totalCore += r.core.length;
-  if (r.core.length === 0) zeroCore++;
-  if (allItems.length === 0) zeroAll++;
+  if (r.core.length === 0 && !expectsNothing) zeroCore++;
+  if (allItems.length === 0 && !expectsNothing) zeroAll++;
 
   // Expect check: at least one expected substring appears somewhere
   let expectOk = true;
@@ -227,7 +426,10 @@ for (const c of CASES) {
     if (avoidBad.length) avoidHit++;
   }
 
-  const isProblem = r.core.length === 0 || allItems.length === 0 || !expectOk || avoidBad.length > 0;
+  const isProblem = (r.core.length === 0 && !expectsNothing)
+    || (allItems.length === 0 && !expectsNothing)
+    || !expectOk
+    || avoidBad.length > 0;
   if (isProblem) {
     problems.push({ c, r, ctx, expectOk, avoidBad, coreTotal, grandTotal });
   }

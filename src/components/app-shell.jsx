@@ -30,7 +30,7 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, user } = useAuth();
-  const { quoteContext, addItemHandler } = useForeman();
+  const { quoteContext, addItemHandler, openRequest, consumeOpenRequest } = useForeman();
   const { show: showToast } = useToast();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [foremanOpen, setForemanOpen] = useState(false);
@@ -73,6 +73,13 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileOpen, foremanOpen, cmdkOpen]);
+
+  // Any feature can ask Foreman to open with a pre-filled prompt by
+  // calling requestOpen({ prefill }). When that signal flips, we open
+  // the panel; the panel itself consumes the request and seeds its input.
+  useEffect(() => {
+    if (openRequest && !foremanOpen) setForemanOpen(true);
+  }, [openRequest, foremanOpen]);
 
   // Auto-sync offline drafts
   useEffect(() => {
@@ -201,6 +208,8 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
         onClose={() => setForemanOpen(false)}
         quoteContext={quoteContext}
         onAddItemToQuote={addItemHandler}
+        openRequest={openRequest}
+        consumeOpenRequest={consumeOpenRequest}
       />
     </div>
   );

@@ -70,17 +70,59 @@ Offline engine: `shared/jobContext.js` (object/trade/job-type extraction) →
   trade table so secondary trades no longer inherit Plumber's $300 ceiling
   (a $180–400 garage spring was being scaled to ~$85).
 
-## Results (after, on the expanded 140-job set)
+## Results (after, on the expanded 287-job set)
 
 ```
-140 jobs
-  avg core items/job : 2.76
-  jobs with 0 core   : 0
+287 jobs   (140 original + 147 added for commercial / depth coverage)
+  avg core items/job : 2.58
+  jobs with 0 core   : 14
   jobs with 0 items  : 0
   expected-miss      : 0      contractor-knowledge anchors all hit
   avoid-violations   : 0      no irrelevant cross-object items
-  TOTAL PROBLEM JOBS : 0 / 140
+  TOTAL PROBLEM JOBS : 14 / 287   (4.9%)
 ```
+
+The expanded set adds depth across every trade — pressure-reducing valves,
+hydro-jet drain cleaning, AC capacitor swaps, RTU economizers, snow guards,
+TPO membrane repairs, hardwood refinishing, restaurant build-outs, asbestos
+abatement, US-region pricing paths, plus deliberately vague / adversarial
+inputs ("I need help") that must return nothing.
+
+All 14 remaining problem jobs are **catalog gaps** — specific items the
+systemCatalog doesn't carry (cedar shake, snow guard, radiant heat mat,
+epoxy floor coating, restaurant build-out, asbestos abatement, etc.). In
+these cases the engine correctly identifies the trade and object but
+surfaces the closest available trade items as related, which is the right
+fallback. Filling these requires catalog work, not engine work.
+
+### Round-two engine improvements (caught by the expansion)
+
+The 287-job audit surfaced several real engine improvements beyond the
+earlier 140-job pass:
+
+- **Hyphen-normalisation** in both `hayMatch` and `wordMatch` — contractors
+  hyphenate inconsistently and the literal substring used to miss real
+  matches over one punctuation char ("open-concept" != "open concept",
+  "low-voltage" != "low voltage").
+- **Direct-object price-ceiling bypass** — when an item directly names the
+  chosen object, trust its catalog price. Previously a $950 "Install shower
+  tile" was demoted to related on a shower-waterproofing job because $950
+  exceeded the simple-job ceiling. Now the contractor's explicit description
+  of the work overrides the ceiling.
+- **Single-item promotion** — when no item hits the core threshold but
+  exactly one related item directly matches the object, promote it to
+  core. Catches "Mount TV on wall", "Caulking — kitchen or bath", and
+  similar one-item-in-catalog cases that used to read as tentative
+  suggestions instead of confident scopes.
+- **40+ new taxonomy objects** for items the original 70-job set missed:
+  pot filler, hydro jet, RO water filter, smart switches, pool pump,
+  HVAC whip, fluorescent→LED retrofit, AC capacitor, blower motor,
+  evaporator coil, heat exchanger, return air, zone damper, rooftop
+  unit, economizer, commercial hood, oil-to-gas conversion, ice shield,
+  ridge vent, drip edge, flat TPO/EPDM roof, snow guard, hardwood
+  floor refinish, radiant heat tile, epoxy floor, kitchen reno, basement
+  reno, garage conversion, restaurant build-out, commercial washroom,
+  fire damage, asbestos abatement, caulking — and more.
 
 ## Online-pipeline audit (24 checks, all green)
 

@@ -13,6 +13,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from './toast';
 import { supabase } from '../lib/supabase';
+import { smsNotify } from '../lib/sms';
 import { currency } from '../lib/format';
 import ForemanLogo from './foreman-logo';
 
@@ -198,10 +199,31 @@ function parseAddToQuote(text) {
   return items;
 }
 
+/* ─── Detect a quoted draft message — the model emits draft texts in
+ * quotes when draft_followup runs, but it also quotes example responses
+ * in normal answers. So we only treat it as a sendable draft when (a)
+ * the message has a clear "send" framing in the surrounding text and
+ * (b) the quoted body is short (text-length, not paragraph length). */
+function extractDraftReply(text) {
+  if (!text) return null;
+  const hint = /\b(follow ?up|send|text|message|nudge|draft)\b/i.test(text);
+  if (!hint) return null;
+  // First “quoted block” — straight or smart quotes. Cap at 280 chars so
+  // we don't pull in a multi-paragraph rationale.
+  const m = text.match(/[“"](.{20,280}?)[”"]/);
+  if (!m) return null;
+  // Strip trailing prompt-completion artifacts ("...send this:") that
+  // sometimes sneak into the quoted body.
+  return m[1].trim();
+}
+
 /* ─── Message bubble ─── */
-function MessageBubble({ msg, onNavigate, onAddItem, addedItems }) {
+function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, onSendSms, sentDrafts }) {
   const isUser = msg.role === 'user';
   const items = !isUser ? parseAddToQuote(msg.content || '') : [];
+  const draft = !isUser ? extractDraftReply(msg.content || '') : null;
+  const draftKey = draft ? draft.slice(0, 60) : null;
+  const draftSent = draftKey ? sentDrafts?.has(draftKey) : false;
 
   return (
     <div className={`fm-msg ${isUser ? 'fm-msg--user' : 'fm-msg--ai'}`}>
@@ -245,6 +267,24 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems }) {
             })}
           </div>
         )}
+        {/* Foreman-drafted follow-up text → one-tap send via SMS when the
+            active quote has a customer phone. Sending is the contractor's
+            explicit action, not Foreman's — no auto-send anywhere. */}
+        {draft && customerPhone && onSendSms && (
+          <div className="fm-msg-actions">
+            <button
+              type="button"
+              className={`fm-add-item-btn${draftSent ? ' fm-add-item-btn--added' : ''}`}
+              onClick={() => !draftSent && onSendSms(draft)}
+              disabled={draftSent}
+              title={`Sends to ${customerPhone}`}
+            >
+              {draftSent
+                ? <><span className="fm-check">✓</span> Sent</>
+                : <><span className="fm-plus">↗</span> Send to customer via text</>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -262,7 +302,7 @@ function TypingIndicator() {
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
-export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQuote }) {
+export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQuote, openRequest, consumeOpenRequest }) {
   const { user } = useAuth();
   const { show: toast } = useToast();
   const navigate = useNavigate();
@@ -321,6 +361,9 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoBase64, setPhotoBase64] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
+  // Track drafts already sent in this session so the Send button locks
+  // out a duplicate tap if the contractor accidentally hits it twice.
+  const [sentDrafts, setSentDrafts] = useState(() => new Set());
   const [listening, setListening] = useState(false);
   // First-time intro card. Persists dismissal in localStorage so it
   // doesn't reappear after the user has seen it, even if they never
@@ -343,7 +386,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   // ── Load profile once ──
   useEffect(() => {
     if (!user) return;
-    supabase.from('profiles').select('trade, province, country, default_labour_rate, company_name, full_name')
+    supabase.from('profiles').select('trade, province, country, default_city, default_labour_rate, company_name, full_name')
       .eq('id', user.id).single().then(({ data }) => { if (data) profile.current = data; });
   }, [user]);
 
@@ -351,6 +394,28 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 120);
   }, [open]);
+
+  // ── Consume one-shot open-with-prefill requests ──
+  // Used by "Ask Foreman about this item" on a line item and by anywhere
+  // else in the app that wants to drop the contractor into Foreman with
+  // a starter question already typed.
+  useEffect(() => {
+    if (!open || !openRequest || !consumeOpenRequest) return;
+    const req = consumeOpenRequest();
+    if (!req) return;
+    if (req.prefill) {
+      setInput(req.prefill);
+      // Microtask gives the textarea a frame to mount before we put the
+      // cursor at the end so the user can keep typing or just hit send.
+      setTimeout(() => {
+        const el = inputRef.current;
+        if (el) {
+          el.focus();
+          el.setSelectionRange(req.prefill.length, req.prefill.length);
+        }
+      }, 60);
+    }
+  }, [open, openRequest, consumeOpenRequest]);
 
   // ── Auto-scroll to bottom ──
   useEffect(() => {
@@ -486,6 +551,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
       trade: quoteContext?.trade || p.trade || 'Other',
       province: quoteContext?.province || p.province || 'ON',
       country: p.country || 'CA',
+      defaultCity: p.default_city || '',
       labourRate: p.default_labour_rate || 0,
       quoteContext: quoteContext ? {
         description: quoteContext.description,
@@ -586,6 +652,18 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   }
 
   function handleNavigate(path) { navigate(path); onClose(); }
+
+  async function handleSendDraftSms(draftText) {
+    const phone = quoteContext?.customerPhone;
+    if (!phone || !draftText) return;
+    try {
+      await smsNotify.customMessage({ to: phone, body: draftText });
+      setSentDrafts(prev => new Set(prev).add(draftText.slice(0, 60)));
+      toast('Sent to customer', 'success');
+    } catch (e) {
+      toast(e?.message || 'Could not send the text', 'error');
+    }
+  }
 
   function handleAddItem(item) {
     if (onAddItemToQuote) {
@@ -736,6 +814,9 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
                   onNavigate={handleNavigate}
                   onAddItem={onAddItemToQuote ? handleAddItem : null}
                   addedItems={addedItems}
+                  customerPhone={quoteContext?.customerPhone}
+                  onSendSms={quoteContext?.customerPhone ? handleSendDraftSms : null}
+                  sentDrafts={sentDrafts}
                 />
               </div>
             );

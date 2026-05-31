@@ -229,12 +229,15 @@ export default function QuoteDetailPage() {
     if (!quote) return;
     const lineItems = Array.isArray(quote.line_items) ? quote.line_items : [];
     setQuoteContext({
+      id: quote.id,
       title: quote.title || '',
       description: quote.description || '',
       trade: quote.trade,
       province: quote.province,
       status: quote.status,
       customer: quote.customer?.name || null,
+      customerPhone: quote.customer?.phone || null,
+      shareToken: quote.share_token || null,
       view_count: quote.view_count || 0,
       sent_at: quote.sent_at || null,
       items: lineItems

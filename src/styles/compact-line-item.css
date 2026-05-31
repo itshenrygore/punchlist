@@ -284,9 +284,39 @@
   color: var(--text-3);
 }
 
+/* Footer row — Ask Foreman + Done sit side by side, push apart */
+.cli-edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.cli-edit-footer:has(.cli-collapse-btn:only-child) { justify-content: flex-end; }
+
+/* Ask Foreman — quiet brand-tinted, distinct from Done */
+.cli-foreman-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn, 10px);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand, #B85128);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-standard);
+}
+.cli-foreman-btn:hover,
+.cli-foreman-btn:active {
+  background: var(--surface-2, rgba(184, 81, 40, 0.06));
+  border-color: var(--brand, #B85128);
+}
+
 /* Done button */
 .cli-collapse-btn {
-  align-self: flex-end;
   background: var(--surface-2, rgba(255,255,255,0.06));
   border: 1px solid var(--border);
   border-radius: var(--r-btn, 10px);

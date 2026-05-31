@@ -129,6 +129,7 @@ export default function SettingsPage() {
     trade: 'Plumber',
     province: 'ON',
     country: 'CA',
+    default_city: '',
     phone: '',
     default_expiry_days: 14,
     default_deposit_mode: 'none',
@@ -262,6 +263,7 @@ export default function SettingsPage() {
           trade: normalizeTrade(p.trade || 'Plumber'),
           province: p.province || 'ON',
           country: p.country || 'CA',
+          default_city: p.default_city || '',
           phone: p.phone || '',
           default_expiry_days: Number(p.default_expiry_days ?? 14),
           default_deposit_mode: p.default_deposit_mode || 'none',
@@ -647,6 +649,19 @@ export default function SettingsPage() {
                 <select className="input" value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value }))}>
                   {(form.country === 'US' ? US_STATES : CA_PROVINCES).map(p => <option key={p}>{p}</option>)}
                 </select>
+              </div>
+            </div>
+            <div className="form-row">
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span className="field-label">Primary city / municipality (optional)</span>
+                <input
+                  className="input"
+                  value={form.default_city || ''}
+                  onChange={e => setForm(p => ({ ...p, default_city: e.target.value }))}
+                  placeholder="e.g. Calgary, AB"
+                  maxLength={80}
+                />
+                <span className="field-hint">Foreman uses this as the default jurisdiction when you ask about permits or code. You can still tell Foreman a different city for a specific job.</span>
               </div>
             </div>
             <div className="form-row">
