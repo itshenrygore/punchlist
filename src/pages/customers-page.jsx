@@ -213,6 +213,29 @@ function CustomerModal({ customer, onSave, onClose, saving }) {
     setCustomTag('');
   }
 
+  // Phone Contact Picker — supported on Chrome for Android (and some mobile
+  // browsers). Feature-detected so we only show it where it actually works.
+  const contactsSupported = typeof navigator !== 'undefined' && navigator.contacts && typeof navigator.contacts.select === 'function';
+  async function importFromContacts() {
+    try {
+      const want = ['name', 'tel', 'email'];
+      let props = want;
+      if (typeof navigator.contacts.getProperties === 'function') {
+        const avail = await navigator.contacts.getProperties();
+        props = want.filter(p => avail.includes(p));
+      }
+      const picked = await navigator.contacts.select(props, { multiple: false });
+      if (!picked || !picked.length) return;
+      const c = picked[0];
+      setForm(f => ({
+        ...f,
+        name: (c.name && c.name[0]) || f.name,
+        phone: (c.tel && c.tel[0]) || f.phone,
+        email: (c.email && c.email[0]) || f.email,
+      }));
+    } catch { /* user cancelled or picker unavailable — no-op */ }
+  }
+
   return (
     <div className="cust-overlay cust-overlay--modal" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="cust-modal">
@@ -224,6 +247,15 @@ function CustomerModal({ customer, onSave, onClose, saving }) {
         </div>
         <form onSubmit={e => { e.preventDefault(); onSave(form); }}>
           <div className="cust-modal-body">
+            {contactsSupported && !customer && (
+              <>
+                <button type="button" className="btn btn-secondary full-width" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={importFromContacts}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  Fill from contacts
+                </button>
+                <div className="muted small" style={{ textAlign: 'center', marginBottom: 14 }}>or enter manually</div>
+              </>
+            )}
             <label className="label">Name <span className="req">*</span></label>
             <input className="input" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Full name" autoComplete="name" autoCapitalize="words" enterKeyHint="next" />
             <label className="label">Phone <span className="req">*</span></label>
