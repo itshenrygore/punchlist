@@ -525,8 +525,13 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   const followUps = messages.length > 0 && !loading ? getFollowUps(lastMsg, quoteContext) : [];
 
   // ── Greeting name ──
+  // Greeting: prefer the profile name (warmer) but fall back to the auth
+  // metadata so the cold-open panel doesn't say a bare "Hey" while the
+  // profile fetch is still in flight on a slow connection.
   const greetName = profile.current?.full_name?.split(' ')[0]
     || profile.current?.company_name?.split(' ')[0]
+    || user?.user_metadata?.full_name?.split(' ')[0]
+    || user?.email?.split('@')[0]
     || '';
 
   // ── Photo handling ──

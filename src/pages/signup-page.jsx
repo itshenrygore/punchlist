@@ -169,7 +169,27 @@ export default function SignupPage() {
       }
 
     } catch (err) {
-      setError(err.message || 'Couldn\u2019t create your account. Try again in a moment.');
+      // Translate raw network / Supabase errors into something a person
+      // can actually act on. "Failed to fetch" / TypeError almost always
+      // means the auth server is unreachable (offline, captive portal,
+      // ad-blocker). The bare message used to leak straight to the form.
+      const raw = String(err?.message || '').toLowerCase();
+      let msg = 'Couldn\u2019t create your account. Try again in a moment.';
+      if (/failed to fetch|networkerror|load failed|fetch.*aborted/.test(raw)) {
+        msg = 'Can\u2019t reach our servers right now. Check your connection and try again.';
+      } else if (/already registered|already exists|user already|email.*registered/.test(raw)) {
+        msg = 'An account with this email already exists. Try logging in instead.';
+      } else if (/password/.test(raw) && /(short|weak|6|8)/.test(raw)) {
+        msg = 'Password is too short \u2014 use at least 8 characters.';
+      } else if (/invalid email|email.*invalid/.test(raw)) {
+        msg = 'That email doesn\u2019t look right \u2014 double-check it.';
+      } else if (err?.message && err.message.length < 140 && !/^[A-Z]/.test(err.message)) {
+        // Tighten lowercase / lib-internal messages to one clean sentence.
+        msg = 'Sign-up didn\u2019t go through. Try again in a moment.';
+      } else if (err?.message) {
+        msg = err.message;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

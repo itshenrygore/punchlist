@@ -51,7 +51,17 @@ export default function PublicInvoicePage() {
   useEffect(() => {
     fetch(`/api/public-invoice?token=${shareToken}`)
       .then(async r => {
-        const j = await r.json().catch(() => ({}));
+        // Robust parse: treat HTML-instead-of-JSON (preview fallback, SW
+        // intercept, captive portal) as a server reach failure rather than
+        // silently dropping into a blank page. Same pattern public-quote uses.
+        const text = await r.text();
+        let j;
+        try { j = JSON.parse(text); }
+        catch {
+          const e = new Error('http_error');
+          e.friendly = 'This invoice couldn’t be loaded right now — couldn’t reach the server. Try refreshing in a moment.';
+          throw e;
+        }
         if (!r.ok) {
           // Distinguish a dead/invalid link (refreshing won't help) from a
           // transient server blip (refreshing might). Carry the friendly
@@ -60,6 +70,13 @@ export default function PublicInvoicePage() {
           e.friendly = r.status === 404
             ? 'This invoice link is invalid or has been removed. Check the link, or ask your contractor to resend it.'
             : 'This invoice couldn’t be loaded right now. Try refreshing in a moment.';
+          throw e;
+        }
+        if (!j.invoice) {
+          // 200 OK with no invoice payload also means the link is dead — used
+          // to fall through to `return null` and render a blank gradient.
+          const e = new Error('http_error');
+          e.friendly = 'This invoice link is invalid or has been removed. Check the link, or ask your contractor to resend it.';
           throw e;
         }
         return j.invoice;
