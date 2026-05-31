@@ -36,7 +36,11 @@ const OBJECTS = {
   drain:            { syn: ['drain cleaning','clogged drain','blocked drain','slow drain','snake drain','auger drain','drain clog'], related: ['p-trap','cleanout','auger','hydro jet','camera inspection'], trade: 'Plumber' },
   'gas line':       { syn: ['gas line','gas pipe','gas hookup','gas connection','bbq gas line','gas run','gas piping'], related: ['gas connector','shutoff valve','black iron','gas fitting','leak test','pressure test'], trade: 'Plumber' },
   garburator:       { syn: ['garburator','garbage disposal','insinkerator','disposal unit','garburator replace'], related: ['drain','p-trap','reset button','electrical connection'], trade: 'Plumber' },
-  pipe:             { syn: ['pipe leak','leaky pipe','leaking pipe','burst pipe','frozen pipe','pipe repair','pipe replacement','repipe','broken pipe','copper pipe','pex pipe'], related: ['fittings','pex','copper','abs','insulation','hanger','shutoff valve','solder','drywall patch'], trade: 'Plumber' },
+  pipe:             { syn: ['pipe leak','leaky pipe','leaking pipe','burst pipe','frozen pipe','pipe repair','pipe replacement','repipe','re-pipe','broken pipe','copper pipe','pex pipe'], related: ['fittings','pex','copper','abs','insulation','hanger','shutoff valve','solder','drywall patch'], trade: 'Plumber' },
+  // Poly B (polybutylene) repipe — a whole-home re-pipe job, one of the most
+  // common plumbing upgrades in 1980s–90s homes. Modeled as its own object so
+  // it matches strongly (instead of falling through to keyword-spray).
+  'poly b repipe':  { syn: ['poly b','polybutylene','poly-b','pb pipe','poly b upgrade','poly b replacement','poly b repipe','poly b removal','replace poly b','remove poly b','whole home repipe','whole-home repipe','full repipe','house repipe','repipe house'], related: ['pex','copper','manifold','fittings','shutoff valve','water shutoff','drywall patch','access hole','pressure test','permit','insulation','hanger'], trade: 'Plumber' },
   'water softener': { syn: ['water softener','softener install','hard water','water treatment','water conditioner'], related: ['bypass valve','drain line','salt','plumbing'], trade: 'Plumber' },
   'backflow':       { syn: ['backflow preventer','backflow test','rpz test','backflow device','annual backflow'], related: ['test','certification','permit'], trade: 'Plumber' },
   'hose bib':       { syn: ['hose bib','outdoor faucet','exterior faucet','garden faucet','frost free','hose spigot'], related: ['pipe','insulation','shutoff valve','frost protection'], trade: 'Plumber' },

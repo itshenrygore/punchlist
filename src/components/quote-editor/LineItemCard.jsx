@@ -200,6 +200,14 @@ export default function LineItemCard({
               <span className="li-total">{currency(lineTotal, country)}</span>
             </div>
 
+            {/* Make labour editability obvious — for labour lines, qty = hours
+                and price = your hourly rate, both tappable above. */}
+            {/labou?r/i.test(item.category || '') && (
+              <div className="li-labour-hint" style={{ fontSize: 'var(--text-2xs)', color: 'var(--muted)', marginTop: 4 }}>
+                Labour — adjust hours (qty) and your rate (price) to fit this job
+              </div>
+            )}
+
             {renderPriceHint()}
 
             {noteOpen ? (
