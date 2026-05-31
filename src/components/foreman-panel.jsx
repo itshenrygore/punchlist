@@ -151,8 +151,12 @@ function getFollowUps(lastMsg, quoteContext) {
     chips.push({ label: 'Add all to quote', send: 'Add all suggested items to the quote.' });
   if (text.includes('follow') || text.includes('nudge'))
     chips.push({ label: 'Draft a nudge text', send: 'Draft a follow-up text I can send.' });
+  // Capability-true pricing follow-up — Foreman can reason about whether a
+  // line is low/high using catalog ranges. (Replaced "Compare to my area",
+  // which promised location-specific data it doesn't have and replied
+  // "I can't do that" — a trust-killer.)
   if (text.includes('price') || text.includes('$'))
-    chips.push({ label: 'Compare to my area', send: 'How do these prices compare to my area specifically?' });
+    chips.push({ label: 'Which items look underpriced?', send: 'Which of these line items look underpriced for my province, and what would you charge?' });
 
   return chips.slice(0, 3);
 }

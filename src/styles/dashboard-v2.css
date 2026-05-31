@@ -5492,25 +5492,31 @@ a.dv2-headline-metric:hover {
 
 /* ── Quick actions (empty state) ── */
 .fm-quick-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
   width: 100%;
-  max-width: 340px;
   margin-top: 4px;
 }
 .fm-quick-btn {
-  padding: 10px 12px;
-  border-radius: 12px;
+  position: relative;
+  padding: 15px 40px 15px 16px;
+  border-radius: 14px;
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--text);
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: 14.5px;
+  font-weight: 600;
   cursor: pointer;
   text-align: left;
   line-height: 1.35;
-  transition: border-color 0.15s, background 0.15s;
+  box-shadow: 0 1px 2px rgba(16,24,40,.04);
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.fm-quick-btn::after {
+  content: '→';
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--subtle); font-weight: 700;
 }
 .fm-quick-btn:hover {
   border-color: var(--brand-line);
@@ -5830,8 +5836,7 @@ a.dv2-headline-metric:hover {
 @media (max-width: 640px) {
   .fm-panel { width: 100vw; }
   .fm-empty { padding: 16px; }
-  .fm-quick-actions { grid-template-columns: 1fr; }
-  .fm-quick-btn { text-align: center; }
+  .fm-quick-btn { text-align: left; }
   .fm-followups { padding-left: 12px; padding-right: 12px; }
 }
 
@@ -6214,4 +6219,35 @@ a.dv2-headline-metric:hover {
    per-card fixes above. */
 @media (max-width: 380px) {
   body, html { overflow-x: hidden; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FOREMAN PANEL — single authoritative layout (#6 redesign)
+   Supersedes the conflicting .fm-panel rules spread across index.css,
+   mobile-redesign.css and premium-ui.css that produced the awkward
+   "floating ¾-page" sheet. Loaded last → wins deterministically.
+   The panel is a flex child of .fm-overlay (which pins bottom on mobile,
+   right-centre on desktop), so we keep it relative and let the overlay
+   place it.
+   ════════════════════════════════════════════════════════════════ */
+.fm-panel {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 92dvh !important;
+  max-height: calc(100dvh - 20px) !important;
+  border-radius: 22px 22px 0 0 !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: none !important;
+}
+@media (min-width: 641px) {
+  .fm-panel {
+    width: 420px !important;
+    max-width: 420px !important;
+    height: calc(100dvh - 48px) !important;
+    max-height: calc(100dvh - 48px) !important;
+    border-radius: 18px !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
 }
