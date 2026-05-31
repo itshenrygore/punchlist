@@ -32,11 +32,13 @@ function getQuickActions(pathname, quoteContext) {
       { key: 'review',  label: 'Review this scope',
         send: `Review this ${tradeWord} scope end-to-end. Flag anything missing (permits, disposal, common code items), anything underbid for my province, and any line items that don't belong.` },
       { key: 'missing', label: "What am I missing?",
-        send: `What line items do contractors typically forget on a ${tradeWord} job like this? Be specific with item names and a fair price range.` },
-      { key: 'upsell',  label: 'Smart upsells',
-        send: `Based on this scope, what 2-3 optional upsells should I offer the customer? Pick add-ons they're likely to say yes to and explain why each one matters.` },
+        send: `What line items do contractors typically forget on a ${tradeWord} job like this? Be specific with item names and a fair price range so I can add them.` },
       { key: 'pricing', label: 'Check my pricing',
         send: 'Walk through my line items and tell me which prices look low, high, or right for my province. Use catalog ranges, not gut feel.' },
+      { key: 'code',    label: 'Code & permit check',
+        send: `What permits and code items are likely required for this ${tradeWord} job? Cover the provincial baseline, then ask me which city the job is in — some permits are municipal — and call out anything that would fail inspection if left out.` },
+      { key: 'upsell',  label: 'Smart upsells',
+        send: `Based on this scope, what 2-3 optional upsells should I offer the customer? Pick add-ons they're likely to say yes to and explain why each one matters.` },
     ];
   }
 
@@ -125,15 +127,17 @@ function getQuickActions(pathname, quoteContext) {
   }
 
   // ── Default catch-all (settings, billing, etc.) ───────────
+  // The most-seen empty state across the app. Tilt these toward the things
+  // a contractor needs in the moment — not just business-coaching prompts.
   return [
-    { key: 'today',    label: 'What should I focus on today?',
-      send: 'What should I focus on today? Check my pipeline and follow-ups.' },
-    { key: 'pricing',  label: 'Look up a price',
+    { key: 'price',    label: 'Look up a price',
       send: '' },
-    { key: 'scope',    label: 'Help me scope a job',
+    { key: 'diag',     label: 'Diagnose something',
+      send: "I'm looking at a problem in the field — can I describe it (or send a photo) and you tell me likely cause and fix with cost?" },
+    { key: 'code',     label: 'Code or permit question',
       send: '' },
-    { key: 'followup', label: 'Who needs a follow-up?',
-      send: 'Which quotes need follow-up right now?' },
+    { key: 'spec',     label: 'Material or spec lookup',
+      send: '' },
   ];
 }
 
@@ -251,6 +255,20 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   // last 30 messages to keep localStorage payload small. Cleared by
   // the New Chat button or when the user signs out (handled by the
   // browser session-storage on logout).
+  // ── Conversation hygiene ──
+  // The chat is persisted so a contractor can revisit yesterday's pricing
+  // question, but two things go wrong if we just keep it forever:
+  //   1. Stale context bleeds in — yesterday's kitchen-reno thread riding
+  //      along when today's question is about a 50A breaker.
+  //   2. Every turn ships up to 20 previous messages to the model, which
+  //      gets expensive and dilutes the system prompt's instructions.
+  // Compromise: keep messages persisted, but when the gap since the last
+  // turn exceeds AUTO_ARCHIVE_HOURS, treat the prior thread as history —
+  // it stays visible in the panel as a collapsed "Earlier today" /
+  // "Yesterday" divider, but is excluded from the next API call so the
+  // model starts fresh.
+  const AUTO_ARCHIVE_HOURS = 4;
+  const MAX_PERSISTED = 30;
   const _fmStorageKey = user?.id ? `pl_foreman_chat:${user.id}` : null;
   const [messages, setMessages] = useState(() => {
     if (!_fmStorageKey) return [];
@@ -258,16 +276,27 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
       const raw = localStorage.getItem(_fmStorageKey);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed.slice(-30) : [];
+      return Array.isArray(parsed) ? parsed.slice(-MAX_PERSISTED) : [];
     } catch { return []; }
   });
   useEffect(() => {
     if (!_fmStorageKey) return;
     try {
       if (messages.length === 0) localStorage.removeItem(_fmStorageKey);
-      else localStorage.setItem(_fmStorageKey, JSON.stringify(messages.slice(-30)));
+      else localStorage.setItem(_fmStorageKey, JSON.stringify(messages.slice(-MAX_PERSISTED)));
     } catch { /* private mode / quota */ }
   }, [messages, _fmStorageKey]);
+  // Index of the first message in the CURRENT session (everything before
+  // is archived context — visible but not sent on the wire).
+  const sessionStartIdx = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const t = messages[i]?.ts;
+      const prev = messages[i - 1]?.ts;
+      if (!t || !prev) continue;
+      if ((t - prev) / 36e5 >= AUTO_ARCHIVE_HOURS) return i;
+    }
+    return 0;
+  })();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -417,12 +446,17 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
     if (!msg && !photoBase64) return;
     if (loading) return;
 
-    const userMsg = { role: 'user', content: msg, photo: photoPreview || null };
+    const userMsg = { role: 'user', content: msg, photo: photoPreview || null, ts: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
-    const apiMessages = [...messages.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: msg, photo: photoBase64 || undefined }]
+    // Only ship the CURRENT session to the model — anything older than the
+    // archive boundary stays visible to the contractor but is not in the
+    // wire payload, so the model can't accidentally hallucinate continuity
+    // with yesterday's conversation.
+    const sessionMsgs = messages.slice(sessionStartIdx);
+    const apiMessages = [...sessionMsgs.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: msg, photo: photoBase64 || undefined }]
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .slice(-20);
 
@@ -463,7 +497,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
 
       const contentType = resp.headers.get('content-type') || '';
       if (contentType.includes('text/event-stream') && resp.body) {
-        const placeholder = { role: 'assistant', content: '', appLinks: [] };
+        const placeholder = { role: 'assistant', content: '', appLinks: [], ts: Date.now() };
         setMessages(prev => [...prev, placeholder]);
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
@@ -514,12 +548,14 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           role: 'assistant',
           content: data.content || 'No response.',
           appLinks: data.appLinks || [],
+          ts: Date.now(),
         }]);
       }
     } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Connection error — try again in a sec.',
+        ts: Date.now(),
       }]);
     } finally {
       setLoading(false);
@@ -664,16 +700,27 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
             </div>
           )}
 
-          {/* Chat messages */}
-          {messages.map((msg, i) => (
-            <MessageBubble
-              key={i}
-              msg={msg}
-              onNavigate={handleNavigate}
-              onAddItem={onAddItemToQuote ? handleAddItem : null}
-              addedItems={addedItems}
-            />
-          ))}
+          {/* Chat messages — archived earlier-session messages remain
+              visible so the contractor can scroll back, but a divider
+              makes it clear Foreman is starting fresh below. */}
+          {messages.map((msg, i) => {
+            const showDivider = i === sessionStartIdx && sessionStartIdx > 0;
+            return (
+              <div key={i}>
+                {showDivider && (
+                  <div className="fm-session-divider">
+                    <span>Earlier conversation</span>
+                  </div>
+                )}
+                <MessageBubble
+                  msg={msg}
+                  onNavigate={handleNavigate}
+                  onAddItem={onAddItemToQuote ? handleAddItem : null}
+                  addedItems={addedItems}
+                />
+              </div>
+            );
+          })}
 
           {loading && <TypingIndicator />}
 
