@@ -226,8 +226,9 @@ function CustomerModal({ customer, onSave, onClose, saving }) {
           <div className="cust-modal-body">
             <label className="label">Name <span className="req">*</span></label>
             <input className="input" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Full name" autoComplete="name" autoCapitalize="words" enterKeyHint="next" />
-            <label className="label">Phone</label>
-            <input className="input" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" />
+            <label className="label">Phone <span className="req">*</span></label>
+            <input className="input" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" required value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" />
+            <div className="muted small" style={{ margin: '-4px 0 4px' }}>Needed to text approval, signing, and payment updates.</div>
             <label className="label">Email</label>
             <input className="input" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck="false" enterKeyHint="next" value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@example.com" />
             <label className="label">Address</label>

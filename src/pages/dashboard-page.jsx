@@ -210,8 +210,9 @@ export default function DashboardPage() {
         try {
           const tradeMissing = !profile?.trade || profile.trade === 'Other';
           const regionMissing = !profile?.province;
+          const phoneMissing = !profile?.phone;
           const firstVisit = !localStorage.getItem('pl_onboarded');
-          if (active.length === 0 && (firstVisit || tradeMissing || regionMissing)) {
+          if (active.length === 0 && (firstVisit || tradeMissing || regionMissing || phoneMissing)) {
             setShowOnboarding(true);
           }
         } catch { /* no-op */ }

@@ -2,7 +2,7 @@ import { StepDots } from '../components/ui';
 import Logo from '../components/logo';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Wrench, Zap, Wind, Hammer, HardHat, Trees, Home, PaintBucket, MoreHorizontal } from 'lucide-react';
+import { Wrench, Zap, Wind, Hammer, HardHat, Trees, Home, PaintBucket, MoreHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { saveProfile } from '../lib/api';
 import { trackSignup } from '../lib/analytics';
@@ -79,6 +79,7 @@ export default function SignupPage() {
 
   const [password, setPassword] = useState('');
   const [trade, setTrade] = useState('');
+  const [phone, setPhone] = useState('');
   const [country, setCountry] = useState('CA');
   const [province, setProvince] = useState('AB');
   const [error, setError] = useState('');
@@ -86,6 +87,12 @@ export default function SignupPage() {
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [userId, setUserId] = useState(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Phone is required at onboarding — it's the channel we use to alert the
+  // contractor when a customer views/approves/signs/pays. Without it they
+  // get nothing (the #1 "I never got notified" cause).
+  const phoneDigits = phone.replace(/\D/g, '');
+  const phoneValid = phoneDigits.length === 10 || (phoneDigits.length === 11 && phoneDigits[0] === '1');
 
   async function handleStep1(e) {
     e.preventDefault();
@@ -157,13 +164,16 @@ export default function SignupPage() {
   }
 
   async function handleStep2() {
+    if (!phoneValid) { setError('Enter a valid mobile number so we can text you about your quotes.'); return; }
     setLoading(true);
     setError('');
     let saveFailed = false;
     try {
-      // Use the userId we already captured in step 1 — no need to re-fetch
+      // Use the userId we already captured in step 1 — no need to re-fetch.
+      // Save the phone + turn SMS alerts on (they gave us the number for
+      // exactly this — viewing/approval/signature/payment texts).
       if (userId) {
-        await saveProfile({ id: userId }, { full_name: fullName, trade, province, country, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
+        await saveProfile({ id: userId }, { full_name: fullName, trade, province, country, phone: phone.trim(), sms_notifications_enabled: true, ...(companyName.trim() ? { company_name: companyName.trim() } : {}) });
       }
     } catch (e) {
       // Non-blocking: profile was already partially created by the handle_new_user trigger,
@@ -183,11 +193,6 @@ export default function SignupPage() {
     navigate('/app/quotes/new', { replace: true });
   }
 
-  function skipToApp() {
-    try { localStorage.setItem('pl_first_run', '1'); } catch (e) { console.warn("[PL]", e); }
-    try { localStorage.setItem('pl_onboarded', '1'); } catch (e) { console.warn("[PL]", e); }
-    navigate('/app/quotes/new', { replace: true });
-  }
 
   // ── Email confirmation pending ──
   if (confirmationSent) {
@@ -264,11 +269,24 @@ export default function SignupPage() {
               Your scope, catalog, and pricing will be calibrated for <strong>{trade}</strong> work.
             </div>
           )}
-          <button className="btn btn-primary full-width" type="button" disabled={loading || !trade} onClick={handleStep2}>
+          <div className="auth-field">
+            <label htmlFor="signup-phone" className="field-label">Your mobile number</label>
+            <input
+              id="signup-phone"
+              className="input"
+              type="tel"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="(403) 555-0188"
+              autoComplete="tel"
+              inputMode="tel"
+            />
+            <div className="muted small" style={{ marginTop: 6 }}>
+              We text you the moment a customer views, approves, signs, or pays — so you never miss a job. Required.
+            </div>
+          </div>
+          <button className="btn btn-primary full-width" type="button" disabled={loading || !trade || !phoneValid} onClick={handleStep2}>
             {loading ? 'Saving…' : 'Create my first quote →'}
-          </button>
-          <button type="button" onClick={skipToApp} className="auth-skip">
-            Skip for now <ChevronRight size={14} />
           </button>
         </div>
       </div>
