@@ -1628,8 +1628,14 @@ export default function QuoteBuilderPage() {
             {error && error !== '__needs_phone__' && <div className="jd-error">{error}</div>}
             {error === '__needs_phone__' && (<div className="jd-error qb-needs-phone"><div className="qb-needs-phone-title">Add a phone number to send via text</div><div className="qb-needs-phone-row"><input className="jd-input qb-needs-phone-input" type="tel" value={inlinePhone} onChange={e => setInlinePhone(e.target.value)} placeholder="e.g. (403) 555-0100" autoFocus /><button className="btn btn-primary btn-sm" type="button" disabled={!inlinePhone.trim()} onClick={async () => { try { const cust = allCustomers.find(c => c.id === draft.customer_id); if (!cust) return; await updateCustomer(cust.id, { phone: inlinePhone.trim() }); setLocalCustomers(prev => prev.map(c => c.id === cust.id ? { ...c, phone: inlinePhone.trim() } : c)); invalidateCustomers(); setError(''); toast('Phone saved', 'success'); setTimeout(() => handleSend(), 100); } catch (e) { toast(friendly(e), 'error'); } }}>Save & send</button></div><button type="button" onClick={() => { setDeliveryMethod('copy'); setError(''); handleSend(); }} className="qb-needs-phone-alt">Or copy link instead →</button></div>)}
 
-            {/* Floating autosave indicator (mobile) */}
-            {saveState && <div className={`qb-autosave-pill${saveState === 'saved' ? ' qb-autosave-pill--done' : ''}`}>{saveState === 'saving' ? 'Saving…' : '✓ Draft saved'}</div>}
+            {/* Persistent autosave indicator — once a draft exists it stays
+                visible so the contractor KNOWS their work is saved and they
+                can leave anytime (the #1 "is this saved?" confusion). */}
+            {saveState === 'saving'
+              ? <div className="qb-autosave-pill">Saving…</div>
+              : (lastSavedAt || quoteId)
+                ? <div className="qb-autosave-pill qb-autosave-pill--done" title="Your draft is saved automatically — you can safely leave and finish later">✓ Auto-saved</div>
+                : null}
 
             {/* Sticky Footer */}
             <div className="rq-footer">
