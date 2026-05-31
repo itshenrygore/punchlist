@@ -27,6 +27,48 @@ const TOOL_DEFS = [
     input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Item or service to look up, e.g. "install kitchen faucet" or "panel upgrade"' }, trade: { type: 'string' } }, required: ['query'] },
   },
   {
+    name: 'read_quote_detail',
+    description: 'Pull the full scope of one specific quote — every line item with its quantity and price, the customer name, status, total, and view count. Use this when the contractor asks about a specific quote by title or customer ("what is on the Smith quote", "look at the bathroom reno for Maria") and you do not already have an ACTIVE QUOTE in context. Prefer this over read_quotes when you need item-level detail.',
+    input_schema: { type: 'object', properties: { quote_search: { type: 'string', description: 'Quote title fragment or customer name to disambiguate which quote to load.' } }, required: ['quote_search'] },
+  },
+  {
+    name: 'update_quote',
+    description: 'Apply a focused edit to one of the contractor\'s draft quotes: change the price of an existing line item, add a new line item, or remove a line item by name. Only operates on DRAFT quotes — never touches sent or approved quotes. Use this when the contractor explicitly tells you to make a change ("raise the faucet to 280", "add a permit line at 180", "drop the disposal line"). Always confirm the new total in your reply.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name to identify which draft to edit.' },
+        edits: {
+          type: 'array',
+          description: 'List of edits to apply. Each edit must target a line item by name (case-insensitive substring match) or be marked as an addition.',
+          items: {
+            type: 'object',
+            properties: {
+              action: { type: 'string', enum: ['set_price', 'add', 'remove'] },
+              item_name: { type: 'string', description: 'Name to match for set_price/remove, or the new line item name for add.' },
+              unit_price: { type: 'number', description: 'New price (set_price) or starting price (add). Required for set_price and add.' },
+              quantity: { type: 'number', description: 'Quantity for add. Defaults to 1.' },
+            },
+            required: ['action', 'item_name'],
+          },
+        },
+      },
+      required: ['quote_search', 'edits'],
+    },
+  },
+  {
+    name: 'draft_followup',
+    description: 'Compose a short, ready-to-send follow-up text for ONE specific quote based on its status, age, and view count. Returns the draft text — does NOT auto-send. The frontend renders it with a one-tap Send button. Use when the contractor asks "draft a follow-up for X" or "what should I send the Smith customer".',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name.' },
+        tone: { type: 'string', enum: ['friendly', 'firm', 'closing'], description: 'friendly = soft nudge; firm = it has been a while; closing = decision-time. Defaults to friendly.' },
+      },
+      required: ['quote_search'],
+    },
+  },
+  {
     name: 'start_new_quote',
     description: 'Open the new quote flow so the contractor can describe a job and let AI build the scope. Use when the user wants to create a quote through the normal flow.',
     input_schema: { type: 'object', properties: { customer_name: { type: 'string' }, description: { type: 'string' } } },
@@ -100,6 +142,162 @@ async function executeTool(name, args, userId, supabase) {
       if (!results.length) return `No items matching "${args.query}" in the catalog. You can still quote a custom price based on your experience.`;
       return results.map(r => `${r.n}: $${r.lo}–$${r.hi} (${r.d || r.c})`).join('\n');
     }
+    // Helper: resolve a search fragment to one quote owned by the user.
+    // Returns { quote, ambiguous, none } so callers can branch on each
+    // case and surface a useful message to the model.
+    async function findOneQuote(search) {
+      const s = String(search || '').trim().toLowerCase();
+      if (!s) return { none: true };
+      // Pull recent quotes and rank by title / customer-name match. Limited
+      // to the most recent 80 to keep the payload bounded even for
+      // contractors with hundreds of quotes.
+      const { data: rows } = await supabase
+        .from('quotes')
+        .select('id, title, status, total, trade, province, view_count, sent_at, updated_at, customer:customers(name), line_items')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(80);
+      if (!rows?.length) return { none: true };
+      const matches = rows.filter(r => {
+        const title = String(r.title || '').toLowerCase();
+        const cust  = String(r.customer?.name || '').toLowerCase();
+        return title.includes(s) || cust.includes(s);
+      });
+      if (!matches.length) return { none: true };
+      if (matches.length > 1) {
+        // Prefer an exact title match over a substring tie; otherwise tell
+        // the model the list so it can ask the contractor to clarify.
+        const exact = matches.find(r => String(r.title || '').toLowerCase() === s);
+        if (exact) return { quote: exact };
+        return { ambiguous: matches.slice(0, 5) };
+      }
+      return { quote: matches[0] };
+    }
+
+    if (name === 'read_quote_detail') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} — $${r.total} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      const items = Array.isArray(q.line_items) ? q.line_items : [];
+      const itemLines = items.slice(0, 30).map(li =>
+        `  - ${li.name}: ${Number(li.quantity || 1)}× $${Number(li.unit_price || 0)} = $${Number(li.quantity || 1) * Number(li.unit_price || 0)}`
+      ).join('\n');
+      return [
+        `Quote: "${q.title}"`,
+        `Customer: ${q.customer?.name || '—'}`,
+        `Status: ${q.status} · Total: $${q.total} · Viewed ${q.view_count || 0}×`,
+        `Trade: ${q.trade || '—'} · Province: ${q.province || '—'}`,
+        items.length ? `\nLine items (${items.length}):\n${itemLines}` : '\nNo line items yet.',
+      ].join('\n');
+    }
+
+    if (name === 'update_quote') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      // Hard guard: only drafts. A sent quote has been seen by the customer
+      // and may have a signature / deposit attached — silently rewriting it
+      // would be a real-money mistake. Force the contractor through the
+      // revision flow instead.
+      if (q.status !== 'draft') {
+        return `Can't edit "${q.title}" — status is ${q.status}, not draft. The contractor needs to send a revision through the quote page so the customer sees the change.`;
+      }
+      const rawEdits = Array.isArray(args.edits) ? args.edits.slice(0, 10) : [];
+      if (!rawEdits.length) return 'No edits provided.';
+
+      // Load current items from the line_items table (source of truth) — the
+      // `line_items` field on the quote row can drift.
+      const { data: dbItems } = await supabase
+        .from('line_items').select('id, name, quantity, unit_price, notes, included, category')
+        .eq('quote_id', q.id);
+      const items = (dbItems || []).map(li => ({ ...li }));
+
+      const applied = [];
+      const skipped = [];
+      const clampNum = (v, lo, hi, dflt) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+      };
+      const clampStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+
+      for (const ed of rawEdits) {
+        const action = String(ed?.action || '').toLowerCase();
+        const itemName = clampStr(ed?.item_name, 220).trim();
+        if (!itemName) { skipped.push('blank item_name'); continue; }
+        if (action === 'set_price') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, null);
+          if (newPrice === null) { skipped.push(`bad price on "${itemName}"`); continue; }
+          const oldPrice = Number(target.unit_price || 0);
+          target.unit_price = newPrice;
+          await supabase.from('line_items').update({ unit_price: newPrice }).eq('id', target.id);
+          applied.push(`${target.name}: $${oldPrice} → $${newPrice}`);
+        } else if (action === 'add') {
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, 0);
+          const qty = clampNum(ed.quantity, 0.01, 10_000, 1);
+          const ins = { quote_id: q.id, name: itemName, quantity: qty, unit_price: newPrice, included: true, category: '', notes: '' };
+          const { data: inserted } = await supabase.from('line_items').insert(ins).select().single();
+          if (inserted) {
+            items.push(inserted);
+            applied.push(`+ ${itemName} (${qty}× $${newPrice})`);
+          } else { skipped.push(`could not add "${itemName}"`); }
+        } else if (action === 'remove') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          await supabase.from('line_items').delete().eq('id', target.id);
+          items.splice(items.indexOf(target), 1);
+          applied.push(`− ${target.name}`);
+        } else {
+          skipped.push(`unknown action "${action}"`);
+        }
+      }
+
+      // Recompute total and write back.
+      const newTotal = items.reduce((s, li) => s + Number(li.quantity || 1) * Number(li.unit_price || 0), 0);
+      await supabase.from('quotes').update({ total: newTotal, updated_at: new Date().toISOString() }).eq('id', q.id);
+
+      const out = [
+        `Updated "${q.title}". New total: $${newTotal}.`,
+        applied.length ? `Applied:\n  ${applied.join('\n  ')}` : null,
+        skipped.length ? `Skipped:\n  ${skipped.join('\n  ')}` : null,
+        `[LINK:/app/quotes/${q.id}/edit]`,
+      ].filter(Boolean).join('\n');
+      return out;
+    }
+
+    if (name === 'draft_followup') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      // Don't return a tool result that pretends to send. Hand back the
+      // facts and let the model compose the message in its reply — the
+      // frontend renders it with a confirm-and-send affordance.
+      const daysSent = q.sent_at ? Math.max(0, Math.round((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)) : null;
+      const tone = ['friendly','firm','closing'].includes(args.tone) ? args.tone : 'friendly';
+      return [
+        `Follow-up context for "${q.title}":`,
+        `  Customer: ${q.customer?.name || '—'}`,
+        `  Status: ${q.status}${daysSent !== null ? ` (sent ${daysSent}d ago)` : ''}`,
+        `  Viewed: ${q.view_count || 0}× · Total: $${q.total}`,
+        `  Requested tone: ${tone}`,
+        '',
+        'Write the text the contractor can send verbatim — 1-2 short sentences, no "Hi there", reference the job specifically. Put the message in quotes so the contractor can copy it cleanly.',
+      ].join('\n');
+    }
+
     if (name === 'start_new_quote') {
       // Return a link to the new quote page — optionally with customer pre-selected
       let url = '/app/quotes/new';
@@ -248,6 +446,14 @@ CRITICAL RESPONSE RULES:
 11. If the contractor asks about their day, status, or what to focus on, reference the business context above — mention quotes needing follow-up and close rate if relevant. Don't lecture, just surface the data.
 12. If there is an ACTIVE QUOTE above, you can see its line items, description, and total. Reference this directly when the contractor asks about "this quote", "the current job", "what else to include", etc. Suggest specific missing items with prices. Don't say you can't see the quote — you can.
 13. PERMITS / CODE / INSPECTIONS — permit rules and amendments often differ by municipality, not just province. When the question is permit, inspection, code amendment, or local approval, ALWAYS ask for the job city / town / municipality first if it has not been mentioned in this turn. Give the answer in the SAME reply: state the provincial baseline you know, then say one short line like "Which city is the job in? Some permits are municipal" and stop. Don't ask if the answer is obviously province-wide (e.g., national electrical code minimums). Once they tell you the city, give the city-specific answer if you know it; if not, name the AHJ (Authority Having Jurisdiction) they should call and say what to ask for.
+
+TOOLS AVAILABLE — reach for them aggressively:
+- read_quote_detail when asked about a specific named quote and there's no ACTIVE QUOTE above.
+- update_quote when the contractor tells you to change a price, add a line, or remove a line on a DRAFT quote ("raise the faucet to 280", "add a permit line at 180"). After the tool runs, confirm the new total in one short line.
+- draft_followup when asked to draft / write / send a follow-up for a specific quote.
+- lookup_pricing for any "how much" or "what should I charge" question — use it before guessing.
+- start_new_quote when the contractor wants to begin a brand-new job.
+Never narrate the tool call. Just give the answer using its result.
 
 Example good responses:
 User: "Breaker keeps tripping on kitchen circuit"

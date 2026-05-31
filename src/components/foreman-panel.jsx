@@ -165,16 +165,35 @@ function getFollowUps(lastMsg, quoteContext) {
   return chips.slice(0, 3);
 }
 
-/* ─── Parse pricing items from AI response for "Add to quote" ─── */
+/* ─── Parse pricing items from AI response for "Add to quote" ───
+ * Claude formats line items inconsistently — sometimes hyphen bullets,
+ * sometimes asterisks, sometimes plain numbered lines; sometimes "$120–$160"
+ * with an en-dash, sometimes "$120 to $160", sometimes just "$140".
+ * The old parser required exactly one shape and silently dropped the rest,
+ * so most "+ Add" buttons never appeared. This is shape-tolerant: any
+ * bulleted / numbered line that ends with a recognisable price wins. */
 function parseAddToQuote(text) {
   const items = [];
-  const rx = /(?:^|\n)\s*[-•]\s*(.+?):\s*\$?([\d,]+)\s*[–-]\s*\$?([\d,]+)/g;
-  let m;
-  while ((m = rx.exec(text)) !== null) {
+  const seen = new Set();
+  const lines = String(text || '').split(/\r?\n/);
+  // bullet/number prefix → name → (optional :) → ($lo - $hi) | (~$mid) | ($mid)
+  // Names cap at ~80 chars so a sentence with a stray "$" doesn't get picked.
+  const rx = /^\s*(?:[-*•·]|\d+[.)])\s+(.{2,80}?)\s*[:–—-]?\s*~?\$\s?([\d,]+)(?:\s*(?:[–—-]|to)\s*\$?\s?([\d,]+))?\s*$/;
+  for (const raw of lines) {
+    const m = raw.match(rx);
+    if (!m) continue;
     const lo = Number(m[2].replace(/,/g, ''));
-    const hi = Number(m[3].replace(/,/g, ''));
-    const mid = Math.round(lo + (hi - lo) * 0.55);
-    items.push({ name: m[1].trim(), unit_price: mid, lo, hi });
+    const hi = m[3] ? Number(m[3].replace(/,/g, '')) : lo;
+    if (!Number.isFinite(lo) || lo <= 0) continue;
+    const high = Math.max(lo, hi);
+    const mid = Math.round(lo + (high - lo) * 0.55);
+    // Strip markdown emphasis / trailing punctuation from the name.
+    const name = m[1].replace(/[*_`]/g, '').replace(/[.,;]$/, '').trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push({ name, unit_price: mid, lo, hi: high });
   }
   return items;
 }
