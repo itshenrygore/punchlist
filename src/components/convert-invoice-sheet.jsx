@@ -52,7 +52,9 @@ export default function ConvertInvoiceSheet({
   // ── Choice 1: how much to invoice. Default to 'balance' when there's
   //   a paid deposit (so the customer isn't asked to pay it twice), else 'full'.
   const [amountMode, setAmountMode] = useState(() => (depositCredited > 0 ? 'balance' : 'full'));
-  const [customAmount, setCustomAmount] = useState(() => Math.round(balanceTotal));
+  // Milestone default: 50% of the balance, rounded to the nearest $50 — a
+  // common "halfway / midpoint" billing draw. Contractors edit if needed.
+  const [customAmount, setCustomAmount] = useState(() => Math.max(0, Math.round((balanceTotal / 2) / 50) * 50));
 
   // ── Choice 2: due date. We render a friendly pill; tapping reveals the input.
   const [dueDays, setDueDays] = useState(defaultDueDays);
@@ -148,6 +150,7 @@ export default function ConvertInvoiceSheet({
     <div className="cvt-overlay" role="dialog" aria-modal="true" aria-label="Create invoice" onClick={onCancel}>
       <div className="cvt-sheet" ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <div className="cvt-handle" aria-hidden="true" />
+        <div className="cvt-body">
         <div className="cvt-head">
           <div className="cvt-head-text">
             <div className="cvt-eyebrow">Create invoice</div>
@@ -285,6 +288,7 @@ export default function ConvertInvoiceSheet({
         )}
 
         {error && <div className="cvt-error" role="alert">{error}</div>}
+        </div>
 
         {/* Primary CTA — single tap creates AND sends */}
         <div className="cvt-actions">
@@ -298,7 +302,7 @@ export default function ConvertInvoiceSheet({
             {submitting
               ? 'Creating…'
               : sendChannel
-                ? <><SendIcon size={15} strokeWidth={2} /> Create &amp; {sendChannelMeta?.label?.toLowerCase() || 'send'}</>
+                ? <><SendIcon size={15} strokeWidth={2} /> Create &amp; {(() => { const lbl = sendChannelMeta?.label || 'send'; return lbl.replace(/^(\S+)/, m => m.toLowerCase()); })()}</>
                 : `Create draft — ${fmt(headlineAmount)}`}
           </button>
           {sendChannel && (

@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════════════════════════ */
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { Compass } from 'lucide-react';
 import ProtectedRoute from './protected-route';
 import ErrorBoundary from '../components/error-boundary';
 import {
@@ -51,7 +52,7 @@ function S({ fallback, children }) {
 function NotFound() {
   return (
     <div className="not-found-shell">
-      <div className="not-found-icon" aria-hidden="true" role="presentation" />
+      <div className="not-found-icon" aria-hidden="true" role="presentation"><Compass size={28} strokeWidth={1.75} /></div>
       <h1 className="not-found-heading">Page not found</h1>
       <p className="not-found-body">This page doesn't exist or has moved.</p>
       <Link className="btn btn-primary" to="/app">Back to home</Link>

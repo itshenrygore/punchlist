@@ -431,6 +431,10 @@
   font-weight: 700;
   color: var(--brand);
   text-decoration: none;
+  padding: 8px 10px;
+  margin-right: -10px;
+  border-radius: 6px;
+  min-height: 36px;
 }
 .dv2-section-link:hover { text-decoration: underline; }
 
@@ -1201,10 +1205,17 @@
 
   /* ── Headline metric pill: snugger on small phones ── */
   .dv2-headline-metric {
-    padding: 4px 8px;
+    padding: 6px 10px;
     font-size: 12px;
-    gap: 4px;
+    gap: 2px !important;
+    flex-direction: column;
+    align-items: flex-start;
+    border-radius: 12px !important;
+    white-space: normal;
+    line-height: 1.25;
   }
+  .dv2-headline-metric > span:first-child { font-size: 13px; line-height: 1.1; }
+  .dv2-headline-metric .dv2-metric-sub { font-size: 10.5px; opacity: 0.75; }
 
   /* ── Job input: clean proportions ── */
   .dv2-job-input {
@@ -1516,7 +1527,7 @@
   background: var(--panel);
   border-radius: var(--r-lg, 18px);
 }
-.cust-empty-ic { font-size: 36px; margin-bottom: 12px; }
+.cust-empty-ic { font-size: 36px; margin-bottom: 12px; color: var(--muted); display: flex; justify-content: center; }
 .cust-empty-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 8px; color: var(--text); }
 .cust-empty-body { font-size: 14px; color: var(--muted); margin: 0 0 20px; max-width: 360px; margin-left: auto; margin-right: auto; }
 
@@ -2949,7 +2960,9 @@ input[type="checkbox"] {
 .qb-templates-toggle {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 13px; font-weight: 600; color: var(--brand);
-  background: none; border: none; cursor: pointer; padding: 6px 0;
+  background: none; border: none; cursor: pointer;
+  padding: 8px 12px; margin-left: -12px;
+  min-height: 40px; border-radius: 6px;
 }
 .qb-templates-toggle:hover { text-decoration: underline; }
 .qb-templates-list {
@@ -3386,6 +3399,19 @@ input[type="checkbox"] {
   font-size: var(--text-xl) !important;
   letter-spacing: -0.03em !important;
 }
+@media (max-width: 768px) {
+  .dv2-money-chips .dv2-headline-metric {
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    gap: 2px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+  .dv2-money-chips .dv2-headline-metric > span:first-child { font-size: 14px !important; line-height: 1.1 !important; }
+  .dv2-money-chips .dv2-metric-sub { font-size: 10.5px !important; opacity: 0.75 !important; white-space: normal !important; }
+}
 
 /* ── DASHBOARD — ACTION LIST (quote rows) ───────────────────── */
 .dv2-action-list {
@@ -3753,7 +3779,10 @@ input[type="checkbox"] {
   border: none;
   cursor: pointer;
   font-weight: 600;
-  padding: 0;
+  padding: 10px 12px;
+  margin-left: -2px;
+  border-radius: 6px;
+  min-height: 40px;
 }
 .ql-clear-filters:hover { text-decoration: underline; }
 
@@ -4837,11 +4866,14 @@ a.dv2-headline-metric:hover {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 4px 0;
+  padding: 10px 12px;
+  margin-left: -12px;
   text-decoration: none;
   background: none;
   border: none;
   cursor: pointer;
+  min-height: 40px;
+  border-radius: 6px;
 }
 .qb-manual-link:hover { color: var(--text); }
 

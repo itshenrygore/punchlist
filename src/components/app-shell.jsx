@@ -121,7 +121,7 @@ export default function AppShell({ title, subtitle, children, actions, hideTitle
       <header className="app-topbar" ref={headerRef}>
         <div className="container app-topbar-inner">
           <div className="app-topbar-branding">
-            <Link to="/app" aria-label="Punchlist home">
+            <Link to="/app" aria-label="Punchlist home" className="app-topbar-logo">
               <Logo size="sm" />
             </Link>
             <div className="app-topbar-titleblock">

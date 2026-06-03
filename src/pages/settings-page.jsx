@@ -1275,12 +1275,14 @@ export default function SettingsPage() {
         </div>
         </>}
 
-        {/* Explicit save */}
-        <div className="sp-save-footer">
-          <button className="btn btn-primary btn-sm" type="button" disabled={saving} onClick={save}>
-            {saving ? 'Saving…' : 'Save now'}
-          </button>
-        </div>
+        {/* Explicit save — hidden on tabs with no editable profile/business form */}
+        {settingsTab !== 'account' && settingsTab !== 'notifications' && (
+          <div className="sp-save-footer">
+            <button className="btn btn-primary btn-sm" type="button" disabled={saving} onClick={save}>
+              {saving ? 'Saving…' : 'Save now'}
+            </button>
+          </div>
+        )}
       </div>
     </AppShell>
   );
