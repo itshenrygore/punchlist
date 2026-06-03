@@ -180,11 +180,17 @@ export default function PublicInvoicePage() {
   // Loading state
   if (loading) return <PublicLoadingState label="Loading your invoice…" />;
 
-  // Error state
+  // Error state — pass the friendly message we built during the fetch
+  // (404 vs 500 vs unreachable each have distinct copy). Without
+  // message={error} the component fell back to a generic "this link may
+  // have expired" line for every failure, which lies to the customer
+  // when the real cause was a transient 500 / connectivity blip and
+  // they should retry instead of giving up.
   if (error && !invoice) return (
     <PublicErrorState
       docType="invoice"
       contractorName={null}
+      message={error}
       onRetry={() => window.location.reload()}
     />
   );

@@ -918,11 +918,20 @@ export default function QuoteDetailPage() {
                         {(() => {
                           const total = quote.total || 0;
                           const monthsCovered = total > 0 ? Math.round(total / 29) : 0;
-                          const roiNote = monthsCovered >= 2
-                            ? ` This job alone covers ${monthsCovered} months of Pro.`
-                            : monthsCovered === 1
-                              ? ' This job alone covers a month of Pro.'
-                              : ' One closed job typically covers it.';
+                          // Cap the ROI framing so a big job doesn't claim
+                          // something absurd like "covers 392 months of Pro".
+                          // Past ~18 months, switch to a clean "years" phrasing.
+                          let roiNote;
+                          if (monthsCovered >= 18) {
+                            const years = Math.floor(monthsCovered / 12);
+                            roiNote = ` This job alone covers ${years}+ years of Pro.`;
+                          } else if (monthsCovered >= 2) {
+                            roiNote = ` This job alone covers ${monthsCovered} months of Pro.`;
+                          } else if (monthsCovered === 1) {
+                            roiNote = ' This job alone covers a month of Pro.';
+                          } else {
+                            roiNote = ' One closed job typically covers it.';
+                          }
                           return `Deposits and invoicing are yours free — Pro lifts the 5-quote/month cap so you never hit a wall mid-month.${roiNote} $29/month.`;
                         })()}
                       </div>
