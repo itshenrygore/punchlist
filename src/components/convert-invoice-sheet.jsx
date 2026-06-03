@@ -298,7 +298,7 @@ export default function ConvertInvoiceSheet({
             {submitting
               ? 'Creating…'
               : sendChannel
-                ? <><SendIcon size={15} strokeWidth={2} /> Create &amp; {sendChannelMeta?.label?.toLowerCase() || 'send'}</>
+                ? <><SendIcon size={15} strokeWidth={2} /> Create &amp; {(() => { const lbl = sendChannelMeta?.label || 'send'; return lbl.replace(/^(\S+)/, m => m.toLowerCase()); })()}</>
                 : `Create draft — ${fmt(headlineAmount)}`}
           </button>
           {sendChannel && (
