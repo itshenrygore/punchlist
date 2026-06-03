@@ -86,7 +86,21 @@
   --logo-glass-highlight: rgba(255,255,255,0.55);
   --logo-row-fill:        #4a4f57;
 
-  color-scheme: light;
+  /* ── Z-index scale ──
+     These were previously defined ONLY inside [data-theme="dark"], so in
+     light mode (the app's default) every overlay using var(--z-modal) /
+     var(--z-overlay) without a fallback resolved to `z-index: auto` and
+     rendered UNDER the sticky topbar — most visibly the onboarding
+     wizard backdrop, which let the dashboard bleed through. Defined here
+     in :root so the whole modal/overlay/toast stack layers in both
+     themes. */
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-overlay: 300;
+  --z-toast: 400;
+
   color-scheme: light;
 }
 
