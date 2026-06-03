@@ -521,19 +521,29 @@ export default function SettingsPage() {
     finally { setExporting(false); }
   }
 
-  // 7G: Delete account
+  // 7G: Delete account — the server endpoint wipes every quote / line
+  // item / invoice / customer / template / notification / photo and
+  // finally the auth user itself, then signs us out client-side and
+  // clears IndexedDB + localStorage so the next visitor on the device
+  // starts truly fresh. Until this commit the call hit a client-only
+  // implementation that couldn't touch the auth user (silent fail) and
+  // left every quote + customer orphaned.
   async function handleDeleteAccount() {
     if (!user || !deleteConfirm || !deleteConfirm2) return;
     setDeleting(true);
     try {
-      const result = await deleteAccount(user.id);
-      if (result == null) {
-        showToast('To delete your account, email hello@punchlist.ca', 'info');
-        setDeleteConfirm(false);
-        setDeleteConfirm2(false);
-        setDeleting(false);
-        return;
+      const report = await deleteAccount();
+      // Surface a meaningful number — "We removed 42 quotes, 8 customers
+      // and 3 invoices" reads much more reassuring than a bare redirect.
+      if (report && !report.auth_deleted) {
+        // Data was wiped but the auth user couldn't be removed. The
+        // contractor's local session is gone (we signed them out), but
+        // we should be honest about what's left.
+        showToast('Your data was deleted, but your sign-in record could not be removed. Email hello@punchlist.ca to finish.', 'error');
       }
+      // Even on partial success, redirect to the landing page — staying
+      // on /app/settings with a signed-out client would re-bounce to
+      // /login and confuse the contractor.
       window.location.href = '/';
     } catch (e) {
       showToast(friendly(e), 'error');

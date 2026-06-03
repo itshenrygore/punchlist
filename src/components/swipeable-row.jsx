@@ -80,9 +80,25 @@ export default function SwipeableRow({ children, onSwipe, label = 'Archive', col
     }
   }, [offset]);
 
-  const handleAction = useCallback(() => {
+  const handleAction = useCallback(async () => {
     haptic('medium');
-    // Animate out
+    // Call the parent's onSwipe FIRST and await it. The previous version
+    // started the row's slide-out animation immediately, then fired the
+    // delete API 280ms later — which meant a failed delete left the row
+    // visually gone but still in the DB, so it reappeared on the next
+    // refresh ("I deleted one, refreshed, still 9"). Now: only animate
+    // out after the action resolves successfully.
+    let result;
+    try {
+      result = onSwipe?.();
+      if (result && typeof result.then === 'function') await result;
+    } catch (err) {
+      // The parent shows its own toast. Snap the row back to its closed
+      // position so the contractor sees nothing happened.
+      setOffset(0);
+      setRevealed(false);
+      return;
+    }
     if (rowRef.current) {
       rowRef.current.style.transition = 'transform .25s ease, opacity .25s ease, max-height .3s ease .05s';
       rowRef.current.style.transform = 'translateX(-100%)';
@@ -90,7 +106,6 @@ export default function SwipeableRow({ children, onSwipe, label = 'Archive', col
       rowRef.current.style.maxHeight = '0';
       rowRef.current.style.overflow = 'hidden';
     }
-    setTimeout(() => onSwipe?.(), 280);
   }, [onSwipe]);
 
   const reset = useCallback(() => {
