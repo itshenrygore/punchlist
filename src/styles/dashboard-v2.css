@@ -223,10 +223,29 @@
 
 /* Money-chip cluster — pipeline + owed sit side by side on the
    greeting row, stack on small viewports. */
-.dv2-money-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.dv2-money-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
 @media (max-width: 480px) {
   .dv2-money-chips { width: 100%; }
-  .dv2-money-chips .dv2-headline-metric { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .dv2-money-chips .dv2-headline-metric {
+    /* Stack value over subtitle so the longer subtitles ("awaiting
+       payment", "2 in open quotes") get the full column width instead
+       of clipping off the right edge when forced onto one line inside
+       a 50%-wide pill. */
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    line-height: 1.25;
+  }
+  .dv2-money-chips .dv2-headline-metric > span:first-child { font-size: var(--text-base); }
+  .dv2-money-chips .dv2-metric-sub {
+    white-space: normal;       /* allow the subtitle to wrap rather than clip */
+    font-size: 11px;
+    font-weight: 500;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3923,12 +3942,20 @@ a.dv2-headline-metric:hover {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+/* On a phone the two price panels (the featured one has a "Best value —
+   save $99" badge + "$20.75/mo" + a full-width button) can't shrink below
+   their content width, which pushed the whole upgrade card ~37px past the
+   viewport. Stack them so each gets the full card width and reads cleanly. */
+@media (max-width: 460px) {
+  .bp-pricing-grid { grid-template-columns: 1fr; }
+}
 .bp-price-panel {
   text-align: center;
   padding: 18px 14px;
   border-radius: var(--r-card);
   background: var(--panel);
   border: 1px solid var(--line);
+  min-width: 0; /* allow the grid item to shrink rather than force overflow */
 }
 .bp-price-panel--featured {
   border: 2px solid var(--green);
@@ -4144,6 +4171,13 @@ a.dv2-headline-metric:hover {
   flex-shrink: 0;
   font-size: var(--text-xs) !important;
 }
+/* On a phone the paragraph + button don't fit side by side — the button
+   ended up overlapping the description ("Pro lifts the 5-" clipped behind
+   it). Stack them: full-width text, then a full-width CTA below. */
+@media (max-width: 540px) {
+  .qd-pro-moment { flex-direction: column; align-items: stretch; gap: 12px; }
+  .qd-pro-moment-btn { width: 100%; text-align: center; justify-content: center; }
+}
 
 /* Job-won celebration (deposit paid, Pro users) */
 .qd-win-moment {
@@ -4316,6 +4350,15 @@ a.dv2-headline-metric:hover {
     padding: 6px 0;
     border-bottom: 1px solid var(--border);
   }
+  /* When TODAY is also empty, the empty-rule's `padding: 6px 0` removed
+     the horizontal padding that offsets the today-highlight's -12px
+     negative margin — pulling the "Today" label to -3px and clipping
+     its first letter. Keep the horizontal padding (and drop the
+     stray negative margin) so the highlight + label stay on-screen. */
+  .sch-day--today.sch-day--empty {
+    padding: 6px 12px;
+    margin: -4px 0;
+  }
   .sch-day--empty .sch-day-header { margin-bottom: 0; }
   .sch-day--empty .sch-day-count { display: none; }
   .sch-day--empty .sch-empty-day {
@@ -4344,7 +4387,23 @@ a.dv2-headline-metric:hover {
   font-size: 13px;
   line-height: 1;
 }
-.sch-date-input { font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface, #fff); color: var(--text); cursor: pointer; max-width: 130px; }
+/* Match the native datetime input to the pill buttons beside it so the
+   "pick a custom date" control reads as part of the set instead of a
+   raw browser widget. Height + radius + border align with .btn-xs. */
+.sch-date-input {
+  font-size: 12px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2, var(--surface, #fff));
+  color: var(--text-2);
+  cursor: pointer;
+  max-width: 150px;
+  font-family: inherit;
+  line-height: 1.2;
+}
+.sch-date-input:hover { border-color: var(--brand-line); color: var(--text); }
+.sch-date-input::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
 .sch-unscheduled { margin-top: 24px; }
 .sch-unsched-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 .sch-unsched-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
