@@ -2833,6 +2833,13 @@
   margin-left: 4px;
   font-size: var(--text-xs);
   font-weight: 600;
+  padding: 6px 12px;
+  margin-left: -2px;
+  border-radius: 4px;
+  display: inline-block;
+  min-height: 36px;
+  min-width: 44px;
+  line-height: 24px;
 }
 
 /* Scope summary box */

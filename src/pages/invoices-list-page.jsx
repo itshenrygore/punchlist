@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Receipt, AlertTriangle } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import { PageHeader } from '../components/ui';
 import EmptyState from '../components/empty-state';
@@ -140,7 +141,7 @@ export default function InvoicesListPage() {
       />
       {loadError && invoices.length === 0 ? (
         <EmptyState
-          icon={<span aria-hidden="true">⚠️</span>}
+          icon={<AlertTriangle size={36} strokeWidth={1.5} aria-hidden="true" />}
           title="Couldn’t load your invoices"
           description="Something went wrong reaching the server. Check your connection and try again."
         >
@@ -154,7 +155,7 @@ export default function InvoicesListPage() {
         // .es-actions next to the primary so contractors get a way
         // out when they don't have an invoice yet but do have quotes.
         <EmptyState
-          icon={<span aria-hidden="true">🧾</span>}
+          icon={<Receipt size={36} strokeWidth={1.5} aria-hidden="true" />}
           title="No invoices yet"
           description="Create a standalone invoice or convert an approved quote."
         >

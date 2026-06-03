@@ -23,7 +23,6 @@
   width: 100%;
   max-width: 540px;
   max-height: 92dvh;
-  overflow-y: auto;
   background: var(--panel-2);
   color: var(--text);
   border-radius: 22px 22px 0 0;
@@ -31,6 +30,17 @@
   box-shadow: 0 -24px 60px rgba(0, 0, 0, .35);
   padding: 8px 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
   animation: cvt-sheet-in .3s cubic-bezier(.16, 1, .3, 1) both;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cvt-body {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-left: -20px; margin-right: -20px;
+  padding-left: 20px; padding-right: 20px;
 }
 @keyframes cvt-sheet-in {
   from { transform: translateY(100%); }
@@ -300,7 +310,9 @@
   align-self: center;
   font-size: 13px;
   color: var(--muted);
-  padding: 6px 10px;
+  padding: 10px 14px;
+  min-height: 40px;
+  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {

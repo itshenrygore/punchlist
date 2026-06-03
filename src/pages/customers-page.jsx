@@ -4,6 +4,7 @@
    ═══════════════════════════════════════════════════════════════ */
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Users } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import { PageHeader } from '../components/ui';
 import { useAuth } from '../hooks/use-auth';
@@ -490,7 +491,7 @@ export default function CustomersPage() {
           <div className="cust-skel-list">{[...Array(6)].map((_, i) => <div key={i} className="cust-skel-row" />)}</div>
         ) : customers.length === 0 ? (
           <div className="cust-empty">
-            <div className="cust-empty-ic">👥</div>
+            <div className="cust-empty-ic" aria-hidden="true"><Users size={36} strokeWidth={1.5} /></div>
             <h2 className="cust-empty-title font-display">No customers yet</h2>
             <p className="cust-empty-body">Customers are added automatically when you create a quote, or add them manually.</p>
             <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)}>Add your first customer</button>

@@ -81,6 +81,9 @@
   font-size: 32px;
   line-height: 1;
   opacity: 0.9;
+  color: var(--muted);
+  display: flex;
+  justify-content: center;
 }
 .pl-empty-card .pl-empty-title {
   font-size: clamp(1.125rem, 2.4vw, 1.375rem);
@@ -547,10 +550,14 @@
   color: var(--muted);
   opacity: 0;
   transition: opacity .15s, color .15s;
+  display: inline-flex; align-items: center; justify-content: center;
 }
 .ql-row-premium:hover .ql-dup-btn { opacity: 1; }
 .ql-dup-btn:hover { color: var(--primary); }
 .ql-cards .ql-dup-btn { opacity: .6; }
+@media (max-width: 768px) {
+  .ql-dup-btn { padding: 11px; min-width: 40px; min-height: 40px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .ql-row-premium,

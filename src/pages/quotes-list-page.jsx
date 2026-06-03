@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { SearchX } from 'lucide-react';
 import AppShell from '../components/app-shell';
 import EmptyState from '../components/empty-state';
 import SwipeableRow from '../components/swipeable-row';
@@ -549,7 +550,7 @@ export default function QuotesListPage() {
           </Card>
         ) : filtered.length === 0 ? (
           <Card padding="loose" minH="220px" className="pl-empty-card">
-            <div className="pl-empty-glyph">🔍</div>
+            <div className="pl-empty-glyph" aria-hidden="true"><SearchX size={36} strokeWidth={1.5} /></div>
             <h2 className="pl-empty-title font-display">No quotes match</h2>
             <p className="pl-empty-body">Try adjusting your search or filters.</p>
             <div className="pl-empty-actions">
