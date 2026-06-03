@@ -8,7 +8,7 @@
 // What the contractor is doing (verb intent)
 const JOB_TYPE_PATTERNS = {
   install:   /\b(install|add|mount|hang|set up|setup|hook ?up|connect|wire|run|put in|new)\b/i,
-  replace:   /\b(replace|swap|change out|upgrade|switch out|new .{0,20}(for|replacing|instead))\b/i,
+  replace:   /\b(replace|swap|change out|upgrade|switch out|re-?pipe|re-?wire|new .{0,20}(for|replacing|instead))\b/i,
   repair:    /\b(repair|fix|patch|seal|stop leak|troubleshoot|diagnose|not working|not heating|not cooling|no heat|no cool|broken|leak|clog|clogged|stuck|crack|damage|faulty|backed up|running|dripping|tripping|flickering|squeaky|noisy|loud)\b/i,
   remove:    /\b(remove|demo|demolish|tear out|rip out|gut|strip|take out|disconnect|cap off)\b/i,
   maintain:  /\b(maintain|service|tune.?up|clean|inspect|test|check|annual|seasonal|flush|blowout)\b/i,
@@ -36,7 +36,7 @@ const OBJECTS = {
   drain:            { syn: ['drain cleaning','clogged drain','blocked drain','slow drain','snake drain','auger drain','drain clog'], related: ['p-trap','cleanout','auger','hydro jet','camera inspection'], trade: 'Plumber' },
   'gas line':       { syn: ['gas line','gas pipe','gas hookup','gas connection','bbq gas line','gas run','gas piping'], related: ['gas connector','shutoff valve','black iron','gas fitting','leak test','pressure test'], trade: 'Plumber' },
   garburator:       { syn: ['garburator','garbage disposal','insinkerator','disposal unit','garburator replace'], related: ['drain','p-trap','reset button','electrical connection'], trade: 'Plumber' },
-  pipe:             { syn: ['pipe leak','leaky pipe','leaking pipe','burst pipe','frozen pipe','pipe repair','pipe replacement','repipe','re-pipe','broken pipe','copper pipe','pex pipe'], related: ['fittings','pex','copper','abs','insulation','hanger','shutoff valve','solder','drywall patch'], trade: 'Plumber' },
+  pipe:             { syn: ['pipe leak','leaky pipe','leaking pipe','burst pipe','frozen pipe','pipe repair','pipe replacement','repipe','re-pipe','broken pipe','copper pipe','pex pipe','pex manifold','water manifold','manifold replacement','mechanical room','main water line','galvanized to copper'], related: ['fittings','pex','copper','abs','insulation','hanger','shutoff valve','solder','drywall patch'], trade: 'Plumber' },
   // Poly B (polybutylene) repipe — a whole-home re-pipe job, one of the most
   // common plumbing upgrades in 1980s–90s homes. Modeled as its own object so
   // it matches strongly (instead of falling through to keyword-spray).
@@ -44,33 +44,33 @@ const OBJECTS = {
   'water softener': { syn: ['water softener','softener install','hard water','water treatment','water conditioner'], related: ['bypass valve','drain line','salt','plumbing'], trade: 'Plumber' },
   'backflow':       { syn: ['backflow preventer','backflow test','rpz test','backflow device','annual backflow'], related: ['test','certification','permit'], trade: 'Plumber' },
   'hose bib':       { syn: ['hose bib','outdoor faucet','exterior faucet','garden faucet','frost free','hose spigot'], related: ['pipe','insulation','shutoff valve','frost protection'], trade: 'Plumber' },
-  dishwasher:       { syn: ['dishwasher hookup','dishwasher connection','dishwasher install','dishwasher plumbing'], related: ['supply line','drain hose','air gap','shutoff valve'], trade: 'Plumber' },
+  dishwasher:       { syn: ['dishwasher hookup','dishwasher connection','dishwasher install','install dishwasher','dishwasher','dishwasher plumbing'], related: ['supply line','drain hose','air gap','shutoff valve'], trade: 'Plumber' },
   'laundry plumbing':{ syn: ['laundry hookup','washing machine hookup','washer hookup','laundry connection','washer box'], related: ['supply valve','drain','laundry box','hoses'], trade: 'Plumber' },
   bidet:            { syn: ['bidet','bidet seat','bidet install','washlet','bidet attachment'], related: ['supply line','t-valve','mounting'], trade: 'Plumber' },
   'tub spout':      { syn: ['tub spout','diverter','tub faucet spout','spout diverter','tub diverter'], related: ['shower valve','cartridge','trim kit','caulk'], trade: 'Plumber' },
   'water pressure': { syn: ['low water pressure','water pressure','weak flow','low flow','no pressure','pressure problem'], related: ['prv','pressure reducing valve','shutoff valve','pipe','pressure test'], trade: 'Plumber' },
   'drain pipe':     { syn: ['drain pipe','kitchen drain pipe','drain pipes','replace drain','drain replacement','drain line'], related: ['p-trap','abs','pvc','fittings','cleanout','cement'], trade: 'Plumber' },
   'fridge water':   { syn: ['fridge water line','fridge line','ice maker line','refrigerator line','fridge hookup','fridge water','water line to fridge','ice maker','fridge supply'], related: ['saddle valve','shutoff valve','copper tubing','braided line'], trade: 'Plumber' },
-  'sewer':          { syn: ['sewer backup','sewage backup','sewer line','sewer repair','sewer clog','main sewer','sewage'], related: ['cleanout','camera','auger','hydro jet','backflow valve'], trade: 'Plumber' },
+  'sewer':          { syn: ['sewer backup','sewage backup','sewer line','sewer repair','sewer clog','main sewer','sewage','main line','main line clog','root intrusion','tree roots in line','main drain clog','main line camera'], related: ['cleanout','camera','auger','hydro jet','backflow valve'], trade: 'Plumber' },
   'floor drain':    { syn: ['floor drain','floor drain install','laundry drain','utility drain','basement floor drain'], related: ['trap primer','p-trap','abs pipe','concrete cutting'], trade: 'Plumber' },
 
   // ── ELECTRICAL OBJECTS (primary target trade) ──
   outlet:           { syn: ['outlet','receptacle','wall outlet','plug outlet','dead outlet','outlet not working','add outlet'], related: ['wire','box','cover plate','breaker','romex'], trade: 'Electrician' },
   'gfci':           { syn: ['gfci','gfci outlet','gfi outlet','ground fault outlet','gfci receptacle'], related: ['outlet','wire','box','bathroom','kitchen','exterior'], trade: 'Electrician' },
-  switch:           { syn: ['light switch','dimmer switch','switch install','switch replace','three way switch','3-way switch'], related: ['wire','box','cover plate','dimmer'], trade: 'Electrician' },
+  switch:           { syn: ['light switch','dimmer switch','switch install','switch replace','three way switch','3-way switch','motion sensor switch','motion switch','occupancy sensor','vacancy sensor','timer switch'], related: ['wire','box','cover plate','dimmer'], trade: 'Electrician' },
   panel:            { syn: ['panel','electrical panel','breaker panel','panel upgrade','fuse box','panel replacement','200 amp','100 amp','service upgrade','main panel'], related: ['breaker','wire','ground rod','surge protector','subpanel','meter','disconnect'], trade: 'Electrician' },
   breaker:          { syn: ['circuit breaker','breaker keeps tripping','tripping breaker','replace breaker','breaker replacement','afci breaker'], related: ['panel','wire','afci','gfci breaker','load'], trade: 'Electrician' },
   light:            { syn: ['light fixture','ceiling light','light install','flush mount light','chandelier install','light not working'], related: ['wire','switch','bulb','box','dimmer'], trade: 'Electrician' },
   'pot light':      { syn: ['pot light','recessed light','can light','pot lamp','led pot light','recessed lighting','wafer light'], related: ['wire','switch','dimmer','box','led','hole saw'], trade: 'Electrician' },
   'pendant light':  { syn: ['pendant light','pendant install','island light','hanging light','pendant fixture'], related: ['wire','switch','box','dimmer','ceiling box'], trade: 'Electrician' },
   'ceiling fan':    { syn: ['ceiling fan','ceiling fan install','fan with light','paddle fan','ceiling fan replace'], related: ['wire','switch','box','bracket','remote','fan brace'], trade: 'Electrician' },
-  'ev charger':     { syn: ['ev charger','electric vehicle charger','charging station','level 2 charger','tesla charger','ev outlet','car charger','nema 14-50'], related: ['240v outlet','breaker','disconnect','wire','conduit'], trade: 'Electrician' },
+  'ev charger':     { syn: ['ev charger','electric vehicle charger','charging station','level 2 charger','tesla charger','tesla wall connector','wall connector','ev outlet','car charger','nema 14-50'], related: ['240v outlet','breaker','disconnect','wire','conduit'], trade: 'Electrician' },
   'power':          { syn: ['no power','power outage','lost power','half power','partial power','no electricity','power failure','dead circuit'], related: ['breaker','panel','wire','troubleshoot','diagnostic','meter'], trade: 'Electrician' },
   'subpanel':       { syn: ['subpanel','sub panel','sub-panel','garage panel','workshop panel','detached garage power'], related: ['breaker','wire','conduit','trench','disconnect','ground rod'], trade: 'Electrician' },
   'smoke detector': { syn: ['smoke detector','co detector','smoke alarm','carbon monoxide alarm','fire alarm','smoke alarm replace'], related: ['wire','interconnect','battery','hardwired'], trade: 'Electrician' },
   'exhaust fan':    { syn: ['exhaust fan','bathroom exhaust','bath exhaust fan','ventilation fan','bathroom vent fan'], related: ['duct','switch','timer','wire','damper'], trade: 'Electrician' },
   'outdoor light':  { syn: ['outdoor light','exterior light','porch light','security light','motion light','flood light','landscape light','soffit light'], related: ['wire','box','motion sensor','photocell','weatherproof box'], trade: 'Electrician' },
-  'under cabinet light': { syn: ['under cabinet light','under cabinet lighting','cabinet light','puck light','led under cabinet'], related: ['wire','switch','led strip','transformer'], trade: 'Electrician' },
+  'under cabinet light': { syn: ['under cabinet light','under cabinet lighting','under cabinet led','undercabinet','under-cabinet','under cabinet','cabinet light','puck light','led under cabinet'], related: ['wire','switch','led strip','transformer'], trade: 'Electrician' },
   'hot tub wiring': { syn: ['hot tub wiring','hot tub','spa wiring','hot tub electrical','jacuzzi wiring','spa circuit','wire hot tub','hot tub install','spa electrical'], related: ['wire','disconnect','gfci breaker','conduit'], trade: 'Electrician' },
   'doorbell':       { syn: ['doorbell','smart doorbell','ring doorbell','video doorbell','doorbell install'], related: ['transformer','wire','chime'], trade: 'Electrician' },
   'data cable':     { syn: ['ethernet','cat6','data cable','network cable','ethernet run','cat6 install'], related: ['cable','keystone','wall plate','patch panel'], trade: 'Electrician' },
@@ -79,7 +79,7 @@ const OBJECTS = {
   'generator':      { syn: ['generator hookup','generator install','backup generator','transfer switch install','generator connection','standby generator'], related: ['transfer switch','panel','breaker','interlock','wire'], trade: 'Electrician' },
   'security camera': { syn: ['security camera','camera install','surveillance','cctv','security system','camera wiring','ring camera'], related: ['wire','low voltage','conduit','power supply','network cable'], trade: 'Electrician' },
   'garage wiring':  { syn: ['wire garage','garage wiring','garage electrical','wire new garage','garage circuit','garage outlets'], related: ['wire','outlet','light','breaker','panel','conduit','subpanel'], trade: 'Electrician' },
-  'dedicated circuit': { syn: ['dedicated circuit','add circuit','new circuit','fridge circuit','appliance circuit','dedicated line'], related: ['wire','breaker','panel','outlet'], trade: 'Electrician' },
+  'dedicated circuit': { syn: ['dedicated circuit','dedicated','add circuit','new circuit','fridge circuit','appliance circuit','dedicated line','circuit for'], related: ['wire','breaker','panel','outlet'], trade: 'Electrician' },
   'bathroom fan':   { syn: ['bathroom fan','bath fan','bathroom fan install','bath fan install','bathroom exhaust install','bath fan replace','bathroom ventilation','fan light combo','bathroom exhaust fan'], related: ['duct','vent cap','switch','timer','wire','damper'], trade: 'Electrician' },
 
   // ── HVAC OBJECTS (primary target trade) ──
@@ -88,15 +88,17 @@ const OBJECTS = {
   condenser:        { syn: ['condenser','outdoor unit','condenser unit','condenser coil','ac condenser','compressor unit'], related: ['refrigerant','line set','pad','disconnect','contactor','capacitor','fan motor'], trade: 'HVAC' },
   thermostat:       { syn: ['thermostat','smart thermostat','nest thermostat','ecobee','honeywell thermostat','programmable thermostat','thermostat install','thermostat replace'], related: ['thermostat wire','c-wire','batteries','wall plate'], trade: 'HVAC' },
   'heat pump':      { syn: ['heat pump','air source heat pump','heat pump install','heat pump replace','hybrid system'], related: ['line set','thermostat','condenser','indoor unit','outdoor unit','defrost board'], trade: 'HVAC' },
-  'mini split':     { syn: ['mini split','ductless mini split','ductless system','wall mount mini split','mitsubishi mini split','ductless heat pump'], related: ['line set','outdoor unit','indoor unit','disconnect','condensate pump','wall bracket'], trade: 'HVAC' },
+  'mini split':     { syn: ['mini split','ductless mini split','ductless system','wall mount mini split','mitsubishi mini split','ductless heat pump','vrf','vrv','vrf system','variable refrigerant flow','multi zone','multi-zone','daikin vrv','samsung vrf','lg vrf'], related: ['line set','outdoor unit','indoor unit','disconnect','condensate pump','wall bracket'], trade: 'HVAC' },
+  'condensate':     { syn: ['condensate pump','condensate line','condensate drain','condensate overflow','condensate trap','wet switch','float switch ac'], related: ['pump','ac','drain'], trade: 'HVAC' },
   ductwork:         { syn: ['ductwork','duct install','duct repair','duct modification','hvac duct','air duct','duct leak','ductwork install'], related: ['register','grille','damper','duct tape','flex duct','mastic','sheet metal','insulation'], trade: 'HVAC' },
   humidifier:       { syn: ['humidifier','whole home humidifier','humidifier install','humidifier replace','humidifier pad','furnace humidifier'], related: ['water panel','humidifier pad','solenoid valve','bypass damper','water line'], trade: 'HVAC' },
   boiler:           { syn: ['boiler','boiler repair','boiler install','boiler service','hot water boiler','hydronic boiler','boiler not working'], related: ['circulator pump','expansion tank','zone valve','pressure relief','aquastat'], trade: 'HVAC' },
   'garage heater':  { syn: ['garage heater','shop heater','unit heater','overhead heater','garage heat install'], related: ['gas line','thermostat','vent pipe','gas connector'], trade: 'HVAC' },
   'hrv':            { syn: ['hrv','erv','heat recovery ventilator','energy recovery ventilator','air exchanger','hrv install','hrv service'], related: ['duct','filter','core','defrost','condensate'], trade: 'HVAC' },
   'fireplace':      { syn: ['gas fireplace','fireplace install','fireplace repair','fireplace service','pilot light','fireplace insert'], related: ['gas line','venting','thermostat','remote','gas valve'], trade: 'HVAC' },
-  'refrigerant':    { syn: ['refrigerant','recharge','freon','r410a','low refrigerant','refrigerant leak','ac charge','ac freezing','frozen coil','ice on coil','iced up','froze up'], related: ['leak detection','dye test','scale','gauge','coil','condenser'], trade: 'HVAC' },
+  'refrigerant':    { syn: ['refrigerant','recharge','freon','r410a','low refrigerant','refrigerant leak','ac charge','ac freezing','frozen coil','ice on coil','ice on the coil','iced up','froze up','compressor frozen','frozen compressor'], related: ['leak detection','dye test','scale','gauge','coil','condenser'], trade: 'HVAC' },
   'contactor':      { syn: ['ac contactor','contactor replace','contactor repair','contactor burned'], related: ['capacitor','condenser','wire','ac repair'], trade: 'HVAC' },
+  'ac capacitor':   { syn: ['ac capacitor','capacitor swap','hard start kit','hard start','capacitor replace','capacitor replacement','dual run capacitor','start capacitor'], related: ['contactor','condenser','fan motor'], trade: 'HVAC' },
   'airflow':        { syn: ['hot and cold spots','uneven heating','uneven cooling','airflow problem','airflow balance','hot cold rooms','one room cold','one room hot'], related: ['damper','register','duct','duct sealing','balancing'], trade: 'HVAC' },
   'ac warm air':    { syn: ['ac not blowing cold','ac blowing warm','ac not cooling','warm air from ac','ac warm air','no cold air'], related: ['refrigerant','capacitor','contactor','compressor','thermostat','filter'], trade: 'HVAC' },
 
@@ -115,27 +117,30 @@ const OBJECTS = {
   stairs:           { syn: ['stair repair','stair tread','riser','staircase','squeaky stairs','stair rebuild'], related: ['tread','riser','stringer','nosing','railing'], trade: 'Carpenter' },
 
   // ── ROOFING OBJECTS ──
-  shingle:          { syn: ['shingle','roof shingle','asphalt shingle','architectural shingle','missing shingle','wind damage'], related: ['underlayment','flashing','ridge vent','nails','ice shield'], trade: 'Roofing' },
+  shingle:          { syn: ['shingle','roof shingle','asphalt shingle','architectural shingle','missing shingle','wind damage','standing seam','metal roof panel','slate roof','slate tile','heritage roof','clay tile'], related: ['underlayment','flashing','ridge vent','nails','ice shield'], trade: 'Roofing' },
+  'roof inspection':{ syn: ['roof inspection','annual roof inspection','roof assessment','roof condition report','tune-up roof','roof check','roof maintenance'], related: ['shingle','flashing','sealant'], trade: 'Roofing' },
+  'roof leak':      { syn: ['roof leak','water marks','water mark','water stain','ceiling stain','ceiling discoloration','water marks on the ceiling','attic leak','roof drip','active roof leak','wet spot ceiling','brown spot ceiling'], related: ['shingle','flashing','vent boot','sealant','underlayment'], trade: 'Roofing' },
   flashing:         { syn: ['flashing','step flashing','counter flashing','roof flashing','flashing repair','flashing leak'], related: ['sealant','shingle','vent boot','drip edge'], trade: 'Roofing' },
   gutter:           { syn: ['gutter','eavestrough','downspout','rain gutter','gutter repair','gutter install'], related: ['gutter guard','sealant','hanger','elbow','end cap'], trade: 'Roofing' },
   soffit:           { syn: ['soffit','fascia','soffit panel','fascia board','soffit repair'], related: ['ventilation','nails','j-channel','aluminum'], trade: 'Roofing' },
   skylight:         { syn: ['skylight','roof window','velux','sun tunnel','skylight leak'], related: ['flashing','frame','caulk'], trade: 'Roofing' },
   chimney:          { syn: ['chimney','chimney cap','chimney flashing','chimney leak','chimney repair'], related: ['flashing','cap','sealant','mortar'], trade: 'Roofing' },
-  'vent boot':      { syn: ['vent boot','pipe boot','roof vent boot','pipe collar','plumbing vent boot'], related: ['sealant','caulk','nails'], trade: 'Roofing' },
+  'vent boot':      { syn: ['vent boot','pipe boot','roof vent boot','pipe collar','plumbing vent boot','vent stack','replace boot','roof boot','vent flashing'], related: ['sealant','caulk','nails'], trade: 'Roofing' },
 
   // ── PAINTER OBJECTS ──
-  'room paint':     { syn: ['paint room','paint walls','wall paint','interior paint','repaint room','paint ceiling','paint bedroom','paint living room'], related: ['primer','caulk','filler','tape','drop cloth','roller','brush','sandpaper'], trade: 'Painter' },
+  'room paint':     { syn: ['paint room','paint walls','wall paint','interior paint','repaint','repaint room','repaint bedroom','paint bedrooms','paint ceiling','paint bedroom','paint living room','paint main floor','open concept','open-concept paint','paint office','repaint office','accent wall','faux finish','spray paint mdf','spray paint built','closet built','closet paint'], related: ['primer','caulk','filler','tape','drop cloth','roller','brush','sandpaper'], trade: 'Painter' },
   'trim paint':     { syn: ['paint trim','paint baseboard','paint casing','paint moulding','trim paint','paint doors'], related: ['primer','sandpaper','caulk','brush','wood filler'], trade: 'Painter' },
   cabinet:          { syn: ['cabinet paint','cabinet refinish','cabinet spray','paint cabinets','kitchen cabinet paint'], related: ['primer','paint','sandpaper','hardware','bonding primer'], trade: 'Painter' },
-  'exterior paint': { syn: ['exterior paint','house paint','paint outside','siding paint','paint house','exterior repaint'], related: ['primer','caulk','scraper','power wash','drop cloth'], trade: 'Painter' },
+  'exterior paint': { syn: ['exterior paint','house paint','paint outside','siding paint','paint house','exterior repaint','house repaint','exterior house','paint exterior','elastomeric','elastomeric paint','stucco paint','paint stucco','storefront paint','awning paint'], related: ['primer','caulk','scraper','power wash','drop cloth'], trade: 'Painter' },
   'deck stain':     { syn: ['deck stain','stain deck','deck seal','deck refinish','fence stain','stain fence'], related: ['stain','sealer','cleaner','brush','roller'], trade: 'Painter' },
-  wallpaper:        { syn: ['wallpaper removal','strip wallpaper','remove wallpaper','wallpaper strip'], related: ['scraper','steamer','adhesive','primer'], trade: 'Painter' },
+  wallpaper:        { syn: ['wallpaper','wallpaper removal','strip wallpaper','remove wallpaper','wallpaper strip'], related: ['scraper','steamer','adhesive','primer'], trade: 'Painter' },
+  'trim and doors': { syn: ['paint trim','interior trim','trim and doors','paint interior trim','paint trim and doors','trim and door'], related: ['primer','sandpaper','caulk','brush','wood filler'], trade: 'Painter' },
 
   // ── LANDSCAPING OBJECTS ──
-  lawn:             { syn: ['lawn care','lawn mowing','grass cutting','lawn repair','sod install','lawn maintenance'], related: ['mowing','fertilizer','seed','aeration','sod'], trade: 'Landscaping' },
+  lawn:             { syn: ['lawn care','lawn mowing','grass cutting','lawn repair','sod install','sod','lawn','new lawn','new sod','lay sod','lawn maintenance'], related: ['mowing','fertilizer','seed','aeration','sod'], trade: 'Landscaping' },
   patio:            { syn: ['patio','paver patio','interlock patio','stone patio','patio install'], related: ['pavers','sand','gravel','edging','base'], trade: 'Landscaping' },
   'garden bed':     { syn: ['garden bed','flower bed','garden install','planting bed','mulch bed'], related: ['mulch','edging','soil','plants','fabric'], trade: 'Landscaping' },
-  tree:             { syn: ['tree pruning','tree removal','tree planting','tree trim','tree service'], related: ['pruning','stump','mulch','stakes'], trade: 'Landscaping' },
+  tree:             { syn: ['tree','tree pruning','tree removal','tree planting','tree trim','tree service','remove tree','prune tree','stump'], related: ['pruning','stump','mulch','stakes'], trade: 'Landscaping' },
   irrigation:       { syn: ['irrigation','sprinkler system','drip system','sprinkler install','irrigation repair'], related: ['heads','valve','timer','pipe','blowout'], trade: 'Landscaping' },
   'retaining wall': { syn: ['retaining wall','garden wall','landscape wall','block wall','retaining wall build'], related: ['block','gravel','drainage','fabric','cap'], trade: 'Landscaping' },
 
@@ -156,6 +161,84 @@ const OBJECTS = {
   storefront:          { syn: ['storefront','storefront glass','glass door','aluminum storefront','commercial entry','shop front'], related: ['glass','frame','door','closer','hardware'], trade: 'General Contractor' },
   'parking lot':       { syn: ['parking lot','parking lot lights','lot lighting','wall pack','pole light','exterior commercial'], related: ['pole','fixture','wire','conduit','photocell'], trade: 'Electrician' },
   'data cable':        { syn: ['data cabling','cat6','cat 6','ethernet','network cable','data drop','network drop','structured cabling'], related: ['patch panel','keystone','faceplate','cable','conduit'], trade: 'Electrician' },
+
+  // ── SECONDARY-TRADE OBJECTS ──
+  // These give Garage Doors / Appliances / Concrete / Siding / Windows /
+  // Restoration / Handyman / Flooring-tile / GC-reno jobs a real "core"
+  // suggestion offline instead of dropping to the low-confidence keyword
+  // tier. scoreItem trade-gates downstream, so each object's synonyms only
+  // ever match its own trade's catalog items.
+  'garage door':       { syn: ['garage door','overhead door','garage door spring','garage spring','broken spring','garage door opener','garage opener','garage door panel','garage door cable','garage door roller','garage door track','garage door repair','garage door replace','garage door seal','garage door off track'], related: ['spring','opener','cable','roller','track','weather seal','keypad'], trade: 'Garage Doors' },
+  'appliance install': { syn: ['install appliance','appliance install','install washer','install dryer','washer and dryer','install range','install oven','wall oven','built-in oven','built in oven','cooktop','install cooktop','install microwave','microwave','over range','over the range','range microwave','install fridge','install refrigerator','refrigerator install','install range hood','install hood fan','dryer vent','hook up appliance','hook up washer','hook up dryer','stacking kit','stacking washer dryer'], related: ['water line','drain hose','gas line connection','dryer vent','disposal'], trade: 'Appliance Install' },
+  'concrete work':     { syn: ['concrete','pour concrete','concrete driveway','concrete patio','patio slab','garage pad','garage slab','concrete slab','slab','concrete sidewalk','concrete steps','concrete pad','cement pad','foundation crack','foundation','cracked foundation','foundation wall','parging','mudjacking','mudjack','settled slab','concrete curb','stamped concrete','driveway pour','pour driveway','seal driveway','seal concrete','concrete seal','concrete sealing','crack fill','crack-fill','pour footing','footings','pour footings','dumpster pad','equipment pad'], related: ['rebar','wire mesh','excavation','grading','ready-mix','forms','concrete sealing'], trade: 'Concrete' },
+  'siding':            { syn: ['siding','vinyl siding','fiber cement siding','hardie','hardie board','board and batten','siding repair','siding install','replace siding','lap siding','cladding','stucco repair'], related: ['house wrap','soffit','fascia','exterior trim','caulk'], trade: 'Siding' },
+  'window replacement':{ syn: ['replace window','replace windows','window replacement','vinyl window','vinyl windows','double hung','casement window','awning window','new window','install window','egress window','window install','basement window','foggy window','foggy','sealed unit','glass','glass pane','window glass','replace glass'], related: ['casing','trim','caulk','weatherstrip','glass','window unit'], trade: 'Windows & Doors' },
+  'water damage':      { syn: ['water damage','flood damage','flooded','water extraction','sewage cleanup','sewage backup','mold remediation','mould remediation','mold','mould','water restoration','restoration','remediation','dry out','water cleanup','flooded basement','storm damage'], related: ['extraction','drying equipment','dehumidifier','antimicrobial','moisture testing','demo'], trade: 'Restoration' },
+  'fire damage':       { syn: ['fire damage','smoke damage','soot damage','smoke cleanup','soot cleanup','kitchen fire','house fire','odor treatment','smoke odor','fire cleanup','char removal'], related: ['hepa','sealer','primer','demo'], trade: 'Restoration' },
+  'tv mount':          { syn: ['mount tv','tv mount','wall mount tv','mount television','hang tv','tv on wall','mount the tv','tv wall mount','mount tvs','mounting tvs','tv install','install tv','tvs in','tvs on'], related: ['bracket','cord conceal','drywall anchor'], trade: 'Handyman' },
+  'caulking':          { syn: ['caulk','caulking','recaulk','re-caulk','seal joint','silicone bead','caulk around','tub caulk','kitchen caulk','bathroom caulk'], related: ['silicone','sealant','primer'], trade: 'Handyman' },
+  'tile work':         { syn: ['tile backsplash','backsplash tile','subway tile','tile install','install tile','wall tile','ceramic tile','porcelain tile','shower tile','tile floor','floor tile','tile job','retile','tile work'], related: ['thinset','grout','tile','underlayment','backsplash'], trade: 'Flooring' },
+  'bathroom reno':     { syn: ['bathroom renovation','bathroom reno','gut bathroom','rebuild bathroom','bathroom remodel','redo bathroom','full bathroom reno','gut and rebuild bathroom','ensuite reno','ensuite renovation','master ensuite','en-suite','main bath reno'], related: ['tile','vanity','toilet','shower','drywall','flooring','fixtures'], trade: 'General Contractor' },
+  'popcorn ceiling':   { syn: ['popcorn ceiling','remove popcorn','stipple ceiling','knockdown ceiling','knockdown texture','ceiling texture','texture finish','texture ceiling','smooth ceiling','skim coat','retexture','spray texture'], related: ['mud','skim coat','prime','texture','sand'], trade: 'Drywall' },
+  'corner bead':       { syn: ['corner bead','metal corner','paper bead','j-bead','j bead','outside corner','drywall corner','bullnose'], related: ['mud','tape','drywall'], trade: 'Drywall' },
+  'bath accessories':  { syn: ['grab bar','grab bars','safety bar','towel bar','towel rack','toilet paper holder','bathroom accessories','curtain rod','blinds','closet organizer'], related: ['anchor','blocking','hardware'], trade: 'Handyman' },
+
+  // ── EXPANSION OBJECTS — caught by the 287-job audit ──
+  // Specialty / commonly-quoted items that fell through to the
+  // low-confidence keyword tier. Each maps to its catalog item by name
+  // or a distinct synonym so direct-name matching takes over scoring.
+  'pot filler':         { syn: ['pot filler','pot-filler','filler faucet','stove faucet','wall mount pot'], related: ['gas line','copper','shutoff valve','rough-in'], trade: 'Plumber' },
+  'hydro jet':          { syn: ['hydro jet','hydro-jet','hydrojet','jet cleaning','jet drain','high pressure water','jetting drain'], related: ['camera inspection','cleanout','snake'], trade: 'Plumber' },
+  'water filter':       { syn: ['water filter','reverse osmosis','ro system','under sink filter','whole house filter','filtration system','water purifier'], related: ['shutoff valve','tubing','tank','membrane'], trade: 'Plumber' },
+  'aluminum wiring':    { syn: ['aluminum wiring','aluminum wire','al wire','pigtail','copalum','antioxidant'], related: ['copper','connector','outlet','wire nut'], trade: 'Electrician' },
+  'smart switch':       { syn: ['smart switch','wifi switch','smart dimmer','wifi dimmer','lutron caseta','smart light switch','google home switch','alexa switch'], related: ['wire','box','dimmer','neutral'], trade: 'Electrician' },
+  'pool pump':          { syn: ['pool pump','pool electrical','pool wiring','spa pump','bonding pool','pool circuit'], related: ['conduit','wire','disconnect','breaker','bonding'], trade: 'Electrician' },
+  'hvac whip':          { syn: ['hvac whip','whip and disconnect','rooftop unit power','rtu power','rtu wiring','disconnect for hvac','condenser disconnect'], related: ['disconnect','wire','breaker','conduit'], trade: 'Electrician' },
+  'led retrofit':       { syn: ['led retrofit','fluorescent to led','fluorescent fixture','fluorescent fixtures','fluorescent with led','fluorescent ballasts','fluorescent ballast','led driver','led drivers','t8 to led','recessed retrofit','retrofit fixture','led troffer','led upgrade','office ceiling led','ballast bypass','ballast replace'], related: ['ballast bypass','driver','wire'], trade: 'Electrician' },
+  'hood fan wiring':    { syn: ['hood fan wiring','restaurant hood wiring','makeup air interlock','kitchen hood electrical','commercial hood wiring','hood control'], related: ['interlock','contactor','wire','disconnect'], trade: 'Electrician' },
+  'solar interconnect': { syn: ['solar interconnect','solar tie-in','inverter interconnect','solar panel inverter','solar electrical','pv interconnect','powerwall','tesla powerwall','battery backup','battery interconnect','ess interconnect','enphase'], related: ['disconnect','breaker','panel','meter'], trade: 'Electrician' },
+  'baseboard heater':   { syn: ['baseboard heater','electric baseboard','convector','convection heater','baseboard heating'], related: ['thermostat','wire','breaker'], trade: 'HVAC' },
+  'blower motor':       { syn: ['blower motor','furnace blower','blower fan','blower wheel','squirrel cage','ecm motor','blower replacement'], related: ['capacitor','belt','control board'], trade: 'HVAC' },
+  'evaporator coil':    { syn: ['evaporator coil','indoor coil','a coil','evap coil','coil leak','frozen evaporator'], related: ['refrigerant','line set','tx valve','drain pan'], trade: 'HVAC' },
+  'heat exchanger':     { syn: ['heat exchanger','cracked heat exchanger','primary exchanger','secondary exchanger','co exchanger'], related: ['furnace','combustion'], trade: 'HVAC' },
+  'return air':         { syn: ['return air','return duct','return air drop','add return','return grille','cold air return','undersized return'], related: ['duct','grille','filter','airflow'], trade: 'HVAC' },
+  'zone damper':        { syn: ['zone damper','zoning system','dual zone','zone control','damper control','multi-zone','zoning damper'], related: ['damper','controller','thermostat'], trade: 'HVAC' },
+  'rooftop unit':       { syn: ['rooftop unit','rtu','rooftop hvac','package unit','rtu service','rtu replacement'], related: ['curb','disconnect','duct','crane'], trade: 'HVAC' },
+  'economizer':         { syn: ['economizer','outdoor air damper','free cooling','economizer control','rtu economizer'], related: ['damper','controller','sensor'], trade: 'HVAC' },
+  'kitchen hood':       { syn: ['kitchen hood','commercial hood','exhaust hood','range hood balancing','hood and makeup air','restaurant hood','grease hood'], related: ['makeup air','damper','fan'], trade: 'HVAC' },
+  'oil to gas':         { syn: ['oil to gas','oil furnace conversion','oil conversion','convert oil','gas conversion'], related: ['gas line','venting','tank removal'], trade: 'HVAC' },
+  'ice shield':         { syn: ['ice and water shield','ice shield','water shield','ice membrane','peel and stick underlayment','i&w','snow and ice','snow and ice belt','ice belt','ice belt edge','ice and water belt'], related: ['underlayment','flashing','drip edge'], trade: 'Roofing' },
+  'ridge vent':         { syn: ['ridge vent','roof ridge venting','ridge ventilation','cobra vent'], related: ['vent','shingle','attic'], trade: 'Roofing' },
+  'drip edge':          { syn: ['drip edge','eave metal','rake edge','d-style drip','t-style drip','starter metal'], related: ['flashing','underlayment','shingle'], trade: 'Roofing' },
+  'flat roof':          { syn: ['flat roof','tpo roof','tpo membrane','epdm','epdm rubber','torch down','torch-down','modified bitumen','sbs roof','low-slope roof','low slope roof','membrane roof'], related: ['membrane','flashing','adhesive','patch'], trade: 'Roofing' },
+  'cedar shake':        { syn: ['cedar shake','wood shake','shake roof','cedar shingle','wood roof','hurricane-rated','hurricane rated','coastal roof','wind-rated','high-wind roof'], related: ['underlayment','flashing','fastener','ice shield'], trade: 'Roofing' },
+  'snow guard':         { syn: ['snow guard','snow stop','snow rail','metal roof snow','snow retention'], related: ['metal roof','fastener','sealant'], trade: 'Roofing' },
+  'roof vent':          { syn: ['roof vent','gable vent','attic vent','soffit vent','box vent','turtle vent','static vent','vent cap'], related: ['underlayment','flashing','attic ventilation'], trade: 'Roofing' },
+  'hardwood floor':     { syn: ['hardwood','hardwood floor','hardwood floors','oak floor','engineered hardwood','solid hardwood','wood floor','refinish hardwood','sand and refinish','poly urethane finish','polyurethane finish','gym floor','wood floor refinish','clear coat hardwood'], related: ['underlayment','baseboard','transition','floor prep','stain','finish'], trade: 'Flooring' },
+  'radiant heat tile':  { syn: ['radiant mat','heated floor','radiant tile','schluter ditra','electric radiant','floor heat'], related: ['tile','thermostat','underlayment'], trade: 'Flooring' },
+  'epoxy floor':        { syn: ['epoxy floor','epoxy coating','garage floor coat','garage epoxy','floor coating','polyaspartic','shop floor coating','epoxy quartz','quartz floor system','commercial kitchen floor','commercial epoxy'], related: ['floor prep','primer','grind','seal'], trade: 'Flooring' },
+  'linoleum':           { syn: ['linoleum','lino','marmoleum','sheet vinyl','sheet flooring','commercial sheet vinyl','healthcare floor'], related: ['floor prep','adhesive','seam','welding'], trade: 'Flooring' },
+  'shower waterproof':  { syn: ['shower waterproof','schluter membrane','kerdi','waterproof shower','shower membrane','redgard'], related: ['tile','thinset','grout','niche'], trade: 'Flooring' },
+  'vct':                { syn: ['vct','commercial vinyl','vinyl composition','commercial-grade vinyl','vinyl composite','commercial vinyl tile','vct floor'], related: ['floor prep','adhesive','wax','sealer'], trade: 'Flooring' },
+  'self leveling':      { syn: ['self-leveling','self leveling','levelling','self-levelling','self levelling','levelling underlayment','leveling underlayment','self level','floor leveling','floor levelling','subfloor level'], related: ['floor prep','underlayment','primer'], trade: 'Flooring' },
+  'door hardware':      { syn: ['door knob','door knobs','door handle','door handles','deadbolt','dead bolt','door hardware','lockset','door lock','re-key','rekey','door knobs and deadbolt'], related: ['strike plate','door','hinge','screws'], trade: 'Handyman' },
+  'asbestos':           { syn: ['asbestos','asbestos abatement','asbestos removal','asbestos remediation','vermiculite','asbestos pipe insulation','asbestos tile','popcorn ceiling asbestos'], related: ['containment','disposal','testing'], trade: 'Restoration' },
+  'kitchen reno':       { syn: ['kitchen renovation','kitchen reno','kitchen remodel','redo kitchen','gut kitchen','rebuild kitchen','new kitchen'], related: ['cabinet','countertop','tile','plumbing','flooring','drywall'], trade: 'General Contractor' },
+  'basement reno':      { syn: ['basement development','develop basement','finish basement','basement finish','basement reno','basement renovation','basement build-out','basement build out'], related: ['framing','drywall','flooring','electrical','plumbing'], trade: 'General Contractor' },
+  'garage conversion':  { syn: ['garage conversion','convert garage','garage to suite','garage suite','convert the garage','garage to living'], related: ['framing','drywall','flooring','plumbing','electrical','insulation'], trade: 'General Contractor' },
+  'restaurant buildout':{ syn: ['restaurant build','restaurant build-out','restaurant buildout','restaurant fit-out','restaurant fitout','dining room build','bar build','yoga studio','retail buildout','fitness buildout','studio buildout'], related: ['framing','partition','plumbing','electrical','ceiling','flooring'], trade: 'General Contractor' },
+  'full home reno':     { syn: ['full home renovation','whole home reno','whole-home reno','main floor renovation','full house remodel','top to bottom reno','complete renovation','gut and rebuild'], related: ['kitchen','bathroom','flooring','drywall','paint'], trade: 'General Contractor' },
+  'commercial washroom':{ syn: ['commercial washroom','accessible washroom','accessible bathroom','commercial bathroom','barrier-free washroom','barrier free','public washroom'], related: ['partition','grab bar','tile','plumbing'], trade: 'General Contractor' },
+  'addition':           { syn: ['addition','room addition','home addition','mudroom addition','second storey','second story','square footage addition','build addition'], related: ['foundation','framing','roof','siding','windows'], trade: 'General Contractor' },
+  'load bearing':       { syn: ['load bearing','load-bearing','beam install','structural beam','lvl beam','remove wall','open up the wall'], related: ['framing','beam','column','permit'], trade: 'General Contractor' },
+  'tpo membrane':       { syn: ['tpo','epdm','modified bitumen','sbs','membrane roof','torch down','torch-down'], related: ['adhesive','flashing','seam','primer'], trade: 'Roofing' },
+  // Trade-specific rough-in objects for new-construction quotes.
+  'plumbing rough-in':  { syn: ['plumbing rough-in','plumbing roughin','plumbing rough in','new construction rough-in','new construction plumbing','full plumbing package','complete plumbing rough','top-out plumbing'], related: ['supply','drain','vent','pex','pvc','abs'], trade: 'Plumber' },
+  'electrical rough-in':{ syn: ['electrical rough-in','electrical roughin','electrical rough in','new construction electrical','full electrical package','complete electrical rough','rough wire','wire pull rough'], related: ['wire','box','panel','outlet','breaker','circuit'], trade: 'Electrician' },
+  'hvac rough-in':      { syn: ['hvac rough-in','hvac roughin','hvac rough in','new construction hvac','full hvac system','full hvac package','complete hvac install','new build hvac'], related: ['furnace','duct','condenser','thermostat','vent'], trade: 'HVAC' },
+  // Annual / safety inspection objects so "Annual electrical safety
+  // inspection for landlord" and similar surface a service-call line.
+  'electrical inspection':{ syn: ['electrical inspection','annual electrical safety','landlord electrical inspection','rental electrical inspection','electrical safety check','esa inspection'], related: ['diagnostic','assessment','permit'], trade: 'Electrician' },
 };
 
 // ── LOCATIONS ──
@@ -194,14 +277,19 @@ export function extractJobContext(description, selectedTrade = 'Other') {
     if (pattern.test(text)) { jobType = type; break; }
   }
 
-  // Helper: word-boundary-aware match to prevent "ac" matching inside "replace"
+  // Helper: word-boundary-aware match to prevent "ac" matching inside "replace".
+  // Normalises hyphens to spaces in BOTH sides so "open-concept" matches
+  // "open concept" (and "low-voltage" matches "low voltage", etc) —
+  // contractors hyphenate inconsistently and the literal substring used to
+  // miss real matches over a single punctuation char.
   function wordMatch(text, term) {
-    if (term.length <= 2) {
-      // Short terms need strict word boundary: space or start/end
-      const re = new RegExp(`(?:^|\\s|/)${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|/|$)`, 'i');
-      return re.test(text);
+    const normalizedText = text.replace(/-/g, ' ');
+    const t = term.toLowerCase().replace(/-/g, ' ');
+    if (t.length <= 2) {
+      const re = new RegExp(`(?:^|\\s|/)${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|/|$)`, 'i');
+      return re.test(normalizedText);
     }
-    return text.includes(term.toLowerCase());
+    return normalizedText.includes(t);
   }
 
   // 2. Detect objects (check multi-word first, then single-word)

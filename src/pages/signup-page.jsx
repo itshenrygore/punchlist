@@ -169,7 +169,27 @@ export default function SignupPage() {
       }
 
     } catch (err) {
-      setError(err.message || 'Couldn\u2019t create your account. Try again in a moment.');
+      // Translate raw network / Supabase errors into something a person
+      // can actually act on. "Failed to fetch" / TypeError almost always
+      // means the auth server is unreachable (offline, captive portal,
+      // ad-blocker). The bare message used to leak straight to the form.
+      const raw = String(err?.message || '').toLowerCase();
+      let msg = 'Couldn\u2019t create your account. Try again in a moment.';
+      if (/failed to fetch|networkerror|load failed|fetch.*aborted/.test(raw)) {
+        msg = 'Can\u2019t reach our servers right now. Check your connection and try again.';
+      } else if (/already registered|already exists|user already|email.*registered/.test(raw)) {
+        msg = 'An account with this email already exists. Try logging in instead.';
+      } else if (/password/.test(raw) && /(short|weak|6|8)/.test(raw)) {
+        msg = 'Password is too short \u2014 use at least 8 characters.';
+      } else if (/invalid email|email.*invalid/.test(raw)) {
+        msg = 'That email doesn\u2019t look right \u2014 double-check it.';
+      } else if (err?.message && err.message.length < 140 && !/^[A-Z]/.test(err.message)) {
+        // Tighten lowercase / lib-internal messages to one clean sentence.
+        msg = 'Sign-up didn\u2019t go through. Try again in a moment.';
+      } else if (err?.message) {
+        msg = err.message;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -209,7 +229,7 @@ export default function SignupPage() {
   // ── Email confirmation pending ──
   if (confirmationSent) {
     return (
-      <div className="auth-page">
+      <main className="auth-page">
         <div className="panel auth-card stack auth-confirm-card">
           <div className="auth-confirm-icon">📬</div>
           <div>
@@ -238,14 +258,14 @@ export default function SignupPage() {
           </div>
           <Link className="btn btn-secondary" to="/login">Back to log in</Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   // ── Step 2: Trade + Region ──
   if (step === 2) {
     return (
-      <div className="auth-page">
+      <main className="auth-page">
         <div className="panel auth-card stack">
           <div className="auth-step-dots-wrap"><StepDots current={1} total={2} variant="bar" /></div>
           <div className="auth-header">
@@ -302,13 +322,13 @@ export default function SignupPage() {
             {loading ? 'Saving…' : 'Create my first quote →'}
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   // ── Step 1: Account creation ──
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <form className="panel auth-card stack" onSubmit={handleStep1}>
         <div className="auth-logo-row">
           <Link to="/"><Logo size="md" /></Link>
@@ -412,6 +432,6 @@ export default function SignupPage() {
           <Link to="/login">Log in</Link>
         </div>
       </form>
-    </div>
+    </main>
   );
 }

@@ -1651,7 +1651,22 @@ a.sched-drawer-sec-btn{text-decoration:underline}
 .settings-grid{display:grid;gap:var(--sp-md);max-width:580px}
 
 /* Settings tab navigation */
-.settings-tabs{display:flex;gap:4px;max-width:580px;margin-bottom:16px;padding:3px;background:var(--panel-2);border-radius:var(--r-sm);border:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:56px;z-index:10;scrollbar-width:none}
+/* Tab strip — solid panel background + opaque shadow so content
+   scrolling underneath can never peek through. The previous (translucent)
+   variant let the "BUSINESS PROFILE" eyebrow bleed through the bottom
+   edge of the tabs on mobile. */
+.settings-tabs{display:flex;gap:4px;max-width:580px;margin-bottom:16px;padding:6px 3px 8px;background:var(--panel);border-radius:var(--r-sm);border:1px solid var(--line);box-shadow:0 1px 0 var(--panel);overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:56px;z-index:10;scrollbar-width:none}
+@media(max-width:640px){
+  /* On phones the sticky+overflow combo produced layout overlap on iOS
+     Safari (the next element's box rendered with offsetTop < tabsBottom).
+     Drop sticky on mobile — the page is short enough that the contractor
+     can flick back to the top to switch tabs. Restores predictable flow.
+     Also belt-and-suspenders: any first-child collapsible gets a hard
+     margin-top so even if something else regresses, the eyebrow can't
+     bleed up under the strip again. */
+  .settings-tabs{position:static!important;top:auto!important}
+  .settings-grid > .sp-collapsible:first-child{margin-top:8px}
+}
 .settings-tabs::-webkit-scrollbar{display:none}
 /* Fade affordance — useScrollFade adds .scrolled-mid / .scrolled-end
    classes; without these the tab strip clipped without visible hint.
@@ -3458,10 +3473,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .fm-overlay{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;padding:0;overscroll-behavior:contain}
 @media(min-width:641px){.fm-overlay{align-items:center;justify-content:flex-end;padding:24px}}
 
-/* ── Panel ── */
-.fm-panel{width:100%;max-width:400px;height:min(560px,calc(100vh - 32px));background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden;animation:fm-slide-in .2s var(--ease)}
-@media(max-width:640px){.fm-panel{max-width:100%;height:min(480px,calc(100vh - 120px));border-radius:var(--r-lg) var(--r-lg) 0 0}}
-@keyframes fm-slide-in{from{opacity:0;transform:translateY(40px)}}
+/* ── Panel — LEGACY (overridden by dashboard-v2.css). The earlier rules
+   used to size the panel as a small card and clipped it to ~480px on
+   phones, which is why the Foreman drawer only opened a sliver from the
+   bottom edge on mobile. Kept as a no-op so the slide-in keyframe still
+   exists for any other component referencing it. */
+@keyframes fm-slide-in-legacy{from{opacity:0;transform:translateY(40px)}}
 
 /* ── Header ── */
 .fm-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);flex-shrink:0}
@@ -4321,15 +4338,11 @@ input[type="number"]{-moz-appearance:textfield}
   .id-items{max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 }
 
-/* ── #19: Foreman — use dvh for keyboard-aware height ── */
-@media(max-width:640px){
-  .fm-panel{height:min(480px,calc(100dvh - 120px))!important;max-height:min(480px,calc(100dvh - 120px))!important}
-}
-@supports not (height: 100dvh){
-  @media(max-width:640px){
-    .fm-panel{height:min(480px,calc(100vh - 120px))!important;max-height:min(480px,calc(100vh - 120px))!important}
-  }
-}
+/* ── Foreman mobile sizing was previously clamped to ~480px tall via
+   !important — combined with position:fixed bottom:0 from dashboard-v2,
+   the panel opened as a sliver from the bottom of the screen instead of
+   filling it. The canonical full-height side/bottom drawer lives in
+   dashboard-v2.css; legacy clamps removed. */
 
 /* ── #20: Mobile nav + button — active state on center action ── */
 .mobile-nav-action:active{transform:scale(0.88);box-shadow:0 2px 6px rgba(249,115,22,.2)}
@@ -5481,7 +5494,20 @@ a.btn-link:hover,.btn-link:hover{text-decoration:underline}
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Swipeable Row ── */
-.swipeable-row{position:relative;overflow:hidden}
+/* Match the inner card's rounded corners and elevation so the red
+   "Delete" / amber "Archive" reveal stays cleanly inside the card
+   silhouette — used to render as a square red rectangle behind a
+   rounded white card, looking visibly sloppy on mobile (see user
+   screenshot). Inherits radius from the card via :has() fallback to
+   --r-card token. */
+.swipeable-row{
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-card, 12px);
+  margin-bottom: 6px;
+}
+.swipeable-row .ql-row-premium{ margin-bottom: 0 !important; }
+.pl-ql-row-wrap{ margin-bottom: 6px; }
 .swipeable-content{will-change:transform}
 .swipeable-action{will-change:opacity;font-family:inherit;letter-spacing:.02em;text-transform:uppercase;font-size:11px}
 

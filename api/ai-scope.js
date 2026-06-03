@@ -6,88 +6,89 @@ import { inferTrade, regionalize, getAIPricingContext } from './_tradeBrain.js'
  * This handles the most common failure: Haiku generates items correctly
  * but runs out of tokens while writing gaps/assumptions at the end.
  */
-function repairTruncatedJson(raw) {
+export function repairTruncatedJson(raw) {
   try {
-    // Strategy 1: Find the items array and close the JSON manually
+    if (!raw || typeof raw !== 'string') return null;
     const itemsStart = raw.indexOf('"items"');
     if (itemsStart === -1) return null;
-
-    // Find the opening [ of the items array
     const arrStart = raw.indexOf('[', itemsStart);
     if (arrStart === -1) return null;
 
-    // Walk through the array finding complete objects
-    let depth = 0, lastCompleteItem = -1;
+    // Walk the array, tracking string state so braces inside strings don't
+    // skew depth counting. Record the position right after each complete
+    // object as a candidate cut point for the salvageable items.
+    let depth = 0, inStr = false, esc = false, lastClose = -1, arrClosed = -1;
     for (let i = arrStart; i < raw.length; i++) {
       const ch = raw[i];
+      if (inStr) {
+        if (esc) { esc = false; continue; }
+        if (ch === '\\') { esc = true; continue; }
+        if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') { inStr = true; continue; }
       if (ch === '{') depth++;
-      if (ch === '}') { depth--; if (depth === 0) lastCompleteItem = i; }
-      if (ch === ']' && depth === 0) { lastCompleteItem = i; break; }
+      else if (ch === '}') { depth--; if (depth === 0) lastClose = i; }
+      else if (ch === ']' && depth === 0) { arrClosed = i; break; }
     }
+    if (lastClose === -1) return null;
 
-    if (lastCompleteItem === -1) return null;
+    const itemsJson = raw.slice(arrStart, lastClose + 1) + ']';
+    let items;
+    try { items = JSON.parse(itemsJson); } catch { return null; }
+    if (!Array.isArray(items) || items.length === 0) return null;
 
-    // Check if we already have the closing ] for the items array
-    const afterItems = raw.slice(lastCompleteItem + 1).trimStart();
-    let repairedItems;
-    if (afterItems.startsWith(']') || raw[lastCompleteItem] === ']') {
-      // Items array is complete — try to close the outer object
-      const closedJson = raw.slice(0, raw.lastIndexOf(']') + 1) + ']}';
-      // Find the start of the outer {
-      const outerStart = raw.indexOf('{');
-      const attempt = raw.slice(outerStart, raw.lastIndexOf(']') + 1) + ']}';
-      try { return JSON.parse(attempt); } catch {}
-    }
-
-    // Strategy 2: Extract just the items array
-    const itemsJson = raw.slice(arrStart, lastCompleteItem + 1) + ']';
-    try {
-      const items = JSON.parse(itemsJson);
-      // Extract other top-level fields that completed before truncation
-      let jobType = '';
-      const jtMatch = raw.match(/"jobType"\s*:\s*"([^"]+)"/);
-      if (jtMatch) jobType = jtMatch[1];
-      let scopeSummary = '';
-      const ssMatch = raw.match(/"scope_summary"\s*:\s*"([^"]+)"/);
-      if (ssMatch) scopeSummary = ssMatch[1];
-      return { jobType, scope_summary: scopeSummary, items, gaps: [], assumptions: [], optional_upgrades: [] };
-    } catch {}
-
-    return null;
+    const jtMatch = raw.match(/"jobType"\s*:\s*"([^"]*)"/);
+    const ssMatch = raw.match(/"scope_summary"\s*:\s*"([^"]*)"/);
+    return {
+      jobType: jtMatch ? jtMatch[1] : '',
+      scope_summary: ssMatch ? ssMatch[1] : '',
+      items,
+      gaps: [],
+      assumptions: [],
+      optional_upgrades: [],
+    };
   } catch {
     return null;
   }
 }
 
 // ── Server-side category classification ──
-const _LABOUR_KW = ['labour','labor','install','replace','remove','repair','upgrade','diagnostic','service call','setup','startup','swap','connect','disconnect','mount','frame','drywall','patch','commission','calibrat'];
-const _MATERIAL_KW = ['material','supply','supplies','fitting','fittings','valve','connector','hose','adapter','wire','cable','pipe','duct','filter','sealant','caulk','primer','shingle','lumber','bracket','flashing','wax ring','bolt','ring','tape','parts','allowance'];
-const _SERVICE_KW = ['permit','inspection','disposal','cleanup','haul','delivery','coordination','scheduling','warranty','protection','certification','compliance','testing','closeout'];
+// Ordering matters: a service-call/dispatch item names "install" too, so
+// the service patterns run first (anchored when they would otherwise be
+// ambiguous). "Supply & install …" is a labour line — the contractor is
+// installing the thing the model is also listing as supplied; the material
+// is captured separately. Without the anchor, the broad "supply" kw wins.
+const _SERVICE_RE = /\b(dispatch|service\s*call|trip\s*charge|callout|permit|inspection|disposal|cleanup|haul|delivery|coordination|scheduling|warranty|protection|certification|compliance|testing|closeout|assessment)\b/i;
+const _LABOUR_RE  = /\b(install|replace|remove|repair|upgrade|diagnostic|setup|startup|swap|connect|disconnect|mount|frame|patch|commission|calibrat|labour|labor|hang|build|prep|paint|finish|run|wire(?:\s|$))\b/i;
+const _MATERIAL_RE = /\b(material|supply\s*lines?|supplies|fitting|fittings|valve|connector|hose|adapter|cable|pipe|duct|filter|sealant|caulk|primer|shingle|lumber|bracket|flashing|wax\s*ring|bolt|tape|parts|allowance|thermostat|breaker|fixture|panel\s*board)\b/i;
 
-function classifyItemServer(name) {
-  const t = (name || '').toLowerCase();
-  if (_SERVICE_KW.some(w => t.includes(w))) return 'services';
-  if (_MATERIAL_KW.some(w => t.includes(w))) return 'materials';
-  if (_LABOUR_KW.some(w => t.includes(w))) return 'labour';
-  if (/^(install|replace|remove|repair|upgrade|connect|mount|build|frame|patch|prep)/i.test(name || '')) return 'labour';
+export function classifyItemServer(name) {
+  const t = String(name || '');
+  if (_SERVICE_RE.test(t)) return 'services';
+  if (_LABOUR_RE.test(t)) return 'labour';
+  if (_MATERIAL_RE.test(t)) return 'materials';
+  if (/^(install|replace|remove|repair|upgrade|connect|mount|build|frame|patch|prep)/i.test(t)) return 'labour';
   return 'services';
 }
 
-function normalizeItems(items) {
+export function normalizeItems(items) {
   return (Array.isArray(items) ? items : []).map((item) => {
-    const lo = Math.max(1, Number(item.lo || 0));
-    const hi = Math.max(lo, Number(item.hi || 0));
-    // Use the AI's mid if it provided one, otherwise calculate 55th percentile
+    // Reconcile lo/hi if the model returned them out of order — without this
+    // a hi < lo response can produce a $1 mid on a $600 item.
+    let lo = Math.max(1, Number(item.lo || 0));
+    let hi = Math.max(1, Number(item.hi || 0));
+    if (hi < lo) { const t = lo; lo = hi; hi = t; }
     const aiMid = Number(item.mid || item.unit_price || item.price || 0);
-    const calcMid = hi > lo ? Math.round(lo + (hi - lo) * 0.55) : aiMid;
-    const mid = aiMid > 0 ? aiMid : calcMid;
-    
+    const calcMid = hi > lo ? Math.round(lo + (hi - lo) * 0.55) : (aiMid > 0 ? aiMid : lo);
+    const mid = Math.max(1, aiMid > 0 ? aiMid : calcMid);
+
     return {
       description: String(item.description || '').slice(0, 220),
       category: item.category || classifyItemServer(item.description),
       quantity: Math.max(0.01, Number(item.quantity || 1)),
-      unit_price: Math.max(1, mid),
-      lo, mid: Math.max(1, mid), hi: Math.max(mid, hi),
+      unit_price: mid,
+      lo, mid, hi: Math.max(mid, hi),
       why: String(item.why || '').slice(0, 220),
       when: String(item.when || '').slice(0, 180),
       skip: String(item.skip || '').slice(0, 180),

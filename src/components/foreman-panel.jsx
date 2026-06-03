@@ -13,6 +13,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from './toast';
 import { supabase } from '../lib/supabase';
+import { smsNotify } from '../lib/sms';
 import { currency } from '../lib/format';
 import ForemanLogo from './foreman-logo';
 
@@ -32,11 +33,13 @@ function getQuickActions(pathname, quoteContext) {
       { key: 'review',  label: 'Review this scope',
         send: `Review this ${tradeWord} scope end-to-end. Flag anything missing (permits, disposal, common code items), anything underbid for my province, and any line items that don't belong.` },
       { key: 'missing', label: "What am I missing?",
-        send: `What line items do contractors typically forget on a ${tradeWord} job like this? Be specific with item names and a fair price range.` },
-      { key: 'upsell',  label: 'Smart upsells',
-        send: `Based on this scope, what 2-3 optional upsells should I offer the customer? Pick add-ons they're likely to say yes to and explain why each one matters.` },
+        send: `What line items do contractors typically forget on a ${tradeWord} job like this? Be specific with item names and a fair price range so I can add them.` },
       { key: 'pricing', label: 'Check my pricing',
         send: 'Walk through my line items and tell me which prices look low, high, or right for my province. Use catalog ranges, not gut feel.' },
+      { key: 'code',    label: 'Code & permit check',
+        send: `What permits and code items are likely required for this ${tradeWord} job? Cover the provincial baseline, then ask me which city the job is in — some permits are municipal — and call out anything that would fail inspection if left out.` },
+      { key: 'upsell',  label: 'Smart upsells',
+        send: `Based on this scope, what 2-3 optional upsells should I offer the customer? Pick add-ons they're likely to say yes to and explain why each one matters.` },
     ];
   }
 
@@ -125,15 +128,17 @@ function getQuickActions(pathname, quoteContext) {
   }
 
   // ── Default catch-all (settings, billing, etc.) ───────────
+  // The most-seen empty state across the app. Tilt these toward the things
+  // a contractor needs in the moment — not just business-coaching prompts.
   return [
-    { key: 'today',    label: 'What should I focus on today?',
-      send: 'What should I focus on today? Check my pipeline and follow-ups.' },
-    { key: 'pricing',  label: 'Look up a price',
+    { key: 'price',    label: 'Look up a price',
       send: '' },
-    { key: 'scope',    label: 'Help me scope a job',
+    { key: 'diag',     label: 'Diagnose something',
+      send: "I'm looking at a problem in the field — can I describe it (or send a photo) and you tell me likely cause and fix with cost?" },
+    { key: 'code',     label: 'Code or permit question',
       send: '' },
-    { key: 'followup', label: 'Who needs a follow-up?',
-      send: 'Which quotes need follow-up right now?' },
+    { key: 'spec',     label: 'Material or spec lookup',
+      send: '' },
   ];
 }
 
@@ -161,24 +166,99 @@ function getFollowUps(lastMsg, quoteContext) {
   return chips.slice(0, 3);
 }
 
-/* ─── Parse pricing items from AI response for "Add to quote" ─── */
+/* ─── Parse pricing items from AI response for "Add to quote" ───
+ * Claude formats line items inconsistently — sometimes hyphen bullets,
+ * sometimes asterisks, sometimes plain numbered lines; sometimes "$120–$160"
+ * with an en-dash, sometimes "$120 to $160", sometimes just "$140".
+ * The old parser required exactly one shape and silently dropped the rest,
+ * so most "+ Add" buttons never appeared. This is shape-tolerant: any
+ * bulleted / numbered line that ends with a recognisable price wins. */
 function parseAddToQuote(text) {
   const items = [];
-  const rx = /(?:^|\n)\s*[-•]\s*(.+?):\s*\$?([\d,]+)\s*[–-]\s*\$?([\d,]+)/g;
-  let m;
-  while ((m = rx.exec(text)) !== null) {
+  const seen = new Set();
+  const lines = String(text || '').split(/\r?\n/);
+  // bullet/number prefix → name → (optional :) → ($lo - $hi) | (~$mid) | ($mid)
+  // Names cap at ~80 chars so a sentence with a stray "$" doesn't get picked.
+  const rx = /^\s*(?:[-*•·]|\d+[.)])\s+(.{2,80}?)\s*[:–—-]?\s*~?\$\s?([\d,]+)(?:\s*(?:[–—-]|to)\s*\$?\s?([\d,]+))?\s*$/;
+  for (const raw of lines) {
+    const m = raw.match(rx);
+    if (!m) continue;
     const lo = Number(m[2].replace(/,/g, ''));
-    const hi = Number(m[3].replace(/,/g, ''));
-    const mid = Math.round(lo + (hi - lo) * 0.55);
-    items.push({ name: m[1].trim(), unit_price: mid, lo, hi });
+    const hi = m[3] ? Number(m[3].replace(/,/g, '')) : lo;
+    if (!Number.isFinite(lo) || lo <= 0) continue;
+    const high = Math.max(lo, hi);
+    const mid = Math.round(lo + (high - lo) * 0.55);
+    // Strip markdown emphasis / trailing punctuation from the name.
+    const name = m[1].replace(/[*_`]/g, '').replace(/[.,;]$/, '').trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push({ name, unit_price: mid, lo, hi: high });
   }
   return items;
 }
 
+/* ─── Speak text via the Web Speech API (browser TTS).
+ * Hands-on-tools moments — reading a 4-line answer while holding a wrench
+ * is friction. One tap reads it. Tap again to stop. Falls back silently
+ * on browsers without speechSynthesis support. */
+function speak(text, voice) {
+  if (typeof window === 'undefined' || !window.speechSynthesis || !text) return false;
+  // Cancel anything already speaking — second tap on the same bubble stops,
+  // and a new bubble doesn't talk over the old one.
+  window.speechSynthesis.cancel();
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.05;   // slight speed-up reads more naturally for short answers
+    u.pitch = 1.0;
+    if (voice) u.voice = voice;
+    window.speechSynthesis.speak(u);
+    return true;
+  } catch { return false; }
+}
+
+/* ─── Detect a quoted draft message — the model emits draft texts in
+ * quotes when draft_followup runs, but it also quotes example responses
+ * in normal answers. So we only treat it as a sendable draft when (a)
+ * the message has a clear "send" framing in the surrounding text and
+ * (b) the quoted body is short (text-length, not paragraph length). */
+function extractDraftReply(text) {
+  if (!text) return null;
+  const hint = /\b(follow ?up|send|text|message|nudge|draft)\b/i.test(text);
+  if (!hint) return null;
+  // First “quoted block” — straight or smart quotes. Cap at 280 chars so
+  // we don't pull in a multi-paragraph rationale.
+  const m = text.match(/[“"](.{20,280}?)[”"]/);
+  if (!m) return null;
+  // Strip trailing prompt-completion artifacts ("...send this:") that
+  // sometimes sneak into the quoted body.
+  return m[1].trim();
+}
+
 /* ─── Message bubble ─── */
-function MessageBubble({ msg, onNavigate, onAddItem, addedItems }) {
+function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, onSendSms, sentDrafts, onSavePhoto, photoSaved, onCreateQuoteFromItems, quoteCreatedKey }) {
   const isUser = msg.role === 'user';
   const items = !isUser ? parseAddToQuote(msg.content || '') : [];
+  const draft = !isUser ? extractDraftReply(msg.content || '') : null;
+  const draftKey = draft ? draft.slice(0, 60) : null;
+  const draftSent = draftKey ? sentDrafts?.has(draftKey) : false;
+  const [speaking, setSpeaking] = useState(false);
+  const canSpeak = !isUser && typeof window !== 'undefined' && !!window.speechSynthesis && (msg.content || '').trim().length > 0;
+  function handleSpeak() {
+    // Tap again to stop, first tap starts. Poll speaking state so the
+    // play icon flips back when the utterance finishes naturally.
+    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return; }
+    if (!speak(msg.content)) return;
+    setSpeaking(true);
+    const tick = setInterval(() => {
+      if (!window.speechSynthesis.speaking) { setSpeaking(false); clearInterval(tick); }
+    }, 250);
+  }
+  // Items + no active-quote handler = offer "Create a quote with these"
+  // instead of per-item Add. Common after a photo-diagnosis turn.
+  const offerCreateQuote = !isUser && items.length > 0 && !onAddItem && onCreateQuoteFromItems;
+  const itemsKey = items.map(i => i.name).join('|').slice(0, 80);
 
   return (
     <div className={`fm-msg ${isUser ? 'fm-msg--user' : 'fm-msg--ai'}`}>
@@ -187,12 +267,40 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems }) {
         {msg.photo && (
           <div className="fm-msg-photo">
             <img src={msg.photo} alt="Uploaded" />
+            {/* Save diagnostic photo to the active quote — only when the
+                contractor has a live quote to attach to. Otherwise no-op. */}
+            {isUser && onSavePhoto && (
+              <button
+                type="button"
+                className={`fm-photo-save${photoSaved ? ' fm-photo-save--done' : ''}`}
+                onClick={() => !photoSaved && onSavePhoto(msg.photo)}
+                disabled={photoSaved}
+                title="Save this photo to the active quote"
+              >
+                {photoSaved ? '✓ Saved to quote' : 'Save to quote'}
+              </button>
+            )}
           </div>
         )}
         <div className="fm-msg-text">
           {(msg.content || '').split('\n').map((line, i) => (
             <p key={i}>{line || ' '}</p>
           ))}
+          {canSpeak && (
+            <button
+              type="button"
+              className={`fm-speak-btn${speaking ? ' fm-speak-btn--active' : ''}`}
+              onClick={handleSpeak}
+              title={speaking ? 'Stop' : 'Read aloud'}
+              aria-label={speaking ? 'Stop reading' : 'Read aloud'}
+            >
+              {speaking ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              )}
+            </button>
+          )}
         </div>
         {msg.appLinks?.length > 0 && (
           <div className="fm-msg-links">
@@ -222,6 +330,42 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems }) {
             })}
           </div>
         )}
+        {/* When Foreman diagnoses items but there's no active quote (typical
+            after a photo turn from the dashboard), offer to scope them into
+            a brand-new draft instead of forcing the contractor to navigate
+            to the builder and re-explain. */}
+        {offerCreateQuote && (
+          <div className="fm-msg-actions">
+            <button
+              type="button"
+              className={`fm-add-item-btn${quoteCreatedKey === itemsKey ? ' fm-add-item-btn--added' : ''}`}
+              onClick={() => quoteCreatedKey !== itemsKey && onCreateQuoteFromItems(items)}
+              disabled={quoteCreatedKey === itemsKey}
+            >
+              {quoteCreatedKey === itemsKey
+                ? <><span className="fm-check">✓</span> Quote opened</>
+                : <><span className="fm-plus">↗</span> Scope these into a new quote</>}
+            </button>
+          </div>
+        )}
+        {/* Foreman-drafted follow-up text → one-tap send via SMS when the
+            active quote has a customer phone. Sending is the contractor's
+            explicit action, not Foreman's — no auto-send anywhere. */}
+        {draft && customerPhone && onSendSms && (
+          <div className="fm-msg-actions">
+            <button
+              type="button"
+              className={`fm-add-item-btn${draftSent ? ' fm-add-item-btn--added' : ''}`}
+              onClick={() => !draftSent && onSendSms(draft)}
+              disabled={draftSent}
+              title={`Sends to ${customerPhone}`}
+            >
+              {draftSent
+                ? <><span className="fm-check">✓</span> Sent</>
+                : <><span className="fm-plus">↗</span> Send to customer via text</>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -239,7 +383,7 @@ function TypingIndicator() {
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
-export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQuote }) {
+export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQuote, openRequest, consumeOpenRequest }) {
   const { user } = useAuth();
   const { show: toast } = useToast();
   const navigate = useNavigate();
@@ -251,6 +395,20 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   // last 30 messages to keep localStorage payload small. Cleared by
   // the New Chat button or when the user signs out (handled by the
   // browser session-storage on logout).
+  // ── Conversation hygiene ──
+  // The chat is persisted so a contractor can revisit yesterday's pricing
+  // question, but two things go wrong if we just keep it forever:
+  //   1. Stale context bleeds in — yesterday's kitchen-reno thread riding
+  //      along when today's question is about a 50A breaker.
+  //   2. Every turn ships up to 20 previous messages to the model, which
+  //      gets expensive and dilutes the system prompt's instructions.
+  // Compromise: keep messages persisted, but when the gap since the last
+  // turn exceeds AUTO_ARCHIVE_HOURS, treat the prior thread as history —
+  // it stays visible in the panel as a collapsed "Earlier today" /
+  // "Yesterday" divider, but is excluded from the next API call so the
+  // model starts fresh.
+  const AUTO_ARCHIVE_HOURS = 4;
+  const MAX_PERSISTED = 30;
   const _fmStorageKey = user?.id ? `pl_foreman_chat:${user.id}` : null;
   const [messages, setMessages] = useState(() => {
     if (!_fmStorageKey) return [];
@@ -258,21 +416,43 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
       const raw = localStorage.getItem(_fmStorageKey);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed.slice(-30) : [];
+      return Array.isArray(parsed) ? parsed.slice(-MAX_PERSISTED) : [];
     } catch { return []; }
   });
   useEffect(() => {
     if (!_fmStorageKey) return;
     try {
       if (messages.length === 0) localStorage.removeItem(_fmStorageKey);
-      else localStorage.setItem(_fmStorageKey, JSON.stringify(messages.slice(-30)));
+      else localStorage.setItem(_fmStorageKey, JSON.stringify(messages.slice(-MAX_PERSISTED)));
     } catch { /* private mode / quota */ }
   }, [messages, _fmStorageKey]);
+  // Index of the first message in the CURRENT session (everything before
+  // is archived context — visible but not sent on the wire).
+  const sessionStartIdx = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const t = messages[i]?.ts;
+      const prev = messages[i - 1]?.ts;
+      if (!t || !prev) continue;
+      if ((t - prev) / 36e5 >= AUTO_ARCHIVE_HOURS) return i;
+    }
+    return 0;
+  })();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoBase64, setPhotoBase64] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
+  // Track drafts already sent in this session so the Send button locks
+  // out a duplicate tap if the contractor accidentally hits it twice.
+  const [sentDrafts, setSentDrafts] = useState(() => new Set());
+  // Photos that have been successfully attached to the active quote, keyed
+  // by the photo data-URL itself so the "Save to quote" button locks out
+  // a double-tap.
+  const [savedPhotos, setSavedPhotos] = useState(() => new Set());
+  // Items list (by hash) that the contractor has already promoted into a
+  // new quote — prevents accidentally creating two drafts from the same
+  // diagnosis turn.
+  const [quoteCreatedKey, setQuoteCreatedKey] = useState(null);
   const [listening, setListening] = useState(false);
   // First-time intro card. Persists dismissal in localStorage so it
   // doesn't reappear after the user has seen it, even if they never
@@ -295,7 +475,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   // ── Load profile once ──
   useEffect(() => {
     if (!user) return;
-    supabase.from('profiles').select('trade, province, country, default_labour_rate, company_name, full_name')
+    supabase.from('profiles').select('trade, province, country, default_city, default_labour_rate, company_name, full_name')
       .eq('id', user.id).single().then(({ data }) => { if (data) profile.current = data; });
   }, [user]);
 
@@ -303,6 +483,28 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 120);
   }, [open]);
+
+  // ── Consume one-shot open-with-prefill requests ──
+  // Used by "Ask Foreman about this item" on a line item and by anywhere
+  // else in the app that wants to drop the contractor into Foreman with
+  // a starter question already typed.
+  useEffect(() => {
+    if (!open || !openRequest || !consumeOpenRequest) return;
+    const req = consumeOpenRequest();
+    if (!req) return;
+    if (req.prefill) {
+      setInput(req.prefill);
+      // Microtask gives the textarea a frame to mount before we put the
+      // cursor at the end so the user can keep typing or just hit send.
+      setTimeout(() => {
+        const el = inputRef.current;
+        if (el) {
+          el.focus();
+          el.setSelectionRange(req.prefill.length, req.prefill.length);
+        }
+      }, 60);
+    }
+  }, [open, openRequest, consumeOpenRequest]);
 
   // ── Auto-scroll to bottom ──
   useEffect(() => {
@@ -323,8 +525,13 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   const followUps = messages.length > 0 && !loading ? getFollowUps(lastMsg, quoteContext) : [];
 
   // ── Greeting name ──
+  // Greeting: prefer the profile name (warmer) but fall back to the auth
+  // metadata so the cold-open panel doesn't say a bare "Hey" while the
+  // profile fetch is still in flight on a slow connection.
   const greetName = profile.current?.full_name?.split(' ')[0]
     || profile.current?.company_name?.split(' ')[0]
+    || user?.user_metadata?.full_name?.split(' ')[0]
+    || user?.email?.split('@')[0]
     || '';
 
   // ── Photo handling ──
@@ -417,12 +624,17 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
     if (!msg && !photoBase64) return;
     if (loading) return;
 
-    const userMsg = { role: 'user', content: msg, photo: photoPreview || null };
+    const userMsg = { role: 'user', content: msg, photo: photoPreview || null, ts: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
-    const apiMessages = [...messages.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: msg, photo: photoBase64 || undefined }]
+    // Only ship the CURRENT session to the model — anything older than the
+    // archive boundary stays visible to the contractor but is not in the
+    // wire payload, so the model can't accidentally hallucinate continuity
+    // with yesterday's conversation.
+    const sessionMsgs = messages.slice(sessionStartIdx);
+    const apiMessages = [...sessionMsgs.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: msg, photo: photoBase64 || undefined }]
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .slice(-20);
 
@@ -433,6 +645,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
       trade: quoteContext?.trade || p.trade || 'Other',
       province: quoteContext?.province || p.province || 'ON',
       country: p.country || 'CA',
+      defaultCity: p.default_city || '',
       labourRate: p.default_labour_rate || 0,
       quoteContext: quoteContext ? {
         description: quoteContext.description,
@@ -463,7 +676,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
 
       const contentType = resp.headers.get('content-type') || '';
       if (contentType.includes('text/event-stream') && resp.body) {
-        const placeholder = { role: 'assistant', content: '', appLinks: [] };
+        const placeholder = { role: 'assistant', content: '', appLinks: [], ts: Date.now() };
         setMessages(prev => [...prev, placeholder]);
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
@@ -514,12 +727,14 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           role: 'assistant',
           content: data.content || 'No response.',
           appLinks: data.appLinks || [],
+          ts: Date.now(),
         }]);
       }
     } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Connection error — try again in a sec.',
+        ts: Date.now(),
       }]);
     } finally {
       setLoading(false);
@@ -531,6 +746,71 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   }
 
   function handleNavigate(path) { navigate(path); onClose(); }
+
+  // Save a photo bubble's image to the active quote so the contractor
+  // doesn't have to take it again to attach evidence. Uses the existing
+  // uploadQuotePhoto pipeline. Locks the button after success.
+  async function handleSavePhotoToQuote(photoDataUrl) {
+    if (!quoteContext?.id || !photoDataUrl) return;
+    try {
+      // photo is a data URL like "data:image/jpeg;base64,...". Convert to
+      // a Blob for uploadQuotePhoto, which expects a File-ish input.
+      const res = await fetch(photoDataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `foreman-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
+      const { uploadQuotePhoto } = await import('../lib/api');
+      await uploadQuotePhoto(quoteContext.id, file);
+      setSavedPhotos(prev => new Set(prev).add(photoDataUrl));
+      toast('Photo saved to quote', 'success');
+    } catch (e) {
+      toast(e?.message || 'Could not save the photo', 'error');
+    }
+  }
+
+  // Promote a list of Foreman-extracted items into a new draft quote.
+  // Used when there's no active quote (typical after a dashboard-level
+  // photo diagnosis). Navigates the contractor into the builder with the
+  // items pre-staged in sessionStorage so the build page can read them.
+  async function handleCreateQuoteFromItems(items) {
+    if (!items?.length || !user?.id) return;
+    try {
+      const { createQuote } = await import('../lib/api');
+      const p = profile.current || {};
+      const draft = await createQuote(user.id, {
+        title: 'From Foreman',
+        description: items.map(i => i.name).join('; ').slice(0, 220),
+        trade: p.trade || 'Other',
+        province: p.province || 'AB',
+        country: p.country || 'CA',
+        status: 'draft',
+        line_items: items.map(i => ({
+          name: i.name,
+          quantity: 1,
+          unit_price: i.unit_price || 0,
+          included: true,
+        })),
+      });
+      const itemsKey = items.map(i => i.name).join('|').slice(0, 80);
+      setQuoteCreatedKey(itemsKey);
+      toast('Quote opened', 'success');
+      navigate(`/app/quotes/${draft.id}/edit`);
+      onClose();
+    } catch (e) {
+      toast(e?.message || 'Could not open the quote', 'error');
+    }
+  }
+
+  async function handleSendDraftSms(draftText) {
+    const phone = quoteContext?.customerPhone;
+    if (!phone || !draftText) return;
+    try {
+      await smsNotify.customMessage({ to: phone, body: draftText });
+      setSentDrafts(prev => new Set(prev).add(draftText.slice(0, 60)));
+      toast('Sent to customer', 'success');
+    } catch (e) {
+      toast(e?.message || 'Could not send the text', 'error');
+    }
+  }
 
   function handleAddItem(item) {
     if (onAddItemToQuote) {
@@ -601,7 +881,16 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           <div className="fm-context-bar">
             <span className="fm-context-dot" />
             <span className="fm-context-text">
-              {quoteContext.title || quoteContext.trade || 'Quote'} · {quoteContext.items?.length || 0} items · {currency(quoteContext.total || 0)}
+              {(() => {
+                const label = quoteContext.title || quoteContext.trade || 'Quote';
+                const itemCount = quoteContext.items?.length || 0;
+                const total = Number(quoteContext.total || 0);
+                // While the contractor is still describing the job (no items
+                // yet, no total), surface that state instead of an empty
+                // "0 items · $0" line — that reads as a broken counter.
+                if (itemCount === 0 && total === 0) return `${label} · drafting scope`;
+                return `${label} · ${itemCount} item${itemCount === 1 ? '' : 's'} · ${currency(total)}`;
+              })()}
             </span>
           </div>
         )}
@@ -664,16 +953,34 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
             </div>
           )}
 
-          {/* Chat messages */}
-          {messages.map((msg, i) => (
-            <MessageBubble
-              key={i}
-              msg={msg}
-              onNavigate={handleNavigate}
-              onAddItem={onAddItemToQuote ? handleAddItem : null}
-              addedItems={addedItems}
-            />
-          ))}
+          {/* Chat messages — archived earlier-session messages remain
+              visible so the contractor can scroll back, but a divider
+              makes it clear Foreman is starting fresh below. */}
+          {messages.map((msg, i) => {
+            const showDivider = i === sessionStartIdx && sessionStartIdx > 0;
+            return (
+              <div key={i}>
+                {showDivider && (
+                  <div className="fm-session-divider">
+                    <span>Earlier conversation</span>
+                  </div>
+                )}
+                <MessageBubble
+                  msg={msg}
+                  onNavigate={handleNavigate}
+                  onAddItem={onAddItemToQuote ? handleAddItem : null}
+                  addedItems={addedItems}
+                  customerPhone={quoteContext?.customerPhone}
+                  onSendSms={quoteContext?.customerPhone ? handleSendDraftSms : null}
+                  sentDrafts={sentDrafts}
+                  onSavePhoto={quoteContext?.id ? handleSavePhotoToQuote : null}
+                  photoSaved={savedPhotos.has(msg.photo)}
+                  onCreateQuoteFromItems={!onAddItemToQuote ? handleCreateQuoteFromItems : null}
+                  quoteCreatedKey={quoteCreatedKey}
+                />
+              </div>
+            );
+          })}
 
           {loading && <TypingIndicator />}
 

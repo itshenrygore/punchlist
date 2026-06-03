@@ -308,6 +308,20 @@ export default function QuoteItemsEditor({
           </div>
         ) : (
           <ConfidencePanel confidence={confidence} onFixIssue={(issue) => {
+            // Smart-derived missed items carry the specific term to add
+            // ("expansion tank", "AFCI breaker", "permit + inspection",
+            // …). When present, use it verbatim so the new line item
+            // actually matches the gap the engine spotted.
+            const smartTerm = issue.smartTerm;
+            if (smartTerm) {
+              const newId = genLineItemId();
+              const name = `${smartTerm[0].toUpperCase()}${smartTerm.slice(1)}`;
+              setLineItems(p => [...p, { id: newId, name, quantity: 1, unit_price: 0, notes: '', included: true, category: '' }]);
+              markDirty();
+              setEditingItemId(newId);
+              toast?.(`Added ${smartTerm} — set your price`, 'success');
+              return;
+            }
             if (/no customer/i.test(issue.label || '')) {
               const el = document.querySelector('.rq-customer-section input, .jd-input[placeholder*="Search or add customer"], [placeholder*="Search or add customer"]');
               if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
@@ -406,7 +420,11 @@ function ConfidencePanel({ confidence, onFixIssue }) {
                 <span className="qe-conf-dot" />
                 {c.label}
               </div>
-              {onFixIssue && c.label && /cleanup|haul|disposal|permit|no customer/i.test(c.label) && (
+              {/* Show the + Add affordance for every actionable warning:
+                  the smart-derived ones (carry a smartTerm), the generic
+                  cleanup/permit ones, and the "no customer" link to the
+                  customer picker. */}
+              {onFixIssue && c.label && (c.smartTerm || /cleanup|haul|disposal|permit|no customer/i.test(c.label)) && (
                 <button type="button" className="qe-conf-fix-btn" onClick={(e) => { e.stopPropagation(); onFixIssue(c); }}>
                   {/no customer/i.test(c.label) ? 'Add' : '+ Add'}
                 </button>

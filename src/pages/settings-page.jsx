@@ -129,6 +129,7 @@ export default function SettingsPage() {
     trade: 'Plumber',
     province: 'ON',
     country: 'CA',
+    default_city: '',
     phone: '',
     default_expiry_days: 14,
     default_deposit_mode: 'none',
@@ -262,6 +263,7 @@ export default function SettingsPage() {
           trade: normalizeTrade(p.trade || 'Plumber'),
           province: p.province || 'ON',
           country: p.country || 'CA',
+          default_city: p.default_city || '',
           phone: p.phone || '',
           default_expiry_days: Number(p.default_expiry_days ?? 14),
           default_deposit_mode: p.default_deposit_mode || 'none',
@@ -519,19 +521,29 @@ export default function SettingsPage() {
     finally { setExporting(false); }
   }
 
-  // 7G: Delete account
+  // 7G: Delete account — the server endpoint wipes every quote / line
+  // item / invoice / customer / template / notification / photo and
+  // finally the auth user itself, then signs us out client-side and
+  // clears IndexedDB + localStorage so the next visitor on the device
+  // starts truly fresh. Until this commit the call hit a client-only
+  // implementation that couldn't touch the auth user (silent fail) and
+  // left every quote + customer orphaned.
   async function handleDeleteAccount() {
     if (!user || !deleteConfirm || !deleteConfirm2) return;
     setDeleting(true);
     try {
-      const result = await deleteAccount(user.id);
-      if (result == null) {
-        showToast('To delete your account, email hello@punchlist.ca', 'info');
-        setDeleteConfirm(false);
-        setDeleteConfirm2(false);
-        setDeleting(false);
-        return;
+      const report = await deleteAccount();
+      // Surface a meaningful number — "We removed 42 quotes, 8 customers
+      // and 3 invoices" reads much more reassuring than a bare redirect.
+      if (report && !report.auth_deleted) {
+        // Data was wiped but the auth user couldn't be removed. The
+        // contractor's local session is gone (we signed them out), but
+        // we should be honest about what's left.
+        showToast('Your data was deleted, but your sign-in record could not be removed. Email hello@punchlist.ca to finish.', 'error');
       }
+      // Even on partial success, redirect to the landing page — staying
+      // on /app/settings with a signed-out client would re-bounce to
+      // /login and confuse the contractor.
       window.location.href = '/';
     } catch (e) {
       showToast(friendly(e), 'error');
@@ -631,22 +643,35 @@ export default function SettingsPage() {
             <div className="form-row">
               <div>
                 <span className="field-label">Trade</span>
-                <select className="input" value={form.trade} onChange={e => setForm(p => ({ ...p, trade: e.target.value }))}>
+                <select aria-label="Trade" className="input" value={form.trade} onChange={e => setForm(p => ({ ...p, trade: e.target.value }))}>
                   {TRADES.map(t => <option key={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <span className="field-label">Country</span>
-                <select className="input" value={form.country} onChange={e => { const c = e.target.value; setForm(p => ({ ...p, country: c, province: c === 'US' ? 'CA' : 'ON' })); }}>
+                <select aria-label="Country" className="input" value={form.country} onChange={e => { const c = e.target.value; setForm(p => ({ ...p, country: c, province: c === 'US' ? 'CA' : 'ON' })); }}>
                   <option value="CA">Canada</option>
                   <option value="US">United States</option>
                 </select>
               </div>
               <div>
                 <span className="field-label">{form.country === 'US' ? 'State' : 'Province'} (sets tax rate)</span>
-                <select className="input" value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value }))}>
+                <select aria-label={form.country === 'US' ? 'State' : 'Province'} className="input" value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value }))}>
                   {(form.country === 'US' ? US_STATES : CA_PROVINCES).map(p => <option key={p}>{p}</option>)}
                 </select>
+              </div>
+            </div>
+            <div className="form-row">
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span className="field-label">Primary city / municipality (optional)</span>
+                <input
+                  className="input"
+                  value={form.default_city || ''}
+                  onChange={e => setForm(p => ({ ...p, default_city: e.target.value }))}
+                  placeholder="e.g. Calgary, AB"
+                  maxLength={80}
+                />
+                <span className="field-hint">Foreman uses this as the default jurisdiction when you ask about permits or code. You can still tell Foreman a different city for a specific job.</span>
               </div>
             </div>
             <div className="form-row">
@@ -666,7 +691,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <span className="field-label">Account email (where approval notifications are sent)</span>
-              <input className="input sp-readonly-input" value={user?.email || ''} readOnly  />
+              <input aria-label="Account email" className="input sp-readonly-input" value={user?.email || ''} readOnly  />
               <div className="muted small sp-hint">This is your login email. Change it through your account provider.</div>
             </div>
           </div>
@@ -684,6 +709,7 @@ export default function SettingsPage() {
             <div>
               <span className="field-label">Default quote expiry</span>
               <select
+                aria-label="Default quote expiry"
                 className="input"
                 value={form.default_expiry_days}
                 onChange={e => setForm(p => ({ ...p, default_expiry_days: Number(e.target.value) }))}
@@ -814,7 +840,7 @@ export default function SettingsPage() {
             <div className="stack">
               <div>
                 <span className="field-label">Default deposit on new quotes</span>
-                <select className="input" value={form.default_deposit_mode} onChange={e => setForm(p => ({ ...p, default_deposit_mode: e.target.value }))}>
+                <select aria-label="Default deposit on new quotes" className="input" value={form.default_deposit_mode} onChange={e => setForm(p => ({ ...p, default_deposit_mode: e.target.value }))}>
                   <option value="none">No deposit required</option>
                   <option value="percent">Percentage of total</option>
                   <option value="fixed">Fixed amount</option>
@@ -835,7 +861,7 @@ export default function SettingsPage() {
             <div className="stack">
               <div>
                 <span className="field-label">Due date</span>
-                <select className="input" value={form.invoice_due_days} onChange={e => setForm(p => ({ ...p, invoice_due_days: Number(e.target.value) }))}>
+                <select aria-label="Invoice due date" className="input" value={form.invoice_due_days} onChange={e => setForm(p => ({ ...p, invoice_due_days: Number(e.target.value) }))}>
                   <option value={0}>Due on receipt</option>
                   <option value={7}>Net 7</option>
                   <option value={14}>Net 14</option>
@@ -853,7 +879,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <span className="field-label">Applied after (days overdue)</span>
-                  <select className="input" value={form.late_fee_days || 0} onChange={e => setForm(p => ({ ...p, late_fee_days: Number(e.target.value) }))}>
+                  <select aria-label="Late fee applied after (days overdue)" className="input" value={form.late_fee_days || 0} onChange={e => setForm(p => ({ ...p, late_fee_days: Number(e.target.value) }))}>
                     <option value={0}>Off</option>
                     <option value={15}>15 days</option>
                     <option value={30}>30 days</option>

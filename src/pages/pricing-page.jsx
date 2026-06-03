@@ -43,6 +43,9 @@ export default function PricingPage() {
   return (
     <div className="site-wrap">
       <Header />
+      {/* Pricing body lives inside <main> so the page exposes the
+          nav / main / footer landmark structure AT users expect. */}
+      <main>
 
       {/* ── HERO ── */}
       <section className="pr-hero">
@@ -223,6 +226,7 @@ export default function PricingPage() {
           </p>
         </div>
       </section>
+      </main>
     </div>
   );
 }

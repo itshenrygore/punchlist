@@ -287,9 +287,25 @@ export default function QuotesListPage() {
     try {
       await deleteQuote(quoteId);
       setQuotes(prev => prev.filter(q => q.id !== quoteId));
+      // Also drop the row from the IndexedDB cache so a subsequent
+      // fallback read (when the network blips) doesn't resurrect it.
+      // The cache used store.put() which only added/updated — never
+      // removed — so deleted rows lived forever in the local cache.
+      try {
+        const { removeCachedQuote } = await import('../lib/offline-cache');
+        await removeCachedQuote(quoteId);
+      } catch (e) { console.warn('[PL]', e); }
       haptic('success');
       toast('Draft deleted', 'success');
-    } catch { toast('Could not delete', 'error'); }
+    } catch (err) {
+      // Surface the actual reason rather than the bland "Could not delete"
+      // — the contractor previously couldn't tell if the row really went
+      // away or was about to come back.
+      toast(err?.message || 'Could not delete', 'error');
+      // Re-throw so the SwipeableRow can snap back instead of leaving the
+      // animated-out row visible while the underlying state still has it.
+      throw err;
+    }
   }
 
   async function handleDuplicate(e, quoteId) {

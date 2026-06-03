@@ -27,6 +27,86 @@ const TOOL_DEFS = [
     input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Item or service to look up, e.g. "install kitchen faucet" or "panel upgrade"' }, trade: { type: 'string' } }, required: ['query'] },
   },
   {
+    name: 'read_quote_detail',
+    description: 'Pull the full scope of one specific quote — every line item with its quantity and price, the customer name, status, total, and view count. Use this when the contractor asks about a specific quote by title or customer ("what is on the Smith quote", "look at the bathroom reno for Maria") and you do not already have an ACTIVE QUOTE in context. Prefer this over read_quotes when you need item-level detail.',
+    input_schema: { type: 'object', properties: { quote_search: { type: 'string', description: 'Quote title fragment or customer name to disambiguate which quote to load.' } }, required: ['quote_search'] },
+  },
+  {
+    name: 'update_quote',
+    description: 'Apply a focused edit to one of the contractor\'s draft quotes: change the price of an existing line item, add a new line item, or remove a line item by name. Only operates on DRAFT quotes — never touches sent or approved quotes. Use this when the contractor explicitly tells you to make a change ("raise the faucet to 280", "add a permit line at 180", "drop the disposal line"). Always confirm the new total in your reply.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name to identify which draft to edit.' },
+        edits: {
+          type: 'array',
+          description: 'List of edits to apply. Each edit must target a line item by name (case-insensitive substring match) or be marked as an addition.',
+          items: {
+            type: 'object',
+            properties: {
+              action: { type: 'string', enum: ['set_price', 'add', 'remove'] },
+              item_name: { type: 'string', description: 'Name to match for set_price/remove, or the new line item name for add.' },
+              unit_price: { type: 'number', description: 'New price (set_price) or starting price (add). Required for set_price and add.' },
+              quantity: { type: 'number', description: 'Quantity for add. Defaults to 1.' },
+            },
+            required: ['action', 'item_name'],
+          },
+        },
+      },
+      required: ['quote_search', 'edits'],
+    },
+  },
+  {
+    name: 'update_quote_status',
+    description: 'Move a quote forward through its lifecycle from chat — the kitchen-table close moment. Use when the contractor explicitly says the customer accepted ("Smith said yes — mark it approved"), or after a deposit was paid in person ("Kevin paid the deposit"), or to mark a sent quote as followed-up. NEVER guesses a status change without a clear instruction; the tool reply always summarises what changed.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name.' },
+        action: { type: 'string', enum: ['mark_approved', 'mark_deposit_paid', 'mark_followed_up'], description: 'Allowed transitions only — never silent rewrites of declined/archived/converted quotes.' },
+      },
+      required: ['quote_search', 'action'],
+    },
+  },
+  {
+    name: 'start_revision',
+    description: 'Begin a revision on a SENT / VIEWED / APPROVED quote — the in-field "while you\'re here, can you also do X" moment. Stages the requested edits onto the existing line items (without changing customer-visible status yet) and returns a link to the edit page so the contractor reviews and ships the revision. Refuses to touch a draft (use update_quote for those), a declined quote, or one already archived.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name.' },
+        edits: {
+          type: 'array',
+          description: 'Same shape as update_quote.edits: set_price / add / remove on existing line items.',
+          items: {
+            type: 'object',
+            properties: {
+              action: { type: 'string', enum: ['set_price', 'add', 'remove'] },
+              item_name: { type: 'string' },
+              unit_price: { type: 'number' },
+              quantity: { type: 'number' },
+            },
+            required: ['action', 'item_name'],
+          },
+        },
+        reason: { type: 'string', description: 'One-line note for the revision summary (e.g. "Added bathroom fan at customer request").' },
+      },
+      required: ['quote_search', 'edits'],
+    },
+  },
+  {
+    name: 'draft_followup',
+    description: 'Compose a short, ready-to-send follow-up text for ONE specific quote based on its status, age, and view count. Returns the draft text — does NOT auto-send. The frontend renders it with a one-tap Send button. Use when the contractor asks "draft a follow-up for X" or "what should I send the Smith customer".',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quote_search: { type: 'string', description: 'Quote title fragment or customer name.' },
+        tone: { type: 'string', enum: ['friendly', 'firm', 'closing'], description: 'friendly = soft nudge; firm = it has been a while; closing = decision-time. Defaults to friendly.' },
+      },
+      required: ['quote_search'],
+    },
+  },
+  {
     name: 'start_new_quote',
     description: 'Open the new quote flow so the contractor can describe a job and let AI build the scope. Use when the user wants to create a quote through the normal flow.',
     input_schema: { type: 'object', properties: { customer_name: { type: 'string' }, description: { type: 'string' } } },
@@ -48,7 +128,7 @@ const TOOL_DEFS = [
   },
 ];
 
-async function executeTool(name, args, userId, supabase) {
+export async function executeTool(name, args, userId, supabase) {
   try {
     if (name === 'read_quotes') {
       let q = supabase.from('quotes').select('id, title, status, total, trade, updated_at, customer:customers(name)').eq('user_id', userId).order('updated_at', { ascending: false }).limit(10);
@@ -100,6 +180,299 @@ async function executeTool(name, args, userId, supabase) {
       if (!results.length) return `No items matching "${args.query}" in the catalog. You can still quote a custom price based on your experience.`;
       return results.map(r => `${r.n}: $${r.lo}–$${r.hi} (${r.d || r.c})`).join('\n');
     }
+    // Helper: resolve a search fragment to one quote owned by the user.
+    // Returns { quote, ambiguous, none } so callers can branch on each
+    // case and surface a useful message to the model.
+    async function findOneQuote(search) {
+      const s = String(search || '').trim().toLowerCase();
+      if (!s) return { none: true };
+      // Pull recent quotes and rank by title / customer-name match. Limited
+      // to the most recent 80 to keep the payload bounded even for
+      // contractors with hundreds of quotes.
+      const { data: rows } = await supabase
+        .from('quotes')
+        .select('id, title, status, total, trade, province, view_count, sent_at, updated_at, customer:customers(name), line_items')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(80);
+      if (!rows?.length) return { none: true };
+      const matches = rows.filter(r => {
+        const title = String(r.title || '').toLowerCase();
+        const cust  = String(r.customer?.name || '').toLowerCase();
+        return title.includes(s) || cust.includes(s);
+      });
+      if (!matches.length) return { none: true };
+      if (matches.length > 1) {
+        // Prefer an exact title match over a substring tie; otherwise tell
+        // the model the list so it can ask the contractor to clarify.
+        const exact = matches.find(r => String(r.title || '').toLowerCase() === s);
+        if (exact) return { quote: exact };
+        return { ambiguous: matches.slice(0, 5) };
+      }
+      return { quote: matches[0] };
+    }
+
+    if (name === 'read_quote_detail') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} — $${r.total} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      const items = Array.isArray(q.line_items) ? q.line_items : [];
+      const itemLines = items.slice(0, 30).map(li =>
+        `  - ${li.name}: ${Number(li.quantity || 1)}× $${Number(li.unit_price || 0)} = $${Number(li.quantity || 1) * Number(li.unit_price || 0)}`
+      ).join('\n');
+      return [
+        `Quote: "${q.title}"`,
+        `Customer: ${q.customer?.name || '—'}`,
+        `Status: ${q.status} · Total: $${q.total} · Viewed ${q.view_count || 0}×`,
+        `Trade: ${q.trade || '—'} · Province: ${q.province || '—'}`,
+        items.length ? `\nLine items (${items.length}):\n${itemLines}` : '\nNo line items yet.',
+      ].join('\n');
+    }
+
+    if (name === 'update_quote') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      // Hard guard: only drafts. A sent quote has been seen by the customer
+      // and may have a signature / deposit attached — silently rewriting it
+      // would be a real-money mistake. Force the contractor through the
+      // revision flow instead.
+      if (q.status !== 'draft') {
+        return `Can't edit "${q.title}" — status is ${q.status}, not draft. The contractor needs to send a revision through the quote page so the customer sees the change.`;
+      }
+      const rawEdits = Array.isArray(args.edits) ? args.edits.slice(0, 10) : [];
+      if (!rawEdits.length) return 'No edits provided.';
+
+      // Load current items from the line_items table (source of truth) — the
+      // `line_items` field on the quote row can drift.
+      const { data: dbItems } = await supabase
+        .from('line_items').select('id, name, quantity, unit_price, notes, included, category')
+        .eq('quote_id', q.id);
+      const items = (dbItems || []).map(li => ({ ...li }));
+
+      const applied = [];
+      const skipped = [];
+      // Capture the inverse of each edit so the model can offer "reply
+      // 'undo' to revert" and a follow-up update_quote call has the
+      // exact original prices to restore.
+      const reverts = [];
+      const clampNum = (v, lo, hi, dflt) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+      };
+      const clampStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+
+      for (const ed of rawEdits) {
+        const action = String(ed?.action || '').toLowerCase();
+        const itemName = clampStr(ed?.item_name, 220).trim();
+        if (!itemName) { skipped.push('blank item_name'); continue; }
+        if (action === 'set_price') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, null);
+          if (newPrice === null) { skipped.push(`bad price on "${itemName}"`); continue; }
+          const oldPrice = Number(target.unit_price || 0);
+          target.unit_price = newPrice;
+          await supabase.from('line_items').update({ unit_price: newPrice }).eq('id', target.id);
+          applied.push(`${target.name}: $${oldPrice} → $${newPrice}`);
+          reverts.push({ action: 'set_price', item_name: target.name, unit_price: oldPrice });
+        } else if (action === 'add') {
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, 0);
+          const qty = clampNum(ed.quantity, 0.01, 10_000, 1);
+          const ins = { quote_id: q.id, name: itemName, quantity: qty, unit_price: newPrice, included: true, category: '', notes: '' };
+          const { data: inserted } = await supabase.from('line_items').insert(ins).select().single();
+          if (inserted) {
+            items.push(inserted);
+            applied.push(`+ ${itemName} (${qty}× $${newPrice})`);
+            reverts.push({ action: 'remove', item_name: itemName });
+          } else { skipped.push(`could not add "${itemName}"`); }
+        } else if (action === 'remove') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          await supabase.from('line_items').delete().eq('id', target.id);
+          items.splice(items.indexOf(target), 1);
+          applied.push(`− ${target.name}`);
+          reverts.push({
+            action: 'add',
+            item_name: target.name,
+            unit_price: Number(target.unit_price || 0),
+            quantity: Number(target.quantity || 1),
+          });
+        } else {
+          skipped.push(`unknown action "${action}"`);
+        }
+      }
+
+      // Recompute total and write back.
+      const newTotal = items.reduce((s, li) => s + Number(li.quantity || 1) * Number(li.unit_price || 0), 0);
+      await supabase.from('quotes').update({ total: newTotal, updated_at: new Date().toISOString() }).eq('id', q.id);
+
+      const out = [
+        `Updated "${q.title}". New total: $${newTotal}.`,
+        applied.length ? `Applied:\n  ${applied.join('\n  ')}` : null,
+        skipped.length ? `Skipped:\n  ${skipped.join('\n  ')}` : null,
+        // Inverse-edit hint for the model — if the contractor says "undo",
+        // it can call update_quote with these exact reverts to restore the
+        // prior state. The model is told to offer this in its reply.
+        reverts.length
+          ? `Reverts (apply via update_quote if user says "undo"): ${JSON.stringify(reverts)}`
+          : null,
+        `[LINK:/app/quotes/${q.id}/edit]`,
+      ].filter(Boolean).join('\n');
+      return out;
+    }
+
+    if (name === 'update_quote_status') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      const action = String(args.action || '');
+      // Guard: declined / archived / converted quotes are terminal. Don't
+      // resurrect them from chat; that's a contractor-deliberate action.
+      if (['declined','archived','converted_to_invoice'].includes(q.status)) {
+        return `Can't change status on "${q.title}" — currently ${q.status}, which is a terminal state.`;
+      }
+      const patches = {
+        mark_approved: () => {
+          if (q.status === 'draft') return { error: 'Quote is still a draft — send it to the customer first.' };
+          return { patch: { status: 'approved', approved_at: new Date().toISOString() }, label: 'approved' };
+        },
+        mark_deposit_paid: () => {
+          if (!['approved','approved_pending_deposit'].includes(q.status)) {
+            return { error: `Can't mark deposit paid — quote is ${q.status}, must be approved first.` };
+          }
+          return {
+            patch: { deposit_status: 'paid', status: 'deposit_paid', deposit_paid_at: new Date().toISOString() },
+            label: 'deposit paid',
+          };
+        },
+        mark_followed_up: () => {
+          return { patch: { followed_up_at: new Date().toISOString() }, label: 'followed up' };
+        },
+      };
+      const op = patches[action];
+      if (!op) return `Unknown action "${action}". Allowed: mark_approved, mark_deposit_paid, mark_followed_up.`;
+      const result = op();
+      if (result.error) return result.error;
+      const { error } = await supabase.from('quotes').update(result.patch).eq('id', q.id);
+      if (error) return `Update failed: ${error.message || 'unknown error'}.`;
+      return `Marked "${q.title}" as ${result.label}. [LINK:/app/quotes/${q.id}]`;
+    }
+
+    if (name === 'start_revision') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      // Drafts go through update_quote, not start_revision — keeps the
+      // mental model clean: drafts edit in place, sent quotes go through
+      // a tracked revision. Declined/archived/converted are terminal.
+      if (q.status === 'draft') {
+        return `"${q.title}" is still a draft — use update_quote instead, no revision needed.`;
+      }
+      if (['declined','archived','converted_to_invoice'].includes(q.status)) {
+        return `Can't revise "${q.title}" — currently ${q.status}, which is a terminal state.`;
+      }
+      const rawEdits = Array.isArray(args.edits) ? args.edits.slice(0, 10) : [];
+      if (!rawEdits.length) {
+        // Empty edits is still useful — just opens the edit page so the
+        // contractor can make changes themselves, with the right summary.
+        return `Opening "${q.title}" for revision. Edit the line items, then send the revised quote. [LINK:/app/quotes/${q.id}/edit]`;
+      }
+      const { data: dbItems } = await supabase
+        .from('line_items').select('id, name, quantity, unit_price, notes, included, category')
+        .eq('quote_id', q.id);
+      const items = (dbItems || []).map(li => ({ ...li }));
+      const applied = [];
+      const skipped = [];
+      const clampNum = (v, lo, hi, dflt) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+      };
+      const clampStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+      for (const ed of rawEdits) {
+        const action = String(ed?.action || '').toLowerCase();
+        const itemName = clampStr(ed?.item_name, 220).trim();
+        if (!itemName) { skipped.push('blank item_name'); continue; }
+        if (action === 'set_price') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, null);
+          if (newPrice === null) { skipped.push(`bad price on "${itemName}"`); continue; }
+          await supabase.from('line_items').update({ unit_price: newPrice }).eq('id', target.id);
+          target.unit_price = newPrice;
+          applied.push(`${target.name}: → $${newPrice}`);
+        } else if (action === 'add') {
+          const newPrice = clampNum(ed.unit_price, 0, 1_000_000, 0);
+          const qty = clampNum(ed.quantity, 0.01, 10_000, 1);
+          const ins = { quote_id: q.id, name: itemName, quantity: qty, unit_price: newPrice, included: true, category: '', notes: '' };
+          const { data: inserted } = await supabase.from('line_items').insert(ins).select().single();
+          if (inserted) { items.push(inserted); applied.push(`+ ${itemName} (${qty}× $${newPrice})`); }
+          else { skipped.push(`could not add "${itemName}"`); }
+        } else if (action === 'remove') {
+          const target = items.find(li => li.name.toLowerCase().includes(itemName.toLowerCase()));
+          if (!target) { skipped.push(`no line item matches "${itemName}"`); continue; }
+          await supabase.from('line_items').delete().eq('id', target.id);
+          items.splice(items.indexOf(target), 1);
+          applied.push(`− ${target.name}`);
+        } else { skipped.push(`unknown action "${action}"`); }
+      }
+      const newTotal = items.reduce((s, li) => s + Number(li.quantity || 1) * Number(li.unit_price || 0), 0);
+      // Stage the revision_summary so when the contractor hits "Send revised
+      // quote" the customer-visible note explains what changed.
+      const reason = clampStr(args.reason, 220);
+      await supabase.from('quotes').update({
+        total: newTotal,
+        revision_summary: reason || (applied.length ? `Updates: ${applied.join('; ').slice(0, 200)}` : ''),
+        updated_at: new Date().toISOString(),
+      }).eq('id', q.id);
+      return [
+        `Staged revision on "${q.title}". New total: $${newTotal}.`,
+        applied.length ? `Applied:\n  ${applied.join('\n  ')}` : null,
+        skipped.length ? `Skipped:\n  ${skipped.join('\n  ')}` : null,
+        `Open the quote, review, then tap "Send revised quote" to ship it to the customer. [LINK:/app/quotes/${q.id}/edit]`,
+      ].filter(Boolean).join('\n');
+    }
+
+    if (name === 'draft_followup') {
+      const found = await findOneQuote(args.quote_search);
+      if (found.none) return `No quote matches "${args.quote_search}".`;
+      if (found.ambiguous) {
+        return 'Multiple quotes match — ask which one:\n'
+          + found.ambiguous.map(r => `- "${r.title}" — ${r.customer?.name || 'no contact'} [${r.status}]`).join('\n');
+      }
+      const q = found.quote;
+      // Don't return a tool result that pretends to send. Hand back the
+      // facts and let the model compose the message in its reply — the
+      // frontend renders it with a confirm-and-send affordance.
+      const daysSent = q.sent_at ? Math.max(0, Math.round((Date.now() - new Date(q.sent_at).getTime()) / 86_400_000)) : null;
+      const tone = ['friendly','firm','closing'].includes(args.tone) ? args.tone : 'friendly';
+      return [
+        `Follow-up context for "${q.title}":`,
+        `  Customer: ${q.customer?.name || '—'}`,
+        `  Status: ${q.status}${daysSent !== null ? ` (sent ${daysSent}d ago)` : ''}`,
+        `  Viewed: ${q.view_count || 0}× · Total: $${q.total}`,
+        `  Requested tone: ${tone}`,
+        '',
+        'Write the text the contractor can send verbatim — 1-2 short sentences, no "Hi there", reference the job specifically. Put the message in quotes so the contractor can copy it cleanly.',
+      ].join('\n');
+    }
+
     if (name === 'start_new_quote') {
       // Return a link to the new quote page — optionally with customer pre-selected
       let url = '/app/quotes/new';
@@ -162,7 +535,7 @@ async function executeTool(name, args, userId, supabase) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (blocked(res, `ai-assist:${getClientIp(req)}`, 20, 60_000)) return;
-  let { messages = [], userId, trade = 'Other', province = 'AB', country = 'CA', labourRate = 0, quoteContext = null } = req.body || {};
+  let { messages = [], userId, trade = 'Other', province = 'AB', country = 'CA', defaultCity = '', labourRate = 0, quoteContext = null } = req.body || {};
   if (!messages.length) return res.status(400).json({ error: 'No messages' });
 
   // Auth: ALWAYS require a verified JWT. The previous version only ran
@@ -188,6 +561,7 @@ export default async function handler(req, res) {
   const curr = country === 'US' ? 'USD' : 'CAD';
   const region = country === 'US' ? 'American' : 'Canadian';
   const labCtx = labourRate > 0 ? ` The contractor charges $${labourRate}/hr.` : '';
+  const cityCtx = defaultCity ? ` Primary city: ${defaultCity.slice(0, 80)}.` : '';
 
   // Build active quote context if provided
   let activeQuoteCtx = '';
@@ -232,7 +606,7 @@ export default async function handler(req, res) {
     } catch {}
   }
 
-  const systemPrompt = `You are Foreman — a senior trades pro built into the Punchlist app.${trade !== 'Other' ? ` This contractor is a ${trade.toLowerCase()}.` : ''} ${region}, ${curr} pricing.${labCtx}${bizContext}${activeQuoteCtx}
+  const systemPrompt = `You are Foreman — a senior trades pro built into the Punchlist app.${trade !== 'Other' ? ` This contractor is a ${trade.toLowerCase()}.` : ''} ${region}, ${curr} pricing.${cityCtx}${labCtx}${bizContext}${activeQuoteCtx}
 
 CRITICAL RESPONSE RULES:
 1. Lead with the answer. First sentence = what to do or what it costs.
@@ -247,10 +621,24 @@ CRITICAL RESPONSE RULES:
 10. If you use a tool, summarize the result in 1-2 lines. Don't narrate what you did.
 11. If the contractor asks about their day, status, or what to focus on, reference the business context above — mention quotes needing follow-up and close rate if relevant. Don't lecture, just surface the data.
 12. If there is an ACTIVE QUOTE above, you can see its line items, description, and total. Reference this directly when the contractor asks about "this quote", "the current job", "what else to include", etc. Suggest specific missing items with prices. Don't say you can't see the quote — you can.
+13. PERMITS / CODE / INSPECTIONS — permit rules and inspection authorities often differ by municipality, not just province. ${defaultCity ? `The contractor's primary city is ${defaultCity}; answer for ${defaultCity} by default, but ask which city if THIS job is somewhere else.` : 'When the question is permit, inspection, code amendment, or local approval, give the provincial baseline you know, then ask one short line like "Which city is the job in? Some permits are municipal." Don\'t ask if the answer is obviously province-wide (e.g. national electrical code minimums).'} When you don't know the city-specific rule, name the AHJ (Authority Having Jurisdiction) and say what to ask for.
+
+TOOLS AVAILABLE — reach for them aggressively:
+- read_quote_detail when asked about a specific named quote and there's no ACTIVE QUOTE above.
+- update_quote when the contractor tells you to change a price, add a line, or remove a line on a DRAFT quote ("raise the faucet to 280", "add a permit line at 180"). After the tool runs, confirm the new total in one short line AND end with "Reply 'undo' to revert" if the tool result included a Reverts payload. If the contractor's next message is "undo", call update_quote again with the exact Reverts you were given.
+- update_quote_status when the contractor says the customer accepted / paid the deposit / has been followed up ("Smith said yes — mark it approved", "Kevin paid the deposit"). Confirm with the new status in one line. Never guess; only fire on a clear instruction.
+- start_revision when the contractor wants to add to or change a quote that is ALREADY SENT / VIEWED / APPROVED ("while we're there, also fix the bathroom fan — add it to the Smith quote"). Stages the edits but does NOT send; the contractor reviews and sends the revision from the quote page.
+- draft_followup when asked to draft / write / send a follow-up for a specific quote.
+- lookup_pricing for any "how much" or "what should I charge" question — use it before guessing.
+- start_new_quote when the contractor wants to begin a brand-new job.
+Never narrate the tool call. Just give the answer using its result.
 
 Example good responses:
 User: "Breaker keeps tripping on kitchen circuit"
 You: "Probably overloaded — kitchens need dedicated 20A circuits (CEC 26-722). Check if it's a shared 15A. If so, you need a circuit split. ~$485 labour + materials. Want me to scope it?"
+
+User: "Do I need a permit to replace a water heater?"
+You: "Provincially in ${province}: yes for gas, usually no for like-for-like electric swaps. Which city is the job in? Permit fees and inspection rules vary by municipality."
 
 User: "How much for a faucet install?"
 You: "Kitchen faucet swap: $180–$320 labour, $15–$40 in fittings. Total $195–$360 depending on access and shutoff condition."
@@ -275,81 +663,185 @@ Knowledge: ${country === 'CA' ? 'CEC, CPC, NBC' : 'NEC, IPC, IBC'} for ${provinc
     }
   }
 
-  try {
-    const hasPhoto = messages.some(m => m.photo);
-    const model = hasPhoto ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5-20251001';
+  // ── Stream-aware Claude caller ──
+  // Calls Anthropic with stream:true and reconstructs the full content[]
+  // array client-side. On each text_delta, invokes onText so the handler
+  // can forward tokens through the SSE pipe. Tool_use blocks come down as
+  // partial input_json_delta events — buffered and parsed at content_block_stop.
+  // Returns { content, stop_reason } in the same shape as a non-streaming call.
+  async function callClaudeStream({ model, system, messages: msgs, max_tokens, tools, onText }) {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify({ model, system, messages: msgs, max_tokens, tools, stream: true }),
+    });
+    if (!r.ok) {
+      const errText = await r.text().catch(() => '');
+      throw new Error(`Claude ${r.status}: ${errText.slice(0, 160)}`);
+    }
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const blocks = [];   // accumulated content blocks
+    let cur = null;      // currently-building block
+    let toolJsonBuf = '';
+    let stopReason = null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (!payload || payload === '[DONE]') continue;
+        let ev;
+        try { ev = JSON.parse(payload); } catch { continue; }
+        if (ev.type === 'content_block_start') {
+          cur = { ...ev.content_block };
+          if (cur.type === 'text') cur.text = '';
+          if (cur.type === 'tool_use') { cur.input = {}; toolJsonBuf = ''; }
+        } else if (ev.type === 'content_block_delta') {
+          if (ev.delta?.type === 'text_delta' && cur?.type === 'text') {
+            cur.text += ev.delta.text || '';
+            onText?.(ev.delta.text || '');
+          } else if (ev.delta?.type === 'input_json_delta' && cur?.type === 'tool_use') {
+            toolJsonBuf += ev.delta.partial_json || '';
+          }
+        } else if (ev.type === 'content_block_stop') {
+          if (cur?.type === 'tool_use') {
+            try { cur.input = JSON.parse(toolJsonBuf || '{}'); } catch { cur.input = {}; }
+          }
+          if (cur) blocks.push(cur);
+          cur = null;
+        } else if (ev.type === 'message_delta') {
+          if (ev.delta?.stop_reason) stopReason = ev.delta.stop_reason;
+        }
+      }
+    }
+    return { content: blocks, stop_reason: stopReason };
+  }
 
-    let resp = await fetch('https://api.anthropic.com/v1/messages', {
+  // Non-streaming caller — kept for the no-stream code path.
+  async function callClaudeOnce({ model, system, messages: msgs, max_tokens, tools }) {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1200,
-        system: systemPrompt,
-        messages: claudeMessages,
-        tools: userId ? TOOL_DEFS : undefined,
-      }),
+      body: JSON.stringify({ model, max_tokens, system, messages: msgs, tools }),
     });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error?.message || `Claude ${r.status}`);
+    return j;
+  }
 
-    let data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || `Claude ${resp.status}`);
-
-    // Tool-use loop. Cap at 3 iterations so a misbehaving model can't
-    // spin Anthropic calls indefinitely and so multi-step conversational
-    // flows ("find the customer, then create a quote") work — the
-    // previous one-shot handling silently dropped the second tool call.
+  try {
+    const hasPhoto = messages.some(m => m.photo);
+    const model = hasPhoto ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5-20251001';
+    const wantStream = req.body?.stream === true;
     const MAX_TOOL_TURNS = 3;
-    let turn = 0;
     const supabase = getSupabase();
+
+    // SSE setup if streaming. Tokens flow as `{"token":"..."}`; appLinks
+    // and the [DONE] sentinel come at the end. Frontend already understands
+    // this shape (foreman-panel.jsx parses both token and appLinks events).
+    if (wantStream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      // Vercel/Cloudflare proxies sometimes hold SSE without this hint.
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders?.();
+    }
+
+    let turn = 0;
     let conversation = [...claudeMessages];
-    while (turn < MAX_TOOL_TURNS) {
-      const toolUseBlock = data.content?.find(b => b.type === 'tool_use');
-      if (!toolUseBlock || !userId) break;
-      if (!supabase) {
-        console.error('[ai-assist] Cannot execute tool - Supabase not configured');
-        return res.status(200).json({ role: 'assistant', content: 'I can not access your data right now. The database connection is not configured.' });
+    let fullText = '';
+
+    while (turn <= MAX_TOOL_TURNS) {
+      const callOpts = {
+        model,
+        system: systemPrompt,
+        messages: conversation,
+        max_tokens: turn === 0 ? 1200 : 800,
+        tools: userId ? TOOL_DEFS : undefined,
+      };
+
+      let resp;
+      if (wantStream) {
+        resp = await callClaudeStream({
+          ...callOpts,
+          onText: (chunk) => {
+            fullText += chunk;
+            // Hold back [LINK:...] markers from the wire — they're internal
+            // routing, not user-visible content. Send everything else as
+            // tokens. Imperfect mid-marker boundary handling: a [LINK that
+            // arrives split across two deltas may flash briefly. Fine for
+            // a perceived-speed win; the cleanup at end normalises.
+            const clean = chunk.replace(/\[LINK:[^\]]+\]/g, '');
+            if (clean) res.write(`data: ${JSON.stringify({ token: clean })}\n\n`);
+          },
+        });
+      } else {
+        resp = await callClaudeOnce(callOpts);
       }
+
+      const toolUseBlock = resp.content?.find(b => b.type === 'tool_use');
+      if (!toolUseBlock || !userId || turn === MAX_TOOL_TURNS) {
+        // No more tools to run — extract final text and emit appLinks.
+        const finalText = (resp.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+        const usedText = wantStream ? fullText : finalText;
+        const appLinks = [...(usedText.match(/\[LINK:(\/app\/[^\]]+)\]/g) || [])].map(l => l.match(/\[LINK:(.*?)\]/)[1]);
+        const cleanContent = usedText.replace(/\[LINK:[^\]]+\]/g, '').trim() || 'No response.';
+
+        if (wantStream) {
+          if (appLinks.length) res.write(`data: ${JSON.stringify({ appLinks })}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
+        }
+        return res.status(200).json({ role: 'assistant', content: cleanContent, appLinks });
+      }
+
+      if (!supabase) {
+        const msg = 'I can not access your data right now. The database connection is not configured.';
+        if (wantStream) {
+          res.write(`data: ${JSON.stringify({ token: msg })}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
+        }
+        return res.status(200).json({ role: 'assistant', content: msg });
+      }
+
       const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input || {}, userId, supabase);
       conversation = [
         ...conversation,
-        { role: 'assistant', content: data.content },
+        { role: 'assistant', content: resp.content },
         { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUseBlock.id, content: toolResult }] },
       ];
-      const resp2 = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 800,
-          system: systemPrompt,
-          messages: conversation,
-          tools: TOOL_DEFS,
-        }),
-      });
-      const data2 = await resp2.json();
-      if (!resp2.ok) break;
-      data = data2;
       turn++;
     }
-
-    // Extract text from response
-    const textBlocks = (data.content || []).filter(b => b.type === 'text');
-    const content = textBlocks.map(b => b.text).join('\n') || 'No response.';
-
-    const appLinks = [...(content.match(/\[LINK:(\/app\/[^\]]+)\]/g) || [])].map(l => l.match(/\[LINK:(.*?)\]/)[1]);
-    const cleanContent = content.replace(/\[LINK:[^\]]+\]/g, '').trim();
-
-    return res.status(200).json({ role: 'assistant', content: cleanContent, appLinks });
   } catch (e) {
     console.error('[ai-assist] Foreman error:', e.message);
+    if (req.body?.stream === true && !res.writableEnded) {
+      try {
+        res.setHeader('Content-Type', 'text/event-stream');
+      } catch { /* headers already sent */ }
+      res.write(`data: ${JSON.stringify({ token: 'Having trouble connecting. Try again in a moment.' })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+      return;
+    }
     return res.status(200).json({ role: 'assistant', content: 'Having trouble connecting. Try again in a moment.' });
   }
 }

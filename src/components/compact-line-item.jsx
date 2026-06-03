@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, GripVertical, ChevronDown } from 'lucide-react';
+import { X, GripVertical, ChevronDown, MessageCircleQuestion } from 'lucide-react';
 import { currency } from '../lib/format';
 
 /**
@@ -21,6 +21,7 @@ export default function CompactLineItem({
   onReorder,
   isLast,
   onAddNew,
+  onAskForeman,
   country = 'CA',
   isLeaving = false,
 }) {
@@ -175,13 +176,26 @@ export default function CompactLineItem({
             placeholder="Add a note (optional)"
           />
 
-          <button
-            type="button"
-            className="cli-collapse-btn"
-            onClick={() => setExpanded(false)}
-          >
-            Done
-          </button>
+          <div className="cli-edit-footer">
+            {onAskForeman && item.name?.trim() && (
+              <button
+                type="button"
+                className="cli-foreman-btn"
+                onClick={() => onAskForeman(item)}
+                title="Ask Foreman about this item"
+              >
+                <MessageCircleQuestion size={14} />
+                <span>Ask Foreman</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="cli-collapse-btn"
+              onClick={() => setExpanded(false)}
+            >
+              Done
+            </button>
+          </div>
         </div>
       )}
     </div>

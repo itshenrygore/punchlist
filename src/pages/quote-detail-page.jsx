@@ -20,6 +20,7 @@ import { supabase } from '../lib/supabase';
 import { normalizeStatus, chipForStatus, colorForStatus, getNextAction, getSignals, isQuoteLocked, getTimelineSteps } from '../lib/workflow';
 import { smsNotify } from '../lib/sms';
 import { addToCalendar } from '../lib/calendar';
+import { useForeman } from '../contexts/foreman-context';
 const PhotoAnnotator = lazy(() => import('../components/photo-annotator'));
 
 const labelForDeposit = (status) => status === 'paid' ? 'Paid' : status === 'pending' ? 'Pending' : 'Required';
@@ -157,6 +158,7 @@ export default function QuoteDetailPage() {
   const { show: showToast } = useToast();
 
   const [quote, setQuote] = useState(null);
+  const { setQuoteContext, setAddItemHandler } = useForeman();
   const currency = (n, c) => fmtCurrency(n, c ?? quote?.country);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -216,6 +218,37 @@ export default function QuoteDetailPage() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [quoteId]);
+
+  // ── Foreman context: tell the assistant about this quote so its
+  // detail-page quick actions ("Draft a follow-up", "Likely objections",
+  // "Check my pricing") can actually reason about the line items, customer,
+  // and status — instead of silently asking the model about a quote it
+  // can not see. Cleared on unmount so navigating away doesn't bleed
+  // stale context into a different page's Foreman session.
+  useEffect(() => {
+    if (!quote) return;
+    const lineItems = Array.isArray(quote.line_items) ? quote.line_items : [];
+    setQuoteContext({
+      id: quote.id,
+      title: quote.title || '',
+      description: quote.description || '',
+      trade: quote.trade,
+      province: quote.province,
+      status: quote.status,
+      customer: quote.customer?.name || null,
+      customerPhone: quote.customer?.phone || null,
+      shareToken: quote.share_token || null,
+      view_count: quote.view_count || 0,
+      sent_at: quote.sent_at || null,
+      items: lineItems
+        .filter(li => li.name?.trim())
+        .map(li => ({ name: li.name, qty: li.quantity, price: li.unit_price })),
+      total: Number(quote.total || 0),
+    });
+    // Detail page is read-only for line items, so the add-to-quote handler
+    // is a no-op — the panel hides the Add button when no handler is set.
+    return () => { setQuoteContext(null); setAddItemHandler(null); };
+  }, [quote, setQuoteContext, setAddItemHandler]);
 
   // v100 Phase 9 (UX-006): honor cmdk "Nudge {firstName}" handoff.
   // The command palette writes sessionStorage.pl_cmdk_intent and
@@ -784,7 +817,7 @@ export default function QuoteDetailPage() {
            {mobileTab === 'details' ? (<>
             <div className="qd-hero-top">
               <div className="qd-hero-top-info">
-                <h1 className="qd-hero-title">{quote.title||'Untitled'}</h1>
+                <h2 className="qd-hero-title">{quote.title||'Untitled'}</h2>
                 <div className="qd-hero-meta">
                   {quote.quote_number && <span className="qd-hero-qnum">{formatQuoteNumber(quote.quote_number)}</span>}
                   <span>{quote.customer?.name||'No customer'}</span>

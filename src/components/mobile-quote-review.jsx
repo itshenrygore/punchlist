@@ -771,10 +771,17 @@ export default function MobileQuoteReview({ ctx }) {
                     {c.label && /no customer/i.test(c.label) && (
                       <button type="button" onClick={(e)=>{e.stopPropagation();const inp=document.querySelector('[placeholder*="Search or add customer"]');if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});}}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 8px',fontFamily:T.font}}>Add</button>
                     )}
-                    {c.label && /cleanup|haul|disposal/i.test(c.label) && (
+                    {/* Smart-derived missed items — taxonomy-driven, e.g.
+                        "Expansion tank not listed" carries smartTerm so we
+                        add the right line item rather than a generic
+                        "Cleanup" placeholder. */}
+                    {c.smartTerm && (
+                      <button type="button" onClick={(e)=>{e.stopPropagation();const name=`${c.smartTerm[0].toUpperCase()}${c.smartTerm.slice(1)}`;setLineItems(p=>[...p,{id:genLineItemId(),name,quantity:1,unit_price:0,notes:'',included:true,category:''}]);markDirty();toast?.(`Added ${c.smartTerm} — set your price`,'success');setConfOpen(false);}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 8px',fontFamily:T.font}}>+ Add</button>
+                    )}
+                    {!c.smartTerm && c.label && /cleanup|haul|disposal/i.test(c.label) && (
                       <button type="button" onClick={(e)=>{e.stopPropagation();setLineItems(p=>[...p,{id:genLineItemId(),name:'Site cleanup & debris removal',quantity:1,unit_price:0,notes:'',included:true,category:'services'}]);markDirty();toast?.('Added cleanup item — set your price','success');setConfOpen(false);}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 8px',fontFamily:T.font}}>+ Add</button>
                     )}
-                    {c.label && /permit/i.test(c.label) && (
+                    {!c.smartTerm && c.label && /permit/i.test(c.label) && (
                       <button type="button" onClick={(e)=>{e.stopPropagation();setLineItems(p=>[...p,{id:genLineItemId(),name:'Permit & inspection fees',quantity:1,unit_price:0,notes:'',included:true,category:'services'}]);markDirty();toast?.('Added permit item — set your price','success');setConfOpen(false);}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:T.brand,background:'none',border:'none',cursor:'pointer',padding:'4px 8px',fontFamily:T.font}}>+ Add</button>
                     )}
                   </div>

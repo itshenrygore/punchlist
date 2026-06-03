@@ -41,12 +41,19 @@ export default function LoginPage() {
       setLoading(false);
 
       if (loginError) {
-        if (loginError.message.toLowerCase().includes('email not confirmed')) {
+        const raw = String(loginError.message || '').toLowerCase();
+        if (raw.includes('email not confirmed')) {
           setError('Confirm your email first — check your inbox for the link, or email hello@punchlist.ca if you never got one.');
-        } else if (loginError.message.toLowerCase().includes('invalid login')) {
+        } else if (raw.includes('invalid login') || raw.includes('invalid credentials')) {
           setError('Email or password is incorrect. Double-check and try again.');
+        } else if (/rate limit|too many/.test(raw)) {
+          setError('Too many login attempts. Wait a minute, then try again.');
+        } else if (/failed to fetch|networkerror|load failed/.test(raw)) {
+          setError('Can’t reach our servers right now. Check your connection and try again.');
         } else {
-          setError(loginError.message);
+          // Anything else is library noise — show a clean fallback rather than
+          // leaking lowercase / debug strings into the form.
+          setError('We couldn’t sign you in. Try again in a moment.');
         }
         return;
       }
@@ -61,7 +68,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <form className="panel auth-card stack" data-testid="login-form" onSubmit={handleSubmit}>
         <div className="auth-logo-row">
           <Link to="/"><Logo size="md" /></Link>
@@ -127,6 +134,6 @@ export default function LoginPage() {
           <Link to="/signup">Start free</Link>
         </div>
       </form>
-    </div>
+    </main>
   );
 }

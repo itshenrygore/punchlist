@@ -26,14 +26,41 @@ function openDB() {
   });
 }
 
-export async function cacheQuotes(quotes) {
+export async function cacheQuotes(quotes, ownerUserId = null) {
   try {
     const db = await openDB();
     const tx = db.transaction(QUOTES_STORE, 'readwrite');
     const store = tx.objectStore(QUOTES_STORE);
+    // Purge stale rows that belong to this user but aren't in the fresh
+    // payload — otherwise a deleted quote lingers in the cache and
+    // reappears on the next fallback read. Previously store.put() only
+    // added or updated, so deletes were never reflected.
+    if (ownerUserId) {
+      const existing = await new Promise((resolve, reject) => {
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+      const freshIds = new Set(quotes.map(q => q.id));
+      for (const row of existing) {
+        if (row.user_id === ownerUserId && !freshIds.has(row.id)) {
+          store.delete(row.id);
+        }
+      }
+    }
     for (const q of quotes) store.put({ ...q, _cachedAt: Date.now() });
     await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = reject; });
   } catch (e) { console.warn('[PL] cache write failed:', e); }
+}
+
+/** Remove a single quote from the cache (after a successful delete). */
+export async function removeCachedQuote(id) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(QUOTES_STORE, 'readwrite');
+    tx.objectStore(QUOTES_STORE).delete(id);
+    await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = reject; });
+  } catch (e) { console.warn('[PL] cache delete failed:', e); }
 }
 
 export async function getCachedQuotes(userId) {

@@ -48,6 +48,11 @@ export async function saveOfflineDraft(draft) {
       id: draft.id || `offline-${Date.now()}`,
       _offline: true,
       _savedAt: new Date().toISOString(),
+      // Tag the owner so a different user signing in on the same browser
+      // doesn't accidentally pick up someone else's pending drafts. Was
+      // the cause of "phantom dummy quotes on my new account" — the old
+      // account's offline drafts were syncing into the new user_id.
+      _ownerUserId: draft._ownerUserId || draft.user_id || null,
     };
     store.put(record);
     tx.oncomplete = () => resolve(record);
@@ -77,6 +82,21 @@ export async function getOfflineDraft(id) {
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   });
+}
+
+/** Delete every offline draft from this browser — used on sign-out so
+ *  drafts from one account don't bleed into the next account that signs
+ *  in on the same device. */
+export async function clearAllOfflineDrafts() {
+  try {
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).clear();
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch { /* ignore — first sign-in won't have a db yet */ }
 }
 
 /** Delete an offline draft */
@@ -118,8 +138,14 @@ export async function syncOfflineDrafts(userId, createQuoteFn) {
     for (const draft of drafts) {
       const attempts = Number(draft._failedAttempts || 0);
       if (attempts >= 3) { skipped++; continue; }
+      // Skip drafts that don't belong to the currently signed-in user.
+      // Drafts saved before this flag existed (no _ownerUserId) get
+      // synced exactly once to the current user — the same legacy
+      // behaviour as before — so we don't break any in-flight work.
+      const owner = draft._ownerUserId;
+      if (owner && owner !== userId) { skipped++; continue; }
       try {
-        const { _offline, _savedAt, _failedAttempts, id: offlineId, ...quoteData } = draft;
+        const { _offline, _savedAt, _failedAttempts, _ownerUserId, id: offlineId, ...quoteData } = draft;
         await createQuoteFn(userId, quoteData);
         await deleteOfflineDraft(offlineId);
         synced++;

@@ -1,3 +1,5 @@
+import { extractJobContext, OBJECTS } from '../../shared/jobContext.js';
+
 const PROVINCE_TAX = {
   AB: 0.05, BC: 0.12, MB: 0.12, NB: 0.15, NL: 0.15,
   NS: 0.15, ON: 0.13, PE: 0.15, QC: 0.14975, SK: 0.11,
@@ -60,11 +62,59 @@ function marketSignal(items = []) {
   return 'healthy';
 }
 
+// ── Context-aware "commonly missed" checks ──
+// Derive the job's objects (water heater, panel, faucet, …) from the
+// existing line items + description, then for each object look up the
+// catalog's "related" companions and flag any that aren't covered yet.
+// Falls back to the old generic checks when no object is detected so a
+// truly blank-slate quote still surfaces something. Works fully offline.
+function deriveMissedItems(items, { description = '', trade = '' } = {}) {
+  try {
+    const includedNames = items
+      .filter(i => i.included !== false)
+      .map(i => String(i.name || '').toLowerCase());
+    if (!includedNames.length) return [];
+
+    // Build a text sample from the description + every line item name so
+    // the detector can identify objects from the items themselves even
+    // when the contractor didn't write a description.
+    const sample = [description, ...includedNames].join('. ');
+    const ctx = extractJobContext(sample, trade || 'Other');
+    if (!ctx.objects?.length) return [];
+
+    const haystack = includedNames.join(' | ');
+    const seen = new Set();
+    const missed = [];
+    for (const objKey of ctx.objects) {
+      const obj = OBJECTS[objKey];
+      if (!obj?.related) continue;
+      for (const term of obj.related) {
+        const t = term.toLowerCase();
+        if (haystack.includes(t)) continue;
+        // Generic catch-all terms ("wire", "pipe", "valve") create noise
+        // in this context — skip them so we surface only specific names.
+        if (t.length < 5) continue;
+        if (seen.has(t)) continue;
+        seen.add(t);
+        missed.push({
+          id: 'missed_' + t.replace(/\s+/g, '_').slice(0, 24),
+          text: term,
+          object: objKey,
+          action: 'add_item',
+        });
+        if (missed.length >= 4) break;
+      }
+      if (missed.length >= 4) break;
+    }
+    return missed;
+  } catch { return []; }
+}
+
 /**
  * buildConfidence — returns structured scope/pricing/risk/readiness checks
  * Used in both the quote builder confidence module and the quote detail sidebar
  */
-export function buildConfidence(items, warnings, { hasCustomer, hasScope, hasDeposit, revisionSummary } = {}) {
+export function buildConfidence(items, warnings, { hasCustomer, hasScope, hasDeposit, revisionSummary, description, trade, province } = {}) {
   const includedItems = items.filter(i => i.included !== false);
   const pricedItems   = includedItems.filter(i => Number(i.unit_price || 0) > 0);
   const signal        = marketSignal(items);
@@ -79,14 +129,30 @@ export function buildConfidence(items, warnings, { hasCustomer, hasScope, hasDep
     scopeGood.push(`${includedItems.length} item${includedItems.length>1?'s':''} in scope`);
   }
 
+  // Cleanup/disposal is so common that it stays a separate signal even
+  // when the smart engine fires — exposed up here so the legacy `checks`
+  // array further down can reference it for the green-check display.
   const hasCleanup = includedItems.some(i => /cleanup|disposal|haul|site protection|protection/i.test(i.name||''));
-  if (!hasCleanup && includedItems.length > 0) {
-    scopeIssues.push({ id:'no_cleanup', text: 'Cleanup or disposal not listed', action: 'add_item' });
-  }
 
-  const hasMaterials = includedItems.some(i => /material|part|supply|connector|fitting|hardware/i.test(i.name||''));
-  if (!hasMaterials && includedItems.length > 0) {
-    scopeIssues.push({ id:'no_materials', text: 'Materials or parts not listed', action: 'add_item' });
+  // Smart "commonly missed" — context-aware companions for the detected
+  // objects. When the engine finds specific items missing (e.g. expansion
+  // tank on a water heater swap), surface those. Otherwise fall back to
+  // the generic checks so brand-new blank quotes still see hints.
+  const smartMissed = deriveMissedItems(includedItems, { description, trade, province });
+  if (smartMissed.length) {
+    // Cap the surfaced missed items to keep the panel scannable.
+    for (const m of smartMissed.slice(0, 3)) {
+      scopeIssues.push({ id: m.id, text: `${m.text} not listed`, action: 'add_item', smartTerm: m.text });
+    }
+  } else {
+    // Generic fallback — the old stock checks.
+    if (!hasCleanup && includedItems.length > 0) {
+      scopeIssues.push({ id:'no_cleanup', text: 'Cleanup or disposal not listed', action: 'add_item' });
+    }
+    const hasMaterials = includedItems.some(i => /material|part|supply|connector|fitting|hardware/i.test(i.name||''));
+    if (!hasMaterials && includedItems.length > 0) {
+      scopeIssues.push({ id:'no_materials', text: 'Materials or parts not listed', action: 'add_item' });
+    }
   }
 
   const hasOptional = items.some(i => ['optional','recommended'].includes(i.item_type));
@@ -141,14 +207,29 @@ export function buildConfidence(items, warnings, { hasCustomer, hasScope, hasDep
     : hardIssues.length <= 1 ? 'review'
     : 'attention';
 
-  // Legacy checks array for confidence-panel compatibility
+  // Legacy checks array for confidence-panel compatibility. When the
+  // smart engine surfaced specific missed items, they take priority over
+  // the generic "Cleanup not listed" because they're actually relevant
+  // to what's in the scope (expansion tank for a water heater swap,
+  // AFCI breaker for a panel upgrade, etc.).
+  const smartMissedChecks = smartMissed.map(m => ({
+    label: `${m.text[0].toUpperCase()}${m.text.slice(1)} not listed`,
+    state: 'warn',
+    smartTerm: m.text,
+  }));
   const checks = [
     ...(includedItems.length
       ? [{ label: `${includedItems.length} scope items`, state:'good' }]
       : [{ label: 'No scope items yet', state:'warn' }]),
     ...(hasCustomer ? [{ label:'Customer linked', state:'good' }] : [{ label:'No customer', state:'warn' }]),
     ...(signal==='healthy' ? [{ label:'Pricing in range', state:'good' }] : signal==='below' ? [{ label:'Pricing may be low', state:'warn' }] : []),
-    ...(hasCleanup ? [{ label:'Cleanup included', state:'good' }] : includedItems.length ? [{ label:'Cleanup not listed', state:'warn' }] : []),
+    ...smartMissedChecks,
+    // Generic cleanup fallback — only shown if the smart engine didn't
+    // surface specific items. Avoids the "Cleanup not listed" duplicate
+    // when we already have three real flagged items.
+    ...(smartMissedChecks.length === 0 && !hasCleanup && includedItems.length
+        ? [{ label:'Cleanup not listed', state:'warn' }]
+        : hasCleanup ? [{ label:'Cleanup included', state:'good' }] : []),
     ...(hasOptional ? [{ label:'Options offered', state:'good' }] : []),
     ...(hasScope ? [{ label:'Scope summary added', state:'good' }] : []),
     ...(revisionSummary ? [{ label:'Revision notes ready', state:'good' }] : []),

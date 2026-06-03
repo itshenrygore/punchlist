@@ -6,7 +6,7 @@
 
 import C from './systemCatalog.js';
 import { extractJobContext, getRelatedObjects, getLocationObjects, OBJECTS } from './jobContext.js';
-import { normalizeTrade, regionalize, roundPrice, anchorPrice } from './tradeBrain.js';
+import { normalizeTrade, regionalize, roundPrice, anchorPrice, inferTrade } from './tradeBrain.js';
 
 // ═══════════════════════════════════════════════════════════════
 // ITEM SCORING — how relevant is this catalog item to the job?
@@ -16,23 +16,64 @@ import { normalizeTrade, regionalize, roundPrice, anchorPrice } from './tradeBra
  * Score a single catalog item against job context.
  * Returns 0 (irrelevant) to 300+ (perfect match).
  */
-// Word-boundary match for short terms to prevent false positives
+// Word-boundary match for short terms to prevent false positives. Hyphens
+// normalise to spaces so "open-concept" matches "open concept" and vice
+// versa — same change as jobContext.wordMatch, kept here in sync.
 const _shortTermCache = new Map();
 function hayMatch(hay, term) {
-  const t = term.toLowerCase();
+  const normHay = hay.replace(/-/g, ' ');
+  const t = term.toLowerCase().replace(/-/g, ' ');
   if (t.length <= 2) {
     let re = _shortTermCache.get(t);
     if (!re) {
       re = new RegExp(`(?:^|[\\s,/|(])${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[\\s,/|)]|$)`, 'i');
       _shortTermCache.set(t, re);
     }
-    return re.test(hay);
+    return re.test(normHay);
   }
-  return hay.includes(t);
+  return normHay.includes(t);
 }
 
 // Generic terms that match too broadly in related-term checks
 const GENERIC_TERMS = new Set(['drain','pipe','valve','supply','hose','wire','box','duct','filter','gas','vent']);
+
+// ── PER-UNIT PRICE DETECTION ──
+// Some catalog items are priced PER UNIT (per sq ft, per linear ft, per
+// sheet, etc.). Their lo/hi is a rate, not a line total — so surfacing them
+// raw makes a 1,000 sq ft sod job read as "$2" or a siding job as "$4".
+// We tag these so the UI shows the rate honestly ("$2–$5 /sq ft") instead of
+// a misleading line total.
+const AREA_UNIT_TRADES = new Set(['Flooring', 'Siding', 'Concrete', 'Landscaping', 'Roofing', 'Drywall', 'Painter', 'Fencing']);
+function detectUnit(item) {
+  const hay = `${item.n || ''} ${item.d || ''}`.toLowerCase();
+  if (/per\s*sq\.?\s*ft|per\s*sqft|\/\s*sq\.?\s*ft|\bsq\s*ft\b|per\s*square\s*f(oo|ee)?t/.test(hay)) return 'sq ft';
+  if (/per\s*lin(ear)?\.?\s*ft|\/\s*lin(ear)?\.?\s*ft|linear\s*f(oo|ee)?t/.test(hay)) return 'linear ft';
+  if (/per\s*sheet/.test(hay)) return 'sheet';
+  if (/per\s*(cu\.?\s*)?yard/.test(hay)) return 'yard';
+  if (/per\s*day/.test(hay)) return 'day';
+  if (/per\s*(visit|each|door|window|wall)/.test(hay)) return (hay.match(/per\s*(visit|each|door|window|wall)/)[1]);
+  // Heuristic: a Labour line in an area-priced trade with a tiny ceiling is a
+  // rate even when the catalog forgot the "(per sqft)" marker (e.g. "Sod
+  // installation $2–$5", "Concrete curb $10–$25").
+  if (item.c === 'Labour' && AREA_UNIT_TRADES.has(item.t) && (item.hi || 0) <= 30) return 'unit';
+  return null;
+}
+// Apply unit honesty to an outgoing suggestion in place: tag it + make the
+// displayed name self-explanatory so the rate never reads as a total.
+function applyUnit(sug, item) {
+  const unit = detectUnit(item);
+  if (!unit) return sug;
+  sug.unit = unit;
+  if (!/\bper\b|\/\s*(sq|lin|sheet|yard)/i.test(sug.name)) {
+    sug.name = unit === 'unit'
+      ? `${sug.name} (unit price — set qty)`
+      : `${sug.name} (per ${unit})`;
+  }
+  const note = `Priced per ${unit === 'unit' ? 'unit' : unit} — set quantity to the job size`;
+  sug.when_needed = note;
+  sug.when = note; // builder's normSuggestion reads `when`; keep the guidance visible
+  return sug;
+}
 
 /**
  * Pre-compute negative-object synonyms for a given trade/context.
@@ -44,6 +85,10 @@ function buildNegativeObjects(ctx, normalizedTrade) {
   for (const [otherKey, otherDef] of Object.entries(OBJECTS)) {
     if (ctx.objects.includes(otherKey)) continue;
     if (otherDef.trade !== normalizedTrade) continue;
+    // Skip objects that overlap a chosen object by key (e.g. generic "pipe"
+    // was deduped out in favour of "poly b repipe" — it must not then dock
+    // the exact-match item as a "different object").
+    if (ctx.objects.some(o => o.includes(otherKey) || otherKey.includes(o))) continue;
     const longSyns = otherDef.syn.filter(s => s.length > 4);
     if (longSyns.length) negSyns.push(longSyns);
   }
@@ -59,12 +104,13 @@ for (const item of C) {
 function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, normalizedTrade) {
   // ── FAST TRADE GATE — skip before any string work ──
   if (normalizedTrade && normalizedTrade !== 'Other' && item.t !== normalizedTrade) {
-    return { score: 0, hasContextSignal: false, hasObjectSignal: false };
+    return { score: 0, hasContextSignal: false, hasObjectSignal: false, hasDirectObjectMatch: false };
   }
 
   let score = normalizedTrade && normalizedTrade !== 'Other' ? 50 : 0;
   let hasContextSignal = false;
   const hay = _itemHay.get(item);
+  const nameHay = (item.n || '').toLowerCase();
 
   // ── OBJECT MATCH (strongest signal) ──
   let objectMatch = false;
@@ -76,6 +122,10 @@ function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, no
     const directMatch = objDef.syn.some(s => hayMatch(hay, s));
     if (directMatch) {
       score += 120; // direct object match is the #1 signal
+      // Name-exact bonus: when the object synonym appears in the item NAME
+      // (not just its description), this IS the item the contractor means —
+      // e.g. "Bathroom renovation" for a bathroom reno. Nudge it into core.
+      if (objDef.syn.some(s => hayMatch(nameHay, s))) score += 35;
       objectMatch = true;
       hasContextSignal = true;
       break;
@@ -207,7 +257,17 @@ function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, no
   // ── POPULARITY BONUS — small, only for tiebreaking ──
   score += Math.round((item.p || 50) * 0.08); // reduced from 0.15
 
-  return { score, hasContextSignal, hasObjectSignal: objectMatch || hasRelatedSignal };
+  return {
+    score,
+    hasContextSignal,
+    hasObjectSignal: objectMatch || hasRelatedSignal,
+    // Distinct from hasObjectSignal — true ONLY when the item directly
+    // names the chosen object (vs being a related/companion item). The
+    // tier function uses this to bypass the simple-job price ceiling:
+    // if the contractor explicitly described the work AND the catalog
+    // item matches by name, the item's price is trustworthy.
+    hasDirectObjectMatch: objectMatch,
+  };
 }
 
 
@@ -215,7 +275,7 @@ function scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, no
 // TIER ASSIGNMENT — Core / Related / Optional
 // ═══════════════════════════════════════════════════════════════
 
-function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
+function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx, hasDirectObjectMatch) {
   // ALL tiers require object or related-object signal
   if (!hasObjectSignal) return null;
 
@@ -231,6 +291,19 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
     'panel', 'water heater', 'furnace', 'boiler', 'air conditioner', 'condenser',
     'mini split', 'heat pump', 'sewer line', 'main line', 'hot tub', 'ev charger',
     'deck', 'fence', 'roof', 'bathroom', 'kitchen', 'basement',
+    // Big-ticket whole-job objects — legitimately $1k–$15k+, so the simple-job
+    // price ceiling must not demote their exact-match core items.
+    'poly b repipe', 'whole home rewire', 'bathroom reno', 'water damage',
+    'concrete work', 'siding', 'window replacement', 'tenant space',
+    // Commercial line items that legitimately clear the simple-job ceiling.
+    'eye wash', 'three phase', 'grease trap', 'booster pump', 'generator',
+    'subpanel', 'storefront', 'egress window',
+    // Expansion: full-job objects from the 287-job audit.
+    'kitchen reno', 'addition', 'load bearing', 'flat roof', 'tpo membrane',
+    'cedar shake', 'hardwood floor', 'solar interconnect', 'rooftop unit',
+    'oil to gas', 'basement reno', 'garage conversion', 'restaurant buildout',
+    'commercial washroom', 'fire damage', 'full home reno',
+    'plumbing rough-in', 'electrical rough-in', 'hvac rough-in',
   ]);
   const COMPONENT_KEYWORDS = new Set([
     'ignitor', 'igniter', 'sensor', 'thermocouple', 'valve', 'capacitor',
@@ -240,11 +313,16 @@ function assignTier(score, hasContextSignal, hasObjectSignal, item, ctx) {
     'cleaning', 'flush', 'diagnostic', 'diagnosis', 'inspection', 'repair',
     'not heating', 'not cooling', 'not working', 'analysis', 'service',
     'recharge', 'charge', 'coil', 'clean',
-    'circuit', 'pump', 'fluorescent', 'led', 'wiring', 'wire',,
+    'circuit', 'pump', 'fluorescent', 'led',
   ]);
   const hasMajorObject = ctx.objects.some(o => MAJOR_OBJECTS.has(o));
   const hasComponent = ctx.keywords.some(k => COMPONENT_KEYWORDS.has(k));
-  const applyGate = !hasMajorObject || hasComponent;
+  // Bypass the price ceiling when the item directly matches the named
+  // object — the contractor explicitly described THIS work, so trust
+  // the catalog price. Without this, a shower waterproofing job sees
+  // "Install shower tile $800-$1,100" demoted to related because $1,100
+  // exceeds the simple-job ceiling.
+  const applyGate = (!hasMajorObject || hasComponent) && !hasDirectObjectMatch;
 
   if (applyGate && score >= 180) {
     const itemMid = ((item.lo || 0) + (item.hi || 0)) / 2;
@@ -330,10 +408,10 @@ export function getSmartSuggestions({ description, title, trade, province }) {
   // Score every catalog item
   const scored = [];
   for (const item of C) {
-    const { score, hasContextSignal, hasObjectSignal } = scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, nTrade);
+    const { score, hasContextSignal, hasObjectSignal, hasDirectObjectMatch } = scoreItem(item, ctx, relatedTerms, locationObjects, negativeObjects, nTrade);
     if (score <= 0) continue;
 
-    const tier = assignTier(score, hasContextSignal, hasObjectSignal, item, ctx);
+    const tier = assignTier(score, hasContextSignal, hasObjectSignal, item, ctx, hasDirectObjectMatch);
     if (!tier) continue;
 
     const adj = regionalize(item, province);
@@ -342,7 +420,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
     // Use anchor-based compression for realistic market pricing
     const anchored = anchorPrice(rawLo, rawHi, nTrade, item.c);
     const itemReason = computeReason(item, ctx);
-    scored.push({
+    scored.push(applyUnit({
       id: `smart_${item.n.replace(/\s+/g, '_').toLowerCase().slice(0, 30)}_${Math.random().toString(36).slice(2, 6)}`,
       name: item.n,
       desc: item.d || '',
@@ -353,6 +431,9 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       score,
       tier,
       reason: itemReason,
+      // Stash so the promote-step below can find the best direct-object
+      // match if the core tier ends up empty.
+      _directObject: hasDirectObjectMatch,
       // ── Prompt 7A: contextual enrichment for catalog fallback display ──
       why: itemReason,
       pricing_basis: `${item.t || ''} · ${item.c || 'General'} · ${province || 'CA'} market range`,
@@ -361,7 +442,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
         when_needed: 'Include if scope requires it',
         when_not_needed: 'Skip if not part of the current scope',
       } : {}),
-    });
+    }, item));
   }
 
   // Sort by score within tiers
@@ -429,7 +510,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
           const kwAnchored = anchorPrice(adj.lo || item.lo || 0, adj.hi || item.hi || 0, nTrade, item.c);
           // Honest, customer-safe reason — never expose the raw "keyword:" terms.
           const kwReason = 'related to your description';
-          kwResults.push({
+          kwResults.push(applyUnit({
             id: `kw_${item.n.replace(/\s+/g, '_').toLowerCase().slice(0, 30)}_${Math.random().toString(36).slice(2, 6)}`,
             name: item.n, desc: item.d || '', category: item.c || '',
             lo: kwAnchored.lo, hi: kwAnchored.hi,
@@ -441,7 +522,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
             reason: kwReason,
             why: kwReason,
             pricing_basis: `${item.t || ''} · ${item.c || 'General'} · ${province || 'CA'} market range`,
-          });
+          }, item));
         }
       }
       // Sort keyword results by score; use them only to fill the RELATED tier
@@ -467,12 +548,89 @@ export function getSmartSuggestions({ description, title, trade, province }) {
   sortWithinTier(related);
   sortWithinTier(optional);
 
+  // ── DIRECT-OBJECT PROMOTION ──
+  // If core ended up empty but related contains an item that DIRECTLY
+  // matched the named object (not a keyword/companion match), promote the
+  // strongest such item to core. Catches cases where the catalog only has
+  // ONE matching item — e.g. "Mount TV on wall" for a TV mount job, or
+  // "Caulking — kitchen or bath" for a caulking job. Without this, a
+  // perfectly-priced exact-match item shows as a tentative "related"
+  // suggestion instead of a confident core item.
+  if (core.length === 0 && related.length > 0) {
+    const idx = related.findIndex(r => r._directObject);
+    if (idx >= 0) {
+      const item = related.splice(idx, 1)[0];
+      item.tier = 'core';
+      item.reason = item.reason || `${nTrade} · ${ctx.jobType || 'core item'}`;
+      core.push(item);
+    }
+  }
+  // Drop the internal marker so it never reaches the UI.
+  [...core, ...related, ...optional].forEach(i => { delete i._directObject; });
+
+  // ── DIAGNOSTIC FALLBACK ──
+  // A low-signal job ("bathroom is leaking somewhere, not sure where") can
+  // match no object and no keyword. Rather than show an empty panel, surface
+  // the trade's diagnostic/service-call item — which is exactly what a
+  // contractor books first for an unknown problem. Infer the trade from the
+  // text when none was selected so even "Other" jobs get a confident start.
+  if (core.length + related.length + optional.length === 0) {
+    const fallbackTrade = (nTrade && nTrade !== 'Other')
+      ? nTrade
+      : normalizeTrade(inferTrade(fullText, 'Other'));
+    if (fallbackTrade && fallbackTrade !== 'Other') {
+      const diag = C.find(it => it.t === fallbackTrade && it.c === 'Services'
+        && /diagnostic|service call|assessment|inspection|trip/i.test(it.n));
+      if (diag) {
+        const dAnchored = anchorPrice(diag.lo || 0, diag.hi || 0, fallbackTrade, diag.c);
+        core = [{
+          id: `diag_${Math.random().toString(36).slice(2, 8)}`,
+          name: diag.n, desc: diag.d || '', category: diag.c || 'Services',
+          lo: dAnchored.lo, hi: dAnchored.hi, mid: dAnchored.mid,
+          score: 100, tier: 'core',
+          reason: `${fallbackTrade} · start with a diagnosis`,
+          why: 'Book the visit and confirm scope on site — items get added once you know what you\'re dealing with.',
+          pricing_basis: `${fallbackTrade} · Services · ${province || 'CA'} market range`,
+        }];
+      }
+    }
+  }
+
   // Build reason string for the header
   const parts = [];
   if (ctx.objects.length) parts.push(ctx.objects.join(' + '));
   if (ctx.jobType) parts.push(ctx.jobType);
   if (ctx.locations.length) parts.push(ctx.locations.join(', '));
   const reason = parts.length ? `Based on: ${parts.join(' · ')}` : `Based on ${ctx.trade} trade`;
+
+  // ── TRADE MISMATCH HINT ──
+  // When the contractor selected a trade but the detected objects all
+  // belong to a DIFFERENT trade, the result will be sparse and wrong
+  // (e.g. "Replace the water heater" with Electrician selected returns
+  // baseboard heater — the only Electrician heater item). Detect the
+  // mismatch and emit a tradeMismatch payload the UI can surface as
+  // "Looks like a Plumber job — switch?" rather than silently
+  // under-suggesting.
+  let tradeMismatch = null;
+  if (nTrade && nTrade !== 'Other' && ctx.objects.length > 0) {
+    const objectTrades = ctx.objects
+      .map(o => OBJECTS[o]?.trade)
+      .filter(Boolean);
+    // Count which trade the detected objects come from.
+    const counts = {};
+    for (const t of objectTrades) counts[t] = (counts[t] || 0) + 1;
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    // Mismatch when EVERY detected object belongs to one OTHER trade,
+    // and the resulting core tier is empty or single-item — i.e. the
+    // selected trade simply doesn't have anything for this work.
+    if (top && top[0] !== nTrade && top[1] === objectTrades.length && core.length <= 1) {
+      tradeMismatch = {
+        selected: nTrade,
+        suggested: top[0],
+        reason: `The job description mentions ${ctx.objects.join(' + ')} — typically ${top[0]} work, not ${nTrade}.`,
+      };
+    }
+  }
 
   // ── JOB-LEVEL PRICE CLAMP ──
   // After scoring and tier assignment, check if the core total is wildly
@@ -490,13 +648,32 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       Roofing:     { simple: 500, medium: 1500, complex: 5000 },
       Painter:     { simple: 250, medium: 700, complex: 2000 },
       Landscaping: { simple: 250, medium: 700, complex: 2000 },
+      // Secondary trades — without these, each fell through to Plumber's
+      // $300 ceiling and got its line items scaled down (e.g. a $180–400
+      // garage spring clamped to ~$85).
+      Drywall:     { simple: 400, medium: 1200, complex: 3000 },
+      Flooring:    { simple: 550, medium: 1800, complex: 6000 },
+      Concrete:    { simple: 550, medium: 1800, complex: 8000 },
+      Fencing:     { simple: 400, medium: 1500, complex: 5000 },
+      'Windows & Doors': { simple: 550, medium: 1800, complex: 6000 },
+      Siding:      { simple: 650, medium: 2400, complex: 9000 },
+      'Garage Doors': { simple: 400, medium: 950, complex: 2600 },
+      'Appliance Install': { simple: 220, medium: 450, complex: 1000 },
+      Restoration: { simple: 1000, medium: 3000, complex: 12000 },
+      Handyman:    { simple: 200, medium: 525, complex: 1500 },
     };
     const tradeRange = ranges[nTrade] || ranges['Plumber'];
 
     // Detect job complexity from objects and keywords
     const COMPLEX_OBJECTS = new Set(['panel', 'water heater', 'furnace', 'boiler', 'condenser',
       'mini split', 'heat pump', 'sewer line', 'main line', 'hot tub', 'ev charger',
-      'deck', 'roof', 'bathroom', 'kitchen', 'basement']);
+      'deck', 'roof', 'bathroom', 'kitchen', 'basement',
+      'poly b repipe', 'whole home rewire', 'bathroom reno', 'water damage',
+      'concrete work', 'siding', 'window replacement', 'tenant space',
+      'kitchen reno', 'addition', 'load bearing', 'flat roof', 'cedar shake',
+      'hardwood floor', 'solar interconnect', 'rooftop unit', 'oil to gas',
+      'basement reno', 'garage conversion', 'restaurant buildout', 'commercial washroom', 'fire damage',
+      'full home reno', 'plumbing rough-in', 'electrical rough-in', 'hvac rough-in']);
     const COMPONENT_KW = new Set(['ignitor', 'igniter', 'sensor', 'valve', 'capacitor',
       'contactor', 'relay', 'board', 'motor', 'blower', 'fan', 'filter',
       'element', 'anode', 'flapper', 'fill', 'gasket', 'seal', 'switch',
@@ -504,7 +681,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
       'cleaning', 'flush', 'diagnostic', 'diagnosis', 'inspection', 'repair',
       'not heating', 'not cooling', 'not working', 'analysis', 'service',
       'recharge', 'charge', 'coil', 'clean',
-    'circuit', 'pump', 'fluorescent', 'led', 'wiring', 'wire',]);
+    'circuit', 'pump', 'fluorescent', 'led']);
     const hasMajor = ctx.objects.some(o => COMPLEX_OBJECTS.has(o));
     const hasComp = ctx.keywords.some(k => COMPONENT_KW.has(k));
     // No objects = always simple (keyword-only matches are inherently imprecise)
@@ -530,6 +707,7 @@ export function getSmartSuggestions({ description, title, trade, province }) {
     related,
     optional,
     reason,
+    tradeMismatch,
     totalCount: core.length + related.length + optional.length,
   };
 }

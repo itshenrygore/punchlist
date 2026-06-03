@@ -56,15 +56,62 @@ export async function exportAllData(userId) {
   return payload;
 }
 
-export async function deleteAccount(userId) {
+export async function deleteAccount(_unusedUserIdLegacyParam) {
+  // The previous implementation deleted four tables from the client and
+  // called supabase.auth.admin.deleteUser — which always failed silently
+  // because admin scopes aren't reachable with the anon key. Result: a
+  // contractor who tapped "Delete my account" lost their profile row,
+  // their templates, and their notifications, but the auth user + every
+  // quote + customer + invoice + uploaded photo stayed orphaned forever.
+  //
+  // The real wipe is now server-side at /api/delete-account using the
+  // service role. We just authenticate, hit it, then clean up local
+  // browser state.
   const { supabase } = await import('./shared.js');
-  await supabase.from('notifications').delete().eq('user_id', userId);
-  await supabase.from('job_templates').delete().eq('user_id', userId);
-  await supabase.from('message_templates').delete().eq('user_id', userId);
-  await supabase.from('profiles').delete().eq('id', userId);
-  const { error } = await supabase.auth.admin.deleteUser(userId);
-  if (error) console.warn('[PL] auth delete:', error.message);
-  return { deleted: true };
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('You need to be signed in to delete your account.');
+  }
+  const userEmail = session.user?.email || '';
+  const resp = await fetch('/api/delete-account', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ confirm_email: userEmail }),
+  });
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => '');
+    throw new Error(`Could not delete account (${resp.status}). ${detail.slice(0, 160)}`);
+  }
+  const report = await resp.json();
+  // Clear local browser state — Supabase session, IndexedDB drafts, any
+  // cached quotes — so the next visitor on the same device starts truly
+  // fresh and can't see ghost data from the just-deleted account.
+  try {
+    await supabase.auth.signOut();
+  } catch { /* already gone is fine */ }
+  try {
+    const { clearAllOfflineDrafts } = await import('../offline.js');
+    await clearAllOfflineDrafts();
+  } catch { /* ignore */ }
+  try {
+    // Wipe the cached-quotes store too (separate from drafts).
+    const dbName = 'punchlist-offline';
+    if (typeof indexedDB !== 'undefined') {
+      indexedDB.deleteDatabase(dbName);
+    }
+  } catch { /* ignore */ }
+  try {
+    // Persisted preferences (autosave/onboarding/Foreman intro/etc.).
+    if (typeof localStorage !== 'undefined') {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('pl_') || k.startsWith('sb-'));
+      keys.forEach(k => localStorage.removeItem(k));
+    }
+    if (typeof sessionStorage !== 'undefined') sessionStorage.clear();
+  } catch { /* ignore */ }
+  return report;
 }
 
 // ── createInvoiceFromQuoteWithAdditionalWork: legacy name, routes to real impl ──

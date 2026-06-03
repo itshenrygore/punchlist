@@ -256,6 +256,9 @@ export default function LandingPage() {
   return (
     <div className="ln">
       <Nav />
+      {/* All page sections live inside <main> so the landmark structure is
+          nav / main / footer — needed for AT users to skip to content. */}
+      <main id="main-content">
 
       {/* ═══ 1. HERO — dark ═══ */}
       <section className="ln-hero">
@@ -271,8 +274,8 @@ export default function LandingPage() {
               <span className="ln-hi">not just quote them.</span>
             </h1>
             <p className="ln-hero-p rv rv--d1">
-              Describe the job. Get a starting scope with pricing for your area.
-              Edit, adjust, send. Your customer signs and picks how to pay —
+              Describe the job and Punchlist builds a priced scope for your area.
+              Edit it, send it, and your customer signs and picks how to pay —
               all from their phone.
             </p>
             <div className="ln-hero-ctas rv rv--d2">
@@ -328,7 +331,7 @@ export default function LandingPage() {
             {/* Step 1 — Scope */}
             <div className="wf-step rv">
               <div className="wf-step-num">01</div>
-              <h3 className="wf-step-head">Describe it. We surface matching line items.</h3>
+              <h3 className="wf-step-head">Describe it. Matching line items appear.</h3>
               <p className="wf-step-desc">Suggested items pulled from a 1,300-item trade catalog, priced for where you work. You add the ones you want, edit prices, drop in anything we missed.</p>
               <div className="wf-vis wf-vis--scope">
                 <div className="wf-vis-tag">Suggested in 9 sec</div>
@@ -734,6 +737,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* ═══ FOOTER ═══ */}
       <footer className="ln-foot">

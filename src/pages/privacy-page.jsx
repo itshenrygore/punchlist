@@ -8,7 +8,7 @@ export default function PrivacyPage() {
   }, []);
 
   return (
-    <div className="auth-page" style={{ alignItems: 'flex-start', paddingTop: 40, paddingBottom: 60 }}>
+    <main className="auth-page" style={{ alignItems: 'flex-start', paddingTop: 40, paddingBottom: 60 }}>
       <div className="panel auth-card terms-card">
         <Link className="brand" to="/" style={{ fontSize: '1rem', marginBottom: 16, display: 'inline-block' }}>Punchlist</Link>
         <h1 className="terms-page-title">Privacy Policy</h1>
@@ -22,14 +22,14 @@ export default function PrivacyPage() {
             This policy explains what we collect, why we collect it, how we use it, and your rights.
           </p>
 
-          <h3 className="terms-heading">1. Who This Policy Applies To</h3>
+          <h2 className="terms-heading">1. Who This Policy Applies To</h2>
           <p>
             This policy applies to contractors, tradespeople, and business owners ("Contractors")
             who create an account on Punchlist, and to their customers ("Customers") who receive
             and interact with quotes or invoices sent through Punchlist.
           </p>
 
-          <h3 className="terms-heading">2. Information We Collect</h3>
+          <h2 className="terms-heading">2. Information We Collect</h2>
           <p><strong>From Contractors:</strong></p>
           <ul className="terms-list">
             <li>Name, company name, email address, and password</li>
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
             <li>IP address and device information when viewing a quote link</li>
           </ul>
 
-          <h3 className="terms-heading">3. How We Use Your Information</h3>
+          <h2 className="terms-heading">3. How We Use Your Information</h2>
           <ul className="terms-list">
             <li>To provide, operate, and improve the Punchlist platform</li>
             <li>To generate AI-assisted quotes using your job description and trade data</li>
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           </ul>
           <p>We do not sell your personal information to third parties.</p>
 
-          <h3 className="terms-heading">4. Third-Party Service Providers</h3>
+          <h2 className="terms-heading">4. Third-Party Service Providers</h2>
           <p>We share data with trusted third parties only as required to deliver our service:</p>
           <ul className="terms-list">
             <li><strong>Stripe</strong> — payment processing and Stripe Connect for contractor payouts</li>
@@ -75,7 +75,7 @@ export default function PrivacyPage() {
           </ul>
           <p>All providers are bound by data processing agreements and applicable privacy laws.</p>
 
-          <h3 className="terms-heading">5. Data Retention</h3>
+          <h2 className="terms-heading">5. Data Retention</h2>
           <p>
             We retain your account data for as long as your account is active. If you delete your
             account, your data is permanently removed from our systems within 30 days, except
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
             compliance purposes.
           </p>
 
-          <h3 className="terms-heading">6. Your Rights</h3>
+          <h2 className="terms-heading">6. Your Rights</h2>
           <p>Under PIPEDA (Canada), the California Consumer Privacy Act (CCPA) for California residents, and other applicable privacy laws, you have the right to:</p>
           <ul className="terms-list">
             <li>Access the personal information we hold about you</li>
@@ -103,28 +103,28 @@ export default function PrivacyPage() {
             California Attorney General.
           </p>
 
-          <h3 className="terms-heading">7. Security</h3>
+          <h2 className="terms-heading">7. Security</h2>
           <p>
             We use industry-standard safeguards including TLS encryption for data in transit,
             row-level security on all database records, and Stripe's PCI-compliant payment
             infrastructure. We do not store credit card numbers on our servers.
           </p>
 
-          <h3 className="terms-heading">8. Cookies and Tracking</h3>
+          <h2 className="terms-heading">8. Cookies and Tracking</h2>
           <p>
             We use session cookies for authentication. We may use analytics tools (e.g., PostHog)
             to understand how the platform is used in aggregate. We do not use advertising
             trackers or sell behavioral data.
           </p>
 
-          <h3 className="terms-heading">9. Changes to This Policy</h3>
+          <h2 className="terms-heading">9. Changes to This Policy</h2>
           <p>
             We will notify you by email or in-app notification if we make material changes to
             this policy. Continued use of Punchlist after such notice constitutes acceptance
             of the updated policy.
           </p>
 
-          <h3 className="terms-heading">10. Contact</h3>
+          <h2 className="terms-heading">10. Contact</h2>
           <p>
             For privacy questions or requests, contact our Privacy Officer at:{' '}
             <a href="mailto:privacy@punchlist.ca">privacy@punchlist.ca</a>
@@ -137,6 +137,6 @@ export default function PrivacyPage() {
           <Link to="/" className="btn-link" style={{ fontSize: 'var(--text-sm)' }}>Back to home</Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
