@@ -533,13 +533,22 @@ export default function SettingsPage() {
     setDeleting(true);
     try {
       const report = await deleteAccount();
-      // Surface a meaningful number — "We removed 42 quotes, 8 customers
-      // and 3 invoices" reads much more reassuring than a bare redirect.
-      if (report && !report.auth_deleted) {
-        // Data was wiped but the auth user couldn't be removed. The
-        // contractor's local session is gone (we signed them out), but
-        // we should be honest about what's left.
-        showToast('Your data was deleted, but your sign-in record could not be removed. Email hello@punchlist.ca to finish.', 'error');
+      // Be honest about partial failures. The wipe is best-effort and the
+      // server logs each per-table error into report.errors — if anything
+      // is left behind the contractor needs to know rather than discover
+      // ghost data after signing back up with the same email.
+      const errs = Array.isArray(report?.errors) ? report.errors : [];
+      const tablesWithErrors = errs.length > 0;
+      const authMissing = report && !report.auth_deleted;
+      if (tablesWithErrors || authMissing) {
+        const parts = [];
+        if (tablesWithErrors) parts.push(`${errs.length} record${errs.length > 1 ? 's' : ''} couldn’t be removed`);
+        if (authMissing) parts.push('sign-in record couldn’t be removed');
+        const msg = `Your account was partially deleted: ${parts.join(' and ')}. Email hello@punchlist.ca with your account email so we can finish wiping it.`;
+        // sessionStorage so the landing page can surface a banner — toast
+        // disappears too fast for something this important.
+        try { sessionStorage.setItem('pl_delete_partial', msg); } catch (e) { console.warn('[PL]', e); }
+        showToast(msg, 'error');
       }
       // Even on partial success, redirect to the landing page — staying
       // on /app/settings with a signed-out client would re-bounce to

@@ -481,8 +481,34 @@ export default function QuoteBuilderPage() {
           setPhase('describe'); setScopeLoading(false);
           return;
         }
-        const d = await createQuote(user.id, { title: title || description.slice(0, 64), description, trade: inferred, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
-        draftId = d.id;
+        // Dedup: when the contractor describes the same job and clicks
+        // "Build the scope" a second time within the last hour without
+        // adding any items, reuse the empty draft instead of creating a
+        // new one. Otherwise the Quotes list fills with
+        // "50 Gallon Hot Water Tank Replacement" rows that all have no
+        // customer + no items + nothing distinguishing them.
+        const reusedDraft = await (async () => {
+          try {
+            const recent = await listQuotes(user.id);
+            const cutoff = Date.now() - 60 * 60 * 1000;
+            const desc = description.trim().slice(0, 80).toLowerCase();
+            return (recent || []).find(q =>
+              q.status === 'draft' &&
+              !q.customer_id &&
+              (!q.line_items || q.line_items.length === 0) &&
+              new Date(q.updated_at || q.created_at).getTime() >= cutoff &&
+              ((q.description || '').trim().slice(0, 80).toLowerCase() === desc ||
+               (q.title || '').trim().toLowerCase() === (title || description.slice(0, 64)).trim().toLowerCase())
+            );
+          } catch { return null; }
+        })();
+        if (reusedDraft) {
+          await updateQuote(reusedDraft.id, { title: title || description.slice(0, 64), description, trade: inferred, province, country });
+          draftId = reusedDraft.id;
+        } else {
+          const d = await createQuote(user.id, { title: title || description.slice(0, 64), description, trade: inferred, province, country, customer_id: draft.customer_id || null, status: 'draft', line_items: [] });
+          draftId = d.id;
+        }
         setQuoteId(draftId);
         setQuoteFlowQuoteId(draftId);
         nav(`/app/quotes/${draftId}/edit`, { replace: true });

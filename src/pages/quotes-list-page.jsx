@@ -240,7 +240,11 @@ export default function QuotesListPage() {
         const active = (q || []).filter(qt => !qt.archived_at);
         setQuotes(active);
         setLoadError(false);
-        cacheQuotes(active).catch(() => {});
+        // Pass the user id so the cache purges any rows that exist
+        // locally for this user but aren't in the fresh server payload —
+        // otherwise a quote deleted on another device lingers in
+        // IndexedDB and reappears on the next network-failure fallback.
+        cacheQuotes(active, user.id).catch(() => {});
       })
       .catch(e => {
         console.warn('[PL]', e);
@@ -350,13 +354,65 @@ export default function QuotesListPage() {
   async function handleBulkDelete() {
     const drafts = [...selected].filter(id => quotes.find(q => q.id === id)?.status === 'draft');
     if (drafts.length === 0) { toast('Only drafts can be deleted', 'error'); return; }
-    try {
-      await Promise.all(drafts.map(id => deleteQuote(id)));
-      setQuotes(prev => prev.filter(q => !selected.has(q.id)));
-      setSelected(new Set());
+    // Track per-row failures so we can be specific instead of "could not
+    // delete some" — when 1 of 9 fails the contractor needs to know which.
+    const results = await Promise.allSettled(drafts.map(id => deleteQuote(id)));
+    const okIds = drafts.filter((_, i) => results[i].status === 'fulfilled');
+    const failures = results.filter(r => r.status === 'rejected');
+    if (okIds.length) {
+      const okSet = new Set(okIds);
+      setQuotes(prev => prev.filter(q => !okSet.has(q.id)));
+      setSelected(prev => { const n = new Set(prev); okIds.forEach(id => n.delete(id)); return n; });
       haptic('success');
-      toast(`${drafts.length} draft${drafts.length > 1 ? 's' : ''} deleted`, 'success');
-    } catch { toast('Could not delete some drafts', 'error'); }
+    }
+    if (failures.length === 0) {
+      toast(`${okIds.length} draft${okIds.length > 1 ? 's' : ''} deleted`, 'success');
+    } else if (okIds.length === 0) {
+      toast(failures[0].reason?.message || 'Could not delete drafts', 'error');
+    } else {
+      toast(`Deleted ${okIds.length}, ${failures.length} couldn’t be removed — ${failures[0].reason?.message || 'try again'}`, 'error');
+    }
+  }
+
+  /* ── Junk-draft cleanup ──
+     A draft with no line items, no customer, and no description (or only
+     the auto-title from a placeholder build click) is an abandoned attempt.
+     When several pile up — usually from repeated /quotes/new visits where
+     the contractor backed out before saving — give them a one-tap purge
+     so the list doesn't look like a wall of "Untitled draft No customer". */
+  const emptyDrafts = useMemo(() => quotes.filter(q => {
+    if (q.status !== 'draft') return false;
+    if (q.customer_id) return false;
+    const itemCount = Array.isArray(q.line_items) ? q.line_items.length : 0;
+    if (itemCount > 0) return false;
+    // A draft is "empty" if it has no scope summary and the title is the
+    // auto-derived first-64-chars-of-description placeholder. We keep
+    // drafts where the contractor wrote a scope, so we never nuke real work.
+    return !q.scope_summary?.trim();
+  }), [quotes]);
+
+  async function handleCleanupEmptyDrafts() {
+    if (!emptyDrafts.length) return;
+    if (!window.confirm(`Delete ${emptyDrafts.length} empty draft${emptyDrafts.length > 1 ? 's' : ''}? These have no items, no customer, and no scope.`)) return;
+    const results = await Promise.allSettled(emptyDrafts.map(d => deleteQuote(d.id)));
+    const okIds = emptyDrafts.filter((_, i) => results[i].status === 'fulfilled').map(d => d.id);
+    const failures = results.filter(r => r.status === 'rejected');
+    if (okIds.length) {
+      const okSet = new Set(okIds);
+      setQuotes(prev => prev.filter(q => !okSet.has(q.id)));
+      try {
+        const { removeCachedQuote } = await import('../lib/offline-cache');
+        await Promise.all(okIds.map(id => removeCachedQuote(id)));
+      } catch (e) { console.warn('[PL]', e); }
+      haptic('success');
+    }
+    if (failures.length === 0) {
+      toast(`Cleaned up ${okIds.length} empty draft${okIds.length > 1 ? 's' : ''}`, 'success');
+    } else if (okIds.length === 0) {
+      toast(failures[0].reason?.message || 'Could not clean up drafts', 'error');
+    } else {
+      toast(`Cleaned ${okIds.length}, ${failures.length} stuck — ${failures[0].reason?.message || 'try again'}`, 'error');
+    }
   }
 
   async function handleBulkSend() {
@@ -519,6 +575,20 @@ export default function QuotesListPage() {
           >
             Clear filters
           </button>
+        </div>
+      )}
+
+      {/* ── Cleanup banner: appears when 2+ empty drafts are clogging the
+           list. One tap to delete every draft with no items + no customer
+           + no scope — a common state after multiple /quotes/new visits
+           where the contractor backed out before saving. ── */}
+      {emptyDrafts.length >= 2 && (
+        <div className="ql-cleanup-banner" role="status">
+          <div className="ql-cleanup-text">
+            <strong>{emptyDrafts.length} empty draft{emptyDrafts.length > 1 ? 's' : ''}</strong>
+            <span className="ql-cleanup-sub"> · no items, no customer, no scope</span>
+          </div>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleCleanupEmptyDrafts}>Clean up</button>
         </div>
       )}
 
