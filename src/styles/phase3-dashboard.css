@@ -539,6 +539,23 @@
   animation: ql-bar-in .2s ease;
 }
 @keyframes ql-bar-in { from { opacity: 0; transform: translateX(-50%) translateY(12px); } }
+
+/* Empty-drafts cleanup banner — sits inline above the list so it's
+   discoverable without being a fixed overlay competing with the bulk bar. */
+.ql-cleanup-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; margin: 4px 0 12px;
+  border: 1px solid var(--amber-line, rgba(245, 158, 11, .35));
+  background: var(--amber-bg, rgba(245, 158, 11, .08));
+  border-radius: 10px; font-size: 13px; color: var(--text);
+}
+.ql-cleanup-text { min-width: 0; flex: 1; }
+.ql-cleanup-text strong { color: var(--text); }
+.ql-cleanup-sub { color: var(--muted); margin-left: 4px; }
+@media (max-width: 480px) {
+  .ql-cleanup-banner { padding: 8px 12px; font-size: 12.5px; }
+  .ql-cleanup-sub { display: block; margin-left: 0; margin-top: 2px; }
+}
 .ql-bulk-count { font-weight: 700; white-space: nowrap; }
 .ql-bulk-cancel { font-size: 13px; color: var(--muted); }
 
