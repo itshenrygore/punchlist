@@ -23,7 +23,11 @@ const INVOICE_SELECT_OPTIONAL = [
 // Supabase complains about and retry — the user never sees an error.
 const LIST_COLS_OPTIONAL = ['remaining_balance', 'deposit_credited', 'invoice_number'];
 
-export async function listInvoices(_userId) {
+export async function listInvoices(userId) {
+  // CRITICAL: explicit user_id filter — see the same fix in listQuotes.
+  // The shared-token public-read policy on invoices leaks rows to every
+  // signed-in user via PostgREST.
+  if (!userId) throw new Error('listInvoices requires userId');
   const baseSelect = 'id,quote_id,customer_id,title,status,total,due_at,paid_at,updated_at,customer:customers(name,email)';
   const optionalCols = [...LIST_COLS_OPTIONAL];
   let cols = [...optionalCols, baseSelect].join(',');
@@ -32,6 +36,7 @@ export async function listInvoices(_userId) {
     const { data, error } = await supabase
       .from('invoices')
       .select(cols)
+      .eq('user_id', userId)
       .order('updated_at', { ascending: false })
       .limit(500);
 

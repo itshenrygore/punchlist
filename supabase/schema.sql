@@ -859,21 +859,23 @@ CREATE POLICY "profiles_own" ON public.profiles FOR ALL USING (auth.uid() = id) 
 CREATE POLICY "profiles_public_read" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "customers_own" ON public.customers FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "quotes_own" ON public.quotes FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "quotes_public_read" ON public.quotes FOR SELECT USING (share_token IS NOT NULL);
-CREATE POLICY "quotes_public_update" ON public.quotes FOR UPDATE USING (share_token IS NOT NULL) WITH CHECK (share_token IS NOT NULL);
+-- TO anon: public-read policies must NOT apply to authenticated users
+-- or every signed-in contractor sees every share-tokened quote.
+CREATE POLICY "quotes_public_read" ON public.quotes FOR SELECT TO anon USING (share_token IS NOT NULL);
+CREATE POLICY "quotes_public_update" ON public.quotes FOR UPDATE TO anon USING (share_token IS NOT NULL) WITH CHECK (share_token IS NOT NULL);
 CREATE POLICY "line_items_own" ON public.line_items FOR ALL USING (EXISTS (SELECT 1 FROM public.quotes q WHERE q.id = quote_id AND q.user_id = auth.uid())) WITH CHECK (EXISTS (SELECT 1 FROM public.quotes q WHERE q.id = quote_id AND q.user_id = auth.uid()));
-CREATE POLICY "line_items_public_read" ON public.line_items FOR SELECT USING (EXISTS (SELECT 1 FROM public.quotes q WHERE q.id = quote_id AND q.share_token IS NOT NULL));
-CREATE POLICY "line_items_public_update" ON public.line_items FOR UPDATE USING (EXISTS (SELECT 1 FROM public.quotes q WHERE q.id = quote_id AND q.share_token IS NOT NULL));
+CREATE POLICY "line_items_public_read" ON public.line_items FOR SELECT TO anon USING (EXISTS (SELECT 1 FROM public.quotes q WHERE q.id = quote_id AND q.share_token IS NOT NULL));
+CREATE POLICY "line_items_public_update" ON public.line_items FOR UPDATE TO anon USING (EXISTS (SELECT 1 FROM public.quotes q WHERE q.id = quote_id AND q.share_token IS NOT NULL));
 CREATE POLICY "bookings_own" ON public.bookings FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "ai_usage_own" ON public.ai_usage FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "quote_views_public_insert" ON public.quote_views FOR INSERT WITH CHECK (true);
 CREATE POLICY "quote_views_owner_read" ON public.quote_views FOR SELECT USING (EXISTS (SELECT 1 FROM public.quotes q WHERE q.id = quote_id AND q.user_id = auth.uid()));
 CREATE POLICY "invoices_own" ON public.invoices FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "invoices_public_read" ON public.invoices FOR SELECT USING (share_token IS NOT NULL);
+CREATE POLICY "invoices_public_read" ON public.invoices FOR SELECT TO anon USING (share_token IS NOT NULL);
 CREATE POLICY "inv_items_own" ON public.invoice_items FOR ALL USING (EXISTS (SELECT 1 FROM public.invoices i WHERE i.id = invoice_id AND i.user_id = auth.uid())) WITH CHECK (EXISTS (SELECT 1 FROM public.invoices i WHERE i.id = invoice_id AND i.user_id = auth.uid()));
-CREATE POLICY "inv_items_public_read" ON public.invoice_items FOR SELECT USING (EXISTS (SELECT 1 FROM public.invoices i WHERE i.id = invoice_id AND i.share_token IS NOT NULL));
+CREATE POLICY "inv_items_public_read" ON public.invoice_items FOR SELECT TO anon USING (EXISTS (SELECT 1 FROM public.invoices i WHERE i.id = invoice_id AND i.share_token IS NOT NULL));
 CREATE POLICY "awr_own" ON public.additional_work_requests FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "awr_public_read" ON public.additional_work_requests FOR SELECT USING (share_token IS NOT NULL);
+CREATE POLICY "awr_public_read" ON public.additional_work_requests FOR SELECT TO anon USING (share_token IS NOT NULL);
 CREATE POLICY "awr_public_update" ON public.additional_work_requests FOR UPDATE USING (share_token IS NOT NULL) WITH CHECK (share_token IS NOT NULL);
 CREATE POLICY "awi_own" ON public.additional_work_items FOR ALL USING (EXISTS (SELECT 1 FROM public.additional_work_requests r WHERE r.id = additional_work_request_id AND r.user_id = auth.uid())) WITH CHECK (EXISTS (SELECT 1 FROM public.additional_work_requests r WHERE r.id = additional_work_request_id AND r.user_id = auth.uid()));
 CREATE POLICY "awi_public_read" ON public.additional_work_items FOR SELECT USING (EXISTS (SELECT 1 FROM public.additional_work_requests r WHERE r.id = additional_work_request_id AND r.share_token IS NOT NULL));
