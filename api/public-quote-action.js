@@ -396,12 +396,20 @@ export default async function handler(req, res) {
       if (quote.created_at) {
         updatePayload.time_to_respond_seconds = Math.round((Date.now() - new Date(quote.created_at).getTime()) / 1000);
       }
-      // Store signature if provided
+      // Store signature if provided. When the contractor has signatures
+      // turned off, the customer approves with one tap — there's no drawn
+      // image, but we still record the typed name + timestamp + IP so there
+      // is a legitimate "approved by {name} on {date}" audit trail.
       const { signature_data, signer_name, selected_optional_ids } = req.body || {};
       if (signature_data) {
         updatePayload.signature_data = signature_data;
         updatePayload.signed_at = new Date().toISOString();
         updatePayload.signer_name = signer_name || '';
+        updatePayload.signer_ip = clientIp(req);
+      } else if (signer_name) {
+        // One-tap approval (no drawn signature) — still a binding record.
+        updatePayload.signed_at = new Date().toISOString();
+        updatePayload.signer_name = signer_name;
         updatePayload.signer_ip = clientIp(req);
       }
       // 2B: Store which optional items the customer selected + recalculate total

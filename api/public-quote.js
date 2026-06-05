@@ -166,7 +166,7 @@ export default async function handler(req, res) {
         'payment_methods','payment_instructions','etransfer_email',
         'venmo_zelle_handle','square_payment_link','paypal_link',
         'stripe_payment_link','stripe_connect_account_id',
-        'stripe_connect_onboarded','terms_conditions',
+        'stripe_connect_onboarded','terms_conditions','require_signature',
       ];
       let cols = [...PROFILE_COLS];
       for (let attempt = 0; attempt <= PROFILE_COLS.length; attempt++) {
@@ -272,6 +272,10 @@ export default async function handler(req, res) {
       paypal_link: contractor?.paypal_link || '',
       contractor_stripe_link: contractor?.stripe_payment_link || '',
       stripe_connect_enabled: Boolean(contractor?.stripe_connect_account_id && contractor?.stripe_connect_onboarded),
+      // When false (the default), the customer approves with one tap (we
+      // still record their typed name + timestamp + IP). When true, a drawn
+      // signature is required. Controlled in Settings → Quote approval.
+      require_signature: Boolean(contractor?.require_signature),
       // Signature fields
       signature_data: quote.signature_data || null,
       signed_at: quote.signed_at || null,
