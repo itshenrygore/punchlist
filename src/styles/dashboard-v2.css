@@ -4452,6 +4452,18 @@ a.dv2-headline-metric:hover {
 
 .qd-phase-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
 
+/* Optional extras row under the approved banner — clearly not required */
+.qd-optional-actions {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px; padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.qd-optional-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--subtle); margin-right: 2px;
+}
+.qd-completed-flag { color: var(--green, #138a5b); font-weight: 600; }
+
 /* Edit / revise button with left margin */
 .qd-inline-action {
   margin-left: 8px;

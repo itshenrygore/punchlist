@@ -132,6 +132,7 @@ export default function SettingsPage() {
     default_city: '',
     phone: '',
     default_expiry_days: 14,
+    require_signature: false,
     default_deposit_mode: 'none',
     default_deposit_value: 0,
     payment_methods: [],
@@ -266,6 +267,7 @@ export default function SettingsPage() {
           default_city: p.default_city || '',
           phone: p.phone || '',
           default_expiry_days: Number(p.default_expiry_days ?? 14),
+          require_signature: Boolean(p.require_signature),
           default_deposit_mode: p.default_deposit_mode || 'none',
           default_deposit_value: Number(p.default_deposit_value ?? 0),
           payment_methods: Array.isArray(p.payment_methods) ? p.payment_methods : [],
@@ -733,6 +735,27 @@ export default function SettingsPage() {
             </div>
             <div className="notice-banner">
               Quotes expire {form.default_expiry_days} days after being sent. Drafts have no expiry.
+            </div>
+
+            {/* ── How customers approve ── */}
+            <div className="sp-approval-block">
+              <span className="field-label">How customers approve</span>
+              <label className="settings-row sp-approval-row">
+                <input
+                  type="checkbox"
+                  className="settings-checkbox"
+                  checked={form.require_signature}
+                  onChange={e => setForm(p => ({ ...p, require_signature: e.target.checked }))}
+                />
+                <span>
+                  <strong>Require a drawn signature</strong>
+                  <span className="muted small sp-approval-hint">
+                    {form.require_signature
+                      ? 'Customers draw a signature on the quote to approve — best for larger jobs and contracts.'
+                      : 'One-tap approval (default). Customers tap “Approve quote” and type their name — faster, fewer drop-offs. We still record their name, date, and IP.'}
+                  </span>
+                </span>
+              </label>
             </div>
           </div>
         </details>

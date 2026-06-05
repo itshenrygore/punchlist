@@ -33,6 +33,7 @@ const QUOTE={
   contractor_phone:'+14035550101', contractor_email:'mike@comfortair.example',
   contractor_logo:null,
   payment_methods:['stripe','etransfer'], stripe_connect_enabled:true,
+  require_signature:true, // this audit exercises the drawn-signature path
   etransfer_email:'mike@comfortair.example',
   terms_conditions:'50% deposit due to schedule. Balance due on completion. Warranty: 1 year on labour, manufacturer warranty on equipment.',
   conversation:[], linked_invoice:null,

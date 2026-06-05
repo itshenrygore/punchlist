@@ -196,6 +196,9 @@ export default function PublicQuoteView({
   const [depositConfirming, setDepositConfirming] = useState(false);
   const [depositTimedOut, setDepositTimedOut] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  // One-tap approval (when the contractor hasn't required a drawn signature)
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [approveName, setApproveName] = useState('');
 
   async function handleConnectPay() {
     setPayLoading(true);
@@ -359,6 +362,19 @@ export default function PublicQuoteView({
     });
   }
 
+  // One-tap approve: open a tiny confirm that captures the approver's name
+  // (prefilled from the customer on file) — no drawing required.
+  function openApproveConfirm() {
+    setApproveName(quote.customer_name || quote.customer?.name || '');
+    setShowApproveConfirm(true);
+  }
+  async function submitOneTapApproval() {
+    const name = approveName.trim();
+    if (!name) { setError('Please enter your name to approve.'); return; }
+    setShowApproveConfirm(false);
+    await submitSignature({ signer_name: name });
+  }
+
   async function submitSignature(sigData) {
     setSending(true); setError('');
     try {
@@ -490,6 +506,9 @@ export default function PublicQuoteView({
   const discount = Number(quote.discount || 0);
   const hasDiscount = discount > 0;
   const hasTerms = Boolean(quote.terms_conditions?.trim());
+  // Default is one-tap approval. Only when the contractor explicitly turns
+  // on "require signature" do we present the drawn-signature pad.
+  const requireSig = quote.require_signature === true;
   const conversation = Array.isArray(quote.conversation) ? quote.conversation : [];
   const canSign = _canSign && !isRevisionRequested && (!hasTerms || termsAccepted);
   const contractorDisplayName = quote.contractor_company || quote.contractor_name || 'your contractor';
@@ -812,11 +831,11 @@ export default function PublicQuoteView({
             {/* Primary CTA — right in the hero */}
             {canAct && !isApproved && !isRevisionRequested && !showSignature && (
               <div className="doc-hero-cta">
-                <button className="doc-cta-primary pl-cta-approve" type="button" onClick={openSignature} disabled={!canSign}
+                <button className="doc-cta-primary pl-cta-approve" type="button" onClick={requireSig ? openSignature : openApproveConfirm} disabled={!canSign}
                   data-approved="false"
                   title={hasTerms && !termsAccepted ? 'Tick the terms box to continue' : ''}>
                   <span className="pl-cta-label">
-                    {hasTerms && !termsAccepted ? 'Accept Terms to Continue' : 'Approve & Sign'}
+                    {hasTerms && !termsAccepted ? 'Accept Terms to Continue' : requireSig ? 'Approve & Sign' : 'Approve quote'}
                   </span>
                   <span className="pl-cta-approved" aria-hidden="true">
                     <span className="pl-cta-check">✓</span> Approved
@@ -1039,12 +1058,12 @@ export default function PublicQuoteView({
                   </details>
                 </div>
               )}
-              <button className="doc-cta-primary pl-cta-approve" type="button" onClick={openSignature} disabled={!canSign}
+              <button className="doc-cta-primary pl-cta-approve" type="button" onClick={requireSig ? openSignature : openApproveConfirm} disabled={!canSign}
                 data-approved="false"
                 title={hasTerms && !termsAccepted ? 'Tick the terms box to continue' : ''}
                 style={{ fontSize: 'var(--text-lg)', padding: '14px 20px', fontWeight: 700 }}>
                 <span className="pl-cta-label">
-                  {hasTerms && !termsAccepted ? 'Accept Terms to Approve' : 'Approve & Sign'}
+                  {hasTerms && !termsAccepted ? 'Accept Terms to Approve' : requireSig ? 'Approve & Sign' : 'Approve quote'}
                 </span>
                 <span className="pl-cta-approved" aria-hidden="true">
                   <span className="pl-cta-check">✓</span> Approved
@@ -1364,6 +1383,31 @@ export default function PublicQuoteView({
         termsAccepted={termsAccepted}
         defaultName={quote.customer_name || ''}
       />
+
+      {/* One-tap approval confirm (when no drawn signature is required) */}
+      {showApproveConfirm && (
+        <div className="pq-approve-overlay" role="dialog" aria-modal="true" aria-label="Approve quote" onClick={() => setShowApproveConfirm(false)}>
+          <div className="pq-approve-card" onClick={e => e.stopPropagation()}>
+            <div className="pq-approve-title">Approve this quote</div>
+            <div className="pq-approve-sub">You’re approving <strong>{currency(displayTotal)}</strong> from {contractorDisplayName}. Enter your name to confirm.</div>
+            <input
+              className="pq-approve-input"
+              value={approveName}
+              onChange={e => setApproveName(e.target.value)}
+              placeholder="Your full name"
+              autoFocus
+              onKeyDown={e => { if (e.key === 'Enter') submitOneTapApproval(); }}
+            />
+            <div className="pq-approve-actions">
+              <button type="button" className="pq-approve-cancel" onClick={() => setShowApproveConfirm(false)}>Cancel</button>
+              <button type="button" className="pq-approve-confirm" disabled={sending || !approveName.trim()} onClick={submitOneTapApproval}>
+                {sending ? 'Approving…' : 'Approve quote ✓'}
+              </button>
+            </div>
+            <div className="pq-approve-fine">By tapping Approve, you agree to the scope and price above. We’ll record your name, the date, and your IP as confirmation.</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

@@ -54,6 +54,7 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS default_deposit_mode text D
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS default_deposit_percent numeric(5,2) DEFAULT 0;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS default_deposit_amount numeric(10,2) DEFAULT 0;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS default_deposit_value numeric(10,2) DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS require_signature boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS payment_instructions text DEFAULT '';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS etransfer_email text DEFAULT '';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS venmo_zelle_handle text DEFAULT '';
@@ -177,6 +178,7 @@ ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS exclusions text;
 ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS internal_notes text;
 ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS quick_notes text;
 ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS schedule_window text;
+ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS completed_at timestamptz;
 ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS revision_summary text;
 ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS trade text;
 ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS province text DEFAULT 'ON';

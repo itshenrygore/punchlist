@@ -650,6 +650,25 @@ export default function QuoteDetailPage() {
     } catch (e) { showToast(friendly(e), 'error'); }
   }
 
+  // Optional job-completion marker. Purely a tracking flag — it does NOT
+  // change the quote status or gate invoicing/payment. Contractors who
+  // track when work wrapped (vs. when they got paid) can use it; everyone
+  // else can ignore it entirely.
+  async function toggleComplete() {
+    const next = quote.completed_at ? null : new Date().toISOString();
+    try {
+      await updateQuoteStatus(quote.id, { completed_at: next });
+      setQuote(p => ({ ...p, completed_at: next }));
+      showToast(next ? 'Marked complete' : 'Marked not complete', 'success');
+      if (next) haptic('success');
+    } catch (e) {
+      // Graceful if the completed_at column hasn't been migrated yet.
+      if (/completed_at|column/i.test(e?.message || '')) {
+        showToast('Job tracking needs a quick database update — contact support.', 'error');
+      } else { showToast(friendly(e), 'error'); }
+    }
+  }
+
   // v100 M3: Replace legacy handleFollowUp — now opens the NudgeModal.
   // The modal posts to /api/send-followup and returns the new counter state.
   function openNudgeModal() {
@@ -932,23 +951,31 @@ export default function QuoteDetailPage() {
                   <div className="qd-phase-dot qd-dot-done" />
                   <div className="qd-phase-body">
                     <div className="qd-phase-title">{quote.status === 'deposit_paid' ? 'Deposit paid — ready to invoice' : 'Approved — ready to invoice'}</div>
-                    <div className="qd-phase-hint">Create an invoice to collect payment.</div>
+                    <div className="qd-phase-hint">Create an invoice to collect payment.{quote.completed_at && <span className="qd-completed-flag"> · <Check size={11} strokeWidth={3} style={{verticalAlign:'middle'}}/> Job marked complete {formatDate(quote.completed_at)}</span>}</div>
                   </div>
                   <div className="qd-phase-actions">
                     <button className="btn btn-primary shrink-0" type="button" disabled={creatingInvoice} onClick={handleCreateInvoice}>
                       {creatingInvoice ? 'Creating…' : 'Create invoice'}
                     </button>
-                    <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => addToCalendar(quote)} title="Add job to calendar">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign:'middle',marginRight:4}}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      Add to calendar
-                    </button>
-                    <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => setShowChangeOrderModal(true)}>Change order</button>
-                    {userProfile && isPro(userProfile) && (
-                      <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }} title="Save this quote as a reusable template">
-                        Save as template
-                      </button>
-                    )}
                   </div>
+                </div>
+                {/* Optional extras — none of these are required to get paid. */}
+                <div className="qd-optional-actions">
+                  <span className="qd-optional-label">Optional</span>
+                  <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={toggleComplete} title="Mark when the work is done (just for your records)">
+                    <Check size={13} strokeWidth={2.5} style={{verticalAlign:'middle',marginRight:4}}/>
+                    {quote.completed_at ? 'Completed ✓' : 'Mark complete'}
+                  </button>
+                  <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => addToCalendar(quote)} title="Add job to your phone/computer calendar">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign:'middle',marginRight:4}}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Add to calendar
+                  </button>
+                  <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => setShowChangeOrderModal(true)}>Change order</button>
+                  {userProfile && isPro(userProfile) && (
+                    <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => { setTemplateName(quote.title || ''); setShowSaveTemplate(true); }} title="Save this quote as a reusable template">
+                      Save as template
+                    </button>
+                  )}
                 </div>
                 {userProfile && isPro(userProfile) && quote.status === 'deposit_paid' && (
                   <div className="qd-win-moment">

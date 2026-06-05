@@ -472,3 +472,50 @@
   contain: layout paint;
   transform: translateZ(0);
 }
+
+/* ── One-tap approval confirm (no drawn signature required) ── */
+.pq-approve-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(15,23,42,.55);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 0;
+  animation: pq-approve-fade .2s ease;
+}
+@keyframes pq-approve-fade { from { opacity: 0; } to { opacity: 1; } }
+.pq-approve-card {
+  width: 100%; max-width: 460px;
+  background: var(--doc-surface, #fff); color: var(--doc-text, #0f172a);
+  border-radius: 20px 20px 0 0;
+  padding: 22px 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  box-shadow: 0 -20px 50px rgba(0,0,0,.3);
+  animation: pq-approve-up .28s cubic-bezier(.16,1,.3,1);
+}
+@keyframes pq-approve-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@media (min-width: 600px) {
+  .pq-approve-overlay { align-items: center; padding: 24px; }
+  .pq-approve-card { border-radius: 18px; animation: pq-approve-fade .2s ease; }
+}
+.pq-approve-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; }
+.pq-approve-sub { font-size: 14px; color: var(--doc-muted, #64748b); line-height: 1.5; margin-bottom: 16px; }
+.pq-approve-input {
+  width: 100%; box-sizing: border-box;
+  padding: 13px 14px; font-size: 16px;
+  border: 1.5px solid var(--doc-line, #e2e8f0); border-radius: 11px;
+  background: var(--doc-surface, #fff); color: var(--doc-text, #0f172a);
+  margin-bottom: 14px;
+}
+.pq-approve-input:focus { outline: none; border-color: var(--doc-accent, var(--brand, #b85128)); }
+.pq-approve-actions { display: flex; gap: 10px; }
+.pq-approve-cancel {
+  flex: 0 0 auto; padding: 13px 18px; border-radius: 11px;
+  border: 1.5px solid var(--doc-line, #e2e8f0); background: transparent;
+  color: var(--doc-text, #0f172a); font-weight: 600; font-size: 15px; cursor: pointer;
+}
+.pq-approve-confirm {
+  flex: 1; padding: 13px 18px; border-radius: 11px; border: none;
+  background: var(--doc-accent, var(--brand, #b85128)); color: #fff;
+  font-weight: 700; font-size: 16px; cursor: pointer;
+}
+.pq-approve-confirm:disabled { opacity: .55; cursor: not-allowed; }
+.pq-approve-fine { font-size: 11.5px; color: var(--doc-muted, #94a3b8); line-height: 1.5; margin-top: 12px; text-align: center; }
