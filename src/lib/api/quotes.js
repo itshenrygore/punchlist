@@ -27,20 +27,32 @@ const QUOTE_SELECT = [
   'customer:customers(name,email,phone)',
 ].join(',');
 
-export async function listQuotes(_userId) {
+export async function listQuotes(userId) {
+  // CRITICAL: explicit user_id filter. The `quotes_public_read` RLS policy
+  // (USING share_token IS NOT NULL) was supposed to give unauthenticated
+  // customer-portal visitors read access to a single shared quote, but
+  // PostgREST applies it for ANY signed-in user too, so without an
+  // explicit filter we were returning every share-tokened row in the
+  // database — including other contractors' drafts they could see but
+  // not delete (the cleanup banner would error on each one). And every
+  // quote gets a share_token at creation, so the leak was total.
+  if (!userId) throw new Error('listQuotes requires userId');
   const { data, error } = await supabase
     .from('quotes')
     .select(QUOTE_SELECT)
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false })
     .limit(500);
   if (error) throw new Error(friendly(error));
   return (data || []).map(q => ({ ...q, item_count: q.line_items?.length || 0 }));
 }
 
-export async function listQuotesPaginated(_userId, { cursor = null, limit = 30, status = null } = {}) {
+export async function listQuotesPaginated(userId, { cursor = null, limit = 30, status = null } = {}) {
+  if (!userId) throw new Error('listQuotesPaginated requires userId');
   let q = supabase
     .from('quotes')
     .select(QUOTE_SELECT)
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false })
     .limit(limit + 1);
   if (status) q = q.eq('status', status);
