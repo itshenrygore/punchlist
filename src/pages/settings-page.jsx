@@ -803,7 +803,7 @@ export default function SettingsPage() {
                   {connectStatus?.connected ? 'Finish setup — takes 2 minutes →' : 'Set up payments — takes 2 minutes →'}
                 </Link>
                 <div className="sp-pay-fine-print">
-                  No monthly fee · No setup fee · Small processing fee per transaction
+                  No monthly fee · No setup fee · 2.5% Punchlist fee + standard card processing, only when you’re paid
                 </div>
               </>
             ) : (
@@ -811,6 +811,9 @@ export default function SettingsPage() {
                 <p className="muted small sp-pay-onboarded-desc">
                   Customers can pay by card or choose monthly payments on jobs over $500. You get the full amount within 2 business days.
                 </p>
+                <div className="sp-pay-fee-note">
+                  <strong>Fees:</strong> a 2.5% Punchlist fee plus Stripe’s standard card processing (~2.9% + 30¢) is deducted from each card/financing payment. No fee on e-Transfer, cash, or cheque you mark as paid yourself.
+                </div>
                 {payouts?.connected && !payouts.error && (payouts.available > 0 || payouts.pending > 0 || payouts.nextPayout) && (
                   <div className="sp-payout-summary">
                     <div className="sp-payout-row">
@@ -902,9 +905,9 @@ export default function SettingsPage() {
 
           {/* ── Other payment methods ── */}
           <div>
-            <div className="sp-section-header--4">Other payment methods</div>
+            <div className="sp-section-header--4">{form.country === 'US' ? 'Pay by e-Transfer, cash & more' : 'Pay by e-Transfer, cash & cheque'}</div>
             <p className="muted small sp-other-methods-desc">
-              Optional. Check any methods you also accept — they'll appear on your quotes and invoices alongside Punchlist Payments.
+              Don’t want to use card payments? No problem. Check the methods you accept and they’ll show right on your quotes and invoices — your customer pays you directly, then you mark the invoice paid. No Stripe required, no fees.
             </p>
             <div className="stack">
               {(form.country === 'US'
@@ -922,6 +925,7 @@ export default function SettingsPage() {
                 <div>
                   <span className="field-label">E-Transfer email</span>
                   <input className="input" value={form.etransfer_email} onChange={e => setForm(p => ({ ...p, etransfer_email: e.target.value }))} placeholder="billing@yourcompany.com" />
+                  <div className="sp-rate-hint">Shown on every quote and invoice with a one-tap copy button for your customer. When the e-Transfer lands, open the invoice and tap <strong>Log payment → Mark paid</strong>.</div>
                 </div>
               )}
               {(form.payment_methods.includes('Venmo') || form.payment_methods.includes('Zelle')) && (

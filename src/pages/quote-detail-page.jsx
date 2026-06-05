@@ -6,6 +6,7 @@ import { QuoteDetailSkeleton } from '../components/skeletons';
 import StatusBadge from '../components/status-badge';
 import UpgradePrompt from '../components/upgrade-prompt';
 import ConvertInvoiceSheet from '../components/convert-invoice-sheet';
+import ConfirmModal from '../components/confirm-modal';
 import '../styles/convert-invoice-sheet.css';
 import { sendInvoiceEmail } from '../lib/api/invoices';
 import { calculateTotals } from '../lib/pricing';
@@ -187,6 +188,14 @@ export default function QuoteDetailPage() {
   const [aiDraftLoading, setAiDraftLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [sendingText, setSendingText] = useState(false);
+  // Guard against accidental double-sends: when a contractor returns to an
+  // already-sent quote and taps Resend/Text again, confirm first instead of
+  // firing a second text to the customer silently.
+  const [resendConfirm, setResendConfirm] = useState(false);
+  // One-time "✓ Sent" confirmation banner when arriving fresh from the
+  // builder (?sent=1) — makes the send unmistakable so contractors don't
+  // re-send because they weren't sure the first one went through.
+  const [justSent, setJustSent] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [revisionSummary, setRevisionSummary] = useState('');
   const [sendingRevision, setSendingRevision] = useState(false);
@@ -217,6 +226,23 @@ export default function QuoteDetailPage() {
       .catch(e => showToast(friendly(e), 'error'))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
+  }, [quoteId]);
+
+  // ── "✓ Sent" confirmation when arriving fresh from the builder. We read
+  // the flag once and strip it from the URL so a refresh doesn't re-show it
+  // (and so a back-nav doesn't make the contractor think it just sent again).
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('sent') === '1') {
+        setJustSent(true);
+        params.delete('sent');
+        const qs = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+        const t = setTimeout(() => setJustSent(false), 8000);
+        return () => clearTimeout(t);
+      }
+    } catch (e) { console.warn('[PL]', e); }
   }, [quoteId]);
 
   // ── Foreman context: tell the assistant about this quote so its
@@ -390,7 +416,18 @@ export default function QuoteDetailPage() {
   // UX-031 fix: single rendering path through renderTemplate so {firstName} is
   // always substituted correctly. The old fallback used a JS ternary expression
   // (`Hi{fn?' '+fn:''}`) that .replace('{firstName}') never matched.
-  async function handleSendText() {
+  // Entry point for the Resend / Text buttons. If the quote was already
+  // sent, ask for confirmation first — this is the exact spot contractors
+  // were accidentally double-texting customers (they return to a sent
+  // quote, aren't sure it went, and tap again).
+  function handleSendText() {
+    if (sendingText) return;
+    if (quote?.sent_at && !resendConfirm) { setResendConfirm(true); return; }
+    performSendText();
+  }
+
+  async function performSendText() {
+    setResendConfirm(false);
     if (sendingText) return;
     if (!hasShareToken) return showToast("This quote doesn't have a share link yet — save it first.", 'error');
     const ph = quote.customer?.phone;
@@ -776,6 +813,20 @@ export default function QuoteDetailPage() {
       {upgradePrompt && <UpgradePrompt trigger={upgradePrompt.trigger} context={upgradePrompt.context} onDismiss={()=>setUpgradePrompt(null)} />}
       <div className="qd-grid">
         <section className="qd-main">
+
+          {/* ══════════ "✓ SENT" CONFIRMATION ══════════
+              Unmistakable confirmation when the contractor just sent from
+              the builder, so they don't re-send out of uncertainty. */}
+          {justSent && (
+            <div className="qd-just-sent" role="status">
+              <span className="qd-just-sent-check"><Check size={16} strokeWidth={3} /></span>
+              <div className="qd-just-sent-body">
+                <strong>Sent to {quote.customer?.name?.split(' ')[0] || 'your customer'}</strong>
+                <span className="qd-just-sent-sub">{quote.customer?.phone ? 'Their phone just buzzed' : 'They can open it from the link'} — we'll notify you the moment they open it.</span>
+              </div>
+              <button type="button" className="qd-just-sent-x" onClick={() => setJustSent(false)} aria-label="Dismiss"><X size={15} /></button>
+            </div>
+          )}
 
           {/* ══════════ §5.7 LIFECYCLE STRIP ══════════
               Renders for drafts too — previously hidden, which deprived
@@ -1174,7 +1225,7 @@ export default function QuoteDetailPage() {
           controls render the same actions inline. Otherwise the user
           sees the same Resend/Copy-link pair twice on one screen. */}
       {mobileTab !== 'more' && isDraft && <div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Continue editing →</Link></div>}
-      {mobileTab !== 'more' && !isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" disabled={sendingText} onClick={handleSendText}><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>{sendingText?'Sending…':`Text ${quote.customer?.name?.split(' ')[0]||'quote'}`}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink}><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>{linkCopied?'Copied! ✓':'Copy link'}</button>}<button className={`btn btn-secondary qd-copy-link-btn qd-copy-link-btn-compact${linkCopied?' qd-copy-link-btn--copied':''}`} type="button" onClick={handleCopyLink} aria-label="Copy quote link"><Link2 size={14}/><span className="qd-copy-link-text">{linkCopied?'✓':'Link'}</span></button></div>}
+      {mobileTab !== 'more' && !isDraft&&!isLocked&&!isRevision&&!isExpired&&hasShareToken&&<div className="qd-mobile-send-bar">{quote.customer?.phone?<button className="btn btn-primary flex-1" type="button" disabled={sendingText} onClick={handleSendText}><MessageSquare size={13} style={{verticalAlign:'middle',marginRight:5}}/>{sendingText?'Sending…':quote.sent_at?`Resend to ${quote.customer?.name?.split(' ')[0]||'customer'}`:`Text ${quote.customer?.name?.split(' ')[0]||'quote'}`}</button>:<button className="btn btn-primary flex-1" type="button" onClick={handleCopyLink}><Link2 size={13} style={{verticalAlign:"middle",marginRight:5}}/>{linkCopied?'Copied! ✓':'Copy link'}</button>}<button className={`btn btn-secondary qd-copy-link-btn qd-copy-link-btn-compact${linkCopied?' qd-copy-link-btn--copied':''}`} type="button" onClick={handleCopyLink} aria-label="Copy quote link"><Link2 size={14}/><span className="qd-copy-link-text">{linkCopied?'✓':'Link'}</span></button></div>}
       {mobileTab !== 'more' && isRevision&&<div className="qd-mobile-send-bar"><Link className="btn btn-primary qd-mobile-cta-link" to={`/app/quotes/${quote.id}/edit`}>Revise & resend →</Link></div>}
       {mobileTab !== 'more' && isApproved && <div className="qd-mobile-send-bar"><button className="btn btn-primary flex-1" type="button" disabled={creatingInvoice} onClick={handleCreateInvoice}>{creatingInvoice ? 'Creating…' : 'Create invoice'}</button></div>}
 
@@ -1195,6 +1246,16 @@ export default function QuoteDetailPage() {
         defaultDueDays={userProfile?.invoice_due_days || 30}
         onCancel={() => setShowConvertSheet(false)}
         onConfirm={handleConfirmConvert}
+      />
+
+      <ConfirmModal
+        open={resendConfirm}
+        onConfirm={performSendText}
+        onCancel={() => setResendConfirm(false)}
+        title="Send this again?"
+        message={`You already sent this quote to ${quote.customer?.name?.split(' ')[0] || 'this customer'}${quote.sent_at ? ` ${timeAgo(quote.sent_at)}` : ''}.${quote.view_count > 0 ? ` They've opened it ${quote.view_count}×.` : ' They haven’t opened it yet.'} Send another text?`}
+        confirmLabel="Send again"
+        cancelLabel="Cancel"
       />
 
     </AppShell>
