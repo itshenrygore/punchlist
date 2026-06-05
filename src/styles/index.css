@@ -1854,7 +1854,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .qb-cols{grid-template-columns:1fr}
   .qb-side{position:static}
   .qb-totals-card{position:static}
-  .qd-grid{grid-template-columns:1fr;padding-bottom:70px}
+  /* Clear the fixed mobile action bar (Create invoice / Text) so the last
+     content card (e.g. the approved pro-moment) can scroll fully above it
+     instead of sitting behind the bar. */
+  .qd-grid{grid-template-columns:1fr;padding-bottom:calc(var(--bottom-chrome-height, 52px) + 76px)}
   .qd-sidebar{position:static}
   .qd-meta{grid-template-columns:repeat(2,1fr)}
   .qd-pdf-btn{display:none!important}
