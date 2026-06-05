@@ -398,7 +398,7 @@ function IntroScreen({ onNext }) {
 
       <div className="po-trust-grid">
         <TrustBadge icon="🔒" text="Powered by Stripe — trusted by millions of businesses" />
-        <TrustBadge icon="🆓" text="No monthly fees. You only pay a small processing fee when you get paid." />
+        <TrustBadge icon="🆓" text="No monthly fees. A 2.5% Punchlist fee + standard card processing applies only when you get paid." />
       </div>
     </FlowFrame>
   );
