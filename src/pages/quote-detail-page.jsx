@@ -20,8 +20,9 @@ import { safeWriteClipboard, nativeShare, openMaps } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { normalizeStatus, chipForStatus, colorForStatus, getNextAction, getSignals, isQuoteLocked, getTimelineSteps } from '../lib/workflow';
 import { smsNotify } from '../lib/sms';
-import { addToCalendar } from '../lib/calendar';
+import { addToCalendar, exportScheduledQuote } from '../lib/calendar';
 import { useForeman } from '../contexts/foreman-context';
+import ForemanLogo from '../components/foreman-logo';
 const PhotoAnnotator = lazy(() => import('../components/photo-annotator'));
 
 const labelForDeposit = (status) => status === 'paid' ? 'Paid' : status === 'pending' ? 'Pending' : 'Required';
@@ -159,7 +160,7 @@ export default function QuoteDetailPage() {
   const { show: showToast } = useToast();
 
   const [quote, setQuote] = useState(null);
-  const { setQuoteContext, setAddItemHandler } = useForeman();
+  const { setQuoteContext, setAddItemHandler, requestOpen: openForeman } = useForeman();
   const currency = (n, c) => fmtCurrency(n, c ?? quote?.country);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -170,6 +171,13 @@ export default function QuoteDetailPage() {
   const [followingUp, setFollowingUp] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [showConvertSheet, setShowConvertSheet] = useState(false);
+  // Schedule picker — opens when the contractor taps "Add to calendar" on a
+  // quote that hasn't been scheduled yet. We don't silently guess a date
+  // anymore (the old fallback was always 9am one week out, always wrong).
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [scheduleDateTime, setScheduleDateTime] = useState('');
+  const [scheduleDuration, setScheduleDuration] = useState(2);
+  const [scheduleSaving, setScheduleSaving] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [annotatingPhoto, setAnnotatingPhoto] = useState(null);
@@ -669,6 +677,44 @@ export default function QuoteDetailPage() {
     }
   }
 
+  // ── Add to calendar (with real scheduling) ──
+  // If the quote already has a schedule_window, just export it. Otherwise
+  // open a tiny picker so the contractor sets the real date/time. The old
+  // behaviour silently guessed "9am one week out" — wrong every time.
+  function handleAddToCalendar() {
+    const result = addToCalendar(quote);
+    if (result?.exported) { showToast('Added to calendar', 'success'); return; }
+    // Pre-fill the picker with a reasonable default: tomorrow at 9am,
+    // local time, so the contractor only types the actual chosen time.
+    const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0);
+    const pad = n => String(n).padStart(2, '0');
+    setScheduleDateTime(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    setScheduleDuration(2);
+    setShowSchedulePicker(true);
+  }
+  async function handleScheduleConfirm() {
+    if (!scheduleDateTime) { showToast('Pick a date and time first', 'error'); return; }
+    const start = new Date(scheduleDateTime); // datetime-local is parsed as LOCAL time
+    if (isNaN(start.getTime())) { showToast('That doesn’t look like a valid date', 'error'); return; }
+    setScheduleSaving(true);
+    try {
+      // Persist as the canonical schedule_window so the Schedule page and
+      // future "Add to calendar" exports both see the real time.
+      const iso = start.toISOString();
+      await updateQuoteStatus(quote.id, { schedule_window: iso });
+      setQuote(p => ({ ...p, schedule_window: iso }));
+      exportScheduledQuote({ ...quote, schedule_window: iso }, start, Number(scheduleDuration) || 2);
+      setShowSchedulePicker(false);
+      showToast('Scheduled & added to calendar', 'success');
+    } catch (e) {
+      // Even if the persist fails, still let them download the .ics they
+      // just configured — the contractor's intent was clear.
+      try { exportScheduledQuote(quote, start, Number(scheduleDuration) || 2); } catch (e2) { console.warn('[PL]', e2); }
+      setShowSchedulePicker(false);
+      showToast(friendly(e), 'error');
+    } finally { setScheduleSaving(false); }
+  }
+
   // v100 M3: Replace legacy handleFollowUp — now opens the NudgeModal.
   // The modal posts to /api/send-followup and returns the new counter state.
   function openNudgeModal() {
@@ -966,9 +1012,9 @@ export default function QuoteDetailPage() {
                     <Check size={13} strokeWidth={2.5} style={{verticalAlign:'middle',marginRight:4}}/>
                     {quote.completed_at ? 'Completed ✓' : 'Mark complete'}
                   </button>
-                  <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => addToCalendar(quote)} title="Add job to your phone/computer calendar">
+                  <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={handleAddToCalendar} title={quote.schedule_window ? 'Export to your phone/computer calendar' : 'Pick a date/time, then add to your calendar'}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign:'middle',marginRight:4}}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Add to calendar
+                    {quote.schedule_window ? `Scheduled ${formatDate(quote.schedule_window)}` : 'Schedule + add to calendar'}
                   </button>
                   <button className="btn btn-secondary btn-sm shrink-0" type="button" onClick={() => setShowChangeOrderModal(true)}>Change order</button>
                   {userProfile && isPro(userProfile) && (
@@ -1103,6 +1149,48 @@ export default function QuoteDetailPage() {
               <div className="qd-feed-reply"><div className="qd-reply-row"><textarea value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder={`Message ${quote.customer?.name?.split(' ')[0]||'customer'}…`} rows={1} className="qd-feed-reply-input" onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleReply();}}} onInput={e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';}} /><button type="button" className="btn btn-primary btn-sm qd-reply-send-btn" disabled={replySending||!replyText.trim()} onClick={handleReply}>{replySending?'…':'Send'}</button></div><div className="qd-reply-hint">Delivered via {quote.customer?.email?'email & quote page':'quote page'}{quote.customer?.phone?' · SMS':''}</div></div>
             )}
           </div>
+
+          {/* ══════════ ASK FOREMAN — contextual quick-actions ══════════
+              Surface Foreman as inline helpers tied to the current quote,
+              not a hidden tab. Each chip pre-fills the assistant with a
+              specific job-aware question and opens the panel. Hidden on
+              drafts (nothing to coach yet) and terminal states. */}
+          {!isDraft && !['paid','declined','expired','converted_to_invoice'].includes(quote.status) && (
+            <div className="qd-foreman-strip" role="group" aria-label="Ask Foreman about this quote">
+              <span className="qd-foreman-strip-label">
+                <ForemanLogo size={13} stroke className="qd-foreman-strip-icon" />
+                Ask Foreman
+              </span>
+              <div className="qd-foreman-chips">
+                {(quote.status === 'sent' || quote.status === 'viewed' || quote.status === 'revision_requested') && (
+                  <>
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `Draft a friendly follow-up text to ${quote.customer?.name?.split(' ')[0] || 'the customer'} about this quote.`, autoSend: true })}>
+                      Draft a follow-up
+                    </button>
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'What are the most likely objections to this quote, and how would I handle each?', autoSend: true })}>
+                      Likely objections
+                    </button>
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'Review my pricing on this quote. Anything underpriced or missing from the scope?', autoSend: true })}>
+                      Check my pricing
+                    </button>
+                  </>
+                )}
+                {(quote.status === 'approved' || quote.status === 'approved_pending_deposit' || quote.status === 'deposit_paid') && (
+                  <>
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'What should I bring to this job? List materials, permits, and anything to confirm before I show up.', autoSend: true })}>
+                      What to bring
+                    </button>
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `Draft a confirmation text to ${quote.customer?.name?.split(' ')[0] || 'the customer'} confirming the job and asking when works best.`, autoSend: true })}>
+                      Confirm the job
+                    </button>
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'Are there any common change-order items I should flag for this job before starting?', autoSend: true })}>
+                      Change-order risks
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ══════════ ZONE 3: SCOPE DETAILS (collapsed) ══════════ */}
           <div className={`qd-scope${mobileTab !== 'details' ? ' qd-zone-details' : ''}`}>
@@ -1274,6 +1362,32 @@ export default function QuoteDetailPage() {
         onCancel={() => setShowConvertSheet(false)}
         onConfirm={handleConfirmConvert}
       />
+
+      {/* ── Schedule picker — pick a real date/time before exporting ── */}
+      {showSchedulePicker && (
+        <div className="modal-overlay qd-sched-overlay" role="dialog" aria-modal="true" aria-label="Schedule job" onClick={() => !scheduleSaving && setShowSchedulePicker(false)}>
+          <div className="modal-content qd-sched-card" onClick={e => e.stopPropagation()}>
+            <div className="qd-sched-title">When are you doing this job?</div>
+            <div className="qd-sched-sub">We’ll save it as the scheduled time and download an event for your calendar.</div>
+            <label className="qd-sched-label">Date &amp; time</label>
+            <input type="datetime-local" className="qd-sched-input" value={scheduleDateTime} onChange={e => setScheduleDateTime(e.target.value)} />
+            <label className="qd-sched-label">How long?</label>
+            <select className="qd-sched-input" value={scheduleDuration} onChange={e => setScheduleDuration(Number(e.target.value))}>
+              <option value={1}>1 hour</option>
+              <option value={2}>2 hours</option>
+              <option value={3}>3 hours</option>
+              <option value={4}>Half day (4 h)</option>
+              <option value={8}>Full day (8 h)</option>
+            </select>
+            <div className="qd-sched-actions">
+              <button type="button" className="btn btn-ghost" disabled={scheduleSaving} onClick={() => setShowSchedulePicker(false)}>Cancel</button>
+              <button type="button" className="btn btn-primary" disabled={scheduleSaving || !scheduleDateTime} onClick={handleScheduleConfirm}>
+                {scheduleSaving ? 'Saving…' : 'Schedule & add to calendar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         open={resendConfirm}
