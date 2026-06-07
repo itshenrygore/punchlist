@@ -1163,28 +1163,35 @@ export default function QuoteDetailPage() {
               </span>
               <div className="qd-foreman-chips">
                 {(quote.status === 'sent' || quote.status === 'viewed' || quote.status === 'revision_requested') && (
+                  // Pre-decision: closing + anticipating the customer.
+                  // Pricing isn't an option here — the quote is already sent
+                  // and the contractor can't reprice mid-flight.
                   <>
                     <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `Draft a friendly follow-up text to ${quote.customer?.name?.split(' ')[0] || 'the customer'} about this quote.`, autoSend: true })}>
                       Draft a follow-up
                     </button>
-                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'What are the most likely objections to this quote, and how would I handle each?', autoSend: true })}>
-                      Likely objections
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `What questions might ${quote.customer?.name?.split(' ')[0] || 'the customer'} ask before approving this quote? Give me ready answers for each.`, autoSend: true })}>
+                      What might they ask?
                     </button>
-                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'Review my pricing on this quote. Anything underpriced or missing from the scope?', autoSend: true })}>
-                      Check my pricing
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `What are the common pitfalls or surprises on a job like this${quote.trade ? ` (${quote.trade})` : ''}? What should I watch out for so I don't get caught out?`, autoSend: true })}>
+                      Pitfalls to watch for
                     </button>
                   </>
                 )}
                 {(quote.status === 'approved' || quote.status === 'approved_pending_deposit' || quote.status === 'deposit_paid') && (
+                  // Post-decision: job planning + diagnostic. The contractor
+                  // doesn't need closing help — they need to do the work
+                  // right. Three angles: materials/tools, regulatory, and
+                  // customer-prep instructions.
                   <>
-                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'What should I bring to this job? List materials, permits, and anything to confirm before I show up.', autoSend: true })}>
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'What should I bring to this job? List the materials, parts, tools, and anything to confirm before I show up.', autoSend: true })}>
                       What to bring
                     </button>
-                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `Draft a confirmation text to ${quote.customer?.name?.split(' ')[0] || 'the customer'} confirming the job and asking when works best.`, autoSend: true })}>
-                      Confirm the job
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `What permits, inspections, or code requirements should I know for this${quote.trade ? ' ' + quote.trade : ''} job${quote.province ? ' in ' + quote.province : ''}? Walk me through what to file and when.`, autoSend: true })}>
+                      Permit & code checklist
                     </button>
-                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: 'Are there any common change-order items I should flag for this job before starting?', autoSend: true })}>
-                      Change-order risks
+                    <button type="button" className="qd-foreman-chip" onClick={() => openForeman({ prefill: `Draft a short message I can send ${quote.customer?.name?.split(' ')[0] || 'the customer'} the day before, telling them what to do to prep — clear access, move furniture, lock up pets, parking — whatever applies to this kind of job.`, autoSend: true })}>
+                      What to tell the customer
                     </button>
                   </>
                 )}
