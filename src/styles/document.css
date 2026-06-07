@@ -865,15 +865,91 @@
 @media (min-width: 680px) { .doc-sticky-cta { display: none; } }
 
 /* ── Print styles ── */
+/* ═══════════════════════════════════════════════════════════════
+   PRINT — Pack the proposal onto ~1 page (was spilling to 3).
+   Strip every interactive/marketing thing the paper doesn't need,
+   shrink the type and gaps, and prevent stray page-breaks.
+   ═══════════════════════════════════════════════════════════════ */
 @media print {
+  @page { size: auto; margin: 14mm 14mm 14mm 14mm; }
+
+  html, body, .doc-shell { background: white !important; color: #000 !important; }
   .doc-shell { background: white; }
-  .doc-container { padding: 0; max-width: 100%; }
-  .doc-card { box-shadow: none; border-radius: 0; }
-  .doc-actions { display: none; }
-  .doc-sticky-cta { display: none !important; }
-  .doc-signals { display: none; }
-  .doc-powered { display: none; }
-  .doc-signature-print { display: flex !important; }
+  .doc-container { padding: 0; max-width: 100%; padding-bottom: 0 !important; }
+  .doc-card { box-shadow: none !important; border-radius: 0; border: none !important; padding: 0 !important; }
+
+  /* Compact type so the document reads like an invoice, not a brochure. */
+  body, .doc-shell { font-size: 10.5pt; line-height: 1.35; }
+  .doc-header, .doc-pricing-hero, .doc-section, .doc-totals, .doc-signature-print { margin: 0 0 8pt 0 !important; padding: 0 !important; }
+
+  /* Hide every interactive / marketing block — buyer's already decided. */
+  .doc-actions,
+  .doc-sticky-cta,
+  .doc-signals,
+  .doc-powered,
+  .doc-powered-by,
+  .doc-hero-cta,
+  .doc-cta-primary,
+  .doc-cta-secondary,
+  .pq-btn-secondary,
+  .pq-sticky-cta,
+  .pq-payment-options,
+  .pq-monthly-block,
+  .pq-trust-row,
+  .pq-success-banner,
+  .pq-preview-banner,
+  .pq-conversation,
+  .pq-changes-categories,
+  .pq-sheet,
+  .pq-toggle,
+  .pq-faq,
+  .pq-undo,
+  .pq-replay,
+  .pq-terms-toggle,
+  .pq-inline-terms,
+  .pq-approve-overlay,
+  .doc-status,
+  .pl-cta-approve,
+  .pl-cta-approved,
+  .pq-deposit-section,
+  .pq-finance-card,
+  .doc-meta-row,
+  .doc-meta-chip,
+  .doc-price-deposit,
+  .doc-trust-row,
+  .doc-helper-line,
+  .doc-pricing-hero .doc-monthly-from,
+  .doc-pricing-hero .pl-monthly-from,
+  .doc-pricing-hero .pl-pay-monthly,
+  .doc-hero-actions,
+  .doc-stat-monthly,
+  .doc-stat-pay,
+  .doc-summary-actions,
+  .doc-mobile-bar,
+  .pq-question-form,
+  .pq-feedback-form,
+  .modal-overlay { display: none !important; }
+
+  /* Make sure the always-on signature block prints, and is tight. */
+  .doc-signature-print { display: flex !important; gap: 24pt !important; padding: 16pt 0 0 !important; margin-top: 10pt !important; border-top: 1px solid #000 !important; }
+  .doc-sig-line { min-height: 24pt !important; }
+
+  /* Force the line-item table to stay on the page with the totals. */
+  .doc-items, .doc-totals, .doc-summary, .doc-section { break-inside: avoid; page-break-inside: avoid; }
+  .doc-card > * + * { margin-top: 6pt !important; }
+
+  /* The big pricing hero ($X TOTAL / $Y/mo) — keep totals, drop monthly. */
+  .doc-pricing-hero { padding: 0 !important; background: none !important; border: none !important; }
+  .doc-pricing-hero .doc-price-block { padding: 0 !important; }
+
+  /* Remove backgrounds/shadows from everything (they fight the printer). */
+  .doc-shell *, .doc-shell *::before, .doc-shell *::after {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  /* But preserve the table outline and the signature line. */
+  .doc-items, .doc-items th, .doc-items td { border-color: #000 !important; }
 }
 
 /* Print signature blocks */

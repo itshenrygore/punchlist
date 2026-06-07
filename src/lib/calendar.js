@@ -36,7 +36,8 @@ export function downloadICS(icsContent, filename = 'event.ics') {
   URL.revokeObjectURL(url);
 }
 
-export function addToCalendar(quote) {
+// Internal helper that builds + downloads the .ics for a given Date.
+function exportQuoteToCalendar(quote, startDate, durationHours = 2) {
   const customer = quote.customer?.name || 'Customer';
   const title = `${quote.title || 'Job'} — ${customer}`;
   const description = [
@@ -44,15 +45,33 @@ export function addToCalendar(quote) {
     quote.total ? `Total: $${Number(quote.total).toFixed(2)}` : '',
     quote.share_token ? `Quote: ${window.location.origin}/q/${quote.share_token}` : '',
   ].filter(Boolean).join('\n');
-
   const location = quote.customer?.address || '';
-  // No scheduled window yet → default to a clean 9:00 AM a week out (a
-  // sensible placeholder the contractor edits in their calendar app)
-  // rather than an arbitrary "now + 7 days" time-of-day.
-  const startDate = quote.schedule_window
-    ? new Date(quote.schedule_window)
-    : (() => { const d = new Date(Date.now() + 7 * 86400000); d.setHours(9, 0, 0, 0); return d; })();
-
-  const ics = generateICS({ title, description, location, startDate });
+  const ics = generateICS({ title, description, location, startDate, durationHours });
   downloadICS(ics, `punchlist-${quote.quote_number || 'job'}.ics`);
+}
+
+/**
+ * addToCalendar
+ *
+ * If `quote.schedule_window` is set, export it directly (the contractor
+ * has already scheduled the job). Otherwise we DO NOT guess — return
+ * { needsSchedule: true } so the caller can prompt the contractor to
+ * pick a real date/time. Silently exporting "9am one week out" was
+ * worse than asking, because the calendar event was always wrong and
+ * had to be manually edited.
+ */
+export function addToCalendar(quote) {
+  if (quote.schedule_window) {
+    exportQuoteToCalendar(quote, new Date(quote.schedule_window));
+    return { exported: true };
+  }
+  return { needsSchedule: true };
+}
+
+/**
+ * exportScheduledQuote — direct export after the contractor has picked
+ * a date + time in our scheduler UI. Skips the schedule_window check.
+ */
+export function exportScheduledQuote(quote, startDate, durationHours = 2) {
+  exportQuoteToCalendar(quote, startDate, durationHours);
 }

@@ -6435,3 +6435,47 @@ a.dv2-headline-metric:hover {
     border-bottom: 1px solid var(--line) !important;
   }
 }
+
+/* ── Schedule picker (quote detail "Add to calendar") ── */
+.qd-sched-card { max-width: 420px; padding: 24px; }
+.qd-sched-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--text); }
+.qd-sched-sub { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 18px; }
+.qd-sched-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-2); margin: 12px 0 6px; }
+.qd-sched-input { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 15px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
+.qd-sched-input:focus { outline: none; border-color: var(--brand); }
+.qd-sched-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* ── Inline Foreman chip strip (quote detail) ──
+   Premium, minimal: tied to the current quote, not a hidden tab. */
+.qd-foreman-strip {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 10px 12px; margin-top: 4px;
+  background: linear-gradient(135deg, rgba(184, 81, 40, 0.04) 0%, rgba(184, 81, 40, 0.02) 100%);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-card);
+}
+.qd-foreman-strip-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: -.005em;
+  color: var(--brand); white-space: nowrap;
+  padding-right: 8px; margin-right: 2px;
+  border-right: 1px solid var(--brand-line);
+}
+.qd-foreman-strip-icon { color: var(--brand); }
+.qd-foreman-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.qd-foreman-chip {
+  appearance: none; cursor: pointer;
+  padding: 7px 11px;
+  font-size: 12px; font-weight: 600;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line); border-radius: 999px;
+  transition: background .15s, border-color .15s, transform .1s;
+  white-space: nowrap;
+}
+.qd-foreman-chip:hover { background: var(--brand-bg); border-color: var(--brand-line); color: var(--brand); }
+.qd-foreman-chip:active { transform: scale(0.97); }
+@media (max-width: 540px) {
+  .qd-foreman-strip { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px; }
+  .qd-foreman-strip-label { border-right: none; padding-right: 0; padding-bottom: 6px; border-bottom: 1px solid var(--brand-line); }
+  .qd-foreman-chips { gap: 6px; }
+}
