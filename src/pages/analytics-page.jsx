@@ -2,7 +2,7 @@
    Punchlist — Analytics Page
    Close rate, pipeline value, revenue tracked, monthly trends.
    ═══════════════════════════════════════════════════════════════ */
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useDeferredValue } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/app-shell';
 import { PageHeader } from '../components/ui';
@@ -76,12 +76,20 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const quotes = useMemo(() => {
+  const quotesRaw = useMemo(() => {
     const opt = RANGE_OPTIONS.find(r => r.key === range);
     if (!opt || opt.days === 0) return allQuotes;
     const cutoff = new Date(Date.now() - opt.days * 86_400_000);
     return allQuotes.filter(q => new Date(q.created_at) >= cutoff);
   }, [allQuotes, range]);
+
+  // Defer the analytics input so React can paint the page chrome + skeletons
+  // FIRST, then run the heavy per-stat memos in a low-priority pass. Without
+  // this, contractors with 200+ quotes on mobile saw a partial render because
+  // all the filter/map/reduce work blocked the first paint, and the page
+  // sometimes flushed mid-calc with empty stat cards.
+  const quotes = useDeferredValue(quotesRaw);
+  const isStale = quotes !== quotesRaw;
 
   useEffect(() => { load(); }, [load]);
   usePullToRefresh(load);
@@ -254,7 +262,10 @@ export default function AnalyticsPage() {
           ) : undefined}
         />
 
-        {loading ? (
+        {(loading || isStale) ? (
+          // isStale = quotes input updated but the deferred memos haven't
+          // re-computed yet. Showing the skeleton during this window keeps
+          // the page from flashing half-rendered stat cards on mobile.
           <div className="an-skel-grid">{[...Array(4)].map((_, i) => <div key={i} className="an-skel-card" />)}</div>
         ) : loadError ? (
           <div className="an-empty">
