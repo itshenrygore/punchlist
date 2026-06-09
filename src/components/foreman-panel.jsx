@@ -15,6 +15,7 @@ import { useToast } from './toast';
 import { supabase } from '../lib/supabase';
 import { smsNotify } from '../lib/sms';
 import { currency } from '../lib/format';
+import { isOnline, onConnectivityChange } from '../lib/offline';
 import ForemanLogo from './foreman-logo';
 
 /* ─── Contextual quick actions based on current page ───
@@ -237,7 +238,7 @@ function extractDraftReply(text) {
 }
 
 /* ─── Message bubble ─── */
-function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, onSendSms, sentDrafts, onSavePhoto, photoSaved, onCreateQuoteFromItems, quoteCreatedKey }) {
+function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, onSendSms, sentDrafts, onSavePhoto, photoSaved, onCreateQuoteFromItems, quoteCreatedKey, onRetry }) {
   const isUser = msg.role === 'user';
   const items = !isUser ? parseAddToQuote(msg.content || '') : [];
   const draft = !isUser ? extractDraftReply(msg.content || '') : null;
@@ -310,6 +311,20 @@ function MessageBubble({ msg, onNavigate, onAddItem, addedItems, customerPhone, 
               </button>
             ))}
           </div>
+        )}
+        {/* Retry handle for offline / upstream failures. The send() catch
+            path attaches `retryOf` to the assistant error bubble so the
+            contractor can resend the original prompt in one tap. */}
+        {!isUser && msg.retryOf && onRetry && (
+          <button
+            type="button"
+            className="fm-msg-retry"
+            onClick={() => onRetry(msg.retryOf)}
+            aria-label="Try again"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            Try again
+          </button>
         )}
         {items.length > 0 && onAddItem && (
           <div className="fm-msg-actions">
@@ -439,6 +454,11 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
   })();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  // Track network status so Foreman can degrade gracefully when offline or
+  // when the AI proxy is unreachable. Without this, every failed send
+  // looked like "Connection error" regardless of cause.
+  const [online, setOnline] = useState(() => isOnline());
+  useEffect(() => onConnectivityChange(setOnline), []);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoBase64, setPhotoBase64] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
@@ -627,6 +647,19 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
     const userMsg = { role: 'user', content: msg, photo: photoPreview || null, ts: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+
+    // Offline short-circuit. Don't waste a fetch on a dead network —
+    // tell the contractor clearly what's happening AND give them a
+    // retry handle on the failed message so the resend is one tap.
+    if (!isOnline()) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "You're offline. I need internet to think through your job — I'll be ready the moment you're back online.\n\nTip: scope, customers, and your quote list still work offline. Anything you draft will sync when you reconnect.",
+        retryOf: msg,
+        ts: Date.now(),
+      }]);
+      return;
+    }
     setLoading(true);
 
     // Only ship the CURRENT session to the model — anything older than the
@@ -730,10 +763,20 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           ts: Date.now(),
         }]);
       }
-    } catch {
+    } catch (err) {
+      // Differentiate: did our network drop, or did the upstream Claude
+      // proxy fail? The contractor needs to know which, because the
+      // remedy is different (move to a place with signal vs. wait a
+      // minute and retry). Attach retryOf so the message bubble can
+      // render a one-tap "Try again" button.
+      const networkDied = !isOnline() || /network|fetch|timeout|abort|failed to fetch/i.test(err?.message || '');
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Connection error — try again in a sec.',
+        content: networkDied
+          ? "Your connection dropped. Move to better signal and tap Try again."
+          : "Foreman is having a moment — Claude looks busy. Try again in a few seconds.",
+        retryOf: msg,
+        errorKind: networkDied ? 'offline' : 'upstream',
         ts: Date.now(),
       }]);
     } finally {
@@ -860,7 +903,10 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
           <div className="fm-header-left">
             <div className="fm-logo"><ForemanLogo size={18} stroke /></div>
             <div>
-              <div className="fm-header-title">Foreman</div>
+              <div className="fm-header-title">
+                Foreman
+                {!online && <span className="fm-offline-pill" title="You're offline — Foreman needs internet">● Offline</span>}
+              </div>
               <div className="fm-header-sub">{hasQuote ? 'Quote assistant' : 'Your field assistant'}</div>
             </div>
           </div>
@@ -977,6 +1023,7 @@ export default function ForemanPanel({ open, onClose, quoteContext, onAddItemToQ
                   photoSaved={savedPhotos.has(msg.photo)}
                   onCreateQuoteFromItems={!onAddItemToQuote ? handleCreateQuoteFromItems : null}
                   quoteCreatedKey={quoteCreatedKey}
+                  onRetry={send}
                 />
               </div>
             );

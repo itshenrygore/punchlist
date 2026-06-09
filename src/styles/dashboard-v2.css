@@ -6479,3 +6479,29 @@ a.dv2-headline-metric:hover {
   .qd-foreman-strip-label { border-right: none; padding-right: 0; padding-bottom: 6px; border-bottom: 1px solid var(--brand-line); }
   .qd-foreman-chips { gap: 6px; }
 }
+
+/* ── Foreman offline pill + retry handle ── */
+.fm-offline-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 10px; font-weight: 700;
+  background: var(--amber-bg, rgba(245, 158, 11, .12));
+  color: var(--amber, #b54708);
+  border: 1px solid var(--amber-line, rgba(245, 158, 11, .35));
+  border-radius: 999px;
+  letter-spacing: .02em;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.fm-msg-retry {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 10px;
+  padding: 7px 12px;
+  font-size: 12px; font-weight: 600;
+  background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 999px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.fm-msg-retry:hover { background: var(--brand-bg); border-color: var(--brand-line); color: var(--brand); }
